@@ -6,8 +6,6 @@ networkx>=1.7
 numpy>=1.9.1
 python-dateutil
 pytz
-pyyaml
-requests
 scipy
 simplejson
 simplekml

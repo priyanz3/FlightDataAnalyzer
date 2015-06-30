@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import atan2, ceil, copysign, cos, floor, log, radians, sin, sqrt
-from operator import attrgetter
+from math import ceil, copysign, cos, floor, log, radians, sin, sqrt
+from operator import attrgetter, itemgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -19,6 +19,7 @@ from scipy.signal import medfilt
 from hdfaccess.parameter import MappedArray
 
 from flightdatautilities import aircrafttables as at
+from flightdatautilities.geometry import cross_track_distance
 
 from settings import (
     BUMP_HALF_WIDTH,
@@ -26,6 +27,8 @@ from settings import (
     KTS_TO_MPS,
     METRES_TO_FEET,
     REPAIR_DURATION,
+    RUNWAY_HEADING_TOLERANCE,
+    RUNWAY_ILSFREQ_TOLERANCE,
     SLOPE_FOR_TOC_TOD,
     TRUCK_OR_TRAILER_INTERVAL,
     TRUCK_OR_TRAILER_PERIOD,
@@ -7792,3 +7795,148 @@ def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None):
     message += ', '.join("'%s'" for i in range(len(attributes)))
     obj.warning(message, name, *attributes)
     return None
+
+
+def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None, hint=None):
+    '''
+    Helper to find the nearest runway in the database.
+
+    Attempt to choose a runway depending on provided hints.
+
+    Runway identifier suffixes::
+
+       C = Center
+       L = Left
+       R = Right
+       S = STOL (Short Takeoff & Landing)
+       T = True Heading (Not magnetic heading)
+
+    :param airport: The airport to find runways for.
+    :type airport: Attribute
+    :param heading: The magnetic heading of the aircraft.
+    :type heading: str
+    :param ilsfreq: The localizer frequency the aircraft is tuned to.
+    :type ilsfreq: str
+    :param latitude: The latitude to search for.
+    :type latitude: str
+    :param longitude: The longitude to search for.
+    :type longitude: str
+    :param hint: Assistance for determining runway selection when imprecise.
+    :type hint: str
+    :returns: The nearest runway found.
+    :rtype: Runway
+    :raises: ValueError
+    :raises: IndexError
+    '''
+
+    def _filter_heading(r, h):
+        rh = r['magnetic_heading']
+        h1 = heading - RUNWAY_HEADING_TOLERANCE
+        h2 = heading + RUNWAY_HEADING_TOLERANCE
+        q1 = h1 + 360 <= rh <= 360 or 0 <= rh <= h if h1 < 0 else h1 <= rh <= h
+        q2 = h <= rh <= 360 or 0 <= rh <= h2 % 360 if h2 > 360 else h <= rh <= h2
+        return q1 or q2
+
+    def _filter_ilsfreq(r, f):
+        rf = r['localizer']['frequency']
+        f0 = ilsfreq - RUNWAY_ILSFREQ_TOLERANCE
+        f1 = ilsfreq + RUNWAY_ILSFREQ_TOLERANCE
+        return f0 <= rf <= f1
+
+    try:
+        runways = airport['runways']
+    except KeyError:
+        logger.warning('No runway information available for airport #%d.', airport['id'])
+        return None
+
+    # 1. Attempt to identify the runway by magnetic heading:
+    assert 0 <= heading <= 360, 'Heading must be between 0 and 360 degrees.'
+    runways = [runway for runway in runways if _filter_heading(runway, heading)]
+    if len(runways) == 0:
+        logger.warning('No runways found at airport #%d for heading %03.1f degrees.', airport['id'], heading)
+        return None
+    if len(runways) == 1:
+        return runways[0]
+
+    # 2. Attempt to identify the runway by localizer frequency:
+    if ilsfreq is not None:
+        ilsfreq = int(ilsfreq * 1000)  # Convert from MHz to kHz
+        assert 108100 <= ilsfreq <= 111950, 'Localizer frequency is out-of-range.'
+        assert ilsfreq // 100 % 10 % 2, 'Localiser frequency must have odd 100 kHz digit.'
+        x = [runway for runway in runways if _filter_ilsfreq(runway, ilsfreq)]
+        if len(x) == 1:
+            # XXX logger.info("Runway '%s' selected: Identified by ILS.", x[0]['ident'])
+            return x[0]
+        elif len(x) == 0:
+            # XXX logger.warning("ILS '%s' frequency provided, no matching runway found at '%s'.", ilsfreq, airport['id'])
+        else:
+            # XXX logger.warning("ILS '%s' frequency provided, multiple matching runways found at '%s'.", ilsfreq, airport['id'])
+
+    # 3. If hint provided (i.e. not precise positioning) try narrowing down the
+    #    runway by heading - if more than one runway within 10 degrees, likely
+    #    parallel runways so continue with other means of runway detection.
+    if hint is not None:
+        # TODO: Compare true heading with one calculated from runway end points?
+        assert hint in ('takeoff', 'landing', 'approach')
+        for limit in (20, 10):
+            x = [runway for runway in runways if abs(float(runway['magnetic_heading']) - heading) < limit]
+            if len(x) == 1:
+                # XXX logger.info("Runway '%s' selected: Only runway within %d degrees of provided heading.", x[0].ident, limit)
+                return x[0]
+
+    # 4. Attempt to identify by nearest runway (if precise positioning):
+    if latitude is not None and longitude is not None:
+        assert -90 <= latitude <= 90, 'Latitude must be between -90 and 90 degrees.'
+        assert -180 < longitude <= 180, 'Longitude must be between -180 and 180 degrees.'
+        p3y, p3x = longitude, latitude
+        distance = float('inf')
+        runway = None
+        for r in runways:
+            p1x = r['start']['longitude']
+            p1y = r['start']['latitude']
+            p2x = r['end']['longitude']
+            p2y = r['end']['latitiude']
+            args = (p1y, p1x, p2y, p2x, p3y, p3x)
+            if not any(args):
+                continue
+            abs_dxt = abs(cross_track_distance(*args))
+            if abs_dxt < distance:
+                distance = abs_dxt
+                runway = r
+        if runway:
+            logger.info("Runway '%s' selected: Closest to provided coordinates.", runway.ident)
+            return runway
+
+    # 4. Fall back to not identifying which parallel runway:
+    runways = sorted(map(lambda r: r.to_dict(), runways), key=itemgetter('id'))
+    idents = map(lambda runway: runway['identifier'], runways)
+
+    # Check that the runway identifiers don't conflict, otherwise guess:
+    ident_to_int = lambda x: int(x.rstrip('CLRST'), 10)
+    groups = list(set(map(ident_to_int, idents)))
+    if len(groups) > 1:
+        # Ensure that we can find out if there was a runway conflict:
+        args = [airport['id'], heading, ilsfreq, latitude, longitude, hint]
+        message = 'Runways with conflicting identifer headings found: %s [%s].'
+        details = (', '.join(map(str, idents)), ', '.join(map(str, args)))
+        logger.info(message, *details)
+        # Determine nearest identifiers to the heading provided:
+        nearest = min(groups, key=lambda x: abs(x - heading))
+        # Filter out runways that are not the nearest to the heading:
+        runways = [r for r in runways if ident_to_int(r['identifier']) == nearest]
+        # Prevent addition of * if only a single runway:
+        if len(runways) == 1:
+            return runways[0]
+
+    # Choose an order of runway identifiers based on the provided hint:
+    order = {'takeoff': 'CLRST', 'landing': 'RCLST', 'approach': 'CRLST'}[hint or 'landing']
+    # Order the runway objects by the selected ordering:
+    runway = sorted(runways, key=lambda x: order.find(x['identifier'][-1]))[0]
+
+    runway['identifier'] = runway['identifier'].rstrip('CLRST') + '*'  # FIXME: Copy to avoid modifying!
+
+    if not runway.get('end'):
+        raise ValueError('Runway %s at airport #%d has no end coordinates.'
+                         % (runway['identifier'], airport['id']))
+
+    return runway

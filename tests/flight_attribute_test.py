@@ -47,7 +47,7 @@ test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 
 def setUpModule():
-    settings.API_HANDLER = 'analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal'
+    settings.API_HANDLER = 'analysis_engine.api_handler.FileHandler'
 
 
 class NodeTest(object):
@@ -362,7 +362,7 @@ class TestDestinationAirport(unittest.TestCase):
         self.afr_dest = A('AFR Destination Airport', value={'id': 2000})
         self.node = DestinationAirport()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_airport')
     def test_derive_dest(self, get_airport):
         self.node.derive(self.dest, None)
         self.assertEqual(self.node.value, get_airport.return_value)
@@ -372,7 +372,7 @@ class TestDestinationAirport(unittest.TestCase):
         self.node.derive(None, self.afr_dest)
         self.assertEqual(self.node.value, self.afr_dest.value)
     
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_airport')
     def test_derive_both(self, get_airport):
         self.node.derive(self.dest, self.afr_dest)
         self.assertEqual(self.node.value, get_airport.return_value)
@@ -496,7 +496,7 @@ class TestLandingAirport(unittest.TestCase, NodeTest):
             ('Latitude At Touchdown', 'Longitude At Touchdown', 'AFR Landing Airport'),
         ]
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_airport_not_found(self, get_nearest_airport):
         '''
         Attribute is not set when airport is not found.
@@ -526,7 +526,7 @@ class TestLandingAirport(unittest.TestCase, NodeTest):
         get_nearest_airport.assert_called_once_with(0.9, 8.4)
         get_nearest_airport.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_airport_found(self, get_nearest_airport):
         '''
         Attribute is set when airport is found.
@@ -551,7 +551,7 @@ class TestLandingAirport(unittest.TestCase, NodeTest):
         get_nearest_airport.assert_called_once_with(0.9, 8.4)
         get_nearest_airport.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_afr_fallback(self, get_nearest_airport):
         info = {'id': '50'}
         get_nearest_airport.return_value = info
@@ -712,7 +712,7 @@ class TestLandingRunway(unittest.TestCase, NodeTest):
         self.operational_combination_length = 144
         self.check_operational_combination_length_only = True
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
     def test_derive(self, get_nearest_runway):
         info = {
             'end': {'latitude': 58.211678, 'longitude': 8.095269},
@@ -775,7 +775,7 @@ class TestLandingRunway(unittest.TestCase, NodeTest):
         get_nearest_runway.assert_called_once_with(25, 20.0, ils_freq=330150, hint='landing')
         get_nearest_runway.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
     def test_derive_afr_fallback(self, get_nearest_runway):
         info = {'identifier': '09L'}
         def runway_side_effect(apt, hdg, *args, **kwargs):
@@ -893,7 +893,7 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
         self.assertTrue(self.node_class.can_operate(('Latitude Off Blocks', 'Longitude Off Blocks')))
         self.assertFalse(self.node_class.can_operate(('Latitude At Liftoff', 'Longitude Off Blocks')))
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_airport_not_found(self, get_nearest_airport):
         '''
         Attribute is not set when airport is not found.
@@ -923,7 +923,7 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
         get_nearest_airport.assert_called_once_with(4.0, 3.0)
         get_nearest_airport.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_airport_found(self, get_nearest_airport):
         '''
         Attribute is set when airport is found.
@@ -954,7 +954,7 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
         get_nearest_airport.assert_called_once_with(4.0, 3.0)
         get_nearest_airport.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive_afr_fallback(self, get_nearest_airport):
         info = {'id': '50'}
         get_nearest_airport.return_value = info
@@ -1130,7 +1130,7 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
         self.operational_combination_length = 40
         self.check_operational_combination_length_only = True
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
     def test_derive(self, get_nearest_runway):
         info = {'identifier': '27L', 'length': 20}
         get_nearest_runway.return_value = info
@@ -1174,7 +1174,7 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
         get_nearest_runway.assert_called_once_with(25, 20.0, latitude=4.0, longitude=3.0,  hint='takeoff')
         get_nearest_runway.reset_mock()
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
     def test_derive_afr_fallback(self, get_nearest_runway):
         info = {'identifier': '09L'}
         def runway_side_effect(apt, hdg, *args, **kwargs):

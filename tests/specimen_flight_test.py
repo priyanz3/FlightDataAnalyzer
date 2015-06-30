@@ -39,7 +39,7 @@ DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data'
 
 
 def setUpModule():
-    settings.API_HANDLER = 'analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal'
+    settings.API_HANDLER = 'analysis_engine.api_handler.FileHandler'
     hooks.PRE_FILE_ANALYSIS = None
     hooks.PRE_FLIGHT_ANALYSIS = None
     logging.disable(logging.DEBUG)

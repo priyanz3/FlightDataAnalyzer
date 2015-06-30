@@ -12,6 +12,9 @@ import sys
 # your local environment and append customised modules.
 
 
+_path = os.path.dirname(os.path.realpath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+
+
 ##############################################################################
 # General Configuration
 
@@ -30,20 +33,18 @@ NODE_MODULES = [
     'analysis_engine.flight_phase',
 ]
 
-# API Handler Configuration:
-LOCAL_API_HANDLER = 'analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal'
-API_HANDLER = LOCAL_API_HANDLER
-BASE_URL = ''  # Must be configured to use HTTP API handler.
+API_HTTP_HANDLER = 'analysis_engine.api_handler.HTTPHandler'
+API_HTTP_BASE_URL = None
 
-ANALYZER_PATH = os.path.dirname(os.path.realpath(
-    sys.executable if getattr(sys, 'frozen', False) else __file__))
+API_FILE_HANDLER = 'analysis_engine.api_handler.FileHandler'
+API_FILE_PATHS = {
+    'aircraft': os.path.join(_path, 'config', 'aircraft.yaml'),
+    'airports': os.path.join(_path, 'config', 'airports.yaml'),
+    'runways': os.path.join(_path, 'config', 'runways.yaml'),
+    'exports': os.path.join(_path, 'config', 'exports.yaml'),
+}
 
-CONFIG_PATH = os.path.join(ANALYZER_PATH, 'config')
-
-LOCAL_API_AIRCRAFT_PATH = os.path.join(CONFIG_PATH, 'aircraft.yaml')
-LOCAL_API_AIRPORT_PATH = os.path.join(CONFIG_PATH, 'airports.yaml')
-LOCAL_API_RUNWAY_PATH = os.path.join(CONFIG_PATH, 'runways.yaml')
-LOCAL_API_EXPORTS_PATH = os.path.join(CONFIG_PATH, 'exports.yaml')
+API_HANDLER = API_FILE_HANDLER
 
 # User's home directory, override in analyser_custom_settings.py
 WORKING_DIR = os.path.expanduser('~')
@@ -417,6 +418,10 @@ after level off. This led to reducing the threshold to 600 fpm in 3
 minutes which has been found to give good qualitative segregation
 between climb, cruise and descent phases."""
 SLOPE_FOR_TOC_TOD = 600 / float(3*60)  # 600fpm in 3 mins
+
+# Tolerance values used when determining the nearest runway:
+RUNWAY_HEADING_TOLERANCE = 30  # deg
+RUNWAY_ILSFREQ_TOLERANCE = 50  # kHz
 
 
 

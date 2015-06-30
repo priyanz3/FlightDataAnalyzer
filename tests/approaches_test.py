@@ -51,8 +51,8 @@ class TestApproachInformation(unittest.TestCase):
         self.assertTrue(('Approach And Landing', 'Altitude AAL', 'Fast')
                         in combinations)
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive(self, get_nearest_airport, get_nearest_runway):
         approaches = self.node_class()
         approaches._lookup_airport_and_runway = Mock()
@@ -118,8 +118,8 @@ class TestApproachInformation(unittest.TestCase):
         #        works correctly and any fall back values are used as
         #        appropriate.
 
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
-    @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_airport')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_runway')
+    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     def test_derive__ils_sidestep(self, get_nearest_airport, get_nearest_runway):
         approaches = self.node_class()
         approaches._lookup_airport_and_runway = Mock()

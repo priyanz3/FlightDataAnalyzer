@@ -7,8 +7,9 @@ import pytz
 
 from datetime import datetime
 
+from flightdatautilities import api
+
 from analysis_engine import __version__, settings
-from analysis_engine.api_handler import get_api_handler, NotFoundError
 
 from analysis_engine.library import (
     all_of,
@@ -17,6 +18,7 @@ from analysis_engine.library import (
     min_value,
     max_value,
     most_common_value,
+    nearest_runway,
 )
 from analysis_engine.node import A, KTI, KPV, FlightAttributeNode, M, P, S
 
@@ -194,10 +196,10 @@ class DestinationAirport(FlightAttributeNode):
         if value is None or not value.isalpha():
             return
 
-        api = get_api_handler(settings.API_HANDLER)
+        handler = api.get_handler(settings.API_HANDLER)
         try:
-            airport = api.get_airport(value)
-        except NotFoundError:
+            airport = handler.get_airport(value)
+        except api.NotFoundError:
             self.warning('No destination airport found for %s.', value)
             return
 
@@ -306,10 +308,10 @@ class LandingAirport(FlightAttributeNode):
             lat = land_lat.get_last()
             lon = land_lon.get_last()
             if lat and lon:
-                api = get_api_handler(settings.API_HANDLER)
+                handler = api.get_handler(settings.API_HANDLER)
                 try:
-                    airport = api.get_nearest_airport(lat.value, lon.value)
-                except NotFoundError:
+                    airport = handler.get_nearest_airport(lat.value, lon.value)
+                except api.NotFoundError:
                     msg = 'No landing airport found near coordinates (%f, %f).'
                     self.warning(msg, lat.value, lon.value)
                     # No airport was found, so fall through and try AFR.
@@ -408,9 +410,9 @@ class LandingRunway(FlightAttributeNode):
                     ils_app_slice = slice(landing.start_edge, landing.slice.stop)
                 else:
                     ils_app_slice = landing.slice
-                ils_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
-                if ils_freq:
-                    kwargs.update(ils_freq=ils_freq.value)
+                lis_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
+                if lis_freq:
+                    kwargs.update(lis_freq=lis_freq.value)
 
             '''
             Original comment:
@@ -437,14 +439,12 @@ class LandingRunway(FlightAttributeNode):
             else:
                 kwargs.update(hint='landing')
 
-            api = get_api_handler(settings.API_HANDLER)
-            try:
-                runway = api.get_nearest_runway(airport, heading, **kwargs)
-            except NotFoundError:
+            runway = nearest_runway(airport, heading, **kwargs)
+            if not runway:
                 msg = 'No runway found for airport #%d @ %03.1f deg with %s.'
-                self.warning(msg, airport, heading, kwargs)
+                self.warning(msg, airport['id'], heading, kwargs)
                 # No runway was found, so fall through and try AFR.
-                if 'ils_freq' in kwargs:
+                if 'lis_freq' in kwargs:
                     # This is a trap for airports where the ILS data is not
                     # available, but the aircraft approached with the ILS
                     # tuned. A good prompt for an omission in the database.
@@ -531,10 +531,10 @@ class TakeoffAirport(FlightAttributeNode):
         lat = lat_source.get_first()
         lon = lon_source.get_first()
         if lat and lon:
-            api = get_api_handler(settings.API_HANDLER)
+            handler = api.get_handler(settings.API_HANDLER)
             try:
-                airport = api.get_nearest_airport(lat.value, lon.value)
-            except NotFoundError:
+                airport = handler.get_nearest_airport(lat.value, lon.value)
+            except api.NotFoundError:
                 msg = 'No takeoff airport found near coordinates (%f, %f).'
                 self.warning(msg, lat.value, lon.value)
                 # No airport was found, so fall through and try AFR.
@@ -768,8 +768,8 @@ class TakeoffRunway(FlightAttributeNode):
         precise = bool(getattr(precision, 'value', False))
 
         try:
-            airport = int(toff_fdr_apt.value['id'])
-        except (AttributeError, KeyError, TypeError, ValueError):
+            airport = toff_fdr_apt.value  # FIXME
+        except AttributeError:
             self.warning('Invalid airport... Fallback to AFR Takeoff Runway.')
             fallback = True
 
@@ -805,12 +805,10 @@ class TakeoffRunway(FlightAttributeNode):
             if not precise:
                 kwargs.update(hint='takeoff')
 
-            api = get_api_handler(settings.API_HANDLER)
-            try:
-                runway = api.get_nearest_runway(airport, heading, **kwargs)
-            except NotFoundError:
+            runway = nearest_runway(airport, heading, **kwargs)
+            if not runway:
                 msg = 'No runway found for airport #%d @ %03.1f deg with %s.'
-                self.warning(msg, airport, heading, kwargs)
+                self.warning(msg, airport['id'], heading, kwargs)
                 # No runway was found, so fall through and try AFR.
             else:
                 self.info('Detected takeoff runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport, heading, kwargs)

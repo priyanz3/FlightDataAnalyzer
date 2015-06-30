@@ -11,7 +11,8 @@ from inspect import getargspec, isclass, ismodule
 from hdfaccess.file import hdf_file
 from hdfaccess.utils import strip_hdf
 
-from analysis_engine.api_handler import APIError, get_api_handler
+from flightdatautilities import api
+
 from analysis_engine.dependency_graph import dependencies3, graph_nodes
 # node classes required for unpickling
 from analysis_engine.node import (
@@ -114,32 +115,25 @@ def open_node_container(zip_path):
 
 def get_aircraft_info(tail_number):
     '''
-    Fetch aircraft info from settings.API_HANDLER or from LOCAL_API_HANDLER
-    if there is an API_ERROR raised.
+    Fetch aircraft info from configured API handler falling back to file handler if an exception is raised.
 
-    :param tail_number: Aircraft tail registration
-    :type tail_number: string
-    :returns: Aircraft information key:value pairs
+    :param tail_number: aircraft tail number
+    :type tail_number: str
+    :returns: aircraft information dictionary
     :rtype: dict
+    :raises: APIError -- if the aircraft is not found.
     '''
-    # Fetch aircraft info through the API.
-    api_handler = get_api_handler(settings.API_HANDLER)
-
+    handler = api.get_handler(settings.API_HANDLER)
     try:
-        aircraft_info = api_handler.get_aircraft(tail_number)
-    except APIError:
-        if settings.API_HANDLER == settings.LOCAL_API_HANDLER:
+        aircraft_info = handler.get_aircraft(tail_number)
+    except api.APIError:
+        if settings.API_HANDLER == settings.API_FILE_HANDLER:
             raise
-        # Fallback to the local API handler.
-        logger.warning(
-            "Aircraft '%s' could not be found with '%s' API handler. "
-            "Falling back to '%s'.", tail_number, settings.API_HANDLER,
-            settings.LOCAL_API_HANDLER)
-        api_handler = get_api_handler(settings.LOCAL_API_HANDLER)
-        aircraft_info = api_handler.get_aircraft(tail_number)
-    logger.debug(
-        "Using aircraft_info provided by '%s' '%s'.",
-        api_handler.__class__.__name__, aircraft_info)
+        message = 'Aircraft information for aircraft %s not found via %s - falling back to %s.'
+        logger.warning(message, tail_number, settings.API_HANDLER, settings.API_FILE_HANDLER)
+        handler = api.get_handler(settings.API_FILE_HANDLER)
+        aircraft_info = handler.get_aircraft(tail_number)
+    logger.info('Using aircraft_info provided by %s: %s.', handler.__class__.__name__, aircraft_info)
     return aircraft_info
 
 

@@ -3,18 +3,21 @@
 ##############################################################################
 
 '''
+Flight Data Analyzer: API Handler
 '''
 
 ##############################################################################
 # Imports
 
 
+import abc
 import logging
-import os
-import requests
-import sys
 
-from requests.packages.urllib3.util.retry import Retry
+from operator import itemgetter
+
+from flightdatautilities import api
+
+from analysis_engine import library, settings
 
 
 ##############################################################################
@@ -24,130 +27,260 @@ from requests.packages.urllib3.util.retry import Retry
 logger = logging.getLogger(name=__name__)
 
 
-if getattr(sys, 'frozen', False):
-    # XXX: Attempt to provide path to certificates in frozen applications:
-    path = os.path.join(os.path.dirname(sys.executable), 'cacert.pem')
-    os.environ.setdefault('REQUESTS_CA_BUNDLE', path)
-
-
 ##############################################################################
-# Exceptions
+# Classes
 
 
-class APIError(Exception):
+class MethodInterface(object):
     '''
-    A generic exception class for an error when calling an API.
-    '''
-
-    def __init__(self, message, url=None, method=None, params=None, data=None, json=None):
-        super(APIError, self).__init__(message)
-        self.url = url
-        self.method = method
-        self.params = params
-        self.data = data
-        self.json = json
-
-
-class IncompleteEntryError(APIError):
-    '''
-    An exception to be raised when and entry does not contain all required
-    data.
-    '''
-    pass
-
-
-class NotFoundError(APIError):
-    '''
-    An exception to be raised when something could not be found via the API.
-    '''
-    pass
-
-
-##############################################################################
-# HTTP API Handler
-
-
-class APIHandlerHTTP(object):
-    '''
-    Restful HTTP API Handler.
+    Abstract base class for Flight Data Analyser API handler classes.
     '''
 
-    def request(self, url, method='GET', params=None, data=None, json=None, **kw):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_aircraft(self, aircraft):
         '''
-        Makes a request to a URL and attempts to return the decoded content.
+        Returns details of an aircraft matching the provided tail number.
 
-        :param url: url to connect to for handling the request.
-        :type url: str
-        :param method: method for the request.
-        :type method: str
-        :param data: data to send in the body of the request.
-        :type data: mixed
-        :returns: the data fetched from the remote server.
-        :rtype: mixed
-        :raises: NotFoundError -- if no record could be found (server returns 404)
-        :raises: APIError -- if the server does not respond or returns an error.
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: aircraft info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
         '''
-        backoff = kw.get('backoff', 0.2)
-        retries = kw.get('retries', 5)
-        timeout = kw.get('timeout', 15)
+        raise NotImplementedError
 
-        retries = Retry(total=retries, backoff_factor=backoff, status_forcelist=[503])
+    @abc.abstractmethod
+    def get_analyser_profiles(self, aircraft):
+        '''
+        Returns details of analyser profiles enabled for an aircraft.
 
-        logger.debug('API Request: %s %s', method, url)
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: analyser profiles in (module_path, required) tuples.
+        :rtype: list
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_data_exports(self, aircraft):
+        '''
+        Returns details of data exports configuration for an aircraft.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: data exports info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_airport(self, code):
+        '''
+        Returns details of an airport matching the provided code.
+
+        :param code: airport id, ICAO code or IATA code.
+        :type code: int or str
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_nearest_airport(self, latitude, longitude):
+        '''
+        Returns the nearest airport to the provided latitude and longitude.
+
+        :param latitude: latitude in decimal degrees.
+        :type latitude: float
+        :param longitude: longitude in decimal degrees.
+        :type longitude: float
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        raise NotImplementedError
+
+
+class HTTPHandler(MethodInterface, api.HTTPHandler):
+
+    def __init__(self):
+        assert settings.API_HTTP_BASE_URL, 'Setting missing for HTTP API Handler.'
+
+    def get_aircraft(self, aircraft):
+        '''
+        Returns details of an aircraft matching the provided tail number.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: aircraft info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        url = '%(base_url)s/api/aircraft/%(aircraft)s/' % {
+            'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
+            'aircraft': aircraft.strip().lower(),
+        }
+        return self.request(url)['aircraft']
+
+    def get_analyser_profiles(self, aircraft):
+        '''
+        Returns details of analyser profiles enabled for an aircraft.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: analyser profiles in (module_path, required) tuples.
+        :rtype: list
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        url = '%(base_url)s/api/aircraft/%(aircraft)s/profiles/' % {
+            'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
+            'aircraft': aircraft.strip().lower(),
+        }
+        return self.request(url)['analyser_profiles']
+
+    def get_data_exports(self, aircraft):
+        '''
+        Returns details of data exports configuration for an aircraft.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: data exports info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        url = '%(base_url)s/api/aircraft/%(aircraft)s/exports/' % {
+            'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
+            'aircraft': aircraft.strip().lower(),
+        }
+        return self.request(url)['data_exports']
+
+    def get_airport(self, code):
+        '''
+        Returns details of an airport matching the provided code.
+
+        :param code: airport id, ICAO code or IATA code.
+        :type code: int or str
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        url = '%(base_url)s/api/airport/%(code)s/' % {
+            'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
+            'code': str(code).strip().lower(),
+        }
+        return self.request(url)['airport']
+
+    def get_nearest_airport(self, latitude, longitude):
+        '''
+        Returns the nearest airport to the provided latitude and longitude.
+
+        :param latitude: latitude in decimal degrees.
+        :type latitude: float
+        :param longitude: longitude in decimal degrees.
+        :type longitude: float
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        url = '%(base_url)s/api/airport/nearest/' % {
+            'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
+        }
+        params = {'ll': '%f,%f' % (latitude, longitude)}
+        return self.request(url, params=params)['airport']
+
+
+class FileHandler(MethodInterface, api.FileHandler):
+
+    def __init__(self):
+        assert settings.API_FILE_PATHS, 'Setting missing for File API Handler.'
+
+    def get_aircraft(self, aircraft):
+        '''
+        Returns details of an aircraft matching the provided tail number.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: aircraft info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        data = self.request(settings.API_FILE_PATHS['aircraft'])
         try:
-            with requests.Session() as s:
-                a = requests.adapters.HTTPAdapter(max_retries=retries)
-                s.mount('http://', a)
-                s.mount('https://', a)
-                r = s.request(method, url, params=params, data=data, json=json, timeout=timeout)
-                r.raise_for_status()
-                return r.json()
+            return data[aircraft]
+        except KeyError:
+            raise api.NotFoundError('Aircraft not found using Local File API: %s' % aircraft)
 
-        except requests.HTTPError as e:
-            try:
-                message = e.response.json()['error']
-            except:
-                message = 'No error message available or supplied.'
-            if e.response.status_code == requests.codes.not_found:
-                logger.debug(message)
-                raise NotFoundError(message, url, method, params, data, json)
-            else:
-                logger.exception(message)
-                raise APIError(message, url, method, params, data, json)
-        except requests.RequestException:
-            message = 'Unexpected error with connection to the API.'
-            logger.exception(message)
-            raise APIError(message, url, method, params, data, json)
-        except ValueError:
-            # Note: JSONDecodeError only in simplejson or Python 3.5+
-            message = 'Unexpected error decoding response from API.'
-            logger.exception(message)
-            raise APIError(message, url, method, params, data, json)
+    def get_analyser_profiles(self, aircraft):
+        '''
+        Returns details of analyser profiles enabled for an aircraft.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: analyser profiles in (module_path, required) tuples.
+        :rtype: list
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        logger.warning('Analyser profiles not supported by Local File API.')
+        return []
+
+    def get_data_exports(self, aircraft):
+        '''
+        Returns details of data exports configuration for an aircraft.
+
+        :param aircraft: aircraft tail number.
+        :type aircraft: str
+        :returns: data exports info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        data = self.request(settings.API_FILE_PATHS['exports'])
+        try:
+            return data[aircraft]
+        except (KeyError, TypeError):
+            raise api.NotFoundError('Aircraft not found using Local File API: %s' % aircraft)
+
+    def get_airport(self, code):
+        '''
+        Returns details of an airport matching the provided code.
+
+        :param code: airport id, ICAO code or IATA code.
+        :type code: int or str
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        data = self.request(settings.API_FILE_PATHS['airports'])
+        for airport in data:
+            if code in (airport.get('id'), airport['code'].get('iata'), airport['code'].get('icao')):
+                return airport
+        raise api.NotFoundError('Airport not found using Local File API: %s' % code)
+
+    def get_nearest_airport(self, latitude, longitude):
+        '''
+        Returns the nearest airport to the provided latitude and longitude.
+
+        :param latitude: latitude in decimal degrees.
+        :type latitude: float
+        :param longitude: longitude in decimal degrees.
+        :type longitude: float
+        :returns: airport info dictionary
+        :rtype: dict
+        :raises: api.NotFoundError -- if the aircraft cannot be found.
+        '''
+        data = self.request(settings.API_FILE_PATHS['airports'])
+        airports = []
+        for airport in data:
+            if 'latitude' not in airport or 'longitude' not in airport:
+                continue
+            args = (latitude, longitude, airport['latitude'], airport['longitude'])
+            airport['distance'] = library.bearing_and_distance(*args)[1]
+            airports.append(airport)
+        try:
+            return min(airports, key=itemgetter('distance'))
         except:
-            message = 'Unexpected error from the API.'
-            logger.exception(message)
-            raise APIError(message, url, method, params, data, json)
-
-
-##############################################################################
-# API Handler Lookup Function
-
-
-def get_api_handler(handler_path, *args, **kwargs):
-    '''
-    Returns an instance of the class specified by the handler_path.
-
-    :param handler_path: Path to handler module, e.g. project.module.APIHandler
-    :type handler_path: string
-    :param args: Handler class instantiation args.
-    :type args: list
-    :param kwargs: Handler class instantiation kwargs.
-    :type kwargs: dict
-    '''
-    import_path_split = handler_path.split('.')
-    class_name = import_path_split.pop()
-    module_path = '.'.join(import_path_split)
-    handler_module = __import__(module_path, globals(), locals(),
-                                fromlist=[class_name])
-    handler_class = getattr(handler_module, class_name)
-    return handler_class(*args, **kwargs)
+            raise api.NotFoundError('Airport not found using Local File API: %f,%f' % (latitude, longitude))

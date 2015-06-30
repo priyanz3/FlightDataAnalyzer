@@ -1,14 +1,31 @@
+# -*- coding: utf-8 -*-
+# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
+##############################################################################
+
+'''
+Flight Data Analyzer: Approaches
+'''
+
+##############################################################################
+# Imports
+
+
 import numpy as np
 
-from analysis_engine.api_handler import get_api_handler, NotFoundError
-from analysis_engine.node import A, ApproachNode, helicopter, KPV, KTI, P, S
+from flightdatautilities import api
+
 from analysis_engine import settings
+from analysis_engine.library import all_of, nearest_runway
+from analysis_engine.node import A, ApproachNode, KPV, KTI, P, S, helicopter
 
 
+##############################################################################
+# Nodes
+
+
+# TODO: Update docstring for ApproachNode.
 class ApproachInformation(ApproachNode):
-    """
-    # TODO: Update docstring for ApproachNode.
-
+    '''
     Details of all approaches that were made including landing.
 
     If possible we attempt to determine the airport and runway associated with
@@ -37,7 +54,7 @@ class ApproachInformation(ApproachNode):
         [
             {
                 'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Runway API.
+                'runway': {...},   # See output provided by Airport API.
                 'type': 'LANDING',
                 'datetime': datetime(1970, 1, 1, 0, 0, 0),
                 'slice_start': 100,
@@ -48,7 +65,7 @@ class ApproachInformation(ApproachNode):
             },
             {
                 'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Runway API.
+                'runway': {...},   # See output provided by Airport API.
                 'type': 'GO_AROUND',
                 'datetime': datetime(1970, 1, 1, 0, 0, 0),
                 'slice_start': 100,
@@ -58,7 +75,7 @@ class ApproachInformation(ApproachNode):
             },
             {
                 'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Runway API.
+                'runway': {...},   # See output provided by Airport API.
                 'type': 'TOUCH_AND_GO',
                 'datetime': datetime(1970, 1, 1, 0, 0, 0),
                 'slice_start': 100,
@@ -67,39 +84,29 @@ class ApproachInformation(ApproachNode):
             ...
         ]
 
-
-
     This separates out the approach phase excluding the landing.
-    """
+    '''
 
     @classmethod
-    def can_operate(self, available, ac_type=A('Aircraft Type')):
-        '''
-        '''
-        if ac_type == helicopter:
-            return all(n in available for n in ['Approach And Landing',
-                                                'Altitude AGL', 'Fast'])
-        else:
-            return all(n in available for n in ['Approach And Landing',
-                                                'Altitude AAL', 'Fast'])
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = ['Approach And Landing', 'Fast']
+        required.append('Altitude AGL' if ac_type == helicopter else 'Altitude AAL')
+        return all_of(required, available)
 
     def _lookup_airport_and_runway(self, _slice, precise, lowest_lat,
                                    lowest_lon, lowest_hdg, appr_ils_freq,
                                    land_afr_apt=None, land_afr_rwy=None,
                                    hint='approach'):
-        '''
-        '''
-        api = get_api_handler(settings.API_HANDLER)
+        handler = api.get_handler(settings.API_HANDLER)
         kwargs = {}
-        airport = None
-        runway = None
+        airport, runway = None, None
 
         # A1. If we have latitude and longitude, look for the nearest airport:
-        if lowest_lat!=None and lowest_lon!=None:
+        if lowest_lat is not None and lowest_lon is not None:
             kwargs.update(latitude=lowest_lat, longitude=lowest_lon)
             try:
-                airport = api.get_nearest_airport(**kwargs)
-            except NotFoundError:
+                airport = handler.get_nearest_airport(**kwargs)
+            except api.NotFoundError:
                 msg = 'No approach airport found near coordinates (%f, %f).'
                 self.warning(msg, lowest_lat, lowest_lon)
                 # No airport was found, so fall through and try AFR.
@@ -121,12 +128,7 @@ class ApproachInformation(ApproachNode):
             self.error('Unable to determine airport on approach!')
             return None, None
 
-        airport_id = int(airport['id'])
-
         if lowest_hdg is not None:
-        #if heading is None:
-            #self.warning('Invalid heading... Fallback to AFR.')
-            #fallback = True
 
             # R1. If we have airport and heading, look for the nearest runway:
             if appr_ils_freq:
@@ -139,12 +141,10 @@ class ApproachInformation(ApproachNode):
                     del kwargs['latitude']
                     del kwargs['longitude']
 
-            try:
-                runway = api.get_nearest_runway(airport_id, lowest_hdg,
-                                                **kwargs)
-            except NotFoundError:
+            runway = nearest_runway(airport, lowest_hdg, **kwargs)
+            if not runway:
                 msg = 'No runway found for airport #%d @ %03.1f deg with %s.'
-                self.warning(msg, airport_id, lowest_hdg, kwargs)
+                self.warning(msg, airport['id'], lowest_hdg, kwargs)
                 # No runway was found, so fall through and try AFR.
                 if 'ils_freq' in kwargs:
                     # This is a trap for airports where the ILS data is not
@@ -153,7 +153,6 @@ class ApproachInformation(ApproachNode):
                     self.warning('Fix database? No runway but ILS was tuned.')
             else:
                 self.debug('Detected approach runway: %s', runway)
-                runway = runway
 
         # R2. If we have a runway provided in achieved flight record, use it:
         if not runway and land_afr_rwy:
@@ -166,7 +165,8 @@ class ApproachInformation(ApproachNode):
 
         return airport, runway
 
-    def derive(self, app=S('Approach And Landing'),
+    def derive(self,
+               app=S('Approach And Landing'),
                alt_aal=P('Altitude AAL'),
                fast=S('Fast'),
                land_hdg=KPV('Heading During Landing'),
@@ -184,15 +184,11 @@ class ApproachInformation(ApproachNode):
                turnoffs=KTI('Landing Turn Off Runway'),
                alt_agl=P('Altitude AGL'),
                ac_type=A('Aircraft Type')):
+
         precise = bool(getattr(precision, 'value', False))
 
-        default_kwargs = {
-            'precise': precise,
-        }
+        alt = alt_agl if ac_type == helicopter else alt_aal
 
-        alt = alt_aal
-        if ac_type == helicopter:
-            alt = alt_agl
         app_slices = app.get_slices()
 
         for index, _slice in enumerate(app_slices):
@@ -209,9 +205,6 @@ class ApproachInformation(ApproachNode):
                 approach_type = 'GO_AROUND'
                 landing = False
 
-            # Prepare arguments for looking up the airport and runway:
-            kwargs = default_kwargs.copy()
-
             # Pass latitude, longitude and heading depending whether this
             # approach is a landing or not.
             #
@@ -220,20 +213,22 @@ class ApproachInformation(ApproachNode):
             lon = land_lon if landing else appr_lon
             hdg = land_hdg if landing else appr_hdg
 
-            lowest_lat_kpv = lat.get_first(within_slice=_slice) if lat else None
-            lowest_lat = lowest_lat_kpv.value if lowest_lat_kpv else None
-            lowest_lon_kpv = lon.get_first(within_slice=_slice) if lon else None
-            lowest_lon = lowest_lon_kpv.value if lowest_lon_kpv else None
-            # aded within_slice as we are not interested in the heading of
+            # Added within_slice as we are not interested in the heading of
             # the first approach if there are multiple, we are using Approach
             # and Landing so heading on landing should fall within this slice
+            lowest_lat_kpv = lat.get_first(within_slice=_slice) if lat else None
+            lowest_lon_kpv = lon.get_first(within_slice=_slice) if lon else None
             lowest_hdg_kpv = hdg.get_first(within_slice=_slice) if hdg else None
+            lowest_lat = lowest_lat_kpv.value if lowest_lat_kpv else None
+            lowest_lon = lowest_lon_kpv.value if lowest_lon_kpv else None
             lowest_hdg = lowest_hdg_kpv.value if lowest_hdg_kpv else None
 
-            kwargs.update(
+            kwargs = dict(
                 lowest_lat=lowest_lat,
                 lowest_lon=lowest_lon,
                 lowest_hdg=lowest_hdg,
+                appr_ils_freq=appr_ils_freq,
+                precise=precise,
                 _slice=_slice,
             )
 
@@ -255,35 +250,37 @@ class ApproachInformation(ApproachNode):
                 # once during this approach, we take the last segment for the
                 # approach as this is must be the one that included (or was
                 # closest to) the landing
-                gs_est = gs_ests.get_last(
-                    within_slice=_slice, within_use='any')
-                if gs_est:
-                    gs_est = gs_est.slice
+                gs_est = gs_ests.get_last(within_slice=_slice, within_use='any')
+                gs_est = gs_est.slice if gs_est else None
             loc_est = None
             if loc_ests:
                 # As for the glidepath, we take the last localizer phase as
                 # this avoids working off an earlier segment if the aircraft
                 # carries out a teardrop approach. See approach plate for
                 # TOS 19 when approaching from the South.
-                loc_est = loc_ests.get_last(
-                    within_slice=_slice, within_use='any')
-                if loc_est:
-                    loc_est = loc_est.slice
+                loc_est = loc_ests.get_last(within_slice=_slice, within_use='any')
+                loc_est = loc_est.slice if loc_est else None
 
             # Add further details to save hunting when we need them later.
-            ils_freq_kpv = (appr_ils_freq.get_last(within_slice=_slice)
-                           if appr_ils_freq else None)
+            ils_freq_kpv = (appr_ils_freq.get_last(within_slice=_slice) if appr_ils_freq else None)
             ils_freq = ils_freq_kpv.value if ils_freq_kpv else None
             kwargs['appr_ils_freq'] = ils_freq
 
-            turnoff_kpv = (turnoffs.get_first(within_slice=_slice)
-                           if turnoffs else None)
+            turnoff_kpv = (turnoffs.get_first(within_slice=_slice) if turnoffs else None)
             turnoff = turnoff_kpv.index if turnoff_kpv else None
 
             airport, runway = self._lookup_airport_and_runway(**kwargs)
+
             self.create_approach(
-                approach_type, _slice, airport=airport,
-                runway=runway, gs_est=gs_est, loc_est=loc_est,
-                ils_freq=ils_freq, turnoff=turnoff,
-                lowest_lat=lowest_lat, lowest_lon=lowest_lon,
-                lowest_hdg=lowest_hdg)
+                approach_type,
+                _slice,
+                airport=airport,
+                runway=runway,
+                gs_est=gs_est,
+                loc_est=loc_est,
+                ils_freq=ils_freq,
+                turnoff=turnoff,
+                lowest_lat=lowest_lat,
+                lowest_lon=lowest_lon,
+                lowest_hdg=lowest_hdg,
+            )
