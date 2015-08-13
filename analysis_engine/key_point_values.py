@@ -5707,7 +5707,7 @@ class IANFinalApproachCourseDeviationMax(KeyPointValueNode):
 
             ian_est_bands = []
             for band in alt_bands:
-                final_app_course_est = scan_ils('glideslope', ian_final.array,
+                final_app_course_est = scan_ils('localizer', ian_final.array,
                                                 alt_aal.array, band,
                                                 ian_final.frequency)
                 if final_app_course_est:
