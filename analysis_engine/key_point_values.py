@@ -3467,7 +3467,7 @@ class TOGASelectedDuringGoAroundDuration(KeyPointValueNode):
     FDS developed this KPV to support the UK CAA Significant Seven programme.
     "Loss of Control - TOGA power selection in flight (Go-arounds need to be
     kept as a separate case)."
-    
+
     Align to Takeoff And Go Around for most accurate state change indices.
     '''
 
@@ -6685,7 +6685,7 @@ class EngTPRAtTOGADuringTakeoffMin(KeyPointValueNode):
     '''
     Originally coded for 787, but the event has been disabled since it lacks a
     limit.
-    
+
     Align to Takeoff And Go Around for most accurate state change indices.
     '''
 
@@ -8627,7 +8627,7 @@ class HeadingDeviationFromRunwayAtTOGADuringTakeoff(KeyPointValueNode):
     '''
     FDS developed this KPV to support the UK CAA Significant Seven programme.
     "Excursions - Take off (Lateral). TOGA pressed before a/c aligned."
-    
+
     Align to Takeoff And Go Around for most accurate state change indices.
     '''
 
@@ -9307,9 +9307,9 @@ class GroundspeedAtTOGA(KeyPointValueNode):
 
     This KPV measures the groundspeed at the point of TOGA selection,
     irrespective of whether this is late (or early!).
-    
+
     Align to Takeoff And Go Around for most accurate state change indices.
-    
+
     Note: Takeoff phase is used as this includes turning onto the runway
           whereas Takeoff Roll only starts after the aircraft is accelerating.
     '''
