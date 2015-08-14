@@ -89,6 +89,7 @@ from analysis_engine.library import (actuator_mismatch,
                                      slices_or,
                                      slices_remove_small_slices,
                                      smooth_track,
+                                     straighten_altitudes,
                                      straighten_headings,
                                      track_linking,
                                      value_at_index,
@@ -1081,7 +1082,8 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
             # match the fine part to the coarse part to get the altitudes
             # right.
             altitude = align(alt, fine)
-            self.array = match_altitudes(fine.array, altitude)
+            self.array = match_altitudes(straighten_altitudes(fine.array, None,5000),
+                                         altitude)
 
         elif alt_capt and alt_fo:
             # Merge alternate sources if they are available from the LFL
@@ -7650,7 +7652,7 @@ class AirspeedMinusV2(DerivedParameterNode):
         for start in starts:
             start.index = max(start.index - 5 * 64 * self.hz, 0)
         phases = slices_from_ktis(starts, climb_starts)
-        
+
         v2 = v2_recorded or airspeed_selected or v2_lookup
         if not v2:
             return

@@ -715,6 +715,15 @@ class TestAltitudeSTDSmoothed(unittest.TestCase):
         max_diff = np.ma.max(np.ma.abs(alt.array - node.array))
         self.assertTrue(max_diff < 100)
 
+    def test_derive_747_200(self):
+        frame = Attribute('Frame', '747-200-xxx')
+        alt_f = P('Altitude STD (Fine)', array=[4000,4999,1000,2000])
+        alt_c = P('Altitude STD', array=[-900,-800,1000,2000])
+        node = AltitudeSTDSmoothed()
+        node.derive(alt_f, alt_c, None, None, frame)
+        self.assertTrue(int(node.array[0]) == 333)
+        self.assertTrue(int(node.array[-1]) == 666)
+
 
 class TestAltitudeAAL(unittest.TestCase):
     def test_can_operate(self):
