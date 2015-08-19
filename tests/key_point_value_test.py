@@ -1845,7 +1845,7 @@ class TestAirspeedMinsToTouchdown(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestAirspeedTrueAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
+class TestAirspeedTrueAtTouchdown(unittest.TestCase):
 
     def setUp(self):
         self.node_class = AirspeedTrueAtTouchdown
@@ -1855,6 +1855,10 @@ class TestAirspeedTrueAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
         self.touchdowns = KTI(name='Touchdown', items=[
             KeyTimeInstance(name='Touchdown', index=5.2),
         ])
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(opts, self.operational_combinations)
 
     def test_derive_low_frequency(self):
         # created based on real Airspeed True recorded at 0.25hz
@@ -5659,18 +5663,6 @@ class TestEngEPRDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test Not Implemented')
 
 
-class TestEngTPRDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
-
-    def setUp(self):
-        self.node_class = EngTPRDuringTakeoff5MinRatingMax
-        self.operational_combinations = [('Eng (*) TPR Max', 'Takeoff 5 Min Rating')]
-        self.function = max_value
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test Not Implemented')
-
-
 class TestEngEPRDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -9342,19 +9334,6 @@ class TestPitch500To7FtMin(unittest.TestCase, CreateKPVsWithinSlicesTest):
         self.operational_combinations = [('Pitch', 'Altitude AAL For Flight Phases')]
         self.function = min_value
         self.second_param_method_calls = [('slices_from_to', (500, 7), {})]
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestPitch500To20FtMin(unittest.TestCase, CreateKPVsWithinSlicesTest):
-
-    def setUp(self):
-        self.node_class = Pitch500To20FtMin
-        self.operational_combinations = [('Pitch', 'Altitude AAL For Flight Phases')]
-        self.function = min_value
-        self.second_param_method_calls = [('slices_from_to', (500, 20), {})]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
