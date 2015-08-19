@@ -2,6 +2,7 @@ import numpy as np
 import os
 import unittest
 
+from hdfaccess.parameter import MappedArray
 from flightdatautilities.array_operations import load_compressed
 from flightdatautilities.filesystem_tools import copy_file
 
@@ -28,6 +29,8 @@ from analysis_engine.flight_phase import (
     GoAround5MinRating,
     Grounded,
     Holding,
+    IANFinalApproachCourseEstablished,
+    IANGlidepathEstablished,
     ILSGlideslopeEstablished,
     ILSLocalizerEstablished,
     InitialApproach,
@@ -52,9 +55,9 @@ from analysis_engine.flight_phase import (
     TwoDegPitchTo35Ft,
 )
 from analysis_engine.key_time_instances import BottomOfDescent, TopOfClimb, TopOfDescent
-from analysis_engine.library import integrate
-from analysis_engine.node import (A, Attribute, KTI, KeyTimeInstance,
-                                  KPV, KeyPointValue, M,
+from analysis_engine.library import integrate, np_ma_zeros_like
+from analysis_engine.node import (A, App, ApproachItem, Attribute, KTI,
+                                  KeyTimeInstance, KPV, KeyPointValue, M,
                                   Parameter, P, S, Section, SectionNode, load)
 from analysis_engine.process_flight import process_flight
 
@@ -458,6 +461,115 @@ class TestBouncedLanding(unittest.TestCase):
         self.assertEqual(len(bl), 0)
 
 
+class TestIANFinalApproachCourseEstablished(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = IANFinalApproachCourseEstablished
+        ian_array = load_compressed(os.path.join(test_data_path, 'ian_established-ian_app_course.npz'))
+        self.ian_app_corse = Parameter('IAN Final Approach Course', ian_array)
+        aal_array = load_compressed(os.path.join(test_data_path, 'ian_established-alt_aal.npz'))
+        self.alt_aal = Parameter('Altitude AAL For Flight Phases', aal_array)
+        values_mapping = {0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'}
+        self.app_src_capt = Parameter('Displayed App Source (Capt)',
+                                      MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
+        self.app_src_fo = Parameter('Displayed App Source (FO)',
+                                    MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
+
+    def test_derive__basic(self):
+        self.app_src_capt.array[slice(28710, 30480)] = 'FMC'
+        self.app_src_fo.array[slice(28709, 30481)] = 'FMC'
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), loc_est=None),])
+        node = self.node_class()
+        node.derive(self.ian_app_corse,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].slice.start, 30238, delta=1)
+        self.assertAlmostEqual(node[0].slice.stop, 30438, delta=1) #TODO: check stop index
+
+    def test_derive__ils_approach(self):
+        self.app_src_capt.array[slice(28710, 30480)] = 'ILS'
+        self.app_src_fo.array[slice(28709, 30481)] = 'ILS'
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), loc_est=True),])
+        node = self.node_class()
+        node.derive(self.ian_app_corse,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 0)
+
+    def test_derive__no_source(self):
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), loc_est=None),])
+        node = self.node_class()
+        node.derive(self.ian_app_corse,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 0)
+
+
+class TestIANGlidepathEstablished(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = IANGlidepathEstablished
+        ian_array = load_compressed(os.path.join(test_data_path, 'ian_established-ian_glidepath.npz'))
+        self.ian_glidepath = Parameter('IAN Glidepath', ian_array)
+        aal_array = load_compressed(os.path.join(test_data_path, 'ian_established-alt_aal.npz'))
+        self.alt_aal = Parameter('Altitude AAL For Flight Phases', aal_array)
+        values_mapping = {0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'}
+        self.app_src_capt = Parameter('Displayed App Source (Capt)',
+                                      MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
+        self.app_src_fo = Parameter('Displayed App Source (FO)',
+                                    MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
+
+    def test_derive__basic(self):
+        self.app_src_capt.array[slice(28710, 30480)] = 'FMC'
+        self.app_src_fo.array[slice(28709, 30481)] = 'FMC'
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), gs_est=None),])
+        node = self.node_class()
+        node.derive(self.ian_glidepath,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].slice.start, 30346, delta=1)
+        self.assertAlmostEqual(node[0].slice.stop, 30419, delta=1)
+
+    def test_derive__ils_approach(self):
+        self.app_src_capt.array[slice(28710, 30480)] = 'ILS'
+        self.app_src_fo.array[slice(28709, 30481)] = 'ILS'
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), gs_est=True),])
+        node = self.node_class()
+        node.derive(self.ian_glidepath,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 0)
+
+    def test_derive__no_source(self):
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(30238, 30537), gs_est=None),])
+        node = self.node_class()
+        node.derive(self.ian_glidepath,
+                    self.alt_aal,
+                    apps,
+                    self.app_src_capt,
+                    self.app_src_fo)
+        self.assertEqual(len(node), 0)
+
+
+
 class TestILSGlideslopeEstablished(unittest.TestCase):
 
     def setUp(self):
@@ -667,11 +779,13 @@ class TestILSLocalizerEstablished(unittest.TestCase):
         establish.derive(ils, alt_aal, app, freq, hdg, hdg_ldg)
         self.assertEqual(establish.get_slices(), [slice(2, 18, None)])
         ils = P('ILS Localizer',np.ma.array(data=[0.0]*20,
-                                            mask=[0]*10+[1]*10))
+                                            mask=[0]*12+[1]*8))
+        establish = ILSLocalizerEstablished()
         establish.derive(ils, alt_aal, app, freq, hdg, hdg_ldg)
-        self.assertEqual(establish.get_slices(), [slice(2, 18, None)])
+        self.assertEqual(establish.get_slices(), [slice(2, 12, None)])
         ils = P('ILS Localizer',np.ma.array(data=[0.0]*20,
                                             mask=[0]*8+[1]*12))
+        establish = ILSLocalizerEstablished()
         establish.derive(ils, alt_aal, app, freq, hdg, hdg_ldg)
         self.assertEqual(establish.get_slices(), [])
 

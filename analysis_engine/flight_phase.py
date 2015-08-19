@@ -34,7 +34,7 @@ from analysis_engine.library import (
     slices_remove_small_slices,
 )
 
-from analysis_engine.node import A, FlightPhaseNode, P, S, KTI, KPV, M
+from analysis_engine.node import A, App, FlightPhaseNode, P, S, KTI, KPV, M
 
 from analysis_engine.settings import (
     AIRBORNE_THRESHOLD_TIME,
@@ -698,7 +698,7 @@ def scan_ils(beam, ils_dots, height, scan_slice, frequency,
     if beam not in ['localizer', 'glideslope']:
         raise ValueError('Unrecognised beam type in scan_ils')
 
-    if beam=='localizer':
+    if beam=='localizer' and hdg_ldg:
         # Restrict the scan to approaches facing the runway This restriction
         # will be carried forward into the glideslope calculation by the
         # restricted duration of localizer established, hence does not need
@@ -726,7 +726,7 @@ def scan_ils(beam, ils_dots, height, scan_slice, frequency,
     if valid_ends is None:
         return None
     valid_slice = slice(*(valid_ends+scan_slice.start))
-    if np.ma.count(ils_dots[valid_slice])/float(len(ils_dots[valid_slice])) < ILS_CAPTURE*0.4:
+    if np.ma.count(ils_dots[valid_slice])/float(len(ils_dots[valid_slice])) < 0.4:
         # less than 40% valid data within valid data slice
         return None
 
@@ -756,7 +756,7 @@ def scan_ils(beam, ils_dots, height, scan_slice, frequency,
                                                 scan_slice.start, -1),
                              endpoint='closing')
         if idx_200 is not None:
-            ils_lost_idx = min(ils_lost_idx, idx_200)
+            ils_lost_idx = min(ils_lost_idx, idx_200) + 1
 
         if np.ma.count(ils_dots[scan_slice.start:ils_lost_idx]) < 5:
             # less than 5 valid values within remaining section
@@ -813,6 +813,83 @@ def scan_ils(beam, ils_dots, height, scan_slice, frequency,
         else:
             # Hurrah! We did capture the beam
             return ils_slice
+
+
+class IANFinalApproachCourseEstablished(FlightPhaseNode):
+    name = 'IAN Final Approach Established'
+
+    def derive(self,
+               ian_final=P('IAN Final Approach Course'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               apps=S('Approach And Landing'),
+               ils_freq=P('ILS Frequency'),
+               app_src_capt=M('Displayed App Source (Capt)'),
+               app_src_fo=M('Displayed App Source (FO)')):
+
+        def create_ils_phases(slices):
+            for _slice in slices:
+                ils_slice = scan_ils('localizer', ian_final.array, alt_aal.array,
+                                     _slice, ian_final.frequency)
+                if ils_slice is not None:
+                    self.create_phase(ils_slice)
+
+        # Displayed App Source required to ensure that IAN is being followed
+        in_fmc = (app_src_capt.array == 'FMC') | (app_src_fo.array == 'FMC')
+        ian_final.array[~in_fmc] = np.ma.masked
+
+        for app in apps:
+            if app.loc_est:
+                # Mask IAN data for approaches where ILS is established
+                ian_final.array[app.slice] = np.ma.masked
+                continue
+
+            if not np.ma.count(ian_final.array[app.slice]):
+                # No valid IAN Final Approach data for this approach.
+                continue
+            valid_slices = np.ma.clump_unmasked(ian_final.array[app.slice])
+            valid_slices = slices_remove_small_gaps(valid_slices, count=5)
+            last_valid_slice = shift_slice(valid_slices[-1], app.slice.start)
+            create_ils_phases([last_valid_slice])
+
+
+class IANGlidepathEstablished(FlightPhaseNode):
+    name = 'IAN Glidepath Established'
+
+    def derive(self,
+               ian_glidepath=P('IAN Glidepath'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               apps=App('Approach Information'),
+               app_src_capt=P('Displayed App Source (Capt)'),
+               app_src_fo=P('Displayed App Source (FO)')):
+
+        def create_ils_phases(slices):
+            for _slice in slices:
+                ils_slice = scan_ils('glideslope', ian_glidepath.array,
+                                     alt_aal.array, _slice,
+                                     ian_glidepath.frequency)
+                if ils_slice is not None:
+                    self.create_phase(ils_slice)
+
+        # Assumption here is that Glidepath is not as tightly coupled with
+        # Final Approach Course as Glideslope is to Localiser
+
+        # Displayed App Source required to ensure that IAN is being followed
+        in_fmc = (app_src_capt.array == 'FMC') | (app_src_fo.array == 'FMC')
+        ian_glidepath.array[~in_fmc] = np.ma.masked
+
+        for app in apps:
+            if app.gs_est:
+                # Mask IAN data for approaches where ILS is established
+                ian_glidepath.array[app.slice] = np.ma.masked
+                continue
+
+            if not np.ma.count(ian_glidepath.array[app.slice]):
+                # No valid ian glidepath data for this approach.
+                continue
+            valid_slices = np.ma.clump_unmasked(ian_glidepath.array[app.slice])
+            valid_slices = slices_remove_small_gaps(valid_slices, count=5)
+            last_valid_slice = shift_slice(valid_slices[-1], app.slice.start)
+            create_ils_phases([last_valid_slice])
 
 
 class ILSLocalizerEstablished(FlightPhaseNode):
