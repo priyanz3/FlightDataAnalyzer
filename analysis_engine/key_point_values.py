@@ -32,8 +32,6 @@ from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
                                       SPOILER_DEPLOYED,
                                       VERTICAL_SPEED_FOR_LEVEL_FLIGHT)
 
-from analysis_engine.flight_phase import scan_ils
-
 from analysis_engine.node import KeyPointValueNode, KPV, KTI, P, S, A, M, App, Section
 
 from analysis_engine.library import (ambiguous_runway,
@@ -1316,7 +1314,15 @@ class AirspeedTrueAtTouchdown(KeyPointValueNode):
                air_spd=P('Airspeed True'),
                touchdowns=KTI('Touchdown')):
 
-        self.create_kpvs_at_ktis(air_spd.array, touchdowns)
+        #  Note: low frequency airspeed true can reduce to 0 the sample
+        #  following touchdown. By masking values less than 1kt
+        #  index_at_value will return the last recorded value before
+        #  touchdown. So long as that value is not also masked. This has
+        #  proven more accurate than interpolating between last recorded
+        #  value and 0.
+
+        array = np.ma.masked_less(air_spd.array, 1)
+        self.create_kpvs_at_ktis(array, touchdowns)
 
 
 class AirspeedReferenceVariationMax(KeyPointValueNode):
@@ -5635,31 +5641,14 @@ class IANGlidepathDeviationMax(KeyPointValueNode):
     def derive(self,
                ian_glidepath=P('IAN Glidepath'),
                alt_aal=P('Altitude AAL For Flight Phases'),
-               apps=App('Approach Information'),
-               app_src_capt=P('Displayed App Source (Capt)'),
-               app_src_fo=P('Displayed App Source (FO)')):
-
-        # Displayed App Source required to ensure that IAN is being followed
-        in_fmc = (app_src_capt.array == 'FMC') | (app_src_fo.array == 'FMC')
-        ian_glidepath.array[~in_fmc] = np.ma.masked
-
-        for app in apps:
-            if app.gs_est:
-                # Mask IAN data for approaches where ILS is established
-                ian_glidepath.array[app.slice] = np.ma.masked
+               ian_est=S('IAN Glidepath Established')):
 
         for idx in range(len(self.NAME_VALUES['max_alt'])):
             max_alt = self.NAME_VALUES['max_alt'][idx]
             min_alt = self.NAME_VALUES['min_alt'][idx]
             alt_bands = alt_aal.slices_from_to(max_alt, min_alt)
 
-            ian_est_bands = []
-            for band in alt_bands:
-                ian_glide_est = scan_ils('glideslope', ian_glidepath.array,
-                                         alt_aal.array, band,
-                                         ian_glidepath.frequency)
-                if ian_glide_est:
-                    ian_est_bands.append(ian_glide_est)
+            ian_est_bands = slices_and(alt_bands, ian_est.get_slices())
 
             self.create_kpvs_within_slices(
                 ian_glidepath.array,
@@ -5668,7 +5657,6 @@ class IANGlidepathDeviationMax(KeyPointValueNode):
                 max_alt=max_alt,
                 min_alt=min_alt
             )
-            # End for
 
 
 class IANFinalApproachCourseDeviationMax(KeyPointValueNode):
@@ -5686,32 +5674,14 @@ class IANFinalApproachCourseDeviationMax(KeyPointValueNode):
     def derive(self,
                ian_final=P('IAN Final Approach Course'),
                alt_aal=P('Altitude AAL For Flight Phases'),
-               apps=App('Approach Information'),
-               app_src_capt=M('Displayed App Source (Capt)'),
-               app_src_fo=M('Displayed App Source (FO)')):
-
-        # Displayed App Source required to ensure that IAN is being followed
-        in_fmc = (app_src_capt.array == 'FMC') | (app_src_fo.array == 'FMC')
-        ian_final.array[~in_fmc] = np.ma.masked
-
-        for app in apps:
-            if app.loc_est:
-                # Mask IAN data for approaches where ILS is established
-                ian_final.array[app.slice] = np.ma.masked
+               ian_est=S('IAN Final Approach Course Established')):
 
         for idx in range(len(self.NAME_VALUES['max_alt'])):
             max_alt = self.NAME_VALUES['max_alt'][idx]
             min_alt = self.NAME_VALUES['min_alt'][idx]
 
             alt_bands = alt_aal.slices_from_to(max_alt, min_alt)
-
-            ian_est_bands = []
-            for band in alt_bands:
-                final_app_course_est = scan_ils('localizer', ian_final.array,
-                                                alt_aal.array, band,
-                                                ian_final.frequency)
-                if final_app_course_est:
-                    ian_est_bands.append(final_app_course_est)
+            ian_est_bands = slices_and(alt_bands, ian_est.get_slices())
 
             self.create_kpvs_within_slices(
                 ian_final.array,

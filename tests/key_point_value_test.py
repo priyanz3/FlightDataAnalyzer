@@ -10,6 +10,7 @@ from mock import Mock, call, patch
 
 from flightdatautilities import units as ut
 from flightdatautilities.aircrafttables.interfaces import VelocitySpeed
+from flightdatautilities.array_operations import load_compressed
 from flightdatautilities.geometry import midpoint
 
 from analysis_engine.library import align, median_value
@@ -1849,10 +1850,32 @@ class TestAirspeedTrueAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
     def setUp(self):
         self.node_class = AirspeedTrueAtTouchdown
         self.operational_combinations = [('Airspeed True', 'Touchdown')]
+        air_spd_array = np.ma.array([122, 122, 121, 118, 116, 110, 90, 80, 70, 0, 0])
+        self.air_spd = P('Airspeed True', array = air_spd_array)
+        self.touchdowns = KTI(name='Touchdown', items=[
+            KeyTimeInstance(name='Touchdown', index=5.2),
+        ])
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test Not Implemented')
+    def test_derive_low_frequency(self):
+        # created based on real Airspeed True recorded at 0.25hz
+        self.air_spd.array[6:] = 0
+        node = self.node_class()
+        node.derive(self.air_spd, self.touchdowns)
+
+        self.assertEqual(len(node), 1)
+
+        self.assertEqual(node[0].index, 5.2)
+        self.assertEqual(node[0].value, 110)
+
+    def test_derive_basic(self):
+        # created based on real Airspeed True recorded at 0.25hz
+        node = self.node_class()
+        node.derive(self.air_spd, self.touchdowns)
+
+        self.assertEqual(len(node), 1)
+
+        self.assertEqual(node[0].index, 5.2)
+        self.assertEqual(node[0].value, 106)
 
 
 ########################################
@@ -4931,79 +4954,99 @@ class TestIANGlidepathDeviationMax(unittest.TestCase):
 
     def test_can_operate(self):
         ops = self.node_class.get_operational_combinations()
-        expected = [('IAN Glidepath', 'Altitude AAL For Flight Phases', 'Approach Information', 'Displayed App Source (Capt)', 'Displayed App Source (FO)')]
+        expected = [('IAN Glidepath', 'Altitude AAL For Flight Phases', 'IAN Glidepath Established')]
         self.assertEqual(ops, expected)
 
     def setUp(self):
         self.node_class = IANGlidepathDeviationMax
-        approaches = [ApproachItem('LANDING', slice(2, 12)),]
-        self.apps = App('Approach Information', items=approaches)
         self.height = P(name='Altitude AAL For Flight Phases', array=np.ma.arange(600, 300, -25))
-        self.ian = P(name='IAN Glidepath', array=np.ma.array([4, 2, 2, 1, 0.5, 0.5, 3, 0, 0, 0, 0, 0], dtype=np.float,))
-        self.app_src_capt = M(
-                    name='Displayed App Source (Capt)',
-                    array=np.ma.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
-                    values_mapping={0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'},
-                )
-        self.app_src_fo = M(
-                    name='Displayed App Source (FO)',
-                    array=np.ma.array([0, 0, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5]),
-                    values_mapping={0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'},
-                )
+        self.ian = P(name='IAN Glidepath', array=np.ma.array([4, 2, 2, 1, 0.5, 0.5, 2.45, 0, 0, 0, 0, 0], dtype=np.float,))
+        self.established = buildsection('IAN Glidepath Established', 5, 12)
 
     def test_derive_basic(self):
         kpv = self.node_class()
-        kpv.derive(self.ian, self.height, self.apps, self.app_src_capt, self.app_src_fo)
+        kpv.derive(self.ian, self.height, self.established)
         self.assertEqual(len(kpv), 1)
         self.assertEqual(kpv[0].index, 6)
-        self.assertAlmostEqual(kpv[0].value, 3)
+        self.assertAlmostEqual(kpv[0].value, 2.45)
         self.assertAlmostEqual(kpv[0].name, 'IAN Glidepath Deviation 500 To 200 Ft Max')
 
     def test_derive_with_ils_established(self):
-        self.apps[0].gs_est = slice(3, 12)
         kpv = self.node_class()
-        kpv.derive(self.ian, self.height, self.apps, self.app_src_capt, self.app_src_fo)
+        kpv.derive(self.ian, self.height, S('IAN Glidepath Established'))
         self.assertEqual(len(kpv), 0)
+
+    def test_derive_with_real_data(self):
+        ian_array = load_compressed(os.path.join(test_data_path, 'ian_established-ian_glidepath.npz'))
+        ian_glidepath = P('IAN Glidepath', ian_array)
+        aal_array = load_compressed(os.path.join(test_data_path, 'ian_established-alt_aal.npz'))
+        alt_aal = P('Altitude AAL For Flight Phases', aal_array)
+        established = buildsection('IAN Glidepath Established', 30346, 30419)
+
+        node = self.node_class()
+        node.derive(ian_glidepath, alt_aal, established)
+
+        # established phase starts below 1000ft
+        self.assertEqual(len(node), 2)
+
+        self.assertEqual(node[0].index, 30389)
+        self.assertAlmostEqual(node[0].value, 0.74, delta=0.01)
+        self.assertEqual(node[0].name, 'IAN Glidepath Deviation 1000 To 500 Ft Max')
+
+        self.assertEqual(node[1].index, 30418)
+        self.assertAlmostEqual(node[1].value, 1.74, delta=0.01) # check
+        self.assertEqual(node[1].name, 'IAN Glidepath Deviation 500 To 200 Ft Max')
 
 
 class TestIANFinalApproachCourseDeviationMax(unittest.TestCase):
 
     def test_can_operate(self):
         ops = self.node_class.get_operational_combinations()
-        expected = [('IAN Final Approach Course', 'Altitude AAL For Flight Phases', 'Approach Information', 'Displayed App Source (Capt)', 'Displayed App Source (FO)'),]
+        expected = [('IAN Final Approach Course', 'Altitude AAL For Flight Phases', 'IAN Final Approach Course Established'),]
         self.assertEqual(ops, expected)
 
     def setUp(self):
         self.node_class = IANFinalApproachCourseDeviationMax
-        approaches = [ApproachItem('LANDING', slice(2, 12)),]
         self.height = P(name='Altitude AAL For Flight Phases', array=np.ma.arange(600, 300, -25))
-        self.apps = App('Approach Information', items=approaches)
-        self.ian = P(name='IAN Final Approach Course', array=np.ma.array([4, 2, 2, 1, 0.5, 0.5, 3, 0, 0, 0, 0, 0], dtype=np.float,))
-        self.app_src_capt = M(
-                    name='Displayed App Source (Capt)',
-                    array=np.ma.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
-                    values_mapping={0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'},
-                )
-        self.app_src_fo = M(
-                    name='Displayed App Source (FO)',
-                    array=np.ma.array([0, 0, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5]),
-                    values_mapping={0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'},
-                )
+        self.ian = P(name='IAN Final Approach Course', array=np.ma.array([4, 2, 2, 1, 0.5, 0.5, 2.45, 0, 0, 0, 0, 0], dtype=np.float,))
+        self.established = buildsection('IAN Final Approach Course Established', 5, 12)
 
     def test_derive_basic(self):
         kpv = self.node_class()
-        kpv.derive(self.ian, self.height, self.apps, self.app_src_capt, self.app_src_fo)
+        kpv.derive(self.ian, self.height, self.established)
         self.assertEqual(len(kpv), 1)
         self.assertEqual(kpv[0].index, 6)
-        self.assertAlmostEqual(kpv[0].value, 3)
+        self.assertAlmostEqual(kpv[0].value, 2.45)
         self.assertAlmostEqual(kpv[0].name, 'IAN Final Approach Course Deviation 500 To 200 Ft Max')
 
     def test_derive_with_ils_established(self):
-        self.apps[0].loc_est = slice(3, 12)
         kpv = self.node_class()
-        kpv.derive(self.ian, self.height, self.apps, self.app_src_capt, self.app_src_fo)
+        kpv.derive(self.ian, self.height, S('IAN Final Approach Course Established'))
         self.assertEqual(len(kpv), 0)
 
+    def test_derive_with_real_data(self):
+        ian_array = load_compressed(os.path.join(test_data_path, 'ian_established-ian_app_course.npz'))
+        ian_app_corse = P('IAN Final Approach Course', ian_array)
+        aal_array = load_compressed(os.path.join(test_data_path, 'ian_established-alt_aal.npz'))
+        alt_aal = P('Altitude AAL For Flight Phases', aal_array)
+        established = buildsection('IAN Final Approach Course Established', 30238, 30537)
+
+        node = self.node_class()
+        node.derive(ian_app_corse, alt_aal, established)
+
+        self.assertEqual(len(node), 3)
+
+        self.assertEqual(node[0].index, 30341)
+        self.assertAlmostEqual(node[0].value, 0.09, delta=0.01)
+        self.assertEqual(node[0].name, 'IAN Final Approach Course Deviation 1500 To 1000 Ft Max')
+
+        self.assertEqual(node[1].index, 30362)
+        self.assertAlmostEqual(node[1].value, 1.83, delta=0.01)
+        self.assertEqual(node[1].name, 'IAN Final Approach Course Deviation 1000 To 500 Ft Max')
+    
+        self.assertEqual(node[2].index, 30396)
+        self.assertAlmostEqual(node[2].value, 1.09, delta=0.01) # Check
+        self.assertEqual(node[2].name, 'IAN Final Approach Course Deviation 500 To 200 Ft Max')
 
 ##############################################################################
 # Mach
