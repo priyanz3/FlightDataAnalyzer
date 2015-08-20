@@ -3744,7 +3744,7 @@ class AltitudeOvershootAtSuspectedLevelBust(KeyPointValueNode):
 
                 lvl_off_val = min(lvl_off_vals, key=lambda x: abs(x))
 
-                if val < 3000 and lvl_off_val < 0:
+                if val < 3000 and lvl_off_val < val:
                     # Undershoots under 3000 ft are excluded due to inconsistent Go Around behaviour.
                     self.info('Overshoot not detected: Undershoot below 3000ft')
                     continue
