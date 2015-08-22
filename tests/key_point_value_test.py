@@ -4455,9 +4455,25 @@ class TestAltitudeAtLastGearDownSelection(unittest.TestCase, NodeTest):
         self.node_class = AltitudeAtLastGearDownSelection
         self.operational_combinations = [('Altitude AAL', 'Gear Down Selection')]
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+    def test_derive_basic(self):
+        alt_aal = P(name='Altitude AAL', array=np.ma.arange(1000, 0, -100))
+        gear_downs = KTI(name='Gear Down Selection', items=[
+            KeyTimeInstance(index=4, name='Gear Down Selection'),
+            KeyTimeInstance(index=8, name='Gear Down Selection')])
+        name = self.node_class.get_name()
+        node = self.node_class()
+        node.derive(alt_aal, gear_downs)
+        self.assertEqual(node, KPV(name=name, items=[
+            KeyPointValue(index=8, value=200, name=name),
+        ]))
+
+    def test_derive_no_gear_down(self):
+        alt_aal = P(name='Altitude AAL', array=np.ma.arange(1000, 0, -100))
+        gear_downs = KTI(name='Gear Down Selection', items=[])
+        name = self.node_class.get_name()
+        node = self.node_class()
+        node.derive(alt_aal, gear_downs)
+        self.assertEqual(node, [])
 
 
 class TestAltitudeAtGearDownSelectionWithFlapDown(unittest.TestCase, NodeTest):

@@ -4184,6 +4184,7 @@ class AltitudeAtLastGearDownSelection(KeyPointValueNode):
                alt_aal=P('Altitude AAL'),
                gear_dn_sel=KTI('Gear Down Selection')):
 
+        if gear_dn_sel:
         self.create_kpvs_at_ktis(alt_aal.array, [gear_dn_sel.get_last()])
 
 
