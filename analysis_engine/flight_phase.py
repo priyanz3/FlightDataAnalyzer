@@ -821,7 +821,7 @@ class IANFinalApproachCourseEstablished(FlightPhaseNode):
     def derive(self,
                ian_final=P('IAN Final Approach Course'),
                alt_aal=P('Altitude AAL For Flight Phases'),
-               apps=S('Approach And Landing'),
+               apps=S('Approach Information'),
                ils_freq=P('ILS Frequency'),
                app_src_capt=M('Displayed App Source (Capt)'),
                app_src_fo=M('Displayed App Source (FO)')):
