@@ -69,7 +69,7 @@ class TestCalculateOffset(unittest.TestCase):
             self.assertAlmostEqual(offset, test[1][1], places=3)
 
 class TestNode(unittest.TestCase):
-    
+
     def test_node_attributes(self):
         NewNode = type('NodeAttrs', (Node,), dict(derive=lambda x:x))
         node = NewNode(frequency=0.25)
@@ -84,7 +84,7 @@ class TestNode(unittest.TestCase):
         self.assertEqual(node.frequency, 1.5)
         self.assertEqual(node.hz, 1.5)
         self.assertEqual(node.sample_rate, 1.5)
-        
+
     def test_name(self):
         """ Splits on CamelCase and title cases
         """
@@ -112,7 +112,7 @@ class TestNode(unittest.TestCase):
 
         self.assertEqual(KeyPointValue123.get_dependency_names(),
                          ['Parameter A', 'Parameter B'])
-    
+
     def test_cache_key(self):
         name = 'Parameter A'
         frequency = 1
@@ -833,14 +833,14 @@ class TestSectionNode(unittest.TestCase):
         self.assertEqual(node.get_surrounding(12), [sect_1, sect_2])
         self.assertEqual(node.get_surrounding(-3), [])
         self.assertEqual(node.get_surrounding(25), [sect_2])
-    
+
     def test_get_shortest(self):
         node = SectionNode(items=[Section('ThisSection', slice(0, 5), 0, 5),
                                   Section('ThisSection', slice(10, 13), 10, 13),
                                   Section('ThisSection', slice(25, 30), 25, 30)])
         self.assertEqual(node.get_shortest(), node[1])
         self.assertEqual(node.get_shortest(within_slice=slice(20,40)), node[2])
-    
+
     def test_get_longest(self):
         node = SectionNode(items=[Section('ThisSection', slice(0, 5), 0, 5),
                                   Section('ThisSection', slice(10, 20), 10, 13),
@@ -945,7 +945,7 @@ class TestFormattedNameNode(unittest.TestCase):
         self.assertEqual(kti2.index, 50)
         # within slices
         kti2 = kti_node.get_first(within_slices=[slice(10,20), slice(40, 60)])
-        self.assertEqual(kti2.index, 12)        
+        self.assertEqual(kti2.index, 12)
         # with a particular name
         kti3 = kti_node.get_first(name='Slowest')
         self.assertEqual(kti3.index, 2)
@@ -1174,8 +1174,8 @@ class TestKeyPointValueNode(unittest.TestCase):
         # value should be that of the second KTI
         self.assertEqual(list(knode),
                          [KeyPointValue(index=4, value=6, name='Kpv')])
-        
-        
+
+
     def test_create_kpvs_between_ktis(self):
         knode = self.knode
         param = P('Param', np.ma.arange(10)+2)
@@ -1260,7 +1260,7 @@ class TestKeyPointValueNode(unittest.TestCase):
         self.assertEqual(list(knode)[1],
                          KeyPointValue(index=29, value=44, name='Kpv'))
         # test with single indexes as it was one out!
-        knode.create_kpv_from_slices(array, 
+        knode.create_kpv_from_slices(array,
                         [slice(1, 2), slice(3, 4), slice(5, 6)], max_value)
         self.assertEqual(list(knode)[-1],
                          KeyPointValue(index=5, value=20, name='Kpv'))
@@ -1282,7 +1282,7 @@ class TestKeyPointValueNode(unittest.TestCase):
         self.assertEqual(knode[0].value, 0.75)
         self.assertEqual(knode[1].index, 9)
         self.assertEqual(knode[1].value, 1.0)
-        
+
     def test_create_kpvs_from_slice_durations_slower_samples(self):
         # ...and vice versa.
         knode = self.knode
@@ -1292,7 +1292,7 @@ class TestKeyPointValueNode(unittest.TestCase):
         self.assertEqual(knode[0].value, 6)
         self.assertEqual(knode[1].index, 13)
         self.assertEqual(knode[1].value, 8)
-                        
+
     def test_create_kpv_outside_slices(self):
         knode = self.knode
         function = mock.Mock()
@@ -1344,7 +1344,7 @@ class TestKeyPointValueNode(unittest.TestCase):
                                       min_duration=3)
         self.assertEqual(list(knode),
                          [KeyPointValue(index=11, value=3, name='Kpv')])
-        
+
     def test_create_kpvs_where_in_slice(self):
         knode = self.knode
         array = np.ma.array([0.0] * 20, dtype=float)
@@ -1357,7 +1357,7 @@ class TestKeyPointValueNode(unittest.TestCase):
             phase=slice(10,None))
         self.assertEqual(list(knode),
                          [KeyPointValue(index=11, value=6, name='Kpv')])
-        
+
     def test_create_kpvs_where_in_empty_list(self):
         knode = self.knode
         array = np.ma.array([0.0] * 20, dtype=float)
@@ -1369,7 +1369,7 @@ class TestKeyPointValueNode(unittest.TestCase):
         knode.create_kpvs_where(param.array == 'Up', param.hz,
             phase=[])
         self.assertEqual(list(knode), [])
-        
+
     def test_create_kpvs_where_in_list_of_slices(self):
         knode = self.knode
         array = np.ma.array([0.0] * 20, dtype=float)
@@ -1382,7 +1382,7 @@ class TestKeyPointValueNode(unittest.TestCase):
             phase=slice(10,None))
         self.assertEqual(list(knode),
                          [KeyPointValue(index=11, value=6, name='Kpv')])
-        
+
     def test_create_kpvs_where_in_section(self):
         "where and also test inverterd condition"
         knode = self.knode
@@ -1397,7 +1397,7 @@ class TestKeyPointValueNode(unittest.TestCase):
         self.assertEqual(list(knode),
                          [KeyPointValue(index=10, value=1, name='Kpv'),
                           KeyPointValue(index=17, value=3, name='Kpv')])
-        
+
     def test_create_kpvs_where_in_section_node(self):
         knode = self.knode
         array = np.ma.array([0.0] * 20, dtype=float)
@@ -1681,7 +1681,7 @@ class TestKeyTimeInstanceNode(unittest.TestCase):
         #Check that long mask does not create additional KTI
         self.assertEqual(len(kti), 1, msg='Expecting single KTI')
         self.assertEqual(kti, [KeyTimeInstance(index=399.5, name='Kti')])
-        
+
     def test_create_ktis_on_state_change_entirely_masked(self):
         '''
         Entirely masked data must not trigger, as there can be no state change.
@@ -1690,9 +1690,9 @@ class TestKeyTimeInstanceNode(unittest.TestCase):
         test_param = MappedArray(data=[0]*4+[1]*6+[0]*5,
                                  mask=[1]*15,
                                  values_mapping={0: 'Off', 1: 'On'})
-        self.assertRaises(ValueError, kti.create_ktis_on_state_change, 
+        self.assertRaises(ValueError, kti.create_ktis_on_state_change,
                           'On', test_param, change='entering')
-        
+
     def test_create_ktis_on_state_change_leaving(self):
         kti = self.kti
         test_param = MappedArray([0, 1, 1, 0, 0, 0, 0, 1, 0],
@@ -1873,7 +1873,7 @@ class TestDerivedParameterNode(unittest.TestCase):
         slices_from_to.return_value = (array, [slice(0, 10)])
         param = DerivedParameterNode('Param', array=array)
         slices = param.slices_from_to(5, 15)
-        slices_from_to.assert_called_once_with(array, 5, 15, threshold=0.05)
+        slices_from_to.assert_called_once_with(array, 5, 15, threshold=0.1)
         self.assertEqual(slices, slices_from_to.return_value[1])
         slices = param.slices_from_to(4, -2, threshold=0.2)
         slices_from_to.assert_called_with(array, 4, -2, threshold=0.2)
@@ -1904,7 +1904,7 @@ class TestDerivedParameterNode(unittest.TestCase):
         result = alt_aal.slices_to_kti(75, tdwns)
         expected = []
         self.assertEqual(result, expected)
-        
+
     def test_slices_to_kti_overlapping_periods(self):
         # where you dip below above and below the 50ft threshold, it can
         # create two slices from 50ft to touchdown. These should be logical
@@ -1915,7 +1915,7 @@ class TestDerivedParameterNode(unittest.TestCase):
         tdwns = [KeyTimeInstance(index=34, name='Touchdown')]
         result = alt_aal.slices_to_kti(50, tdwns)
         self.assertEqual(result, [slice(24, 34)])
-        
+
 
     def test_save_and_load_node(self):
         node = P('Altitude AAL', np.ma.array([0,1,2,3], mask=[0,1,1,0]),
@@ -2025,7 +2025,7 @@ class TestMultistateDerivedParameterNode(unittest.TestCase):
         ## create values where no mapping exists and expect a keyerror
         #self.assertRaises(ValueError, multi_p.__setattr__,
                           #'array', np.ma.array(['zonk', 'two']*2, mask=[1,0,0,0]))
-    
+
     @mock.patch('analysis_engine.node.Node.get_derived')
     def test_getattribute(self, get_derived):
         get_derived.return_value = 5
@@ -2055,11 +2055,11 @@ class TestMultistateDerivedParameterNode(unittest.TestCase):
             self.assertEqual(list(np.ma.filled(saved.array, 999)),
                              [  3, 999, 999,   3,   4,   0,   1,   2, 999, 999])
             self.assertEqual(saved.array.data.dtype, np.int)
-            
+
     def test_pickle_load_includes_values_mapping(self):
         mapping = {0:'zero', 1:'one', 2:'two', 3:'three'}
         input_array = np.ma.array(['one', 'two']*5, mask=[1,0,0,0,0,0,0,0,0,1], dtype=object)
-        node = MultistateDerivedParameterNode('multi', array=input_array, 
+        node = MultistateDerivedParameterNode('multi', array=input_array,
                                               values_mapping=mapping)
         self.assertEqual(node.values_mapping, mapping)
         self.assertEqual(node.array.values_mapping, mapping)
@@ -2076,26 +2076,26 @@ class TestMultistateDerivedParameterNode(unittest.TestCase):
         expected = [np.ma.masked, 'two', 'one', 'two', 'one', 'two', 'one', 'two', 'one', np.ma.masked]
         self.assertEqual(list(res.array), expected)
         os.remove(dest)
-        
+
 class TestNodeTypeAbbreviation(unittest.TestCase):
     def test_node_type_abbr_attribute(self):
         class NAME(DerivedParameterNode):
             pass
         self.assertEqual(NAME.node_type_abbr, 'Parameter')
         self.assertEqual(NAME().node_type_abbr, 'Parameter')
-        
+
         class NAME(MultistateDerivedParameterNode):
             pass
         self.assertEqual(NAME.node_type_abbr, 'Multistate')
-        
+
         class NAME(KeyPointValueNode):
             pass
         self.assertEqual(NAME.node_type_abbr, 'KPV')
-        
+
         class NAME(KeyTimeInstanceNode):
             pass
         self.assertEqual(NAME.node_type_abbr, 'KTI')
-        
+
         class NAME(ApproachNode):
             pass
         self.assertEqual(NAME.node_type_abbr, 'Approach')
