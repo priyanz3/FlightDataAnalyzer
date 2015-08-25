@@ -6267,10 +6267,7 @@ class TestStepValues(unittest.TestCase):
                              15.38, 15.39, 15.37, 15.37, 15.41, 15.44])
         array = np.ma.concatenate((array,array[::-1]))
         stepped = step_values(array, (0, 1, 5, 15), step_at='excluding_transition')
-        # would be a litle better in some people's opinion:
-        ##self.assertEqual(list(stepped),[0]*12+[1]*19+[5]*6+[15]*21+[5]*6+[1]*19+[0]*13)
-        # this is what we've got though (not too shabby)
-        self.assertEqual(list(stepped), [0]*12+[1]*18+[5]*7+[15]*22+[5]*7+[1]*19+[0]*11)
+        self.assertEqual(list(stepped), [0]*11+[1]*19+[5]*7+[15]*22+[5]*7+[1]*19+[0]*11)
 
 
     def test_step_including_transition_real_data(self):
