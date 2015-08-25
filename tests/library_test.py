@@ -6303,22 +6303,13 @@ class TestStepValues(unittest.TestCase):
                          [0]*12+[1]*18+[5]*7+[15]*26+[5]*19+[1]*6+[0]*8)
 
     def test_step_trailing_edge_masked_data(self):
-        '''
-        tests first values being masked and remaining values have no cusp
-
-        CJ: Not sure what this test should be representing exactly.
-        '''
         array = np.ma.array(
             [0, 0, 0, 0, 4.92184, 4.92184, 4.92184, 4.92184,
              4.92184, 4.92184, 4.92184, 4.92184, 4.92184, 4.92184])
         array = np.ma.concatenate((array,array[::-1]))
         array[:4] = np.ma.masked
         stepped = step_values(array, (0, 1, 5, 15), step_at='move_stop')
-        # old (bit better so left here commented out)
-        ##expected = np.ma.array([0,0,0,0,5,5,5,5,5,5,5,5,5,5])
-        ##expected = np.ma.concatenate((expected,expected[::-1]))
-        # new (bit of a delay)
-        expected = np.ma.array([5.0]*25+[0.0]*3)
+        expected = np.ma.array([5.0]*24+[0.0]*4)
         expected[:4] = np.ma.masked
         self.assertEqual(list(stepped), list(expected))
 
