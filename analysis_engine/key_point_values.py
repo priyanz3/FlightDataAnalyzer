@@ -4231,7 +4231,8 @@ class AltitudeAtFirstGearUpSelection(KeyPointValueNode):
                alt_aal=P('Altitude AAL'),
                gear_up_sel=KTI('Gear Up Selection')):
 
-        self.create_kpvs_at_ktis(alt_aal.array, [gear_up_sel.get_first()])
+        if gear_up_sel:
+            self.create_kpvs_at_ktis(alt_aal.array, [gear_up_sel.get_first()])
 
 
 class AltitudeAtGearUpSelectionDuringGoAround(KeyPointValueNode):
