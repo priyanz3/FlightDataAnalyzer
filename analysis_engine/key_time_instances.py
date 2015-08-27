@@ -340,6 +340,10 @@ class APUStart(KeyTimeInstanceNode):
             apu.array,
             change='entering',
         )
+        # Is the APU running at the beginning of the data?
+        i, v = first_valid_sample(apu.array)
+        if i is not None and v == 1:
+            self.create_kti(i)
 
 
 class APUStop(KeyTimeInstanceNode):
@@ -352,6 +356,12 @@ class APUStop(KeyTimeInstanceNode):
             apu.array,
             change='leaving',
         )
+        # Is the APU running at the end of the data?
+        # This seems an unlikely case, but added here for cmpleteness with
+        # APUStart
+        i, v = last_valid_sample(apu.array)
+        if i is not None and v == 1:
+            self.create_kti(i)
 
 
 class EngStart(KeyTimeInstanceNode):
