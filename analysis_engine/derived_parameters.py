@@ -7369,198 +7369,198 @@ class TrackDeviationFromRunway(DerivedParameterNode):
 # Takeoff Safety Speed (V2)
 
 
-##class V2(DerivedParameterNode):
-    ##'''
-    ##Takeoff Safety Speed (V2) can be derived for different aircraft.
+# class V2(DerivedParameterNode):
+#     '''
+#     Takeoff Safety Speed (V2) can be derived for different aircraft.
+#
+#     If the value is provided in an achieved flight record (AFR), we use this in
+#     preference. This allows us to cater for operators that use improved
+#     performance tables so that they can provide the values that they used.
+#
+#     For Airbus aircraft, if auto speed control is enabled, we can use the
+#     primary flight display selected speed value from the start of the takeoff
+#     run.
+#
+#     Some other aircraft types record multiple parameters in the same location
+#     within data frames. We need to select only the data that we are interested
+#     in, i.e. the V2 values.
+#
+#     The value is restricted to the range from the start of takeoff acceleration
+#     to the end of the initial climb flight phase.
+#
+#     Reference was made to the following documentation to assist with the
+#     development of this algorithm:
+#
+#     - A320 Flight Profile Specification
+#     - A321 Flight Profile Specification
+#     '''
+#
+#     units = ut.KT
+#
+#     @classmethod
+#     def can_operate(cls, available, afr_v2=A('AFR V2'),
+#                     manufacturer=A('Manufacturer')):
+#
+#         afr = all_of((
+#             'Airspeed',
+#             'AFR V2',
+#             'Liftoff',
+#             'Climb Start',
+#         ), available) and afr_v2 and afr_v2.value >= AIRSPEED_THRESHOLD
+#
+#         airbus = all_of((
+#             'Airspeed',
+#             'Airspeed Selected',
+#             'Speed Control',
+#             'Liftoff',
+#             'Climb Start',
+#             'Manufacturer',
+#         ), available) and manufacturer and manufacturer.value == 'Airbus'
+#
+#         embraer = all_of((
+#             'Airspeed',
+#             'V2-Vac',
+#             'Liftoff',
+#             'Climb Start',
+#         ), available)
+#
+#         return afr or airbus or embraer
+#
+#     def derive(self,
+#                airspeed=P('Airspeed'),
+#                v2_vac=A('V2-Vac'),
+#                spd_sel=P('Airspeed Selected'),
+#                spd_ctl=P('Speed Control'),
+#                afr_v2=A('AFR V2'),
+#                liftoffs=KTI('Liftoff'),
+#                climb_starts=KTI('Climb Start'),
+#                manufacturer=A('Manufacturer')):
+#
+#         # Prepare a zeroed, masked array based on the airspeed:
+#         self.array = np_ma_masked_zeros_like(airspeed.array, np.int)
+#
+#         # Determine interesting sections of flight which we want to use for V2.
+#         # Due to issues with how data is recorded, use five superframes before
+#         # liftoff until the start of the climb:
+#         starts = deepcopy(liftoffs)
+#         for start in starts:
+#             start.index = max(start.index - 5 * 64 * self.hz, 0)
+#         phases = slices_from_ktis(starts, climb_starts)
+#
+#         # 1. Use value provided in achieved flight record (if available):
+#         if afr_v2 and afr_v2.value >= AIRSPEED_THRESHOLD:
+#             for phase in phases:
+#                 self.array[phase] = round(afr_v2.value)
+#             return
+#
+#         # 2. Derive parameter for Embraer 170/190:
+#         if v2_vac:
+#             for phase in phases:
+#                 value = most_common_value(v2_vac.array[phase].astype(np.int))
+#                 if value is not None:
+#                     self.array[phase] = value
+#             return
+#
+#         # 3. Derive parameter for Airbus:
+#         if manufacturer and manufacturer.value == 'Airbus':
+#             spd_sel.array[spd_ctl.array == 'Manual'] = np.ma.masked
+#             for phase in phases:
+#                 value = most_common_value(spd_sel.array[phase].astype(np.int))
+#                 if value is not None:
+#                     self.array[phase] = value
+#             return
 
-    ##If the value is provided in an achieved flight record (AFR), we use this in
-    ##preference. This allows us to cater for operators that use improved
-    ##performance tables so that they can provide the values that they used.
 
-    ##For Airbus aircraft, if auto speed control is enabled, we can use the
-    ##primary flight display selected speed value from the start of the takeoff
-    ##run.
-
-    ##Some other aircraft types record multiple parameters in the same location
-    ##within data frames. We need to select only the data that we are interested
-    ##in, i.e. the V2 values.
-
-    ##The value is restricted to the range from the start of takeoff acceleration
-    ##to the end of the initial climb flight phase.
-
-    ##Reference was made to the following documentation to assist with the
-    ##development of this algorithm:
-
-    ##- A320 Flight Profile Specification
-    ##- A321 Flight Profile Specification
-    ##'''
-
-    ##units = ut.KT
-
-    ##@classmethod
-    ##def can_operate(cls, available, afr_v2=A('AFR V2'),
-                    ##manufacturer=A('Manufacturer')):
-
-        ##afr = all_of((
-            ##'Airspeed',
-            ##'AFR V2',
-            ##'Liftoff',
-            ##'Climb Start',
-        ##), available) and afr_v2 and afr_v2.value >= AIRSPEED_THRESHOLD
-
-        ##airbus = all_of((
-            ##'Airspeed',
-            ##'Airspeed Selected',
-            ##'Speed Control',
-            ##'Liftoff',
-            ##'Climb Start',
-            ##'Manufacturer',
-        ##), available) and manufacturer and manufacturer.value == 'Airbus'
-
-        ##embraer = all_of((
-            ##'Airspeed',
-            ##'V2-Vac',
-            ##'Liftoff',
-            ##'Climb Start',
-        ##), available)
-
-        ##return afr or airbus or embraer
-
-    ##def derive(self,
-               ##airspeed=P('Airspeed'),
-               ##v2_vac=A('V2-Vac'),
-               ##spd_sel=P('Airspeed Selected'),
-               ##spd_ctl=P('Speed Control'),
-               ##afr_v2=A('AFR V2'),
-               ##liftoffs=KTI('Liftoff'),
-               ##climb_starts=KTI('Climb Start'),
-               ##manufacturer=A('Manufacturer')):
-
-        ### Prepare a zeroed, masked array based on the airspeed:
-        ##self.array = np_ma_masked_zeros_like(airspeed.array, np.int)
-
-        ### Determine interesting sections of flight which we want to use for V2.
-        ### Due to issues with how data is recorded, use five superframes before
-        ### liftoff until the start of the climb:
-        ##starts = deepcopy(liftoffs)
-        ##for start in starts:
-            ##start.index = max(start.index - 5 * 64 * self.hz, 0)
-        ##phases = slices_from_ktis(starts, climb_starts)
-
-        ### 1. Use value provided in achieved flight record (if available):
-        ##if afr_v2 and afr_v2.value >= AIRSPEED_THRESHOLD:
-            ##for phase in phases:
-                ##self.array[phase] = round(afr_v2.value)
-            ##return
-
-        ### 2. Derive parameter for Embraer 170/190:
-        ##if v2_vac:
-            ##for phase in phases:
-                ##value = most_common_value(v2_vac.array[phase].astype(np.int))
-                ##if value is not None:
-                    ##self.array[phase] = value
-            ##return
-
-        ### 3. Derive parameter for Airbus:
-        ##if manufacturer and manufacturer.value == 'Airbus':
-            ##spd_sel.array[spd_ctl.array == 'Manual'] = np.ma.masked
-            ##for phase in phases:
-                ##value = most_common_value(spd_sel.array[phase].astype(np.int))
-                ##if value is not None:
-                    ##self.array[phase] = value
-            ##return
-
-
-##class V2Lookup(DerivedParameterNode):
-    ##'''
-    ##Takeoff Safety Speed (V2) can be derived for different aircraft.
-
-    ##In cases where values cannot be derived solely from recorded parameters, we
-    ##can make use of a look-up table to determine values for velocity speeds.
-
-    ##For V2, looking up a value requires the weight and flap (lever detents)
-    ##at liftoff.
-
-    ##Flap is used as the first dependency to avoid interpolation of flap detents
-    ##when flap is recorded at a lower frequency than airspeed.
-    ##'''
-
-    ##units = ut.KT
-
-    ##@classmethod
-    ##def can_operate(cls, available,
-                    ##model=A('Model'), series=A('Series'), family=A('Family'),
-                    ##engine_series=A('Engine Series'), engine_type=A('Engine Type')):
-
-        ##core = all_of((
-            ##'Airspeed',
-            ##'Liftoff',
-            ##'Climb Start',
-            ##'Model',
-            ##'Series',
-            ##'Family',
-            ##'Engine Type',
-            ##'Engine Series',
-        ##), available)
-
-        ##flap = any_of((
-            ##'Flap Lever',
-            ##'Flap Lever (Synthetic)',
-        ##), available)
-
-        ##attrs = (model, series, family, engine_type, engine_series)
-        ##return core and flap and lookup_table(cls, 'v2', *attrs)
-
-    ##def derive(self,
-               ##flap_lever=M('Flap Lever'),
-               ##flap_synth=M('Flap Lever (Synthetic)'),
-               ##airspeed=P('Airspeed'),
-               ##weight_liftoffs=KPV('Gross Weight At Liftoff'),
-               ##liftoffs=KTI('Liftoff'),
-               ##climb_starts=KTI('Climb Start'),
-               ##model=A('Model'),
-               ##series=A('Series'),
-               ##family=A('Family'),
-               ##engine_type=A('Engine Type'),
-               ##engine_series=A('Engine Series')):
-
-        ### Prepare a zeroed, masked array based on the airspeed:
-        ##self.array = np_ma_masked_zeros_like(airspeed.array, np.int)
-
-        ### Determine interesting sections of flight which we want to use for V2.
-        ### Due to issues with how data is recorded, use five superframes before
-        ### liftoff until the start of the climb:
-        ##starts = deepcopy(liftoffs)
-        ##for start in starts:
-            ##start.index = max(start.index - 5 * 64 * self.hz, 0)
-        ##phases = slices_from_ktis(starts, climb_starts)
-
-        ### Initialise the velocity speed lookup table:
-        ##attrs = (model, series, family, engine_type, engine_series)
-        ##table = lookup_table(self, 'v2', *attrs)
-
-        ##for phase in phases:
-
-            ##if weight_liftoffs:
-                ##weight_liftoff = weight_liftoffs.get_first(within_slice=phase)
-                ##index, weight = weight_liftoff.index, weight_liftoff.value
-            ##else:
-                ##index, weight = liftoffs.get_first(within_slice=phase).index, None
-
-            ##if index is None:
-                ##continue
-
-            ##detent = (flap_lever or flap_synth).array[index]
-
-            ##try:
-                ##self.array[phase] = table.v2(detent, weight)
-            ##except (KeyError, ValueError) as error:
-                ##self.warning("Error in '%s': %s", self.name, error)
-                ### Where the aircraft takes off with flap settings outside the
-                ### documented V2 range, we need the program to continue without
-                ### raising an exception, so that the incorrect flap at takeoff
-                ### can be detected.
-                ##continue
+# class V2Lookup(DerivedParameterNode):
+#     '''
+#     Takeoff Safety Speed (V2) can be derived for different aircraft.
+#
+#     In cases where values cannot be derived solely from recorded parameters, we
+#     can make use of a look-up table to determine values for velocity speeds.
+#
+#     For V2, looking up a value requires the weight and flap (lever detents)
+#     at liftoff.
+#
+#     Flap is used as the first dependency to avoid interpolation of flap detents
+#     when flap is recorded at a lower frequency than airspeed.
+#     '''
+#
+#     units = ut.KT
+#
+#     @classmethod
+#     def can_operate(cls, available,
+#                     model=A('Model'), series=A('Series'), family=A('Family'),
+#                     engine_series=A('Engine Series'), engine_type=A('Engine Type')):
+#
+#         core = all_of((
+#             'Airspeed',
+#             'Liftoff',
+#             'Climb Start',
+#             'Model',
+#             'Series',
+#             'Family',
+#             'Engine Type',
+#             'Engine Series',
+#         ), available)
+#
+#         flap = any_of((
+#             'Flap Lever',
+#             'Flap Lever (Synthetic)',
+#         ), available)
+#
+#         attrs = (model, series, family, engine_type, engine_series)
+#         return core and flap and lookup_table(cls, 'v2', *attrs)
+#
+#     def derive(self,
+#                flap_lever=M('Flap Lever'),
+#                flap_synth=M('Flap Lever (Synthetic)'),
+#                airspeed=P('Airspeed'),
+#                weight_liftoffs=KPV('Gross Weight At Liftoff'),
+#                liftoffs=KTI('Liftoff'),
+#                climb_starts=KTI('Climb Start'),
+#                model=A('Model'),
+#                series=A('Series'),
+#                family=A('Family'),
+#                engine_type=A('Engine Type'),
+#                engine_series=A('Engine Series')):
+#
+#         # Prepare a zeroed, masked array based on the airspeed:
+#         self.array = np_ma_masked_zeros_like(airspeed.array, np.int)
+#
+#         # Determine interesting sections of flight which we want to use for V2.
+#         # Due to issues with how data is recorded, use five superframes before
+#         # liftoff until the start of the climb:
+#         starts = deepcopy(liftoffs)
+#         for start in starts:
+#             start.index = max(start.index - 5 * 64 * self.hz, 0)
+#         phases = slices_from_ktis(starts, climb_starts)
+#
+#         # Initialise the velocity speed lookup table:
+#         attrs = (model, series, family, engine_type, engine_series)
+#         table = lookup_table(self, 'v2', *attrs)
+#
+#         for phase in phases:
+#
+#             if weight_liftoffs:
+#                 weight_liftoff = weight_liftoffs.get_first(within_slice=phase)
+#                 index, weight = weight_liftoff.index, weight_liftoff.value
+#             else:
+#                 index, weight = liftoffs.get_first(within_slice=phase).index, None
+#
+#             if index is None:
+#                 continue
+#
+#             detent = (flap_lever or flap_synth).array[index]
+#
+#             try:
+#                 self.array[phase] = table.v2(detent, weight)
+#             except (KeyError, ValueError) as error:
+#                 self.warning("Error in '%s': %s", self.name, error)
+#                 # Where the aircraft takes off with flap settings outside the
+#                 # documented V2 range, we need the program to continue without
+#                 # raising an exception, so that the incorrect flap at takeoff
+#                 # can be detected.
+#                 continue
 
 
 ########################################
