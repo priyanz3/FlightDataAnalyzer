@@ -1259,7 +1259,7 @@ class TestIncludingTransition(unittest.TestCase):
     def test_including_transition_15(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_15.npz'))
         flap_inc = including_transition(array, self.flap_map_2)
-        self.assertEqual(flap_inc.tolist(), [5] * 32 + [1] * 26 + [0] * 14)
+        self.assertEqual(flap_inc.tolist(), [5] * 32 + [1] * 29 + [0] * 11)
 
     def test_including_transition_16(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_16.npz'))
@@ -1284,7 +1284,7 @@ class TestIncludingTransition(unittest.TestCase):
     def test_including_transition_20(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_20.npz'))
         flap_inc = including_transition(array, self.flap_map_2)
-        self.assertEqual(flap_inc.tolist(), [30] * 17 + [25] * 4 + [20] * 10 + [15] * 11 + [5] * 23 + [1] * 26 + [0] * 15)
+        self.assertEqual(flap_inc.tolist(), [30] * 17 + [25] * 4 + [20] * 10 + [15] * 11 + [5] * 23 + [1] * 30 + [0] * 11)
 
     def test_including_transition_21(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_21.npz'))
@@ -6267,10 +6267,7 @@ class TestStepValues(unittest.TestCase):
                              15.38, 15.39, 15.37, 15.37, 15.41, 15.44])
         array = np.ma.concatenate((array,array[::-1]))
         stepped = step_values(array, (0, 1, 5, 15), step_at='excluding_transition')
-        # would be a litle better in some people's opinion:
-        ##self.assertEqual(list(stepped),[0]*12+[1]*19+[5]*6+[15]*21+[5]*6+[1]*19+[0]*13)
-        # this is what we've got though (not too shabby)
-        self.assertEqual(list(stepped), [0]*12+[1]*18+[5]*7+[15]*22+[5]*7+[1]*19+[0]*11)
+        self.assertEqual(list(stepped), [0]*11+[1]*19+[5]*7+[15]*22+[5]*7+[1]*19+[0]*11)
 
 
     def test_step_including_transition_real_data(self):
@@ -6306,22 +6303,13 @@ class TestStepValues(unittest.TestCase):
                          [0]*12+[1]*18+[5]*7+[15]*26+[5]*19+[1]*6+[0]*8)
 
     def test_step_trailing_edge_masked_data(self):
-        '''
-        tests first values being masked and remaining values have no cusp
-
-        CJ: Not sure what this test should be representing exactly.
-        '''
         array = np.ma.array(
             [0, 0, 0, 0, 4.92184, 4.92184, 4.92184, 4.92184,
              4.92184, 4.92184, 4.92184, 4.92184, 4.92184, 4.92184])
         array = np.ma.concatenate((array,array[::-1]))
         array[:4] = np.ma.masked
         stepped = step_values(array, (0, 1, 5, 15), step_at='move_stop')
-        # old (bit better so left here commented out)
-        ##expected = np.ma.array([0,0,0,0,5,5,5,5,5,5,5,5,5,5])
-        ##expected = np.ma.concatenate((expected,expected[::-1]))
-        # new (bit of a delay)
-        expected = np.ma.array([5.0]*25+[0.0]*3)
+        expected = np.ma.array([5.0]*24+[0.0]*4)
         expected[:4] = np.ma.masked
         self.assertEqual(list(stepped), list(expected))
 

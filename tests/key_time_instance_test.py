@@ -1195,6 +1195,22 @@ class TestAPUStart(unittest.TestCase):
         self.assertEqual(len(astart), 1)
         self.assertEqual(astart[0].index, 2.5)
 
+    def test_derive_at_start(self):
+        # APURunning at the beginning of the data, should be detected
+        array = ['Running'] * 2 + ['-'] * 5
+        mapping = {0: '-', 1: 'Running'}
+        apu = M('APU Running', array, values_mapping=mapping)
+        astart = APUStart()
+        astart.derive(apu)
+        self.assertEqual(len(astart), 1)
+        self.assertEqual(astart[0].index, 0)
+        # masked first value
+        apu.array[0] = np.ma.masked
+        astart = APUStart()
+        astart.derive(apu)
+        self.assertEqual(len(astart), 1)
+        self.assertEqual(astart[0].index, 1)
+
 
 class TestAPUStop(unittest.TestCase):
     def test_can_operate(self):
@@ -1209,6 +1225,22 @@ class TestAPUStop(unittest.TestCase):
         astop.derive(apu)
         self.assertEqual(len(astop), 1)
         self.assertEqual(astop[0].index, 4.5)
+
+    def test_derive_at_end(self):
+        # APURunning at the end of the data, should be detected
+        array = ['-'] * 5 + ['Running'] * 2
+        mapping = {0: '-', 1: 'Running'}
+        apu = M('APU Running', array, values_mapping=mapping)
+        astop = APUStop()
+        astop.derive(apu)
+        self.assertEqual(len(astop), 1)
+        self.assertEqual(astop[0].index, 6)
+        # masked first value
+        apu.array[6] = np.ma.masked
+        astop = APUStop()
+        astop.derive(apu)
+        self.assertEqual(len(astop), 1)
+        self.assertEqual(astop[0].index, 5)
 
 
 ##############################################################################

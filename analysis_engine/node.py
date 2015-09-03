@@ -1678,7 +1678,7 @@ class KeyTimeInstanceNode(FormattedNameNode):
             return
 
         repaired_array = repair_mask(
-            array, frequency=self.hz, repair_duration=64,
+            array, frequency=self.hz, repair_duration=64, copy=True,
             raise_entirely_masked=True, method='fill_start')
         if not np.ma.count(repaired_array):
             return
