@@ -12444,7 +12444,7 @@ class DualInputAbove200FtDuration(KeyPointValueNode):
     units = ut.SECOND
 
     def derive(self,
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                alt_aal=P('Altitude AAL')):
         phase = alt_aal.slices_above(200)
         condition = dual.array == 'Dual'
@@ -12473,7 +12473,7 @@ class DualInputBelow200FtDuration(KeyPointValueNode):
     units = ut.SECOND
 
     def derive(self,
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                alt_aal=P('Altitude AAL'),
                takeoff_rolls=S('Takeoff Roll'),
                landing_rolls=S('Landing Roll')):
@@ -12507,7 +12507,7 @@ class DualInputByCaptDuration(KeyPointValueNode):
     units = ut.SECOND
 
     def derive(self,
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                pilot=M('Pilot Flying'),
                takeoff_rolls=S('Takeoff Roll'),
                landing_rolls=S('Landing Roll')):
@@ -12542,7 +12542,7 @@ class DualInputByFODuration(KeyPointValueNode):
     units = ut.SECOND
 
     def derive(self,
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                pilot=M('Pilot Flying'),
                takeoff_rolls=S('Takeoff Roll'),
                landing_rolls=S('Landing Roll')):
@@ -12577,7 +12577,7 @@ class DualInputByCaptMax(KeyPointValueNode):
 
     def derive(self,
                stick_capt=P('Sidestick Angle (Capt)'),
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                pilot=M('Pilot Flying'),
                takeoff_rolls=S('Takeoff Roll'),
                landing_rolls=S('Landing Roll')):
@@ -12618,7 +12618,7 @@ class DualInputByFOMax(KeyPointValueNode):
 
     def derive(self,
                stick_fo=P('Sidestick Angle (FO)'),
-               dual=M('Dual Input Warning'),
+               dual=M('Dual Input'),
                pilot=M('Pilot Flying'),
                takeoff_rolls=S('Takeoff Roll'),
                landing_rolls=S('Landing Roll')):
