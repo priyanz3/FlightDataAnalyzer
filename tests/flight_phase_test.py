@@ -1958,6 +1958,16 @@ class TestTaxiOut(unittest.TestCase):
         expected = buildsection('Taxi Out', 5, 7)
         self.assertEqual(tout.get_slices(), expected.get_slices())
 
+    def test_taxi_out__no_taxiout(self):
+        gnd = buildsections('Mobile', [0, 1], [3, 9])
+        toff = buildsection('Takeoff', 1, 11)
+        first_eng_starts = KTI(
+            'First Eng Start Before Liftoff',
+            items=[KeyTimeInstance(2, 'First Eng Start Before Liftoff')])
+        tout = TaxiOut()
+        tout.derive(gnd, toff, first_eng_starts)
+        self.assertEqual(len(tout), 0)
+
 
 class TestTaxiIn(unittest.TestCase):
     def test_can_operate(self):

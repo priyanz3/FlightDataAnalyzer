@@ -1617,7 +1617,8 @@ class TaxiOut(FlightPhaseNode):
         if toffs:
             toff = toffs[0]
             for gnd in gnds:
-                if slices_overlap(gnd.slice, toff.slice):
+                # If takeoff starts at begining of data there was no taxi out phase
+                if slices_overlap(gnd.slice, toff.slice) and toff.slice.start > 1:
                     taxi_start = gnd.slice.start + 1
                     taxi_stop = toff.slice.start - 1
                     if first_eng_starts:
