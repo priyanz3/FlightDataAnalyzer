@@ -126,9 +126,7 @@ class ApproachInformation(ApproachNode):
 
             # R1. If we have airport and heading, look for the nearest runway:
             if appr_ils_freq:
-                ils_freq = appr_ils_freq.get_first(within_slice=_slice)
-                if ils_freq:
-                    kwargs['ils_freq'] = ils_freq.value
+                kwargs['ils_freq'] = appr_ils_freq
 
                 # We already have latitude and longitude in kwargs from looking up
                 # the airport. If the measurments are not precise, remove them.
@@ -184,11 +182,10 @@ class ApproachInformation(ApproachNode):
 
         default_kwargs = {
             'precise': precise,
-            'appr_ils_freq': appr_ils_freq,
         }
-        
+
         app_slices = app.get_slices()
-        
+
         for index, _slice in enumerate(app_slices):
             # a) The last approach is assumed to be landing:
             if index == len(app_slices) - 1:
@@ -218,8 +215,10 @@ class ApproachInformation(ApproachNode):
             lowest_lat = lowest_lat_kpv.value if lowest_lat_kpv else None
             lowest_lon_kpv = lon.get_first(within_slice=_slice) if lon else None
             lowest_lon = lowest_lon_kpv.value if lowest_lon_kpv else None
-            #lowest_hdg_kpv = hdg.get_first(within_slice=_slice) if hdg else None
-            lowest_hdg_kpv = hdg.get_first() if hdg else None # Because the heading on landing happens after the approach phase.
+            # aded within_slice as we are not interested in the heading of
+            # the first approach if there are multiple, we are using Approach
+            # and Landing so heading on landing should fall within this slice
+            lowest_hdg_kpv = hdg.get_first(within_slice=_slice) if hdg else None
             lowest_hdg = lowest_hdg_kpv.value if lowest_hdg_kpv else None
 
             kwargs.update(
@@ -266,6 +265,7 @@ class ApproachInformation(ApproachNode):
             ils_freq_kpv = (appr_ils_freq.get_last(within_slice=_slice)
                            if appr_ils_freq else None)
             ils_freq = ils_freq_kpv.value if ils_freq_kpv else None
+            kwargs['appr_ils_freq'] = ils_freq
 
             turnoff_kpv = (turnoffs.get_first(within_slice=_slice)
                            if turnoffs else None)
