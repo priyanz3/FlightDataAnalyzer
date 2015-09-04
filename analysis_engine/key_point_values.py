@@ -6990,6 +6990,11 @@ class EngGasTempDuringEngStartForXSecMax(KeyPointValueNode):
         # Mask out sections with N2 > 60%, i.e. all engines running:
         n2_data = eng_n2_min.array[0:fto_idx]
         n2_data[n2_data > 60.0] = np.ma.masked
+
+        # Engines are already running at start of data:
+        if np.ma.count(n2_data) == 0:
+            return
+
         chunks = np.ma.clump_unmasked(n2_data)
 
         for seconds in self.NAME_VALUES['seconds']:
