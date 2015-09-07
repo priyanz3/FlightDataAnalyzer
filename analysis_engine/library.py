@@ -3101,7 +3101,8 @@ def integrate(array, frequency, initial_value=0.0, scale=1.0,
         ##result[-1] += integrand[-1]*s*k
 
     if extend:
-        result += integrand[0]*2.0*s*k
+        first_value = integrand.compressed()[0]
+        result += first_value * 2. * s * k
 
     return result
 
