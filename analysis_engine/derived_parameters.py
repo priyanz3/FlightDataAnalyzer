@@ -6627,10 +6627,21 @@ class TrackTrueContinuous(DerivedParameterNode):
     '''
 
     units = ut.DEGREE
-
-    def derive(self, heading=P('Heading True Continuous'), drift=P('Drift')):
-        #Note: drift is to the right of heading, so: Track = Heading + Drift
-        self.array = heading.array + drift.array
+    
+    @classmethod
+    def can_operate(cls, available):
+        return any_of(('Track True', 'Heading True Continuous'), available)
+    
+    def derive(self, track=P('Track True'), heading=P('Heading True Continuous'), drift=P('Drift')):
+        if track:
+            self.array = track.array % 360
+        else:
+            #Note: drift is to the right of heading, so: Track = Heading + Drift
+            self.array = heading.array
+            if drift:
+                self.array += drift.array
+            else:
+                self.info('Drift is unavailable in Track True Continuous')
 
 
 class TrackTrue(DerivedParameterNode):
