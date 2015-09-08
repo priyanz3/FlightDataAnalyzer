@@ -17,12 +17,6 @@ from analysis_engine.dependency_graph import dependencies3, graph_nodes
 # node classes required for unpickling
 from analysis_engine.node import (
     loads, save, Node, NodeManager,
-    DerivedParameterNode,
-    KeyPointValueNode,
-    KeyTimeInstanceNode,
-    FlightPhaseNode,
-    FlightAttributeNode,
-    ApproachNode,
     NODE_SUBCLASSES,
 )
 from analysis_engine import settings
@@ -35,20 +29,20 @@ def save_test_data(node, locals):
     '''
     Saves derive method arguments to node files within test_data and returns
     code for loading node files within a test case.
-    
+
     Example usage:
-    
+
     class MyKeyPointValue(KeyPointValueNode):
         def derive(self, airspeed=P('Airspeed'), alt_aal=P('Altitude AAL')):
             from analysis_engine.utils import save_test_data
             save_test_data(self, locals())
             ...
-    
+
     Creates:
-    
+
      - tests/test_data/MyKeyPointValue_airspeed_01.nod
      - tests/test_data/MyKeyPointValue_alt_aal_01.nod
-    
+
     :param node: Node to create test data for.
     :type node: Node
     :param locals: locals() from within the derive method.
@@ -63,10 +57,10 @@ def save_test_data(node, locals):
         'tests',
         'test_data',
     )
-    
+
     code = []
     code.append("test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data')")
-    
+
     code.append("node = %s()" % node.__class__.__name__)
     for var_name in getargspec(node.derive).args[1:]:
         # generate unique filename
@@ -78,7 +72,7 @@ def save_test_data(node, locals):
                 break
             counter += 1
         save(locals[var_name], file_path)
-        
+
         code.append("%s = load(os.path.join(test_data_path, '%s'))" % (var_name, filename))
     code.append("node.derive(%s)" % ', '.join(getargspec(node.derive).args[1:]))
     return '\n'.join(code)
@@ -87,35 +81,35 @@ def save_test_data(node, locals):
 def open_node_container(zip_path):
     '''
     Opens a zip file containing nodes and yields (flight_pk, nodes, attrs) tuples.
-    
+
     TODO: Do not compress to the current directory.
-    
+
     :param zip_path: Path of node container zip file.
     :type zip_path: str
     '''
     with zipfile.ZipFile(zip_path, 'r') as zip_file:
         filenames = set(zip_file.namelist())
-        
+
         flight_filenames = defaultdict(dict)
-        
+
         for filename in filenames:
             match = re.match('^(?P<flight_pk>\d+) - (?P<node_name>[\w\d\s\*()]+).nod$', filename)
             if not match:
                 if not re.match('^(?P<flight_pk>\d+)\.json$', filename):
                     print "Skipping invalid filename '%s'" % filename
                 continue
-            
+
             groupdict = match.groupdict()
             flight_filenames[groupdict['flight_pk']][groupdict['node_name']] = filename
-        
+
         for flight_pk, node_filenames in flight_filenames.iteritems():
             nodes = {}
             for node_name, filename in node_filenames.iteritems():
                 nodes[node_name] = loads(zip_file.read(filename))
-            
+
             json_filename = '%s.json' % flight_pk
             attrs = simplejson.loads(zip_file.read(json_filename)) if json_filename in filenames else {}
-            
+
             yield flight_pk, nodes, attrs
 
 
@@ -123,7 +117,7 @@ def get_aircraft_info(tail_number):
     '''
     Fetch aircraft info from settings.API_HANDLER or from LOCAL_API_HANDLER
     if there is an API_ERROR raised.
-    
+
     :param tail_number: Aircraft tail registration
     :type tail_number: string
     :returns: Aircraft information key:value pairs
@@ -131,7 +125,7 @@ def get_aircraft_info(tail_number):
     '''
     # Fetch aircraft info through the API.
     api_handler = get_api_handler(settings.API_HANDLER)
-    
+
     try:
         aircraft_info = api_handler.get_aircraft(tail_number)
     except APIError:
@@ -154,9 +148,9 @@ def get_derived_nodes(module_names):
     '''
     Create a key:value pair of each node_name to Node class for all Nodes
     within modules provided.
-    
+
     sample module_names = ['path_to.module', 'analysis_engine.flight_phase',..]
-    
+
     :param module_names: Module names to import as locations on PYTHON PATH
     :type module_names: List of Strings
     :returns: Module name to Classes
@@ -164,17 +158,17 @@ def get_derived_nodes(module_names):
     '''
     # OPT: local variable to avoid module-level lookup.
     node_subclasses = NODE_SUBCLASSES
-    
+
     def isclassandsubclass(value, classes, superclass):
         if not isclass(value):
             return False
-        
+
         # OPT: Lookup from set instead of issubclass (200x speedup).
         for base_class in value.__bases__:
             if base_class in classes:
                 return True
         return issubclass(value, superclass)
-    
+
     if isinstance(module_names, basestring):
         # This has been done too often!
         module_names = [module_names]
@@ -213,7 +207,7 @@ def derived_trimmer(hdf_path, node_names, dest):
     '''
     Trims an HDF file of parameters which are not dependencies of nodes in
     node_names.
-    
+
     :param hdf_path: file path of hdf file.
     :type hdf_path: str
     :param node_names: A list of Node names which are required.
@@ -233,14 +227,14 @@ def derived_trimmer(hdf_path, node_names, dest):
         for node_name in node_names:
             deps = dependencies3(_graph, node_name, node_mgr)
             params.extend(filter(lambda d: d in node_mgr.hdf_keys, deps))
-    return strip_hdf(hdf_path, params, dest) 
+    return strip_hdf(hdf_path, params, dest)
 
 
 def _get_names(module_locations, fetch_names=True, fetch_dependencies=False,
                filter_nodes=None):
     '''
     Get the names of Nodes and dependencies.
-    
+
     :param module_locations: list of locations to fetch modules from
     :type module_locations: list of strings
     :param fetch_names: Return name of parameters etc. created by class
@@ -294,9 +288,9 @@ def list_derived_parameters():
 def list_lfl_parameter_dependencies():
     '''
     Return an ordered list of the non-derived parameters.
-    
+
     This should be mostly LFL parameters.
-    
+
     Note: A few Attributes will be in here too!
     '''
     parameters = set(list_parameters()) - set(list_derived_parameters())
@@ -345,21 +339,21 @@ if __name__ == '__main__':
                                       "'trimmer' and 'list' are supported",
                                       help='Additional help')
     trimmer_parser = subparser.add_parser('trimmer')
-    trimmer_parser.add_argument('input_file_path', help='Input hdf filename.')  
+    trimmer_parser.add_argument('input_file_path', help='Input hdf filename.')
     trimmer_parser.add_argument('output_file_path', help='Output hdf filename.')
     trimmer_parser.add_argument('nodes', nargs='+',
                                 help='Keep dependencies of the specified nodes '
                                 'within the output hdf file. All other '
                                 'parameters will be stripped.')
-    
+
     list_parser = subparser.add_parser('list')
     list_parser.add_argument('--filter-nodes', nargs='+', help='Node names')
     list_parser.add_argument('--additional-modules', nargs='+',
                              help='Additional modules')
-    
+
     #list_parser.add_argument('--list', action='store_true',
-                             #help='Output as Python list')
-    
+    #                         help='Output as Python list')
+
     args = parser.parse_args()
     if args.command == 'trimmer':
         if not os.path.isfile(args.input_file_path):
