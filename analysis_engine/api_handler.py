@@ -194,7 +194,7 @@ class APIHandlerHTTP(object):
             try:
                 msg = 'API Request args: %s | kwargs: %s' % (args, kwargs)
                 # This log message can be 60k characters.
-                logger.info(msg[:2000])
+                logger.debug(msg[:2000])
                 return self._request(*args, **kwargs)
             except (APIConnectionError, UnknownAPIError) as error:
                 msg = "'%s' error in request, retrying in %.2f seconds..."

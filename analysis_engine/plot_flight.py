@@ -545,8 +545,7 @@ def csv_flight_details(hdf_path, kti_list, kpv_list, phase_list,
                              skip_header=skip_header, extrasaction='ignore')
         writer.writerows(rows)
         # print to Debug I/O
-        logger.info(indent([header] + writer.rowlist(rows), hasHeader=True, 
-                           wrapfunc=lambda x:str(x)))
+        logger.debug(indent([header] + writer.rowlist(rows), hasHeader=True, wrapfunc=lambda x:str(x)))
     return rows
 
 
