@@ -138,14 +138,15 @@ def get_aircraft_info(tail_number):
         if settings.API_HANDLER == settings.LOCAL_API_HANDLER:
             raise
         # Fallback to the local API handler.
-        logger.info(
+        logger.warning(
             "Aircraft '%s' could not be found with '%s' API handler. "
             "Falling back to '%s'.", tail_number, settings.API_HANDLER,
             settings.LOCAL_API_HANDLER)
         api_handler = get_api_handler(settings.LOCAL_API_HANDLER)
         aircraft_info = api_handler.get_aircraft(tail_number)
-    logger.info("Using aircraft_info provided by '%s' '%s'.",
-                api_handler.__class__.__name__, aircraft_info)
+    logger.debug(
+        "Using aircraft_info provided by '%s' '%s'.",
+        api_handler.__class__.__name__, aircraft_info)
     return aircraft_info
 
 
