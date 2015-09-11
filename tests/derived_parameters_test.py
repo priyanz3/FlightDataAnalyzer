@@ -4707,31 +4707,31 @@ class TestSlopeAngleToLanding(unittest.TestCase):
 class TestSpeedbrake(unittest.TestCase):
     def test_can_operate(self):
         family = A(name='Family', value='B737 Classic')
-        self.assertTrue(Speedbrake.can_operate(('Spoiler (2)', 'Spoiler (7)'),
+        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (4)', 'Spoiler (R) (4)'),
                                                family=family))
         family = A(name='Family', value='B737 NG')
-        self.assertTrue(Speedbrake.can_operate(('Spoiler (4)', 'Spoiler (9)'),
+        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (3)', 'Spoiler (R) (3)'),
                                                family=family))
         family = A(name='Family', value='A320')
-        self.assertTrue(Speedbrake.can_operate(('Spoiler (2)', 'Spoiler (7)'),
+        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (3)', 'Spoiler (R) (3)'),
                                                family=family))
         family = A(name='Family', value='B787')
-        self.assertTrue(Speedbrake.can_operate(('Spoiler (1)', 'Spoiler (14)'),
+        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (7)', 'Spoiler (R) (7)'),
                                                family=family))
         family = A(name='Family', value='Learjet')
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L)', 'Spoiler (R)'),
                                                family=family))
         family = A(name='Family', value='CRJ 900')
         self.assertTrue(Speedbrake.can_operate(
-            ('Spoiler (L) Inboard', 'Spoiler (L) Outboard',
-             'Spoiler (R) Inboard', 'Spoiler (R) Outboard'), family=family))
+            ('Spoiler (L) (3)', 'Spoiler (L) (4)',
+             'Spoiler (R) (3)', 'Spoiler (R) (4)'), family=family))
         family = A(name='Family', value='Phenom 300')
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L)', 'Spoiler (R)'),
                                                family=family))
         family = A(name='Family', value='ERJ-190/195')
         self.assertTrue(Speedbrake.can_operate(
-            ('Spoiler (L) Inboard', 'Spoiler (L) Middle', 'Spoiler (L) Outboard',
-             'Spoiler (R) Inboard', 'Spoiler (R) Middle', 'Spoiler (R) Outboard'), family=family))
+            ('Spoiler (L) (3)', 'Spoiler (L) (4)', 'Spoiler (L) (5)',
+             'Spoiler (R) (3)', 'Spoiler (R) (4)', 'Spoiler (R) (5)'), family=family))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

@@ -6021,45 +6021,45 @@ class Speedbrake(DerivedParameterNode):
         '''
         family_name = family.value if family else None
         return family_name and (
-            family_name == 'B737 NG' and (
-                'Spoiler (4)' in available and
-                'Spoiler (9)' in available
+            family_name in ('G-V', 'G-IV', 'CL-600') and (
+                'Spoiler (L) (2)' in available and
+                'Spoiler (R) (2)' in available
             ) or
-            family_name == 'A318' and (
-                'Spoiler (4)' in available and
-                'Spoiler (8)' in available
+            family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330') and (
+                'Spoiler (L) (3)' in available and
+                'Spoiler (R) (3)' in available
             ) or
-            family_name in ['B737 Classic', 'A319', 'A320', 'A321', 'Global'] and (
-                'Spoiler (2)' in available and
-                'Spoiler (7)' in available
+            family_name == 'B737 Classic' and (
+                'Spoiler (L) (4)' in available and
+                'Spoiler (R) (4)' in available
             ) or
-            family_name == 'A330' and (
-                'Spoiler (2)' in available and
-                'Spoiler (8)' in available
+            family_name == 'Global' and (
+                'Spoiler (L) (5)' in available and
+                'Spoiler (R) (5)' in available
             ) or
             family_name == 'B787' and (
-                'Spoiler (1)' in available and
-                'Spoiler (14)' in available
+                'Spoiler (L) (7)' in available and
+                'Spoiler (R) (7)' in available
             ) or
-            family_name in ['G-V', 'G-IV', 'Learjet', 'A300', 'Phenom 300', 'CL-600'] and all_of((
+            family_name in ('Learjet', 'Phenom 300') and all_of((
                 'Spoiler (L)',
                 'Spoiler (R)'),
                 available
             ) or
             family_name in ['CRJ 900', 'CL-600', 'G-IV'] and all_of((
-                'Spoiler (L) Inboard',
-                'Spoiler (L) Outboard',
-                'Spoiler (R) Inboard',
-                'Spoiler (R) Outboard'),
+                'Spoiler (L) (3)',
+                'Spoiler (L) (4)',
+                'Spoiler (R) (3)',
+                'Spoiler (R) (4)'),
                 available
             ) or
             family_name in ['ERJ-170/175', 'ERJ-190/195'] and all_of((
-                'Spoiler (L) Inboard',
-                'Spoiler (L) Middle',
-                'Spoiler (L) Outboard',
-                'Spoiler (R) Inboard',
-                'Spoiler (R) Middle',
-                'Spoiler (R) Outboard'),
+                'Spoiler (L) (3)',
+                'Spoiler (L) (4)',
+                'Spoiler (L) (5)',
+                'Spoiler (R) (3)',
+                'Spoiler (R) (4)',
+                'Spoiler (R) (5)'),
                 available
             )
         )
@@ -6081,60 +6081,52 @@ class Speedbrake(DerivedParameterNode):
         self.array = np.ma.where(array < 10.0, 0.0, array)
 
     def derive(self,
-               spoiler_1=P('Spoiler (1)'),
-               spoiler_2=P('Spoiler (2)'),
-               spoiler_4=P('Spoiler (4)'),
-               spoiler_7=P('Spoiler (7)'),
-               spoiler_8=P('Spoiler (8)'),
-               spoiler_9=P('Spoiler (9)'),
-               spoiler_14=P('Spoiler (14)'),
-               spoiler_L=P('Spoiler (L)'),
-               spoiler_R=P('Spoiler (R)'),
-               spoiler_LI=P('Spoiler (L) Inboard'),
-               spoiler_LM=P('Spoiler (L) Middle'),
-               spoiler_LO=P('Spoiler (L) Outboard'),
-               spoiler_RI=P('Spoiler (R) Inboard'),
-               spoiler_RM=P('Spoiler (R) Middle'),
-               spoiler_RO=P('Spoiler (R) Outboard'),
+               spoiler_l=P('Spoiler (L)'),
+               spoiler_l2=P('Spoiler (L) (2)'),
+               spoiler_l3=P('Spoiler (L) (3)'),
+               spoiler_l4=P('Spoiler (L) (4)'),
+               spoiler_l5=P('Spoiler (L) (5)'),
+               spoiler_l7=P('Spoiler (L) (7)'),
+               spoiler_r=P('Spoiler (R)'),
+               spoiler_r2=P('Spoiler (R) (2)'),
+               spoiler_r3=P('Spoiler (R) (3)'),
+               spoiler_r4=P('Spoiler (R) (4)'),
+               spoiler_r5=P('Spoiler (R) (5)'),
+               spoiler_r7=P('Spoiler (R) (7)'),
                family=A('Family'),
                ):
 
         family_name = family.value
 
-        if family_name == 'B737 NG':
-            self.merge_spoiler(spoiler_4, spoiler_9)
-        elif family_name == 'A318':
-            self.merge_spoiler(spoiler_4, spoiler_8)
-        elif family_name in ['B737 Classic', 'A319', 'A320', 'A321', 'Global']:
-            self.merge_spoiler(spoiler_2, spoiler_7)
-        elif family_name == 'A330':
-            self.merge_spoiler(spoiler_2, spoiler_8)
-
+        if family_name in ('G-V', 'G-IV', 'CL-600'):
+            self.merge_spoiler(spoiler_l2, spoiler_r2)
+        elif family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330'):
+            self.merge_spoiler(spoiler_l3, spoiler_r3)
+        elif family_name  == 'B737 Classic':
+            self.merge_spoiler(spoiler_l4, spoiler_r4)
+        elif family_name == 'Global':
+            self.merge_spoiler(spoiler_l5, spoiler_r5)
         elif family_name == 'B787':
-            self.merge_spoiler(spoiler_1, spoiler_14)
-
-        elif family_name in ['G-V', 'Learjet', 'A300', 'Phenom 300']:
-            self.merge_spoiler(spoiler_L, spoiler_R)
-
-        elif family_name in ('CL-600', 'G-IV') and (spoiler_L or spoiler_R):
-            self.merge_spoiler(spoiler_L, spoiler_R)
+            self.merge_spoiler(spoiler_l7, spoiler_r7)
+        elif family_name in ['Learjet', 'Phenom 300']:
+            self.merge_spoiler(spoiler_l, spoiler_l)
 
         elif family_name in ['CRJ 900', 'CL-600', 'G-IV']:
             # First blend inboard and outboard, then merge
             spoiler_L = DerivedParameterNode(
-                'Spoiler (L)', *blend_two_parameters(spoiler_LI, spoiler_LO))
+                'Spoiler (L)', *blend_two_parameters(spoiler_l3, spoiler_l4))
             spoiler_R = DerivedParameterNode(
-                'Spoiler (R)', *blend_two_parameters(spoiler_RI, spoiler_RO))
+                'Spoiler (R)', *blend_two_parameters(spoiler_r3, spoiler_r4))
             self.merge_spoiler(spoiler_L, spoiler_R)
 
         elif family_name in ['ERJ-170/175', 'ERJ-190/195']:
             # First blend inboard, middle and outboard, then merge
             spoiler_L = DerivedParameterNode(
                 'Spoiler (L)',
-                blend_parameters((spoiler_LI, spoiler_LM, spoiler_LO)))
+                blend_parameters((spoiler_l3, spoiler_l4, spoiler_l5)))
             spoiler_R = DerivedParameterNode(
                 'Spoiler (R)',
-                blend_parameters((spoiler_RI, spoiler_RM, spoiler_RO)))
+                blend_parameters((spoiler_r3, spoiler_r4, spoiler_r5)))
             self.merge_spoiler(spoiler_L, spoiler_R)
         else:
             raise DataFrameError(self.name, family_name)
