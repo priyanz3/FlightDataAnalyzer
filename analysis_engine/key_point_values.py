@@ -12401,7 +12401,8 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
 
     units = ut.KG
 
-    def can_operate(cls, available, manufacturer=A('Manufacturer'), family=('Family')):
+    @classmethod
+    def can_operate(cls, available, manufacturer=A('Manufacturer'), family=A('Family')):
         required_params = ('Gross Weight At Touchdown',
                            'Acceleration Normal At Touchdown',
                            'Rate Of Descent At Touchdown')
