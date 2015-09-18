@@ -12390,6 +12390,41 @@ class GrossWeightAtTouchdown(KeyPointValueNode):
         self.create_kpvs_at_ktis(array, touchdowns)
 
 
+class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
+    '''
+    Gross weight of the aircraft at touchdown if certain criteria are met.
+    Requested for Airbus aircraft which have maintenance actions for
+    overweight landings only if hi rate of descent or hi g at landing
+
+    We use smoothed gross weight data for better accuracy.
+    '''
+
+    units = ut.KG
+
+    def can_operate(cls, available, manufacturer=A('Manufacturer'), family=('Family')):
+        required_params = ('Gross Weight At Touchdown',
+                           'Acceleration Normal At Touchdown',
+                           'Rate Of Descent At Touchdown')
+        return all_of(required_params, available) \
+            and family and family.value == 'A310'
+    # TODO: swap check once we have the conditions for other airbus families.
+            #and manufacturer and manufacturer.value == 'Airbus'
+
+    def derive(self, gw=KPV('Gross Weight At Touchdown'),
+               acc_norm=KPV('Acceleration Normal At Touchdown'),
+               vrt_spd=KPV('Rate Of Descent At Touchdown')):
+
+        acc_norm_limit = 1.7
+        vrt_spd_limit = 360
+
+        for index, tdwn_gw in enumerate(gw):
+            hi_g = acc_norm[index].value and acc_norm[index].value > acc_norm_limit
+            hi_rod = vrt_spd[index].value and vrt_spd[index].value > vrt_spd_limit
+
+            if hi_g or hi_rod:
+                self.create_kpv(tdwn_gw.index, tdwn_gw.value)
+
+
 class GrossWeightDelta60SecondsInFlightMax(KeyPointValueNode):
     '''
     Measure the maximum change of gross weight over a one minute window. This is

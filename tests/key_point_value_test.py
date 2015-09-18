@@ -308,6 +308,7 @@ from analysis_engine.key_point_values import (
     GearDownToLandingFlapConfigurationDuration,
     GrossWeightAtLiftoff,
     GrossWeightAtTouchdown,
+    GrossWeightConditionalAtTouchdown,
     GrossWeightDelta60SecondsInFlightMax,
     GroundspeedAtLiftoff,
     GroundspeedAtTOGA,
@@ -11508,6 +11509,75 @@ class TestGrossWeightAtTouchdown(unittest.TestCase, NodeTest):
         self.gw.array.mask = True
         node = self.node_class()
         node.derive(self.gw, self.touchdowns)
+        self.assertEqual(len(node), 0)
+
+
+class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
+
+    def setUp(self):
+        self.name = 'Gross Weight Conditional At Touchdown'
+        self.node_class = GrossWeightConditionalAtTouchdown
+        self.family = A('Family', 'A310')
+        self.weight = KPV(name='Gross Weight At Touchdown', items=[
+            KeyPointValue(name='Gross Weight At Touchdown', index=6107, value=109301),
+        ])
+        self.accel = KPV(name='Acceleration Normal At Touchdown', items=[
+            KeyPointValue(name='Acceleration Normal At Touchdown', index=6107, value=1.8),
+        ])
+        self.rod = KPV(name='Rate Of Descent At Touchdown', items=[
+            KeyPointValue(name='Rate Of Descent At Touchdown', index=6107, value=400),
+        ])
+        self.expected = KPV(name=self.name, items=[
+            KeyPointValue(name=self.name, index=6107, value=109301),
+        ])
+
+
+    def test_can_operate(self):
+        available = ('Gross Weight At Touchdown',
+                      'Acceleration Normal At Touchdown',
+                      'Rate Of Descent At Touchdown')
+        self.assertTrue(self.node_class().can_operate(available, family=self.family))
+        self.assertFalse(self.node_class().can_operate(('Gross Weight At Touchdown',), family=self.family))
+        self.family.value = 'B737'
+        self.assertFalse(self.node_class().can_operate(available, family=self.family))
+
+
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(self.weight, self.accel, self.rod)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node, self.expected)
+
+
+    def test_derive__hi_g(self):
+        self.rod[0].value = 340
+
+        node = self.node_class()
+        node.derive(self.weight, self.accel, self.rod)
+
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node, self.expected)
+
+
+    def test_derive__hi_rod(self):
+        self.accel[0].value = 1.6
+
+        node = self.node_class()
+        node.derive(self.weight, self.accel, self.rod)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node, self.expected)
+
+
+    def test_derive__gentle_touchdown(self):
+        self.accel[0].value = 1.6
+        self.rod[0].value = 340
+
+        node = self.node_class()
+        node.derive(self.weight, self.accel, self.rod)
+
         self.assertEqual(len(node), 0)
 
 
