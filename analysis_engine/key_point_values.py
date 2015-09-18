@@ -10828,6 +10828,28 @@ class RudderPedalForceMax(KeyPointValueNode):
             max_abs_value)
 
 
+class RudderPedalMax(KeyPointValueNode):
+    '''
+    Temporary KPV to help determine full range of rudder pedal movement
+    '''
+    units = ut.DEGREE
+
+    def derive(self, pedal=P('Rudder Pedal')):
+        index, value = max_value(pedal.array)
+        self.create_kpv(index, value)
+
+
+class RudderPedalMin(KeyPointValueNode):
+    '''
+    Temporary KPV to help determine full range of rudder pedal movement
+    '''
+    units = ut.DEGREE
+
+    def derive(self, pedal=P('Rudder Pedal')):
+        index, value = min_value(pedal.array)
+        self.create_kpv(index, value)
+
+
 ##############################################################################
 # Speedbrake
 
