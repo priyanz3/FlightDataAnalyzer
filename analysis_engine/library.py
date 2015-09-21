@@ -41,6 +41,16 @@ class InvalidDatetime(ValueError):
     pass
 
 
+class IntegrationError(ValueError):
+    '''
+    Exception raised when node is always expected to be derived.
+
+    Useful to safeguard the processing of important nodes. We want to fail
+    early instead of having to check which nodes were derived.
+    '''
+    pass
+
+
 def actuator_mismatch(ap, ap_l, ap_r, act_l, act_r, surf, scaling, frequency):
     '''
     Computes the mismatch between a control surface and the driving actuator
