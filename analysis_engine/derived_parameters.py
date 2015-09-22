@@ -61,6 +61,7 @@ from analysis_engine.library import (actuator_mismatch,
                                      moving_average,
                                      nearest_neighbour_mask_repair,
                                      np_ma_ones_like,
+                                     np_ma_masked_zeros,
                                      np_ma_masked_zeros_like,
                                      np_ma_zeros_like,
                                      offset_select,
@@ -6529,6 +6530,12 @@ class AirspeedSelectedForApproaches(DerivedParameterNode):
         rep = 1 / aspd.frequency
         array = aspd.array.repeat(rep)
         self.array = np.ma.concatenate([array[rep - 1:], array[-(rep - 1):]])
+        if aspd.offset >= 1:
+            # Compensate fot the offset of the source parameter to align the
+            # value steps with the recorded ones
+            offset = int(aspd.offset)
+            self.array = np.ma.concatenate(
+                (np_ma_masked_zeros(offset), array[:-offset]))
         self.frequency = 1
         self.offset = 0
 
