@@ -155,10 +155,14 @@ def _get_normalised_split_params(hdf):
     '''
     params = []
     first_split_param = None
-    for param_name in ('Eng (1) N1', 'Eng (2) N1', 'Eng (3) N1', 'Eng (4) N1',
-                       'Eng (1) N2', 'Eng (2) N2', 'Eng (3) N2', 'Eng (4) N2',
-                       'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np',
-                       'Groundspeed', 'Groundspeed (1)', 'Groundspeed (2)'):
+    split_params = (
+        'Eng (1) N1', 'Eng (2) N1', 'Eng (3) N1', 'Eng (4) N1',
+        'Eng (1) N2', 'Eng (2) N2', 'Eng (3) N2', 'Eng (4) N2',
+        'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np',
+        'Eng (1) Fuel Flow', 'Eng (2) Fuel Flow', 'Eng (3) Fuel Flow', 'Eng (4) Fuel Flow',
+        'Groundspeed', 'Groundspeed (1)', 'Groundspeed (2)'
+    )
+    for param_name in split_params:
         try:
             param = hdf[param_name]
         except KeyError:
@@ -193,9 +197,12 @@ def _get_eng_params(hdf, align_param=None):
     '''
     params = []
 
-    eng_params= ('Eng (1) N1', 'Eng (2) N1', 'Eng (3) N1', 'Eng (4) N1',
-                 'Eng (1) N2', 'Eng (2) N2', 'Eng (3) N2', 'Eng (4) N2',
-                 'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np')
+    eng_params = (
+        'Eng (1) N1', 'Eng (2) N1', 'Eng (3) N1', 'Eng (4) N1',
+        'Eng (1) N2', 'Eng (2) N2', 'Eng (3) N2', 'Eng (4) N2',
+        'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np'
+        'Eng (1) Fuel Flow', 'Eng (2) Fuel Flow', 'Eng (3) Fuel Flow', 'Eng (4) Fuel Flow'
+    )
 
     for param_name in eng_params:
         try:
