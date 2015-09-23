@@ -4174,7 +4174,7 @@ class TestMostPointsCost(unittest.TestCase):
         x = np.ma.array([0.0, 0.0, 0.0])
         y = np.ma.array([0.0, 0.0, 0.0])
         result = most_points_cost(coefs, x, y)
-        self.assertAlmostEqual(result, 0.003 * 3.0, places=3)
+        self.assertAlmostEqual(result, 0.003, places=3)
 
 
 class TestMovingAverage(unittest.TestCase):
