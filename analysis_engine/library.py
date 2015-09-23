@@ -4701,7 +4701,7 @@ def most_points_cost(coefs, x, y):
         raise ValueError('most_points_cost called with x & y of unequal length')
     if len(x) < 2:
         raise ValueError('most_points_cost called with inadequate samples')
-    # Conventional y=mx+c equation for the "bet fit" line
+    # Conventional y=mx+c equation for the "best fit" line
     m=coefs[0]
     c=coefs[1]
 
@@ -4728,7 +4728,8 @@ def most_points_cost(coefs, x, y):
     # while values 10 times greater or smaller led to erroneous results.
     width=0.003
     e = 1.0 -1.0/((d/d_max)**2 + width)
-    return np.ma.sum(e)
+    mean_error = np.ma.sum(e)/len(d)
+    return mean_error
 
 
 def moving_average(array, window=9, weightings=None):
