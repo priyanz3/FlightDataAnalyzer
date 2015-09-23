@@ -6529,13 +6529,13 @@ class AirspeedSelectedForApproaches(DerivedParameterNode):
 
         rep = 1 / aspd.frequency
         array = aspd.array.repeat(rep)
-        self.array = np.ma.concatenate([array[rep - 1:], array[-(rep - 1):]])
         if aspd.offset >= 1:
-            # Compensate fot the offset of the source parameter to align the
+            # Compensate for the offset of the source parameter to align the
             # value steps with the recorded ones
             offset = int(aspd.offset)
-            self.array = np.ma.concatenate(
+            array = np.ma.concatenate(
                 (np_ma_masked_zeros(offset), array[:-offset]))
+        self.array = np.ma.concatenate([array[rep - 1:], array[-(rep - 1):]])
         self.frequency = 1
         self.offset = 0
 
