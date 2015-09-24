@@ -2570,14 +2570,19 @@ class TestSmokeWarning(unittest.TestCase):
 class TestSpeedbrakeDeployed(unittest.TestCase):
 
     def test_can_operate(self):
-        node = self.node_class()
-        operational_combinations = node.get_operational_combinations()
-        self.assertTrue(('Spoiler (L) Deployed', 'Spoiler (R) Deployed') in operational_combinations)
-        self.assertTrue(('Spoiler (L) Outboard Deployed',
-                          'Spoiler (R) Outboard Deployed') in operational_combinations)
+        # get_operational_combinations is too slow for lots of dependencies
+        self.assertTrue(self.node_class.can_operate(('Spoiler Deployed',)))
+        self.assertTrue(self.node_class.can_operate(('Spoiler (L) (1) Deployed', 'Spoiler (R) (1) Deployed')))
+        self.assertTrue(self.node_class.can_operate(('Spoiler (L) Outboard Deployed', 'Spoiler (R) Outboard Deployed')))
+        self.assertTrue(self.node_class.can_operate(('Spoiler (L) Outboard Deployed', 'Spoiler (R) Outboard Deployed')))
+        self.assertTrue(self.node_class.can_operate((
+            'Spoiler (L) (1) Deployed', 'Spoiler (L) (2) Deployed', 'Spoiler (L) (3) Deployed', 'Spoiler (L) (4) Deployed',
+            'Spoiler (L) (5) Deployed', 'Spoiler (L) (6) Deployed', 'Spoiler (L) (7) Deployed',
+            'Spoiler (R) (1) Deployed', 'Spoiler (R) (2) Deployed', 'Spoiler (R) (3) Deployed', 'Spoiler (R) (4) Deployed',
+            'Spoiler (R) (5) Deployed', 'Spoiler (R) (6) Deployed', 'Spoiler (R) (7) Deployed')))
 
     def setUp(self):
-        deployed_l_array = [ 0,  0,  0,  0,  0,  1,  1,  0,  0,  0]
+        deployed_l_array = [ 0,  0,  0,  1,  0,  1,  1,  0,  0,  0]
         deployed_r_array = [ 0,  0,  0,  0,  1,  1,  1,  0,  0,  0]
 
         self.deployed_l = M(name='Spoiler (L) Deployed', array=np.ma.array(deployed_l_array), values_mapping={1:'Deployed'})
@@ -2585,26 +2590,20 @@ class TestSpeedbrakeDeployed(unittest.TestCase):
         self.node_class = SpeedbrakeDeployed
 
     def test_derive(self):
-        result = [ 0,  0,  0,  0,  0,  1,  1,  0,  0,  0]
+        result = [ 0,  0,  0,  1,  1,  1,  1,  0,  0,  0]
         node = self.node_class()
-        node.derive(self.deployed_l,
-                    self.deployed_r,
-                    None,
-                    None,)
+        node.derive(self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result)
 
     def test_derive_masked_value(self):
         self.deployed_l.array.mask = [ 0,  0,  0,  1,  0,  1,  0,  0,  1,  0]
         self.deployed_r.array.mask = [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
-        result_array = [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0]
+        result_array = [ 0,  0,  0,  0,  1,  0,  1,  0,  0,  0]
         result_mask =  [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
         node = self.node_class()
-        node.derive(self.deployed_l,
-                    self.deployed_r,
-                    None,
-                    None,)
+        node.derive(self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result_array)
         np.testing.assert_equal(node.array.mask, result_mask)
 
@@ -2639,7 +2638,7 @@ class TestSpeedbrakeSelected(unittest.TestCase):
                          ['Stowed']*10+['Deployed/Cmd Up']*20+['Stowed']*10)
 
         handle_array = np.ma.concatenate([np.ma.arange(0, 2, 0.1),
-                                          np.ma.array([13]*10),
+                                          np.ma.ones(10) * 13,
                                           np.ma.arange(0.99, 0, -0.1)])
         spd_sel = SpeedbrakeSelected()
         array = spd_sel.derive_from_handle(handle_array, deployed=5, armed=1)
@@ -2647,7 +2646,7 @@ class TestSpeedbrakeSelected(unittest.TestCase):
                          ['Stowed']*10+['Armed/Cmd Dn']*10+['Deployed/Cmd Up']*10+['Stowed']*10)
 
         handle_array = np.ma.concatenate([np.ma.arange(0, 2, 0.1),
-                                          np.ma.array([13]*10),
+                                          np.ma.ones(10) * 13,
                                           np.ma.arange(0.99, 0, -0.1)])
         spd_sel = SpeedbrakeSelected()
         array = spd_sel.derive_from_handle(handle_array, deployed=5)

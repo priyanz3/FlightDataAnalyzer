@@ -2169,24 +2169,39 @@ class SpeedbrakeDeployed(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        simple = ('Spoiler (L) Deployed', 'Spoiler (R) Deployed')
-        in_out = ('Spoiler (L) Outboard Deployed',
-                  'Spoiler (R) Outboard Deployed')
-        return all_of(simple, available) or all_of(in_out, available)
+        return any_of(cls.get_dependency_names(), available)
 
-    def derive(self, deployed_l=M('Spoiler (L) Deployed'),
-               deployed_r=M('Spoiler (R) Deployed'),
-               deployed_l_out=M('Spoiler (L) Outboard Deployed'),
-               deployed_r_out=M('Spoiler (R) Outboard Deployed')):
+    def derive(self, dep=M('Spoiler Deployed'),
+               l=M('Spoiler (L) Deployed'),
+               r=M('Spoiler (R) Deployed'),
+               l1=M('Spoiler (L) (1) Deployed'),
+               l2=M('Spoiler (L) (2) Deployed'),
+               l3=M('Spoiler (L) (3) Deployed'),
+               l4=M('Spoiler (L) (4) Deployed'),
+               l5=M('Spoiler (L) (5) Deployed'),
+               l6=M('Spoiler (L) (6) Deployed'),
+               l7=M('Spoiler (L) (7) Deployed'),
+               r1=M('Spoiler (R) (1) Deployed'),
+               r2=M('Spoiler (R) (2) Deployed'),
+               r3=M('Spoiler (R) (3) Deployed'),
+               r4=M('Spoiler (R) (4) Deployed'),
+               r5=M('Spoiler (R) (5) Deployed'),
+               r6=M('Spoiler (R) (6) Deployed'),
+               r7=M('Spoiler (R) (7) Deployed'),
+               l_out=M('Spoiler (L) Outboard Deployed'),
+               r_out=M('Spoiler (R) Outboard Deployed')):
 
-        deployed_params = (deployed_l, deployed_r, deployed_l_out, deployed_r_out)
-        deployed_stack = vstack_params_where_state(*[(d, 'Deployed') for d in deployed_params])
+        params = (dep, l, r,
+                  l1, l2, l3, l4, l5, l6, l7,
+                  r1, r2, r3, r4, r5, r6, r7,
+                  l_out, r_out)
+        stack = vstack_params_where_state(*[(p, 'Deployed') for p in params])
 
-        array = np_ma_zeros_like(deployed_stack[0], dtype=np.short)
-        array = np.ma.where(deployed_stack.all(axis=0), 1, array)
+        array = np_ma_zeros_like(stack[0], dtype=np.short)
+        array = np.ma.where(stack.any(axis=0), 1, array)
 
         # mask indexes with greater than 50% masked values
-        mask = np.ma.where(deployed_stack.mask.sum(axis=0).astype(float) / len(deployed_stack) * 100 > 50, 1, 0)
+        mask = np.ma.where(stack.mask.sum(axis=0).astype(float) / len(stack) * 100 > 50, 1, 0)
         self.array = array
         self.array.mask = mask
 
