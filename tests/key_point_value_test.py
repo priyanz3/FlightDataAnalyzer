@@ -11534,8 +11534,8 @@ class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
 
     def test_can_operate(self):
         available = ('Gross Weight At Touchdown',
-                      'Acceleration Normal At Touchdown',
-                      'Rate Of Descent At Touchdown')
+                     'Acceleration Normal At Touchdown',
+                     'Rate Of Descent At Touchdown')
         self.assertTrue(self.node_class().can_operate(available, family=self.family))
         self.assertFalse(self.node_class().can_operate(('Gross Weight At Touchdown',), family=self.family))
         self.family.value = 'B737'

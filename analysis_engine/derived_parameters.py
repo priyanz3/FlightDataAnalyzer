@@ -920,8 +920,8 @@ class AltitudeRadio(DerivedParameterNode):
     def can_operate(cls, available, family=A('Family')):
         airbus = family and family.value in ('A300', 'A310', 'A319', 'A320', 'A321', 'A330', 'A340')
         fast = 'Fast' in available if airbus else True
-        return fast and any_of([name for name in cls.get_dependency_names()
-                       if name.startswith('Altitude Radio')], available)
+        alt_rads = [n for n in cls.get_dependency_names() if n.startswith('Altitude Radio')]
+        return fast and any_of(alt_rads, available)
 
     def derive(self,
                source_A=P('Altitude Radio (A)'),
@@ -6551,14 +6551,7 @@ class AirspeedSelected(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        sources = ('Airspeed Selected (L)',
-                   'Airspeed Selected (R)',
-                   'Airspeed Selected (MCP)',
-                   'Airspeed Selected (1)',
-                   'Airspeed Selected (2)',
-                   'Airspeed Selected (3)',
-                   'Airspeed Selected (4)')
-        return any_of(sources, available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, as_l=P('Airspeed Selected (L)'),
                as_r=P('Airspeed Selected (R)'),

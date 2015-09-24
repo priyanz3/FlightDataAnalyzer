@@ -133,14 +133,7 @@ class APLateralMode(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Lateral Mode Selected',
-                       'Runway Mode Active',
-                       'NAV Mode Active',
-                       'ILS Localizer Capture Active',
-                       'ILS Localizer Track Active',
-                       'Roll Go Around Mode Active',
-                       'Land Track Active',
-                       'Heading Mode Active'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                lateral_mode_selected=M('Lateral Mode Selected'),
@@ -211,18 +204,7 @@ class APVerticalMode(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('AT Active',
-                       'Climb Mode Active',
-                       'Longitudinal Mode Selected',
-                       'ILS Glideslope Capture Active',
-                       'ILS Glideslope Active',
-                       'Flare Mode',
-                       'Open Climb Mode',
-                       'Open Descent Mode',
-                       'Altitude Capture Mode',
-                       'Altitude Mode',
-                       'Expedite Climb Mode',
-                       'Expedite Descent Mode'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                at_active=M('AT Active'),
@@ -2139,29 +2121,7 @@ class SmokeWarning(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of([
-            'Smoke Avionics Warning',
-            'Smoke Avionics (1) Warning',
-            'Smoke Avionics (2) Warning',
-            'Smoke Lavatory Warning',
-            'Smoke Lavatory (1) Warning',
-            'Smoke Lavatory (2) Warning',
-            'Smoke Cabin Warning',
-            'Smoke Cabin Rest (1) Warning',
-            'Smoke Cabin Rest (2) Warning',
-            'Smoke Cargo Warning',
-            'Smoke Cargo Fwd (1) Warning',
-            'Smoke Cargo Fwd (2) Warning',
-            'Smoke Cargo Aft (1) Warning',
-            'Smoke Cargo Aft (2) Warning',
-            'Smoke Cargo Rest (1) Warning',
-            'Smoke Cargo Rest (2) Warning',
-            'Smoke Lower Deck Stowage',
-            'Smoke Avionic Bulk',
-            'Smoke IFEC',
-            'Smoke BCRC',
-            'Smoke Autonomous VCC',
-        ], available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                smoke_avionics=M('Smoke Avionics Warning'),
@@ -3106,15 +3066,7 @@ class TakeoffConfigurationWarning(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(['Takeoff Configuration Stabilizer Warning',
-                       'Takeoff Configuration Parking Brake Warning',
-                       'Takeoff Configuration Flap Warning',
-                       'Takeoff Configuration Gear Warning',
-                       'Takeoff Configuration AP Warning',
-                       'Takeoff Configuration Aileron Warning',
-                       'Takeoff Configuration Rudder Warning',
-                       'Takeoff Configuration Spoiler Warning'],
-                      available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, stabilizer=M('Takeoff Configuration Stabilizer Warning'),
                parking_brake=M('Takeoff Configuration Parking Brake Warning'),
@@ -3123,7 +3075,7 @@ class TakeoffConfigurationWarning(MultistateDerivedParameterNode):
                ap=M('Takeoff Configuration AP Warning'),
                ail=M('Takeoff Configuration Aileron Warning'),
                rudder=M('Takeoff Configuration Rudder Warning'),
-               spoiler=M('Takeoff Configuration Rudder Warning')):
+               spoiler=M('Takeoff Configuration Spoiler Warning')):
         params_state = vstack_params_where_state(
             (stabilizer, 'Warning'),
             (parking_brake, 'Warning'),
@@ -3164,14 +3116,7 @@ class SpeedControl(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
 
-        return any_of((
-            'Speed Control Auto',
-            'Speed Control Manual',
-            'Speed Control (1) Auto',
-            'Speed Control (1) Manual',
-            'Speed Control (2) Auto',
-            'Speed Control (2) Manual',
-        ), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                sc0a=M('Speed Control Auto'),
