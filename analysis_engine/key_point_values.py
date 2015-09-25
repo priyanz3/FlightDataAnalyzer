@@ -8762,6 +8762,8 @@ class HeadingVariationTouchdownPlus4SecTo60KtsAirspeed(KeyPointValueNode):
             if end:
                 # We have a meaningful slice to examine.
                 to_scan = head.array[begin:end + 1]
+                if not np.ma.count(to_scan):
+                    continue
                 indexes, values = cycle_finder(to_scan)
                 # If the final sample is due to a turnoff, remove this before
                 # examining the wanderings.
