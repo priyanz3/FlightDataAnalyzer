@@ -903,24 +903,24 @@ def coreg(y, indep_var=None, force_zero=False):
 
     # Need to propagate masks into both arrays equally.
     mask = np.ma.logical_or(x.mask, y.mask)
-    x_ = np.ma.array(data=x.data,mask=mask)
-    y_ = np.ma.array(data=y.data,mask=mask)
+    x = np.ma.array(data=x.data, mask=mask)
+    y = np.ma.array(data=y.data, mask=mask)
 
-    if x_.ptp() == 0.0 or y_.ptp() == 0.0:
+    if x.ptp() == 0.0 or y.ptp() == 0.0:
         # raise ValueError, 'Function coreg called with invariant independent variable'
         return None, None, None
 
-    # n_ is the number of useful data pairs for analysis.
-    n_ = np.ma.count(x_)
-    sx = np.ma.sum(x_)
-    sxy = np.ma.sum(x_*y_)
-    sy = np.ma.sum(y_)
-    sx2 = np.ma.sum(x_*x_)
-    sy2 = np.ma.sum(y_*y_)
+    # n is the number of useful data pairs for analysis.
+    n = float(np.ma.count(x))
+    sx = float(np.ma.sum(x))
+    sxy = float(np.ma.sum(x*y))
+    sy = float(np.ma.sum(y))
+    sx2 = float(np.ma.sum(x*x))
+    sy2 = float(np.ma.sum(y*y))
 
     # Correlation
     try: # in case sqrt of a negative number is attempted
-        p = abs((n_*sxy - sx*sy)/(sqrt(n_*sx2-sx*sx)*sqrt(n_*sy2-sy*sy)))
+        p = abs((n*sxy - sx*sy)/(sqrt(n*sx2-sx*sx)*sqrt(n*sy2-sy*sy)))
     except ValueError:
         return None, None, None
 
@@ -929,8 +929,8 @@ def coreg(y, indep_var=None, force_zero=False):
         m = sxy/sx2
         c = 0.0
     else:
-        m = (sxy-sx*sy/n_)/(sx2-sx*sx/n_)
-        c = sy/n_ - m*sx/n_
+        m = (sxy-sx*sy/n)/(sx2-sx*sx/n)
+        c = sy/n - m*sx/n
 
     return p, m, c
 
