@@ -6099,7 +6099,7 @@ class Speedbrake(DerivedParameterNode):
 
         family_name = family.value
 
-        if family_name in ('G-V', 'G-IV', 'CL-600'):
+        if family_name in ('G-V', 'G-IV') or (family_name == 'CL-600' and spoiler_l2 and spoiler_r2):
             self.merge_spoiler(spoiler_l2, spoiler_r2)
         elif family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330'):
             self.merge_spoiler(spoiler_l3, spoiler_r3)
@@ -6111,7 +6111,6 @@ class Speedbrake(DerivedParameterNode):
             self.merge_spoiler(spoiler_l7, spoiler_r7)
         elif family_name in ['Learjet', 'Phenom 300']:
             self.merge_spoiler(spoiler_l, spoiler_l)
-
         elif family_name in ['CRJ 900', 'CL-600', 'G-IV']:
             # First blend inboard and outboard, then merge
             spoiler_L = DerivedParameterNode(
