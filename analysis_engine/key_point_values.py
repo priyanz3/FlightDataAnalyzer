@@ -5213,7 +5213,10 @@ class HeadingDuringTakeoff(KeyPointValueNode):
             if takeoff.slice.start and takeoff.slice.stop:
                 index = (takeoff.slice.start + takeoff.slice.stop) / 2.0
                 value = np.ma.median(hdg.array[takeoff.slice])
-                self.create_kpv(index, value % 360.0)
+                # median result is rounded as
+                # -1.42108547152020037174224853515625E-14 == 360.0
+                # which is an invalid value for Heading
+                self.create_kpv(index, float(round(value, 8)) % 360.0)
 
 
 class HeadingTrueDuringTakeoff(KeyPointValueNode):
@@ -5233,7 +5236,10 @@ class HeadingTrueDuringTakeoff(KeyPointValueNode):
             if takeoff.slice.start and takeoff.slice.stop:
                 index = (takeoff.slice.start + takeoff.slice.stop) / 2.0
                 value = np.ma.median(hdg_true.array[takeoff.slice])
-                self.create_kpv(index, value % 360.0)
+                # median result is rounded as
+                # -1.42108547152020037174224853515625E-14 == 360.0
+                # which is an invalid value for Heading
+                self.create_kpv(index, float(round(value, 8)) % 360.0)
 
 
 class HeadingDuringLanding(KeyPointValueNode):
@@ -5260,7 +5266,10 @@ class HeadingDuringLanding(KeyPointValueNode):
             if start and stop:
                 index = (start + stop) / 2.0
                 value = np.ma.median(hdg.array[start:stop])
-                self.create_kpv(index, value % 360.0)
+                # median result is rounded as
+                # -1.42108547152020037174224853515625E-14 == 360.0
+                # which is an invalid value for Heading
+                self.create_kpv(index, float(round(value, 8)) % 360.0)
 
 
 class HeadingTrueDuringLanding(KeyPointValueNode):
@@ -5282,7 +5291,10 @@ class HeadingTrueDuringLanding(KeyPointValueNode):
             if landing.slice.start and landing.slice.stop:
                 index = (landing.slice.start + landing.slice.stop) / 2.0
                 value = np.ma.median(hdg.array[landing.slice])
-                self.create_kpv(index, value % 360.0)
+                # median result is rounded as
+                # -1.42108547152020037174224853515625E-14 == 360.0
+                # which is an invalid value for Heading
+                self.create_kpv(index, float(round(value, 8)) % 360.0)
 
 
 class HeadingAtLowestAltitudeDuringApproach(KeyPointValueNode):
