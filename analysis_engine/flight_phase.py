@@ -1202,25 +1202,17 @@ class Mobile(FlightPhaseNode):
                gspd=P('Groundspeed')):
         turning = np.ma.masked_less(np.ma.abs(rot.array), HEADING_RATE_FOR_MOBILE)
         movement = np.ma.flatnotmasked_edges(turning)
-        if movement is not None:
-            movement_start = movement[0]
-            movement_stop = movement[1]
-        else:
-            movement_start = None
-            movement_stop = None
+        start, stop = movement if movement is not None else (None, None)
 
         if gspd is not None:
             moving = np.ma.masked_less(gspd.array, GROUNDSPEED_FOR_MOBILE)
             mobile = np.ma.flatnotmasked_edges(moving)
-            if mobile is not None and movement is not None:
-                movement_start = min(movement_start, mobile[0])
-                movement_stop = max(movement_stop, mobile[1])
-            elif movement is None:
-                movement_start = mobile[0]
-                movement_stop = mobile[1]
+            if mobile is not None:
+                start = min(start, mobile[0]) if start else mobile[0]
+                stop = max(stop, mobile[1]) if stop else mobile[1]
 
-        if movement_start is not None and movement_stop is not None:
-            self.create_phase(slice(movement_start, movement_stop))
+        if start and stop:
+            self.create_phase(slice(start, stop))
 
 
 class Stationary(FlightPhaseNode):
