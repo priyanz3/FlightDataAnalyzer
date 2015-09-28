@@ -8636,7 +8636,7 @@ class HeadingDeviationFromRunwayAtTOGADuringTakeoff(KeyPointValueNode):
             # Measure at known state instead of interpolated transition
             index = ceil(index)
             brg = value_at_index(head.array, index)
-            if brg is np.ma.masked:
+            if brg in (None, np.ma.masked):
                 self.warning("Heading True Continuous is masked at index '%s'", index)
                 continue
             dev = runway_deviation(brg, rwy.value)
