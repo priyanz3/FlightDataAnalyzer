@@ -1211,7 +1211,7 @@ class Mobile(FlightPhaseNode):
                 start = min(start, mobile[0]) if start else mobile[0]
                 stop = max(stop, mobile[1]) if stop else mobile[1]
 
-        if start and stop:
+        if start is not None and stop is not None:
             self.create_phase(slice(start, stop))
 
 
