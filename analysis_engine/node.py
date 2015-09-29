@@ -50,11 +50,11 @@ ApproachItem = recordtype(
     default=None)
 KeyPointValue = recordtype('KeyPointValue',
                            'index value name slice datetime latitude longitude',
-                           field_defaults={'slice':slice(None)}, default=None)
+                           field_defaults={'slice': slice(None)}, default=None)
 KeyTimeInstance = recordtype('KeyTimeInstance',
                              'index name datetime latitude longitude',
                              default=None)
-Section = namedtuple('Section', 'name slice start_edge stop_edge') #Q: rename mask -> slice/section
+Section = namedtuple('Section', 'name slice start_edge stop_edge')  # Q: rename mask -> slice/section
 
 
 # Ref: django/db/models/options.py:20
@@ -77,7 +77,7 @@ def load(path):
     Load a Node module from a file path.
 
     Convention is to use the .nod file extension.
-    
+
     :param path: Path to pickled Node object file
     :type path: String
     :returns: Node loaded from file.
@@ -96,7 +96,7 @@ def load(path):
 def loads(bytes):
     '''
     Load a Node module from a string of bytes.
-    
+
     :param bytes: Pickled Node stored in a string.
     :type bytes: str
     :returns: Node loaded from string.
@@ -130,7 +130,7 @@ def powerset(iterable):
     """
     from itertools import chain, combinations
     s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
 def get_param_kwarg_names(method):
@@ -169,6 +169,7 @@ def _calculate_offset(frequency, offset):
     Put in own function to allow dedicated test case.
     '''
     return offset % (1.0 / frequency)
+
 
 class Node(object):
     '''
@@ -209,12 +210,12 @@ class Node(object):
         """
         assert kwargs.get('hz', frequency) == frequency, "Differing freq to hz"
         if name:
-            self.name = name + '' # for ease of testing, checks name is string
+            self.name = name + ''  # for ease of testing, checks name is string
         else:
-            self.name = self.get_name() # usual option
+            self.name = self.get_name()  # usual option
         # cast frequency as a float to avoid integer division
-        self.frequency = float(frequency) # Hz
-        self.offset = offset # secs
+        self.frequency = float(frequency)  # Hz
+        self.offset = offset  # secs
         self._cache = kwargs.get('cache')
 
     def __repr__(self):
@@ -235,23 +236,23 @@ class Node(object):
         # XXX: May break if we adopt multi-inheritance or a different class
         # hierarchy.
         return self.__class__.__base__
-    
+
     @property
     def hz(self):
         return self.frequency
-    
+
     @hz.setter
     def hz(self, value):
         self.frequency = value
-        
+
     @property
     def sample_rate(self):
         return self.frequency
-    
+
     @sample_rate.setter
     def sample_rate(self, value):
         self.frequency = value
-    
+
     @classmethod
     def get_name(cls):
         """ class My2BNode -> 'My2B Node'
@@ -306,19 +307,19 @@ def can_operate(cls, available):
         """
         TODO: Support additional requested arguments (series/family)
         e.g. Slat(MultistateDerivedParameter)
-        
+
         :returns: Every operational combination of dependencies.
         :rtype: [str]
         """
         dependencies_powerset = powerset(cls.get_dependency_names())
         return [args for args in dependencies_powerset if
                 cls.can_operate(args, **kwargs)]
-    
+
     @staticmethod
     def cache_key(name, frequency, offset, dp=NODE_CACHE_OFFSET_DP):
         '''
         Generate a cache key for a Node.
-        
+
         :param name: Name of Node.
         :param frequency: Frequency for the Node to be aligned to.
         :type frequency: float or int
@@ -331,22 +332,22 @@ def can_operate(cls, available):
         '''
         offset = round(offset, dp) if dp else offset
         return name, frequency, offset
-    
+
     def get_cache(self, key):
         '''
         Get a Node from the cache matching key.
-        
+
         :param key: Cache key (see cache_key method).
         :type key: tuple
         :returns: Cached Node if it exists, else None.
         :rtype: Node or None
         '''
         return self._cache.get(key) if self._cache else None
-    
+
     def set_cache(self, key, node):
         '''
         Set the Node as a key in the cache.
-        
+
         :param key: Cache key (see cache_key method).
         :type key: tuple
         :param node: Node to set in the cache.
@@ -355,7 +356,7 @@ def can_operate(cls, available):
         '''
         if self._cache is not None:
             self._cache[key] = node
-    
+
     def get_aligned(self, align_to_param):
         """
         :returns: version of self which is aligned to the incoming argument.
@@ -379,7 +380,7 @@ def can_operate(cls, available):
             '%s: incorrect number of arguments for derive() method' % self.__class__.__name__
         dependencies_to_align = \
             [d for d in args if d is not None and d.frequency]
-        
+
         if dependencies_to_align and self.align:
 
             if self.align_frequency and self.align_offset is not None:
@@ -400,7 +401,7 @@ def can_operate(cls, available):
                 alignment_param = dependencies_to_align.pop(0)
                 self.frequency = alignment_param.frequency
                 self.offset = alignment_param.offset
-                
+
             # align the dependencies
             aligned_args = []
             for arg in args:
@@ -429,7 +430,7 @@ def can_operate(cls, available):
             raise
 
         if res is NotImplemented:
-            raise NotImplementedError("Class '%s' derive method is not implemented." % \
+            raise NotImplementedError("Class '%s' derive method is not implemented." %
                                       self.__class__.__name__)
         elif res:
             raise UserWarning("Class '%s' should not have returned anything. Got: %s" % (
@@ -475,7 +476,6 @@ def can_operate(cls, available):
         """
         raise NotImplementedError("Abstract Method")
 
-
     def dump(self, dest, protocol=-1, compress=True):
         """
         """
@@ -486,7 +486,7 @@ def can_operate(cls, available):
             _open = open
         with _open(dest, 'wb') as fh:
             return cPickle.dump(self, fh, protocol)
-    
+
     def dumps(self, protocol=-1):
         '''
         '''
@@ -580,7 +580,7 @@ class DerivedParameterNode(Node):
     # lower case to be consistent with the HDFAccess Parameter class and
     # therefore written as an attribute to the HDF file.
     node_type_abbr = 'Parameter'
-    
+
     units = None
     data_type = 'Derived'
     lfl = False
@@ -636,7 +636,7 @@ class DerivedParameterNode(Node):
         cached_node = self.get_cache(cache_key)
         if cached_node:
             return cached_node
-        
+
         # Create temporary new aligned parameter of correct type:
         aligned_param = self.__class__(
             name=self.name,
@@ -651,9 +651,9 @@ class DerivedParameterNode(Node):
         # Ensure that we copy attributes required for multi-states:
         if hasattr(self, 'values_mapping'):
             aligned_param.values_mapping = self.values_mapping
-        
+
         self.set_cache(cache_key, aligned_param)
-        
+
         return aligned_param
 
     def slices_above(self, value):
@@ -727,22 +727,23 @@ class DerivedParameterNode(Node):
         :param ht: Starting height for the slices
         :param tdwns: Reference to the Touchdown KTIs
         '''
-        result = [] # We are going to return a list of slices.
+        result = []  # We are going to return a list of slices.
         _, basics = slices_from_to(self.array, ht, 0)
         for basic in basics:
-            new_basic = slice(basic.start, min(basic.stop + 20, len(self.array))) # In case the touchdown is behind the basic slice.
+            new_basic = slice(basic.start, min(basic.stop + 20, len(self.array)))  # In case the touchdown is behind the basic slice.
             for tdwn in tdwns:
                 if is_index_within_slice(tdwn.index, new_basic):
                     result.append(slice(new_basic.start, tdwn.index))
                     break
-            
+
         if len(result) > 1:
             return slices_remove_small_gaps(result, 5, self.frequency)
         else:
             return result
 
 
-P = Parameter = DerivedParameterNode # shorthand
+P = Parameter = DerivedParameterNode  # shorthand
+
 
 def multistate_string_to_integer(string_array, mapping):
     """
@@ -769,7 +770,7 @@ def multistate_string_to_integer(string_array, mapping):
     # values need converting using mapping
     for int_value, str_value in mapping.iteritems():
         output_array.data[string_array.data == str_value] = int_value
-    output_array.fill_value = 999999  #NB: only 999 will be stored by dtype
+    output_array.fill_value = 999999  # NB: only 999 will be stored by dtype
     # apply fill_value to all masked values
     output_array.data[np.ma.where(output_array.mask)] = output_array.fill_value
     try:
@@ -783,28 +784,28 @@ def multistate_string_to_integer(string_array, mapping):
 class MultistateDerivedParameterNode(DerivedParameterNode):
     '''
     MappedArray stored as array will be of integer dtype.
-    
+
     M() is a shorthand for MultistateDerivedParameterNode()
-    
+
     Can be instantiated from an array which will be converted to a MappedArray
-    
+
     M(array=['one', 'two', 'three'], values_mapping={1:'one', 2:'two'})
     M(array=np.arange(10), values_mapping={1:'one', 2:'two'})
-    
-    
+
+
     Can be instatiated with a MappedArray. The values_mapping will be shared
     amongst the MappedArray and self. If there is a difference, a ValueError
     is raised.
-    
+
     mappedarray = MappedArray(np.arange(10), values_mapping={1:'one', 2:'two'}
     M(array=mappedarray))
-    
+
     is the same as:
     mappedarray = MappedArray(np.arange(10))
     M(array=mappedarray, values_mapping={1:'one', 2:'two'})
     '''
     data_type = 'Derived Multistate'
-    node_type_abbr = 'Multistate'    
+    node_type_abbr = 'Multistate'
 
     def __init__(self, name='', array=np.ma.array([], dtype=int), frequency=1, offset=0,
                  data_type=None, values_mapping={}, *args, **kwargs):
@@ -818,9 +819,9 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
         self.state = {v: k for k, v in self.values_mapping.iteritems()}
 
         super(MultistateDerivedParameterNode, self).__init__(
-                name, array, frequency, offset, data_type, *args,
-                **kwargs)
-    
+            name, array, frequency, offset, data_type, *args,
+            **kwargs)
+
     def get_derived(self, *args, **kwargs):
         node = super(MultistateDerivedParameterNode, self).get_derived(*args,
                                                                        **kwargs)
@@ -829,7 +830,7 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
                 "'%s' requires either values_mapping passed into constructor "
                 "or as a class attribute." % self.__class__.__name__)
         return node
-        
+
     def __setattr__(self, name, value):
         '''
         Prepare self.array
@@ -847,8 +848,8 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
         :raises ValueError: if incomplete mapping for array string values.
         '''
         if name not in ('array', 'values_mapping'):
-            return super(MultistateDerivedParameterNode, self). \
-                    __setattr__(name, value)
+            return super(
+                MultistateDerivedParameterNode, self).__setattr__(name, value)
 
         if name == 'values_mapping':
             if hasattr(self, 'array'):
@@ -898,20 +899,20 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
                              % type(value))
 
         return object.__setattr__(self, name, value)
-    
+
     def __getstate__(self):
         '''
         Get the state of the object for pickling.
-        
+
         :rtype: dict
         '''
         odict = self.__dict__.copy()
         return odict
-    
+
     def __setstate__(self, state):
         '''
         Set the state of the unpickled object.
-        
+
         :type state: dict
         '''
         array = state.pop('array')
@@ -957,7 +958,7 @@ class SectionNode(Node, list):
     .start_edge and .stop_edge
     '''
     node_type_abbr = 'Phase'
-    
+
     def __init__(self, *args, **kwargs):
         '''
         List of slices where this phase is active. Has a frequency and offset.
@@ -986,7 +987,7 @@ class SectionNode(Node, list):
         """
         if section_slice.start is None or section_slice.stop is None:
             logger.debug("Section %s created %s with None start or stop.",
-                          self.get_name(), section_slice)
+                         self.get_name(), section_slice)
         section = Section(name or self.get_name(), section_slice,
                           begin or section_slice.start,
                           end or section_slice.stop)
@@ -1038,8 +1039,8 @@ class SectionNode(Node, list):
 
             inner_slice = slice(inner_slice_start, inner_slice_stop)
             aligned_node.create_section(inner_slice, section.name,
-                                        begin = converted_start,
-                                        end = converted_stop)
+                                        begin=converted_start,
+                                        end=converted_stop)
         return aligned_node
 
     slice_attrgetters = {'start': attrgetter('slice.start'),
@@ -1190,11 +1191,11 @@ class SectionNode(Node, list):
             if getattr(elem.slice, use) < index:
                 return elem
         return None
-    
+
     def get_longest(self, **kwargs):
         '''
         Gets the longest section matching the lookup criteria.
-        
+
         :param kwargs: Passed into _get_condition (see docstring).
         :returns: Longest section matching conditions.
         :rtype: item within self or None
@@ -1203,11 +1204,11 @@ class SectionNode(Node, list):
         if not matching:
             return None
         return max(matching, key=lambda s: slice_duration(s.slice, self.hz))
-    
+
     def get_shortest(self, **kwargs):
         '''
         Gets the shortest section matching the lookup criteria.
-        
+
         :param kwargs: Passed into _get_condition (see docstring).
         :returns: Shortest section matching conditions.
         :rtype: item within self or None
@@ -1312,7 +1313,7 @@ class FormattedNameNode(ListNode):
         # XXX: cache option below disabled until required. Should we create this
         # on init and remove the property instead?
         ##if hasattr(cls, 'names'):
-            ##return cls.names
+        ##    return cls.names
         if not cls.NAME_FORMAT and not cls.NAME_VALUES:
             return [cls.get_name()]
         names = []
@@ -1353,7 +1354,7 @@ class FormattedNameNode(ListNode):
         # validate name is allowed
         if not self._validate_name(name):
             raise ValueError("invalid name '%s'" % name)
-        return name # return as a confirmation it was successful
+        return name  # return as a confirmation it was successful
 
     def _get_condition(self, within_slice=None, within_slices=None, name=None):
         '''
@@ -1373,11 +1374,11 @@ class FormattedNameNode(ListNode):
             within_slices.append(within_slice)
         elif within_slice:
             within_slices = [within_slice]
-        
+
         within_slices_func = \
             lambda e: is_index_within_slices(e.index, within_slices)
         name_func = lambda e: e.name == name
-        
+
         if within_slices and name:
             return lambda e: within_slices_func(e) and name_func(e)
         elif within_slices:
@@ -1529,7 +1530,7 @@ class KeyTimeInstanceNode(FormattedNameNode):
 
     '''
     node_type_abbr = 'KTI'
-    
+
     def __init__(self, *args, **kwargs):
         # place holder
         super(KeyTimeInstanceNode, self).__init__(*args, **kwargs)
@@ -1595,11 +1596,11 @@ class KeyTimeInstanceNode(FormattedNameNode):
                     # Annotate the transition with the post-change state.
                     kwargs.update(**{name: array[int(math.floor(edge_index)) + 1]})
                 self.create_kti(edge_index, **kwargs)
-        
+
         # Check we recognise what we are being asked to do:
         if direction not in ['rising_edges', 'falling_edges', 'all_edges']:
-            raise ValueError('direction  %s not recognised in create_ktis_at_edges' %direction)
-        
+            raise ValueError('direction  %s not recognised in create_ktis_at_edges' % direction)
+
         # High level function scans phase blocks or complete array and
         # presents appropriate arguments for analysis. We test for phase.name
         # as phase returns False.
@@ -1626,7 +1627,7 @@ class KeyTimeInstanceNode(FormattedNameNode):
         '''
         # Prepare kwargs to pass through to self.create_kti():
         kwargs = dict(replace_values=replace_values)
-        
+
         def state_changes(state, array, change, _slice=None):
             '''
             Low level function that finds start and stop indices of given state
@@ -1710,13 +1711,13 @@ class KeyTimeInstanceNode(FormattedNameNode):
             # case arrises
             aligned_kti.index = index_aligned
             aligned_node.append(aligned_kti)
-        
+
         return aligned_node
 
 
 class KeyPointValueNode(FormattedNameNode):
     node_type_abbr = 'KPV'
-    
+
     def __init__(self, *args, **kwargs):
         super(KeyPointValueNode, self).__init__(*args, **kwargs)
 
@@ -1809,7 +1810,7 @@ class KeyPointValueNode(FormattedNameNode):
             # TODO: check for negative index following downsampling if use
             # case arrises
             ##if aligned_kpv.slice:
-                ##aligned_kpv.slice = align_slice(param, self, aligned_kpv.slice)
+            ##    aligned_kpv.slice = align_slice(param, self, aligned_kpv.slice)
             aligned_node.append(aligned_kpv)
         return aligned_node
 
@@ -1876,7 +1877,7 @@ class KeyPointValueNode(FormattedNameNode):
             if not suppress_zeros or value:
                 self.create_kpv(kti.index, value)
 
-    create_kpvs_at_kpvs = create_kpvs_at_ktis # both will work the same!
+    create_kpvs_at_kpvs = create_kpvs_at_ktis  # both will work the same!
 
     def create_kpvs_within_slices(self, array, slices, function, **kwargs):
         '''
@@ -1902,7 +1903,7 @@ class KeyPointValueNode(FormattedNameNode):
                 # Where slice.stop is not a whole number, it is assumed that the
                 # value is an stop_edge rather than an inclusive pythonic end to a
                 # range (stop+1) as a slice should be.
-                stop = slice_.stop if slice_.stop%1 else None
+                stop = slice_.stop if slice_.stop % 1 else None
                 index, value = function(array, slice_, start_edge=slice_.start,
                                         stop_edge=stop)
             self.create_kpv(index, value, **kwargs)
@@ -1944,43 +1945,41 @@ class KeyPointValueNode(FormattedNameNode):
             index -= duration
         self.create_kpv(index, value, **kwargs)
 
-
     def create_kpv_between(self, array, index_1, index_2, function):
         '''
         Convenient function to link a parameter and function to periods
         between two indexes. Especially useful for fuel usage.
-        
+
         This is inclusive, from index_1 up to and including index_2.
-        
+
         :param index_1: Start index
         :type index_1: Int
         :param index_2: End index
         :type index_2: Int
         '''
-        self.create_kpvs_within_slices(array, [slice(index_1, index_2+1)], function)
+        self.create_kpvs_within_slices(array, [slice(index_1, index_2 + 1)], function)
         return
-        
 
     def create_kpvs_between_ktis(self, array, kti_1, kti_2, function):
         '''
         Convenient function to link a parameter and function to periods
         between two KTIs. Especially useful for fuel usage.
-        
+
         This is inclusive, from kti_1 up to and including kti_2.
-        
+
         Assumes lists are of equal length (ignores any additional entries in
         kti_1) and ordered so that it's between index 0 of each, and index 1
         of each etc.
-        
+
         :param kti_1: Start KTIs
         :type kti_1: KTI Node or List
         :param kti_2: End KTIs
         :type kti_2: KTI Node or List
         '''
-        slices = [slice(a.index, b.index+1) for a, b in zip(kti_1, kti_2)]
+        slices = [slice(a.index, b.index + 1) for a, b in zip(kti_1, kti_2)]
         self.create_kpvs_within_slices(array, slices, function)
-        return    
-    
+        return
+
     def create_kpv_outside_slices(self, array, slices, function, **kwargs):
         '''
         Shortcut for creating a KPV excluding values within provided slices or
@@ -1998,7 +1997,7 @@ class KeyPointValueNode(FormattedNameNode):
         '''
         slices = self._get_slices(slices)
         for slice_ in slices:
-            if isinstance(slice_, Section): # Use slice within Section.
+            if isinstance(slice_, Section):  # Use slice within Section.
                 slice_ = slice_.slice
             # Exclude the slices we don't want:
             array[slice_] = np.ma.masked
@@ -2035,7 +2034,7 @@ class KeyPointValueNode(FormattedNameNode):
         '''
         slices = self._get_slices(slices)
         for slice_ in slices:
-            if isinstance(slice_, Section): # Use slice within Section.
+            if isinstance(slice_, Section):  # Use slice within Section.
                 duration = (slice_.stop_edge - slice_.start_edge) / frequency
                 if duration > min_duration:
                     if mark == 'start':
@@ -2097,7 +2096,7 @@ class KeyPointValueNode(FormattedNameNode):
         filtered before creating the KPV.
 
         Note: Replaces "create_kpvs_where" method.
-        
+
         TODO: Where Sections are provided, this method should test the
         partial edges allowed (e.g. 10.3 to 12.7)
         '''
@@ -2111,7 +2110,7 @@ class KeyPointValueNode(FormattedNameNode):
         else:
             # Handle slices and phases with slice attributes
             slices = [getattr(p, 'slice', p) for p in phase]
-            
+
         for _slice in slices:
             start = _slice.start or 0
             # NOTE: TypeError: 'bool' object is not subscriptable:
@@ -2184,7 +2183,7 @@ class ApproachNode(ListNode):
     '''
     Stores Approach objects within a list.
     '''
-    node_type_abbr = 'Approach'    
+    node_type_abbr = 'Approach'
 
     @staticmethod
     def _check_type(_type):
@@ -2399,10 +2398,10 @@ class NodeManager(object):
         :rtype: bool
         """
         if name in self.hdf_keys \
-             or self.aircraft_info.get(name) is not None \
-             or self.achieved_flight_record.get(name) is not None \
-             or self.segment_info.get(name) is not None \
-             or name in ('root', 'HDF Duration'):
+                or self.aircraft_info.get(name) is not None \
+                or self.achieved_flight_record.get(name) is not None \
+                or self.segment_info.get(name) is not None \
+                or name in ('root', 'HDF Duration'):
             return True
         elif name in self.derived_nodes:
             derived_node = self.derived_nodes[name]
@@ -2419,8 +2418,8 @@ class NodeManager(object):
             # can_operate expects attributes.
             res = derived_node.can_operate(available, *attributes)
             ##if not res:
-                ##logger.debug("Derived Node %s cannot operate with available nodes: %s",
-                              ##name, available)
+            ##    logger.debug("Derived Node %s cannot operate with available nodes: %s",
+            ##                 name, available)
             return res
         else:
             ##logger.debug("Node '%s' is unavailable", name)
@@ -2442,7 +2441,7 @@ class NodeManager(object):
 @total_ordering
 class Attribute(object):
 
-    __hash__ = None  # Fix assertItemsEqual in unit tests!    
+    __hash__ = None  # Fix assertItemsEqual in unit tests!
 
     def __init__(self, name, value=None):
         '''
