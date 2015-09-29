@@ -9,6 +9,29 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.23.1
+-------
+ - New:
+   - KPV: GrossWeightConditionalAtTouchdown (Airbus)
+   - KPV: RudderPedalMin (temporary)
+   - KPV: RudderPedalMax (temporary)
+   - Phase: IANFinalApproachCourseEstablished used by IAN KPVs
+   - Phase: IANGlidepathEstablished used by IAN KPVs
+ - Improvements:
+   - AirspeedSelectedForApproaches compensates for large offsets.
+   - APUStart and APUStop derive at the edges of the data.
+   - Derive Track True Continous from Track True with Drift being optional.
+   - EngGasTempDuringEngStart handles engines already running at start of data.
+   - Fuel Flow parameters are used for splitting flights.
+   - Handle Takeoff at start of data during Taxi Out.
+   - most_points_cost algorithm to allows for differing numbers of data samples in the array.
+   - SpeedbrakeDeployed supports Spoiler renaming.
+ - Fixes:
+   - coreg no longer overflows due to np.int32.
+   - Heading during phase KPVs no longer output 360 for very small negative numbers.
+   - Mobile: Ground Only flights with no Groundspeed will not raise Exception.
+
+
 v0.22.2
 -------
  - repair mask of lat and lon results in large speed increase for poor quality signals
