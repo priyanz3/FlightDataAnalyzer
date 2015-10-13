@@ -1460,7 +1460,7 @@ class V2AtLiftoff(KeyPointValueNode):
                     if v2_liftoff:
                         self.create_kpv(index, v2_liftoff.value)
                 else:
-                    value = most_common_value(v2.array[phase].astype(np.int))
+                    value = most_common_value(v2.array[phase])
                     self.create_kpv(index, value)
             return
 
@@ -1476,7 +1476,7 @@ class V2AtLiftoff(KeyPointValueNode):
         # 3. Derive parameter for Embraer 170/190:
         if v2_vac:
             for phase in phases:
-                value = most_common_value(v2_vac.array[phase].astype(np.int))
+                value = most_common_value(v2_vac.array[phase])
                 index = liftoffs.get_last(within_slice=phase).index
                 if value is not None:
                     self.create_kpv(index, value)
@@ -1486,7 +1486,7 @@ class V2AtLiftoff(KeyPointValueNode):
         if manufacturer and manufacturer.value == 'Airbus':
             spd_sel.array[spd_ctl.array == 'Manual'] = np.ma.masked
             for phase in phases:
-                value = most_common_value(spd_sel.array[phase].astype(np.int))
+                value = most_common_value(spd_sel.array[phase])
                 index = liftoffs.get_last(within_slice=phase).index
                 if value is not None:
                     self.create_kpv(index, value)
@@ -1606,7 +1606,7 @@ class AirspeedSelectedAtLiftoff(KeyPointValueNode):
                     stop_index=phase.stop)
                 value = spd_sel_liftoff.value if spd_sel_liftoff else None
             else:
-                value = most_common_value(spd_sel.array[phase].astype(np.int))
+                value = most_common_value(spd_sel.array[phase])
             if value:
                 self.create_kpv(index, value)
             else:

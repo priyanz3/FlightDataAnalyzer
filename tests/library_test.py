@@ -6703,21 +6703,28 @@ class TestUniqueValue(unittest.TestCase):
         res = unique_values(np.ma.array([10, 20, 10], mask=True))
         self.assertEqual(res, {})
 
+
 class TestMostCommonValue(unittest.TestCase):
     def test_most_common_value(self):
-        res = most_common_value(np.ma.array([0,1,1,1,4,4,7,1,1],
-                                   mask=[1,0,0,0,0,0,0,0,1]))
+        res = most_common_value(
+            np.ma.array([0, 1, 1, 1, 4, 4, 7, 1, 1],
+                        mask=[1, 0, 0, 0, 0, 0, 0, 0, 1])
+        )
         self.assertEqual(res, 1)
 
-    def test_most_common_value_negative_values_excluded(self):
-        res = most_common_value(np.ma.array([0,-1,-1,-1,4,4,7,1,1],
-                                            mask=[1,0,0,0,0,0,0,0,1]))
-        self.assertEqual(res, 4)
+    #def test_most_common_value_negative_values_excluded(self):
+    #    res = most_common_value(
+    #        np.ma.array([0, -1, -1, -1, 4, 4, 7, 1, 1],
+    #                    mask=[1, 0, 0, 0, 0, 0, 0, 0, 1])
+    #    )
+    #    self.assertEqual(res, 4)
 
     def test_unique_with_multistate(self):
-        array = MappedArray(np.ma.array([0, 3, 0, 0, 0, 3, 3],
-                                   mask=[1, 0, 0, 0, 0, 0, 1]),
-                            values_mapping={0:'A', 3:'B'})
+        array = MappedArray(
+            np.ma.array([0, 3, 0, 0, 0, 3, 3],
+                        mask=[1, 0, 0, 0, 0, 0, 1]),
+            values_mapping={0: 'A', 3: 'B'}
+        )
         res = most_common_value(array)
         self.assertEqual(res, 'A')
 
