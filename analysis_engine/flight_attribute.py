@@ -192,11 +192,8 @@ class DestinationAirport(FlightAttributeNode):
                 self.set_flight_attr(afr_dest.value)
             return
 
-        # XXX: Slow, but Destination should be sampled infrequently.
-        value, count = next(reversed(sorted(Counter(dest.array).items(),
-                                            key=itemgetter(1))))
-        # Q: Should we validate that the value is 3-4 characters long?
-        if value is np.ma.masked or count < len(dest.array) * 0.45:
+        value = most_common_value(dest.array, threshold=0.45)
+        if value is None:
             return
 
         api = get_api_handler(settings.API_HANDLER)
@@ -245,12 +242,12 @@ class FlightNumber(FlightAttributeNode):
     def derive(self, num=P('Flight Number')):
         # Q: Should we validate the flight number?
         if num.array.dtype.type is np.string_:
-            # XXX: Slow, but Flight Number should be sampled infrequently.
-            value, count = next(reversed(sorted(Counter(num.array).items(),
-                                                key=itemgetter(1))))
-            if value is not np.ma.masked and count > len(num.array) * 0.45:
+            value = most_common_value(num.array, threshold=0.45)
+            if value is not None:
                 self.set_flight_attr(value)
+
             return
+
         # Values of 0 are invalid flight numbers
         array = np.ma.masked_less_equal(num.array, 0)
         # Ignore masked values
@@ -922,13 +919,6 @@ class FlightType(FlightAttributeNode):
             # should we raise an error
             flight_type = types.INCOMPLETE
         self.set_flight_attr(flight_type)
-
-#Q: Not sure if we can identify Destination from the data?
-##class DestinationAirport(FlightAttributeNode):
-    ##""
-    ##def derive(self):
-        ##return NotImplemented
-                    ##{'id':9456, 'name':'City. Airport'}
 
 
 class LandingDatetime(FlightAttributeNode):

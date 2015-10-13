@@ -1490,31 +1490,33 @@ def modulo(value1, value2):
     return float(Decimal(str(value1)) % Decimal(str(value2)))
 
 
-def most_common_value(array):
+def most_common_value(array, threshold=None):
     '''
     Find the most repeating non-negative valid value within an array. Works
-    with mapped arrays too.
-
-    Hint: If you get "TypeError: array cannot be safely cast to required type"
-    and your data is integer type, try casting it to int type:
-
-    most_common_value(array.astype(int))
+    with mapped arrays too as well as arrays of strings.
 
     :param array: Array to count occurrences of values within
     :type array: np.ma.array
-    :returns: [(val, count), (val2, count2)]
-    :rtype: List of tuples
+    :param threshold: return None if number of most common value occurrences is
+        less than this
+    :type threshold: float
+    :returns: most common value in array
     '''
-    if not np.ma.count(array):
-        # no valid data
+    compressed = array.compressed()
+    values, counts = np.unique(compressed, return_counts=True)
+    if not counts.size:
         return None
-    array[array < 0] = np.ma.masked
-    counts = np.bincount(array.compressed())
-    key = counts.argmax()
+
+    i = np.argmax(counts)
+    value, count = values[i], counts[i]
+
+    if threshold is not None and count < compressed.size * threshold:
+        return None
+
     if hasattr(array, 'values_mapping'):
-        return array.values_mapping[key]
+        return array.values_mapping[value]
     else:
-        return key
+        return value
 
 
 def compress_iter_repr(iterable, cast=None, join='+'):
