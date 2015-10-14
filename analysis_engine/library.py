@@ -226,7 +226,9 @@ airspeed may be used.
     # Do some spadework to prepare the ground
     repair_mask(spd, repair_duration=None)
     repair_mask(hdg, repair_duration=None)
-    valid_slice = np.ma.clump_unmasked(np.ma.masked_less_equal(spd, 50.0))[0]
+    # Get longest slice as we want the flight not a high speed RTO
+    valid_slices = np.ma.clump_unmasked(np.ma.masked_less_equal(spd, 50.0))
+    valid_slice = max(valid_slices, key=lambda p: p.stop - p.start)
     hdg_rad = hdg[valid_slice] * deg2rad
 
     lat[valid_slice], lon[valid_slice] = compute_track(lat_start, lon_start,
