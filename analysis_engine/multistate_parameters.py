@@ -2236,7 +2236,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             return 'Speedbrake Handle' in x
         elif family and family.value in ('A318', 'A319', 'A320', 'A321'):
             return 'Speedbrake' in x and 'Speedbrake Armed' in x
-        elif family and family.value == 'A330':
+        elif family and family.value in('A330', 'A340', 'A380'):
             return ('Speedbrake Deployed' in x or
                     all_of(('Speedbrake', 'Speedbrake Handle'), x))
         else:
