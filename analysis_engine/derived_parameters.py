@@ -6016,8 +6016,8 @@ class Speedbrake(DerivedParameterNode):
         Note: The frame name cannot be accessed within this method to determine
               which parameters are required.
 
-        Re 737NG: The ARINC 429 recorded spoiler positions 4 & 9 are used as
-        these have a consistent scaling wheras the synchro sourced 3 & 10
+        Re 737NG: The ARINC 429 recorded spoiler positions L&R 3 are used as
+        these have a consistent scaling wheras the synchro sourced L&R 4
         positions have a scaling that changes with short field option.
         '''
         family_name = family.value if family else None
@@ -6026,7 +6026,7 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (2)' in available and
                 'Spoiler (R) (2)' in available
             ) or
-            family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330') and (
+            family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330', 'A340', 'A380') and (
                 'Spoiler (L) (3)' in available and
                 'Spoiler (R) (3)' in available
             ) or
@@ -6101,7 +6101,7 @@ class Speedbrake(DerivedParameterNode):
 
         if family_name in ('G-V', 'G-IV') or (family_name == 'CL-600' and spoiler_l2 and spoiler_r2):
             self.merge_spoiler(spoiler_l2, spoiler_r2)
-        elif family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321','A330'):
+        elif family_name in ('B737 NG', 'A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380'):
             self.merge_spoiler(spoiler_l3, spoiler_r3)
         elif family_name  == 'B737 Classic':
             self.merge_spoiler(spoiler_l4, spoiler_r4)
