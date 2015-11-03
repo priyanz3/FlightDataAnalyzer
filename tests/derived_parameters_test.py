@@ -6229,6 +6229,7 @@ class TestVMOLookup(unittest.TestCase, NodeTest):
             np.ma.repeat(300, 15),
             np.ma.repeat(000, 9),
         ))
+        expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
@@ -6243,10 +6244,11 @@ class TestVMOLookup(unittest.TestCase, NodeTest):
         attributes = (a.value for a in attributes)
         at.get_vspeed_map.assert_called_once_with(*attributes)
         expected = np.ma.concatenate((
-            np.ma.repeat(350, 20),
-            np.ma.repeat(300, 21),
+            np.ma.repeat(350, 21),
+            np.ma.repeat(300, 20),
             np.ma.repeat(000, 9),
         ))
+        expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
