@@ -2885,14 +2885,14 @@ class TestHeadingContinuous(unittest.TestCase, NodeTest):
         self.assertEqual(node.frequency, 1,0)
 
     def test_heading_continuous_not_hercules(self):
-        hdg = P('Heading',np.ma.array(data=[10]*60, mask=[0]*20+[1]*20+[0]*20))
+        hdg = P('Heading',np.ma.array(data=[10]*60, mask=[0]*20+[1]*20+[0]*20, dtype=float))
         con_hdg = HeadingContinuous()
         con_hdg.derive(hdg, None, None, None)
         # REPAIR_DURATION is limited to 10 seconds, so this should not be repaired.
         self.assertEqual(np.ma.count(con_hdg.array), 40)
 
     def test_heading_continuous_hercules(self):
-        hdg = P('Heading',np.ma.array(data=[10]*60, mask=[0]*20+[1]*20+[0]*20))
+        hdg = P('Heading', np.ma.array(data=[10]*60, mask=[0]*20+[1]*20+[0]*20, dtype=float))
         con_hdg = HeadingContinuous()
         herc = A('Frame', 'L382-Hercules')
         con_hdg.derive(hdg, None, None, herc)
@@ -6354,6 +6354,7 @@ class TestMMOLookup(unittest.TestCase, NodeTest):
             np.ma.repeat(0.800, 15),
             np.ma.repeat(0.000, 9),
         ))
+        expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_almost_equal(node.array, expected, decimal=3)
 
@@ -6368,10 +6369,11 @@ class TestMMOLookup(unittest.TestCase, NodeTest):
         attributes = (a.value for a in attributes)
         at.get_vspeed_map.assert_called_once_with(*attributes)
         expected = np.ma.concatenate((
-            np.ma.repeat(0.850, 20),
-            np.ma.repeat(0.800, 21),
+            np.ma.repeat(0.850, 21),
+            np.ma.repeat(0.800, 20),
             np.ma.repeat(0.000, 9),
         ))
+        expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
