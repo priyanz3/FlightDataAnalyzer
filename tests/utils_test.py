@@ -17,13 +17,11 @@ from analysis_engine.utils import (
 class TestTrimmer(unittest.TestCase):
 
     @patch('analysis_engine.utils.hdf_file')
-    @patch('analysis_engine.utils.datetime')
     @patch('analysis_engine.utils.get_derived_nodes')
     @patch('analysis_engine.utils.strip_hdf')
     @patch('analysis_engine.settings.NODE_MODULES')
     def test_derived_trimmer_mocked(self, node_modules, strip_hdf,
-                                    get_derived_nodes, datetime, file_patched):
-        datetime.now = Mock()
+                                    get_derived_nodes, file_patched):
         hdf_contents = {'IVV': Mock(), 'DME': Mock(), 'WOW': Mock()}
         class hdf_file(dict):
             duration = 10

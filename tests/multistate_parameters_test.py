@@ -1298,7 +1298,7 @@ class TestFlapIncludingTransition(unittest.TestCase, NodeTest):
             family=A('Family', None),
         ))
 
-    @patch('analysis_engine.library.at')
+    @patch('analysis_engine.multistate_parameters.at')
     def test_derive(self, at):
         at.get_flap_map.return_value = {f: str(f) for f in (0, 1, 2, 5, 10, 15, 25, 30, 40)}
         _am = A('Model', 'B737-333')
@@ -1314,8 +1314,14 @@ class TestFlapIncludingTransition(unittest.TestCase, NodeTest):
         self.assertEqual(node.values_mapping, at.get_flap_map.return_value)
         self.assertEqual(node.units, ut.DEGREE)
         self.assertIsInstance(node.array, MappedArray)
-        self.assertEqual(node.frequency, 4)
-        self.assertEqual(node.array.raw.tolist(), [0] * 11 + [40] * 92 + [None])
+        expected = [
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 5.0, 5.0, 5.0, 10.0, 10.0,
+            10.0, 10.0, 10.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 25.0, 25.0,
+            25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 30.0, 30.0, 30.0, 30.0,
+            30.0, 30.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0, 40.0,
+            40.0, 40.0, 40.0, 40.0, 40.0, 40.0
+        ]
+        self.assertEqual(node.array.raw.tolist(), expected)
 
 
 class TestFlapLever(unittest.TestCase, NodeTest):
