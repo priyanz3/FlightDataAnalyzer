@@ -9,6 +9,7 @@ import unittest
 from datetime import datetime
 from math import sqrt
 from mock import patch
+from numpy.ma.testutils import assert_array_almost_equal, assert_array_equal, assert_array_less, assert_equal
 from time import clock
 
 from analysis_engine.flight_attribute import LandingRunway
@@ -826,7 +827,7 @@ class TestAlign(unittest.TestCase):
         expected_data = range(100, 112) + [0] * 4
         expected = np.ma.array(data=expected_data,
                                mask=[0]*12+[1]*4)
-        ma_test.assert_array_almost_equal(result, expected)
+        assert_array_almost_equal(result, expected)
 
     def test_align_8_hz_half_hz(self):
         # Same offset, so every 16th sample (ratio between master and slave)
@@ -905,7 +906,7 @@ class TestAlign(unittest.TestCase):
         master = P('master', array=[1,2,3], frequency=1.0, offset=0.0)
         slave = P('slave', np.ma.arange(15), frequency=5.0, offset=0.0)
         result = align(slave, master)
-        ma_test.assert_array_equal(result, [0, 5, 10])
+        assert_array_equal(result, [0, 5, 10])
 
     def test_align_5hz_reverse(self):
         master = P('master', np.ma.arange(15.0), frequency=5.0, offset=0.0)
@@ -913,13 +914,13 @@ class TestAlign(unittest.TestCase):
         result = align(slave, master)
         expected = (master.array/5.0)+1.0
         expected[11:]=np.ma.masked
-        ma_test.assert_array_almost_equal(result, expected)
+        assert_array_almost_equal(result, expected)
 
     def test_align_10hz(self):
         master = P('master', array=[1,2], frequency=1.0, offset=0.0)
         slave = P('slave', np.ma.arange(20), frequency=10.0, offset=0.0)
         result = align(slave, master)
-        ma_test.assert_array_equal(result, [0, 10])
+        assert_array_equal(result, [0, 10])
 
     def test_align_10hz_reverse(self):
         master = P('master', np.ma.arange(20.0), frequency=10.0, offset=0.0)
@@ -927,13 +928,13 @@ class TestAlign(unittest.TestCase):
         result = align(slave, master)
         expected = (master.array/10.0)+2.0
         expected[21:]=np.ma.masked
-        ma_test.assert_array_almost_equal(result, expected)
+        assert_array_almost_equal(result, expected)
 
     def test_align_20hz(self):
         master = P('master', array=[1,2], frequency=1.0, offset=0.0)
         slave = P('slave', np.ma.arange(40), frequency=20.0, offset=0.0)
         result = align(slave, master)
-        ma_test.assert_array_equal(result, [0, 20])
+        assert_array_equal(result, [0, 20])
 
     def test_align_20hz_reverse(self):
         master = P('master', np.ma.arange(100.0), frequency=20.0, offset=0.0)
@@ -941,7 +942,7 @@ class TestAlign(unittest.TestCase):
         result = align(slave, master)
         expected = 6.0-(master.array/20.0)
         expected[81:]=np.ma.masked
-        ma_test.assert_array_almost_equal(result, expected)
+        assert_array_almost_equal(result, expected)
 
     def test_align_5_10_20_offset_master(self):
         master = P('master', np.ma.arange(100.0), frequency=20.0, offset=0.1)
@@ -3494,7 +3495,7 @@ class TestIntegrate (unittest.TestCase):
         data = np.ma.array(data = [1,1,2,2],
                            mask = [0,0,0,1])
         result = integrate(data,1.0)
-        ma_test.assert_array_equal(np.ma.array(data=[0,1,2.5,2.5], mask=[0,0,0,1]),
+        assert_array_equal(np.ma.array(data=[0,1,2.5,2.5], mask=[0,0,0,1]),
                                    result)
 
     def test_integration_masked_tail_repaired(self):
@@ -3502,7 +3503,7 @@ class TestIntegrate (unittest.TestCase):
         data = np.ma.array(data = [1,1,2,99],
                            mask = [0,0,0,1])
         result = integrate(data,1.0, repair=True)
-        ma_test.assert_array_equal(np.ma.array([0,1,2.5,4.5]), result)
+        assert_array_equal(np.ma.array([0,1,2.5,4.5]), result)
 
     def test_integration_extended(self):
         data = np.ma.array([1,3,5,7.0])
@@ -3533,7 +3534,7 @@ class TestIsSliceWithinSlice(unittest.TestCase):
 
 
 class TestMaskInsideSlices(unittest.TestCase):
-    # Note: This test used "ma_test.assert_equal" but this does not test the
+    # Note: This test used "assert_equal" but this does not test the
     # array correctly. Changed to "ma_test.assert_masked_array_equal" for
     # correct operation.
     def test_mask_inside_slices(self):
@@ -3606,7 +3607,7 @@ class TestMaxContinuousUnmasked(unittest.TestCase):
 
 
 class TestMaskOutsideSlices(unittest.TestCase):
-    # Note: This test used "ma_test.assert_equal" but this does not test the
+    # Note: This test used "assert_equal" but this does not test the
     # array correctly. Changed to "ma_test.assert_masked_array_equal" for
     # correct operation.
     def test_mask_outside_slices(self):
@@ -3774,13 +3775,13 @@ class TestMaxAbsValue(unittest.TestCase):
 
 class TestMergeMasks(unittest.TestCase):
     def test_merge_masks_default(self):
-        ma_test.assert_equal(
+        assert_equal(
             merge_masks([np.array([False, False, False, True, True]),
                          np.array([False, False, True, True, False])]),
             np.array([False, False, True, True, True]))
 
     def test_merge_masks_two_unmasked(self):
-        ma_test.assert_equal(
+        assert_equal(
             merge_masks([np.array([False, False, False, True, True]),
                          np.array([False, False, True, True, False])],
                         min_unmasked=2),
@@ -3793,7 +3794,7 @@ class TestMergeSources(unittest.TestCase):
         p2 = np.ma.array([1,2,3,4])
         result = merge_sources(p1, p2)
         expected = np.ma.array([0,1,0,2,0,3,0,4])
-        np.testing.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
 
 class TestMergeTwoParameters(unittest.TestCase):
@@ -4029,7 +4030,7 @@ class TestBlendParametersWeighting(unittest.TestCase):
                           mask=[1,1,0,1,0,0,0,1,1,1,0,0,0])
         result = blend_parameters_weighting(array, 1.0)
         expected = [0.0,0.0,0.05,0.0,0.05,1.0,0.05,0.0,0.0,0.0,0.05,1.0,1.0]
-        ma_test.assert_equal(result.data, expected)
+        assert_equal(result.data, expected)
 
     def test_weighting_increased_freq(self):
         array=np.ma.array(data=[0,0,0,0,0,0],
@@ -4264,7 +4265,7 @@ class TestNearestNeighbourMaskRepair(unittest.TestCase):
 
 class TestNormalise(unittest.TestCase):
     def test_normalise_copy(self):
-        md = np.ma.array([range(10), range(20,30)])
+        md = np.ma.array([range(10), range(20,30)], dtype=float)
         res = normalise(md, copy=True)
         self.assertNotEqual(id(res), id(md))
         self.assertEqual(md.max(), 29)
@@ -4278,15 +4279,15 @@ class TestNormalise(unittest.TestCase):
         md = np.ma.array([range(10), range(20,30)], dtype=np.float)
         res1 = normalise(md)
         # normalised to max val 30 means first 10 will be below 0.33 and second 10 above 0.66
-        ma_test.assert_array_less(res1[0,:], 0.33)
-        ma_test.assert_array_less(res1[1,:], 1.1)
+        assert_array_less(res1[0,:], 0.33)
+        assert_array_less(res1[1,:], 1.1)
 
         # normalise with max value
         md = np.ma.array([range(10), range(20,30)], dtype=np.float)
         res1 = normalise(md, scale_max=40)
         # normalised to max val 40 means first 10 will be below 0.33 and second 10 above 0.66
-        ma_test.assert_array_less(res1[0,:], 0.226)
-        ma_test.assert_array_less(res1[1,:], 0.776)
+        assert_array_less(res1[0,:], 0.226)
+        assert_array_less(res1[1,:], 0.776)
 
         # normalise per axis
         res2 = normalise(md, axis=1)
@@ -4302,7 +4303,7 @@ class TestNormalise(unittest.TestCase):
         ##self.assertEqual(res3[1,:].max(), 1.0)
 
     def test_normalise_masked(self):
-        arr = np.ma.arange(10)
+        arr = np.ma.arange(10, dtype=float)
         arr[0] = 1000
         arr[0] = np.ma.masked
         arr[9] = np.ma.masked
@@ -4318,23 +4319,23 @@ class TestNpMaZerosLike(unittest.TestCase):
     def test_zeros_like_basic(self):
         result = np_ma_zeros_like(np.ma.array([1,2,3]))
         expected = np.ma.array([0,0,0])
-        ma_test.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
     def test_zeros_like_from_mask(self):
         result = np_ma_zeros_like(np.ma.array([1,2,3]))
         expected = np.ma.array([0,0,0])
-        ma_test.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
     def test_zeros_like_from_masked(self):
         result = np_ma_zeros_like(np.ma.array(data=[1,2,3],mask=[1,0,1]))
         expected = np.ma.array([0,0,0])
-        ma_test.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
     def test_zeros_like_from_all_masked(self):
         # This was found to be a special case.
         result = np_ma_zeros_like(np.ma.array(data=[1,2,3],mask=[1,1,1]))
         expected = np.ma.array([0,0,0])
-        ma_test.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
 
 class TestNpMaConcatenate(unittest.TestCase, M):
@@ -4342,7 +4343,7 @@ class TestNpMaConcatenate(unittest.TestCase, M):
         a1 = np.ma.arange(0,4)
         a2 = np.ma.arange(4,8)
         answer = np.ma.arange(8)
-        ma_test.assert_array_equal(np_ma_concatenate([a1,a2]),answer)
+        assert_array_equal(np_ma_concatenate([a1,a2]),answer)
 
     def test_rejection_of_differing_arrays(self):
         a1 = M(name = 'a1',
@@ -4381,7 +4382,7 @@ class TestNpMaConcatenate(unittest.TestCase, M):
         a=np.ma.arange(5)
         result = np_ma_concatenate([a])
         self.assertEqual(len(result), 5)
-        ma_test.assert_array_equal(result,a)
+        assert_array_equal(result,a)
 
     def test_empty_list(self):
         self.assertEqual(np_ma_concatenate([]),None)
@@ -4391,7 +4392,7 @@ class TestNpMaOnesLike(unittest.TestCase):
     def test_zeros_like_basic(self):
         result = np_ma_ones_like(np.ma.array([1,2,3]))
         expected = np.ma.array([1,1,1])
-        ma_test.assert_array_equal(expected, result)
+        assert_array_equal(expected, result)
 
 
 class TestNpMaMaskedZerosLike(unittest.TestCase):
@@ -4670,19 +4671,19 @@ class TestRateOfChangeArray(unittest.TestCase):
         test_array = np.ma.array([0,1,2,3,4], dtype=float)
         sloped = rate_of_change_array(test_array, 2.0, 1.0)
         answer = np.ma.array([2,2,2,2,2])
-        ma_test.assert_array_almost_equal(sloped, answer)
+        assert_array_almost_equal(sloped, answer)
 
     def test_case_short_data(self):
         test_array = np.ma.array([0,1,2,3,4], dtype=float)
         sloped = rate_of_change_array(test_array, 2.0, 10.0)
         answer = np.ma.array([0,0,0,0,0])
-        ma_test.assert_array_almost_equal(sloped, answer)
+        assert_array_almost_equal(sloped, answer)
 
     def test_case_very_short_data(self):
         test_array = np.ma.array([99], dtype=float)
         sloped = rate_of_change_array(test_array, 2.0, 10.0)
         answer = np.ma.array([0])
-        ma_test.assert_array_almost_equal(sloped, answer)
+        assert_array_almost_equal(sloped, answer)
 
     def test_masked(self):
         test_array = np.ma.array(data=[1,2,3,4,5,6,6,6,5,4,3,2,1],
@@ -4690,7 +4691,7 @@ class TestRateOfChangeArray(unittest.TestCase):
         sloped = rate_of_change_array(test_array, 1.0, 4.0)
         answer = np.ma.array(data=[1,1,99,99,99,99,99,99,99,99,99,-1,-1],
                              mask=[0,0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0])
-        ma_test.assert_array_equal(sloped, answer)
+        assert_array_equal(sloped, answer)
 
 
 class TestRateOfChange(unittest.TestCase):
@@ -4822,7 +4823,7 @@ class TestRepairMask(unittest.TestCase):
         array = np.ma.array([2,4,6,7,5,3,1],mask=[1,1,0,0,1,1,1])
         res = repair_mask(array, extrapolate=True)
         expected = np.ma.array([6,6,6,7,7,7,7],mask=[0,0,0,0,0,0,0])
-        ma_test.assert_array_equal(res, expected)
+        assert_array_equal(res, expected)
 
     def test_fully_masked_array(self):
         array = np.ma.array(range(10), mask=[1]*10)
@@ -4830,8 +4831,8 @@ class TestRepairMask(unittest.TestCase):
         self.assertRaises(ValueError, repair_mask, array)
         # fully masked returns a masked zero array
         res = repair_mask(array, raise_entirely_masked=False)
-        ma_test.assert_array_equal(res.data, array.data)
-        ma_test.assert_array_equal(res.mask, True)
+        assert_array_equal(res.data, array.data)
+        assert_array_equal(res.mask, True)
 
     def test_repair_mask_basic_2(self):
         array = np.ma.arange(10)
@@ -4850,12 +4851,12 @@ class TestRepairMask(unittest.TestCase):
 
 class TestResample(unittest.TestCase):
     def test_resample_upsample(self):
-        ma_test.assert_equal(
+        assert_equal(
             resample(np.array([True, False, True, True]), 0.5, 1),
             np.array([True, True, False, False, True, True, True, True]))
 
     def test_resample_downsample(self):
-        ma_test.assert_equal(
+        assert_equal(
             resample(np.array([True, False, True, False, True]), 4, 2),
             np.array([True, True]))
 
@@ -6467,10 +6468,10 @@ class TestStraightenHeadings(unittest.TestCase):
     def test_straighten_headings_starting_masked(self):
         data = np.ma.array(
             data=[0]*10+[6]*8+[1]*4+[10,5,0,355,350]+[0]*4,
-            mask=[True]*10+[False]*8+[True]*4+[False]*5+[True]*4)
+            mask=[True]*10+[False]*8+[True]*4+[False]*5+[True]*4, dtype=float)
         expected = np.ma.array(
             data=[0]*10+[6]*8+[0]*4+[10,5,0,-5,-10]+[0]*4,
-            mask=[True]*10+[False]*8+[True]*4+[False]*5+[True]*4)
+            mask=[True]*10+[False]*8+[True]*4+[False]*5+[True]*4, dtype=float)
         ma_test.assert_masked_array_approx_equal(straighten_headings(data),
                                                  expected)
 
@@ -6479,10 +6480,10 @@ class TestStraightenHeadings(unittest.TestCase):
                 True, False, False]
         data = np.ma.array(
             [340, 345, 350, 8539, 2920, 10, 15, 20, 8580, 6581, 35, 40],
-            mask=mask)
+            mask=mask, dtype=float)
         expected = np.ma.array(
             [340, 345, 350, 8539, 2920, 370, 375, 380, 8580, 6581, 395, 400],
-            mask=mask)
+            mask=mask, dtype=float)
         ma_test.assert_masked_array_approx_equal(straighten_headings(data),
                                                  expected)
 
@@ -6840,12 +6841,12 @@ class TestVstackParams(unittest.TestCase):
         b[0] = np.ma.masked
         b[-1] = np.ma.masked
         c = None
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(vstack_params(a), 99),
             np.array([[99, 1, 2, 3, 4, 5, 6, 7, 8, 9]])
         )
         # test mixed types (Parameter, Masked Array, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(vstack_params(None, a, b, c), 99),
             np.array([[99,  1,  2,  3,  4,  5,  6,  7,  8,  9],
                       [99, 11, 12, 13, 14, 15, 16, 17, 18, 99]])

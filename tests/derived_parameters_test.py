@@ -10,6 +10,8 @@ import unittest
 from itertools import izip
 from mock import Mock, call, patch
 
+from numpy.ma.testutils import assert_array_almost_equal, assert_array_equal, assert_almost_equal, assert_equal
+
 from hdfaccess.file import hdf_file
 from flightdatautilities import aircrafttables as at, units as ut
 from flightdatautilities.aircrafttables.interfaces import VelocitySpeed
@@ -629,7 +631,7 @@ class TestAirspeedTrue(unittest.TestCase):
         alt.array[1] = np.ma.masked
         tat.array[2] = np.ma.masked
         tas.derive(cas, alt, tat)
-        np.testing.assert_array_equal(tas.array.mask, [True] * 3)
+        assert_array_equal(tas.array.mask, [True] * 3)
 
     def test_tas_no_tat(self):
         cas = P('Airspeed', np.ma.array([100, 200, 300]))
@@ -656,9 +658,9 @@ class TestAirspeedTrue(unittest.TestCase):
         tas = AirspeedTrue()
         tas.derive(cas, alt, None, toffs, lands, None, gspd, acc)
         expected = accel+accel[::-1]
-        ma_test.assert_array_almost_equal(tas.array[3:-4], expected[3:-4], decimal=1)
-        ma_test.assert_array_almost_equal(tas.array[:3], [12.0]*3, decimal=1)
-        ma_test.assert_array_almost_equal(tas.array[-4:], [14.0]*4, decimal=1)
+        assert_array_almost_equal(tas.array[3:-4], expected[3:-4], decimal=1)
+        assert_array_almost_equal(tas.array[:3], [12.0]*3, decimal=1)
+        assert_array_almost_equal(tas.array[-4:], [14.0]*4, decimal=1)
         # Curiously, the test above only checks the valid samples, so no
         # extrapolation is needed to pass, hence a check on validity is
         # essential !
@@ -678,7 +680,7 @@ class TestAirspeedTrue(unittest.TestCase):
         tas = AirspeedTrue()
         tas.derive(cas, alt, None, toffs, lands, None, None, acc)
         expected = speed+speed[::-1]
-        ma_test.assert_array_almost_equal(tas.array, expected, decimal=1)
+        assert_array_almost_equal(tas.array, expected, decimal=1)
         # Curiously, the test above only checks the valid samples, so no
         # extrapolation is needed to pass, hence a check on validity is
         # essential !
@@ -694,7 +696,7 @@ class TestAirspeedTrue(unittest.TestCase):
         tas = AirspeedTrue()
         tas.derive(cas, alt, None, None, None, rtos, None, acc)
         expected = speed+speed[::-1]
-        ma_test.assert_array_almost_equal(tas.array, expected, decimal=1)
+        assert_array_almost_equal(tas.array, expected, decimal=1)
 
 
 class TestAltitudeSTDSmoothed(unittest.TestCase):
@@ -741,7 +743,7 @@ class TestAltitudeAAL(unittest.TestCase):
         alt_aal = AltitudeAAL()
         alt_aal.derive(alt_rad,alt_std, phase_fast)
         expected = np.ma.array([0, 0, 30, 80, 250, 560, 220, 70, 20, 0])
-        np.testing.assert_array_equal(expected, alt_aal.array.data)
+        assert_array_equal(expected, alt_aal.array.data)
 
     def test_alt_aal_bounce_rejection(self):
         data = np.ma.array([-3, 0, 30, 80, 250, 560, 220, 70, 20, -5, 2, 2, 2,
@@ -755,7 +757,7 @@ class TestAltitudeAAL(unittest.TestCase):
         alt_aal.derive(alt_rad, alt_std, phase_fast)
         expected = np.ma.array([0, 0, 30, 80, 250, 560, 220, 70, 20, 0, 0, 0, 0,
                                 0, 0])
-        np.testing.assert_array_equal(expected, alt_aal.array.data)
+        assert_array_equal(expected, alt_aal.array.data)
 
     def test_alt_aal_no_ralt(self):
         data = np.ma.array([-3, 0, 30, 80, 250, 580, 220, 70, 20, 25])
@@ -767,7 +769,7 @@ class TestAltitudeAAL(unittest.TestCase):
         alt_aal = AltitudeAAL()
         alt_aal.derive(None, alt_std, phase_fast, pitch)
         expected = np.ma.array([0, 0, 30, 80, 250, 560, 200, 50, 0, 0])
-        np.testing.assert_array_equal(expected, alt_aal.array.data)
+        assert_array_equal(expected, alt_aal.array.data)
 
     def test_alt_aal_complex(self):
         testwave = np.ma.cos(np.arange(0, 3.14 * 2 * 5, 0.1)) * -3000 + \
@@ -1121,7 +1123,7 @@ class TestAltitudeAALForFlightPhases(unittest.TestCase):
         expected = np.ma.array(data=[0,100,66,33,0],mask=False)
         # ...because data interpolates across the masked values and integer
         # values are rounded.
-        ma_test.assert_array_equal(alt_4_ph.array, expected)
+        assert_array_equal(alt_4_ph.array, expected)
 
 
 
@@ -1138,7 +1140,7 @@ class TestAltitudeForFlightPhases(unittest.TestCase):
         raw_data[1] = np.ma.masked
         alt_4_ph.derive(Parameter('Altitude STD', raw_data, 1,0.0))
         expected = np.ma.array([0,0,0],mask=False)
-        np.testing.assert_array_equal(alt_4_ph.array, expected)
+        assert_array_equal(alt_4_ph.array, expected)
 
     def test_altitude_for_phases_hysteresis(self):
         alt_4_ph = AltitudeForFlightPhases()
@@ -1260,7 +1262,7 @@ class TestAltitudeRadio(unittest.TestCase):
                                  np.ma.array([30.0,30.0,30.0,30.0,30.3]), 0.25, 3.0),
                        None, None, None, None, None)
         answer = np.ma.array(data=[17.5]*80, mask=[True] + (79 * [False]))
-        ma_test.assert_array_almost_equal(alt_rad.array, answer, decimal=0)
+        assert_array_almost_equal(alt_rad.array, answer, decimal=0)
         self.assertEqual(alt_rad.offset, 0.0)
         self.assertEqual(alt_rad.frequency, 4.0)
 
@@ -1273,7 +1275,7 @@ class TestAltitudeRadio(unittest.TestCase):
                        None, None, None, None, None, None)
         answer = np.ma.array(data=[15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.1, 15.1, 15.1, 15.1, 15.2, 15.2, 15.3, 15.3, 15.4],
                              mask=[True] + ([False] * 38) + [True])
-        ma_test.assert_array_almost_equal(alt_rad.array, answer, decimal=1)
+        assert_array_almost_equal(alt_rad.array, answer, decimal=1)
         self.assertEqual(alt_rad.offset, 0.0)
         self.assertEqual(alt_rad.frequency, 4.0)
 
@@ -1289,7 +1291,7 @@ class TestAltitudeRadio(unittest.TestCase):
             15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0,
             15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.1, 15.1,
             15.1, 15.1, 15.2, 15.2, 15.3, 15.3, 15.4], mask=[True] + (38 * [False]) + [False])
-        ma_test.assert_array_almost_equal(alt_rad.array, answer, decimal=1)
+        assert_array_almost_equal(alt_rad.array, answer, decimal=1)
         self.assertEqual(alt_rad.offset, 0.0)
         self.assertEqual(alt_rad.frequency, 4.0)
 
@@ -1303,7 +1305,7 @@ class TestAltitudeRadio(unittest.TestCase):
                        None, None, None)
         answer = np.ma.array(data=[15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.1, 15.1, 15.1, 15.1, 15.2, 15.2, 15.3, 15.3, 15.4],
                              mask=[True] + (38 * [False]) + [False])
-        ma_test.assert_array_almost_equal(alt_rad.array, answer, decimal=1)
+        assert_array_almost_equal(alt_rad.array, answer, decimal=1)
         self.assertEqual(alt_rad.offset, 0.0)
         self.assertEqual(alt_rad.frequency, 4.0)
 
@@ -1465,7 +1467,7 @@ class TestAltitudeRadioForFlightPhases(unittest.TestCase):
         raw_data[1] = np.ma.masked
         alt_4_ph.derive(Parameter('Altitude Radio', raw_data, 1,0.0))
         expected = np.ma.array([0,0,0],mask=False)
-        np.testing.assert_array_equal(alt_4_ph.array, expected)
+        assert_array_equal(alt_4_ph.array, expected)
 """
 
 
@@ -1493,7 +1495,7 @@ class TestAltitudeSTD(unittest.TestCase):
         alt_std_low = Parameter('Altitude STD Low', low_values)
         alt_std = AltitudeSTD()
         result = alt_std._high_and_low(alt_std_high, alt_std_low)
-        ma_test.assert_equal(result,
+        assert_equal(result,
                              np.ma.masked_array([15500, 16500, 17375, 17980, 19000,
                                                  20000, 19000, 17980, 17375, 16500],
                                                 mask=[False] * 8 + 2 * [True]))
@@ -1509,7 +1511,7 @@ class TestAltitudeSTD(unittest.TestCase):
                         np.ma.array([60, 120, 180, 240, 300, 360],
                                     mask=[False] * 4 + [True] + [False]))
         result = alt_std._rough_and_ivv(alt_std_rough, ivv)
-        ma_test.assert_equal(result,
+        assert_equal(result,
                              np.ma.masked_array([61, 63, 65, 67, 0, 0],
                                                 mask=[False] * 4 + [True] * 2))
 
@@ -1617,7 +1619,7 @@ class TestBrake_TempAvg(unittest.TestCase):
         node = self.node_class()
         node.derive(brake_1, None, brake_3, None, None, None, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -1644,7 +1646,7 @@ class TestBrake_TempMax(unittest.TestCase):
         node = self.node_class()
         node.derive(brake_1, None, brake_3, None, None, None, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -1671,7 +1673,7 @@ class TestBrake_TempMin(unittest.TestCase):
         node = self.node_class()
         node.derive(brake_1, None, brake_3, None, None, None, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -1693,7 +1695,7 @@ class TestBrakePressure(unittest.TestCase):
         brakes.derive(brake_left, brake_right)
         expected = np.ma.array([0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0],
                                mask = [0,0,0,0,0,0,0,0,0,1])
-        np.testing.assert_array_equal(brakes.array, expected)
+        assert_array_equal(brakes.array, expected)
 
     def test_basic_four_params(self):
         brake_li = P('Brake (L) Inboard Press', np.ma.array([0,0.75,1,0.75,0]))
@@ -1856,7 +1858,7 @@ class TestSidestickAngleCapt(NodeTest, unittest.TestCase):
         node.derive(pitch, roll)
 
         expected_array = np.ma.sqrt(pitch_array ** 2 + roll_array ** 2)
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
 
     def test_derive_from_hdf(self):
         [pitch, roll, sidestick], phase = self.get_params_from_hdf(
@@ -1869,9 +1871,9 @@ class TestSidestickAngleCapt(NodeTest, unittest.TestCase):
         node = self.node_class()
         node.derive(pitch, roll)
         expected_array = np.ma.sqrt(pitch.array ** 2 + roll.array ** 2)
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
 
-        np.testing.assert_array_equal(node.array, sidestick.array)
+        assert_array_equal(node.array, sidestick.array)
 
 
 class TestSidestickAngleFO(NodeTest, unittest.TestCase):
@@ -1890,7 +1892,7 @@ class TestSidestickAngleFO(NodeTest, unittest.TestCase):
         node.derive(pitch, roll)
 
         expected_array = np.ma.sqrt(pitch_array ** 2 + roll_array ** 2)
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
 
     def test_derive_from_hdf(self):
         [pitch, roll, sidestick], phase = self.get_params_from_hdf(
@@ -1903,7 +1905,7 @@ class TestSidestickAngleFO(NodeTest, unittest.TestCase):
         node = self.node_class()
         node.derive(pitch, roll)
         expected_array = np.ma.sqrt(pitch.array ** 2 + roll.array ** 2)
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
 
         np.testing.assert_array_almost_equal(node.array, sidestick.array)
 
@@ -1923,7 +1925,7 @@ class TestDistanceToLanding(unittest.TestCase):
         expected_result = np.ma.concatenate((np.ma.arange(95, 0, -1),np.ma.arange(0, 5, 1)))
         dtl = DistanceToLanding()
         dtl.derive(distance_travelled, tdwns)
-        ma_test.assert_array_equal(dtl.array, expected_result)
+        assert_array_equal(dtl.array, expected_result)
 
 
 class TestDistanceFlown(unittest.TestCase):
@@ -1941,7 +1943,7 @@ class TestDistanceFlown(unittest.TestCase):
         node = self.node_class()
         node.get_derived((tas, airborne))
         expected = np.ma.concatenate(([0]*5, np.ma.arange(0.0, 1.0, 0.1), [1.1]*5))
-        ma_test.assert_array_almost_equal(node.array, expected, decimal=1)
+        assert_array_almost_equal(node.array, expected, decimal=1)
 
 
 class TestDistanceTravelled(unittest.TestCase):
@@ -2054,7 +2056,7 @@ class TestEng_N1Avg(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng_avg = Eng_N1Avg()
         eng_avg.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng_avg.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       6,7,8,9,10,11,12,13, # unmasked avg of two engines
@@ -2083,7 +2085,7 @@ class TestEng_N1Max(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N1Max()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       11,12,13,14,15,16,17,18,9])
@@ -2095,7 +2097,7 @@ class TestEng_N1Max(unittest.TestCase, NodeTest):
         b = np.ma.array(range(54, 49, -1)) + 0.2
         eng = Eng_N1Max()
         eng.derive(P('Eng (1)',a,offset=0.25), P('Eng (2)',b, offset=0.75), None, None)
-        ma_test.assert_array_equal(eng.array,np.ma.array([54.2, 53.2, 52.2, 53, 54]))
+        assert_array_equal(eng.array,np.ma.array([54.2, 53.2, 52.2, 53, 54]))
         self.assertEqual(eng.offset, 0)
 
 
@@ -2120,7 +2122,7 @@ class TestEng_N1Min(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N1Min()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       1,2,3,4,5,6,7,8,9])
@@ -2178,7 +2180,7 @@ class TestEng_N2Avg(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng_avg = Eng_N2Avg()
         eng_avg.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng_avg.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       6,7,8,9,10,11,12,13, # unmasked avg of two engines
@@ -2207,7 +2209,7 @@ class TestEng_N2Max(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N2Max()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       11,12,13,14,15,16,17,18,9])
@@ -2235,7 +2237,7 @@ class TestEng_N2Min(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N2Min()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       1,2,3,4,5,6,7,8,9])
@@ -2263,7 +2265,7 @@ class TestEng_N3Avg(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng_avg = Eng_N3Avg()
         eng_avg.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng_avg.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       6,7,8,9,10,11,12,13, # unmasked avg of two engines
@@ -2292,7 +2294,7 @@ class TestEng_N3Max(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N3Max()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       11,12,13,14,15,16,17,18,9])
@@ -2320,7 +2322,7 @@ class TestEng_N3Min(unittest.TestCase, NodeTest):
         b[-1] = np.ma.masked
         eng = Eng_N3Min()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       1,2,3,4,5,6,7,8,9])
@@ -2345,7 +2347,7 @@ class TestEng_NpAvg(unittest.TestCase):
         b[-1] = np.ma.masked
         eng_avg = Eng_NpAvg()
         eng_avg.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng_avg.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       6,7,8,9,10,11,12,13, # unmasked avg of two engines
@@ -2370,7 +2372,7 @@ class TestEng_NpMax(unittest.TestCase):
         b[-1] = np.ma.masked
         eng = Eng_NpMax()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       11,12,13,14,15,16,17,18,9])
@@ -2394,7 +2396,7 @@ class TestEng_NpMin(unittest.TestCase):
         b[-1] = np.ma.masked
         eng = Eng_NpMin()
         eng.derive(P('a',a), P('b',b), None, None)
-        ma_test.assert_array_equal(
+        assert_array_equal(
             np.ma.filled(eng.array, fill_value=999),
             np.array([999, # both masked, so filled with 999
                       1,2,3,4,5,6,7,8,9])
@@ -2425,11 +2427,11 @@ class TestFuelQty(unittest.TestCase):
         fuel_qty_node = FuelQty()
         fuel_qty_node.derive(fuel_qty1, fuel_qty2, fuel_qty3, None, None,
                              None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([6, 12, 18]))
         # Works without all parameters.
         fuel_qty_node.derive(fuel_qty1, *[None,]*6)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([1, 2, 3]))
 
     def test_four_tanks(self):
@@ -2445,7 +2447,7 @@ class TestFuelQty(unittest.TestCase):
         fuel_qty_node = FuelQty()
         fuel_qty_node.derive(fuel_qty1, fuel_qty2, fuel_qty3, fuel_qty_a,
                              None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([17, 24, 31]))
 
     def test_masked_tank(self):
@@ -2456,7 +2458,7 @@ class TestFuelQty(unittest.TestCase):
         # Mask will be interpolated by repair_mask.
         fuel_qty_node = FuelQty()
         fuel_qty_node.derive(fuel_qty1, None, fuel_qty2, None, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([1, 2, 3]))
 
 class TestFuelQtyC(unittest.TestCase):
@@ -2488,17 +2490,17 @@ class TestFuelQtyC(unittest.TestCase):
                       array=np.ma.array([3,6,9], mask=[False, True, False]))
         fuel_qty_node = self.node_class()
         fuel_qty_node.derive(fuel_qty1, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([1, 2, 3]))
         fuel_qty_node.derive(None, fuel_qty2, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([2, 4, 6]))
         fuel_qty_node.derive(None, fuel_qty2, fuel_qty3, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([5, 10, 15],
                                                   mask=[False, True, False]))
         fuel_qty_node.derive(fuel_qty1, fuel_qty2, fuel_qty3, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([6, 12, 18],
                                                   mask=[False, True, False]))
 
@@ -2531,17 +2533,17 @@ class TestFuelQtyL(unittest.TestCase):
                       array=np.ma.array([3,6,9], mask=[False, True, False]))
         fuel_qty_node = self.node_class()
         fuel_qty_node.derive(fuel_qty1, None, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([1, 2, 3]))
         fuel_qty_node.derive(None, fuel_qty2, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([2, 4, 6]))
         fuel_qty_node.derive(None, fuel_qty2, fuel_qty3, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([5, 10, 15],
                                                   mask=[False, True, False]))
         fuel_qty_node.derive(fuel_qty1, fuel_qty2, fuel_qty3, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([6, 12, 18],
                                                   mask=[False, True, False]))
 
@@ -2575,17 +2577,17 @@ class TestFuelQtyR(unittest.TestCase):
                       array=np.ma.array([9,6,3], mask=[False, True, False]))
         fuel_qty_node = self.node_class()
         fuel_qty_node.derive(fuel_qty1, None, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([3, 2, 1]))
         fuel_qty_node.derive(None, fuel_qty2, None, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([6, 4, 2]))
         fuel_qty_node.derive(None, fuel_qty2, fuel_qty3, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([15, 10, 5],
                                                   mask=[False, True, False]))
         fuel_qty_node.derive(fuel_qty1, fuel_qty2, fuel_qty3, None, None)
-        np.testing.assert_array_equal(fuel_qty_node.array,
+        assert_array_equal(fuel_qty_node.array,
                                       np.ma.array([18, 12, 6],
                                                   mask=[False, True, False]))
 
@@ -2649,7 +2651,7 @@ class TestGrossWeightSmoothed(unittest.TestCase):
         fast = buildsection('Fast', None, None)
         gws = GrossWeightSmoothed()
         result = gws.get_derived([fuel_flow, weight, climb, descend, fast])
-        ma_test.assert_equal(result.array, weight_aligned)
+        assert_equal(result.array, weight_aligned)
 
     def test_gw_formula(self):
         weight = P('Gross Weight',np.ma.array([292,228,164,100],dtype=float),offset=0.0,frequency=1/64.0)
@@ -2765,7 +2767,7 @@ class TestGroundspeed(unittest.TestCase):
         gs = Groundspeed()
         gs.derive(one, two)
         # Note: end samples are not 100 & 350 due to method of merging.
-        np.testing.assert_array_equal(gs.array[1:-1], np.array([150, 200, 250, 300]))
+        assert_array_equal(gs.array[1:-1], np.array([150, 200, 250, 300]))
         self.assertEqual(gs.frequency, 1.0)
         self.assertEqual(gs.offset, 0.0)
 
@@ -2824,7 +2826,7 @@ class TestGroundspeedAlongTrack(unittest.TestCase):
                              #dtype=np.float, mask=False)
 
         ##ma_test.assert_masked_array_approx_equal(res, answer)
-        #np.testing.assert_array_equal(head.array.data, answer.data)
+        #assert_array_equal(head.array.data, answer.data)
 
 class TestHeadingContinuous(unittest.TestCase, NodeTest):
 
@@ -2850,7 +2852,7 @@ class TestHeadingContinuous(unittest.TestCase, NodeTest):
         expected = np.ma.array(data=[355.0, 356.0, 357.0, 358.0, 359.0, 360.0,
                                      361.0, 362.0, 363.0, 364.0],
                                dtype=np.float, mask=False)
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
     def test_heading_continuous_merged(self):
         hdg = P('Heading',np.ma.remainder(np.ma.array(range(10))+355,360.0))
@@ -2862,7 +2864,7 @@ class TestHeadingContinuous(unittest.TestCase, NodeTest):
                                dtype=np.float, mask=False)
         expected[0]=10.0
         expected[-1]=14.0
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         self.assertEqual(node.offset, 0.1)
         self.assertEqual(node.frequency, 1,0)
 
@@ -2878,7 +2880,7 @@ class TestHeadingContinuous(unittest.TestCase, NodeTest):
                                dtype=np.float, mask=False)
         expected[0]=352.0
         expected[-1]=368.0
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         self.assertEqual(node.offset, 0.1)
         self.assertEqual(node.frequency, 1,0)
 
@@ -2902,7 +2904,7 @@ class TestHeadingContinuous(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.derive(None, hdg_ca, hdg_fo, None)
         expected = np.ma.array([359,359,359.25,360,360,359.75,359.5,359 ])
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
 
 class TestTrack(unittest.TestCase, NodeTest):
@@ -2916,7 +2918,7 @@ class TestTrack(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.derive(track)
         expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
 
 class TestTrackContinuous(unittest.TestCase, NodeTest):
@@ -2931,7 +2933,7 @@ class TestTrackContinuous(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.derive(heading, drift)
         expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
 
 class TestTrackTrue(unittest.TestCase, NodeTest):
@@ -2945,7 +2947,7 @@ class TestTrackTrue(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.derive(track)
         expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
 
 class TestTrackTrueContinuous(unittest.TestCase, NodeTest):
@@ -2966,17 +2968,17 @@ class TestTrackTrueContinuous(unittest.TestCase, NodeTest):
         node = self.node_class()
         expected = [0, 50, 100, 150, 200, 250, 300, 350, 40, 90]
         node.derive(track, None, None)
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         node.derive(track, heading, None)
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         node.derive(track, heading, drift)
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         node.derive(None, heading, None)
         expected = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
         node.derive(None, heading, drift)
         expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
-        ma_test.assert_equal(node.array, expected)
+        assert_equal(node.array, expected)
 
     def test_derive_heading_extra(self):
         # Compare IRU Track Angle True (recorded) against the derived:
@@ -3068,7 +3070,7 @@ class TestHeadingIncreasing(unittest.TestCase):
         head_inc=HeadingIncreasing()
         head_inc.derive(head)
         expected = np.ma.array([0.0, 1.0, 5.0])
-        ma_test.assert_array_equal(head_inc.array, expected)
+        assert_array_equal(head_inc.array, expected)
 
 
 class TestLatitudeAndLongitudePrepared(unittest.TestCase):
@@ -3141,7 +3143,7 @@ class TestHeading(unittest.TestCase):
         head = Heading()
         head.derive(true, var)
         expected = P('Heading True', np.ma.array([358.0, 2.0, 14.0, 2.0, 347.0]))
-        ma_test.assert_array_equal(head.array, expected.array)
+        assert_array_equal(head.array, expected.array)
 
 
 class TestHeadingTrue(unittest.TestCase):
@@ -3157,7 +3159,7 @@ class TestHeadingTrue(unittest.TestCase):
         true = HeadingTrue()
         true.derive(head, None, var)
         expected = P('Heading True', np.ma.array([2.0, 8.0, 358.0, 348.0, 5.0]))
-        ma_test.assert_array_equal(true.array, expected.array)
+        assert_array_equal(true.array, expected.array)
 
     def test_from_runway_used_in_preference(self):
         head = P('Heading Continuous', np.ma.array([0,5,6,355,356]))
@@ -3166,7 +3168,7 @@ class TestHeadingTrue(unittest.TestCase):
         true = HeadingTrue()
         true.derive(head, rwy_var, mag_var)
         expected = P('Heading True', np.ma.array([0, 6, 8, 358, 0]))
-        ma_test.assert_array_equal(true.array, expected.array)
+        assert_array_equal(true.array, expected.array)
 
 
 class TestILSFrequency(unittest.TestCase):
@@ -3314,7 +3316,7 @@ class TestPitch(unittest.TestCase):
                   )
         answer = np.ma.array(data=([5.0,5.25,5.75,6.25,6.75,7.25,7.75,8.25,8.75,9.0]))
         combo = P('Pitch',answer,frequency=2,offset=0.1)
-        ma_test.assert_array_equal(pch.array, combo.array)
+        assert_array_equal(pch.array, combo.array)
         self.assertEqual(pch.frequency, combo.frequency)
         self.assertEqual(pch.offset, combo.offset)
 
@@ -3324,7 +3326,7 @@ class TestPitch(unittest.TestCase):
                    P('Pitch (2)', np.ma.array(range(5),dtype=float)+10, 1,0.45)
                   )
         answer = np.ma.array(data=(range(10)),mask=([1]+[0]*9))/2.0+5.0
-        np.testing.assert_array_equal(pch.array, answer.data)
+        assert_array_equal(pch.array, answer.data)
 
     def test_pitch_error_different_rates(self):
         pch = Pitch()
@@ -3375,14 +3377,14 @@ class TestVerticalSpeedForFlightPhases(unittest.TestCase):
         vert_spd = VerticalSpeedForFlightPhases()
         vert_spd.derive(alt_std)
         expected = np.ma.array(data=[60]*10, dtype=np.float, mask=False)
-        np.testing.assert_array_equal(vert_spd.array, expected)
+        assert_array_equal(vert_spd.array, expected)
 
     def test_vertical_speed_for_flight_phases_level_flight(self):
         alt_std = P('Altitude STD Smoothed', np.ma.array([100]*10))
         vert_spd = VerticalSpeedForFlightPhases()
         vert_spd.derive(alt_std)
         expected = np.ma.array(data=[0]*10, dtype=np.float, mask=False)
-        np.testing.assert_array_equal(vert_spd.array, expected)
+        assert_array_equal(vert_spd.array, expected)
 
 
 class TestHeadingRate(unittest.TestCase):
@@ -3395,7 +3397,7 @@ class TestHeadingRate(unittest.TestCase):
         rot = HeadingRate()
         rot.derive(P('Heading Continuous', np.ma.array(range(10))))
         answer = np.ma.array(data=[1]*10, dtype=np.float)
-        np.testing.assert_array_equal(rot.array, answer) # Tests data only; NOT mask
+        assert_array_equal(rot.array, answer) # Tests data only; NOT mask
 
     def test_rate_of_turn_phase_stability(self):
         rot = HeadingRate()
@@ -3593,7 +3595,7 @@ class TestAileron(unittest.TestCase):
         aileron.get_derived([left, right])
         expected_data = np.ma.array([0.0, 1.5, 1.75, 1.5])
         expected_data[0] = np.ma.masked
-        np.testing.assert_array_equal(aileron.array, expected_data)
+        assert_array_equal(aileron.array, expected_data)
         self.assertEqual(aileron.frequency, 0.5)
         self.assertEqual(aileron.offset, 0.1)
 
@@ -3602,7 +3604,7 @@ class TestAileron(unittest.TestCase):
         aileron = Aileron()
         aileron.get_derived([left, None])
         expected_data = left.array
-        np.testing.assert_array_equal(aileron.array, expected_data)
+        assert_array_equal(aileron.array, expected_data)
         self.assertEqual(aileron.frequency, 0.5)
         self.assertEqual(aileron.offset, 0.1)
 
@@ -3611,7 +3613,7 @@ class TestAileron(unittest.TestCase):
         aileron = Aileron()
         aileron.get_derived([None, right])
         expected_data = right.array
-        np.testing.assert_array_equal(aileron.array, expected_data)
+        assert_array_equal(aileron.array, expected_data)
         self.assertEqual(aileron.frequency, 2.0)
         self.assertEqual(aileron.offset, 0.3)
 
@@ -3661,7 +3663,7 @@ class TestElevator(unittest.TestCase):
         elevator = Elevator()
         elevator.derive(left, right)
         expected_data = np.ma.array([1.5]*3+[1.75]*2+[1.5]*3)
-        np.testing.assert_array_equal(elevator.array, expected_data)
+        assert_array_equal(elevator.array, expected_data)
         self.assertEqual(elevator.frequency, 1.0)
         self.assertEqual(elevator.offset, 0.1)
 
@@ -3670,7 +3672,7 @@ class TestElevator(unittest.TestCase):
         elevator = Elevator()
         elevator.derive(left, None)
         expected_data = left.array
-        np.testing.assert_array_equal(elevator.array, expected_data)
+        assert_array_equal(elevator.array, expected_data)
         self.assertEqual(elevator.frequency, 0.5)
         self.assertEqual(elevator.offset, 0.1)
 
@@ -3679,7 +3681,7 @@ class TestElevator(unittest.TestCase):
         elevator = Elevator()
         elevator.derive(None, right)
         expected_data = right.array
-        np.testing.assert_array_equal(elevator.array, expected_data)
+        assert_array_equal(elevator.array, expected_data)
         self.assertEqual(elevator.frequency, 2.0)
         self.assertEqual(elevator.offset, 0.3)
 
@@ -3696,14 +3698,14 @@ class TestElevatorLeft(unittest.TestCase):
                                                   mask=[0,0,1,0]))
         elevator=ElevatorLeft()
         elevator.derive(None, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
     def test_pot(self):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,0,0]))
         elevator=ElevatorLeft()
         elevator.derive(pot, None)
-        ma_test.assert_array_equal(elevator.array, pot.array)
+        assert_array_equal(elevator.array, pot.array)
 
     def test_both_prefer_syn(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
@@ -3712,7 +3714,7 @@ class TestElevatorLeft(unittest.TestCase):
                                                   mask=[0,1,1,0]))
         elevator=ElevatorLeft()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
     def test_both_prefer_pot(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
@@ -3721,7 +3723,7 @@ class TestElevatorLeft(unittest.TestCase):
                                                   mask=[0,0,1,0]))
         elevator=ElevatorLeft()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, pot.array)
+        assert_array_equal(elevator.array, pot.array)
 
     def test_both_equally_good(self):
         # Where there is no advantage, adopt the synchro which should be a better transducer.
@@ -3731,7 +3733,7 @@ class TestElevatorLeft(unittest.TestCase):
                                                   mask=[0,0,0,0]))
         elevator=ElevatorLeft()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
 class TestElevatorRight(unittest.TestCase):
     def test_can_operate(self):
@@ -3746,14 +3748,14 @@ class TestElevatorRight(unittest.TestCase):
                                                   mask=[0,0,1,0]))
         elevator=ElevatorRight()
         elevator.derive(None, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
     def test_pot(self):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,0,0]))
         elevator=ElevatorRight()
         elevator.derive(pot, None)
-        ma_test.assert_array_equal(elevator.array, pot.array)
+        assert_array_equal(elevator.array, pot.array)
 
     def test_both_prefer_syn(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
@@ -3762,7 +3764,7 @@ class TestElevatorRight(unittest.TestCase):
                                                   mask=[0,1,1,0]))
         elevator=ElevatorRight()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
     def test_both_prefer_pot(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
@@ -3771,7 +3773,7 @@ class TestElevatorRight(unittest.TestCase):
                                                   mask=[0,0,1,0]))
         elevator=ElevatorRight()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, pot.array)
+        assert_array_equal(elevator.array, pot.array)
 
     def test_both_equally_good(self):
         # Where there is no advantage, adopt the synchro which should be a better transducer.
@@ -3781,7 +3783,7 @@ class TestElevatorRight(unittest.TestCase):
                                                   mask=[0,0,0,0]))
         elevator=ElevatorRight()
         elevator.derive(pot, syn)
-        ma_test.assert_array_equal(elevator.array, syn.array)
+        assert_array_equal(elevator.array, syn.array)
 
 
 class TestEng_FuelFlow(unittest.TestCase):
@@ -3801,7 +3803,7 @@ class TestEng_FuelFlow(unittest.TestCase):
         node = Eng_FuelFlow()
         node.derive(ff1, ff2, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_arr)
+        assert_array_equal(node.array, expected_arr)
 
 
 class TestEng_FuelFlowMax(unittest.TestCase):
@@ -3822,7 +3824,7 @@ class TestEng_FuelFlowMax(unittest.TestCase):
         node = Eng_FuelFlowMax()
         node.derive(ff1, ff2, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_arr)
+        assert_array_equal(node.array, expected_arr)
 
 
 class TestEng_FuelFlowMin(unittest.TestCase):
@@ -3843,7 +3845,7 @@ class TestEng_FuelFlowMin(unittest.TestCase):
         node = Eng_FuelFlowMin()
         node.derive(ff1, ff2, None, None)
 
-        np.testing.assert_array_equal(node.array, expected_arr)
+        assert_array_equal(node.array, expected_arr)
 
 
 class TestEng_1_FuelBurn(unittest.TestCase, NodeTest):
@@ -4077,7 +4079,7 @@ class TestEng_TorquePercentAvg(unittest.TestCase):
         node = self.node_class()
         node.derive(eng_1, None, eng_3, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -4108,7 +4110,7 @@ class TestEng_TorquePercentMax(unittest.TestCase):
         node = self.node_class()
         node.derive(eng_1, None, eng_3, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -4139,7 +4141,7 @@ class TestEng_TorquePercentMin(unittest.TestCase):
         node = self.node_class()
         node.derive(eng_1, None, eng_3, None)
 
-        np.testing.assert_array_equal(node.array, expected_array)
+        assert_array_equal(node.array, expected_array)
         self.assertEqual(node.offset, 0.3)
 
 
@@ -4296,7 +4298,7 @@ class TestFlapAngle(unittest.TestCase, NodeTest):
         fa.get_derived([None, fr, None, None, None, None])
         self.assertEqual(fa.offset, fr.offset)
         self.assertEqual(fa.frequency, fr.frequency)
-        np.testing.assert_array_equal(fa.array, fr.array)
+        assert_array_equal(fa.array, fr.array)
 
     def test_with_same_offsets(self):
         fl = P('Flap Angle (L)', array=np.ma.arange(10, 20, 2), offset=0.123, frequency=0.5)
@@ -4595,7 +4597,7 @@ class TestRollRate(unittest.TestCase):
         rr = RollRate()
         rr.derive(roll)
         expected=np_ma_ones_like(roll.array)*4.0
-        ma_test.assert_array_equal(expected[2:4], rr.array[2:4]) # Differential process blurs ends of the array, so just test the core part.
+        assert_array_equal(expected[2:4], rr.array[2:4]) # Differential process blurs ends of the array, so just test the core part.
 
 
 class TestRudderPedal(unittest.TestCase):
@@ -4676,7 +4678,7 @@ class TestSlatAngle(unittest.TestCase):
                    slat_retracted,
                    *self.ac_info_attributes)
         expected = np.ma.repeat((0, 22, 32, 22, 0), 10)
-        ma_test.assert_almost_equal(node.array, expected)
+        assert_almost_equal(node.array, expected)
 
 
 
@@ -4701,7 +4703,7 @@ class TestSlopeAngleToLanding(unittest.TestCase):
         slope = P('Slope To Landing', np.ma.array([0.5, 1, 2, 4, 8, 16]))
         node = SlopeAngleToLanding()
         node.derive(slope)
-        ma_test.assert_array_almost_equal(node.array, [26.6, 45.0, 63.43, 76.0, 82.9, 86.4], decimal=1)
+        assert_array_almost_equal(node.array, [26.6, 45.0, 63.43, 76.0, 82.9, 86.4], decimal=1)
 
 
 class TestSpeedbrake(unittest.TestCase):
@@ -4769,7 +4771,7 @@ class TestSAT_ISA(unittest.TestCase):
         sat.derive(alt)
         expected = np.ma.array([16.9812, 15.0, 5.09400, -4.812, -24.624,
                                 -44.4360, -56.5, -56.5])
-        ma_test.assert_array_almost_equal(sat.array, expected)
+        assert_array_almost_equal(sat.array, expected)
 
 
 class TestTAT(unittest.TestCase):
@@ -4785,7 +4787,7 @@ class TestTAT(unittest.TestCase):
         tat.derive(t1, t2, None)
         expected = np.ma.array(range(1,7))+0.5
         # This test correctly ignores the 6th overrun sample which is masked.
-        ma_test.assert_array_almost_equal(tat.array, expected)
+        assert_array_almost_equal(tat.array, expected)
 
     def test_conversion(self):
         sat = P('SAT', array=[0.0, -30.0])
@@ -4794,7 +4796,7 @@ class TestTAT(unittest.TestCase):
         tat.derive(None, None, sat, mach)
         # TAT = SAT (1 + (1.4-1)/2M^2) = 1 + 0.2M^2
         expected = np.ma.array([13.6575, 1.1232])
-        ma_test.assert_array_almost_equal(tat.array, expected)
+        assert_array_almost_equal(tat.array, expected)
 
 
 class TestTailwind(unittest.TestCase):
@@ -7155,7 +7157,7 @@ class TestAirspeedMinusAirspeedSelectedFor3Sec(unittest.TestCase):
             [999]*10 + [0]*90 + [250]*150))
         aspd_minus_sel = AirspeedMinusAirspeedSelectedFor3Sec()
         aspd_minus_sel.get_derived([aspd, aspd_sel])
-        ma_test.assert_array_equal(
+        assert_array_equal(
             aspd_minus_sel.array[-150:], np.ma.ones(150)*6)
 
 ##############################################################################

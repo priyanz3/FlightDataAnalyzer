@@ -72,13 +72,13 @@ class TestSplitSegments(unittest.TestCase):
     def test_split_segments(self):
         # TODO: Test engine param splitting.
         # Mock hdf
-        airspeed_array = np.ma.concatenate([np.ma.arange(300),
-                                            np.ma.arange(300, 0, -1)])
+        airspeed_array = np.ma.concatenate([np.ma.arange(300, dtype=float),
+                                            np.ma.arange(300, 0, -1, dtype=float)])
 
         airspeed_frequency = 2
         airspeed_secs = len(airspeed_array) / airspeed_frequency
 
-        heading_array = np.ma.arange(len(airspeed_array) / 2) % 360
+        heading_array = np.ma.arange(len(airspeed_array) / 2, dtype=float) % 360
         heading_frequency = 1
         heading_array.mask = False
 
@@ -172,7 +172,7 @@ class TestSplitSegments(unittest.TestCase):
                                             np.ma.arange(0, 200, 0.5),
                                             np.ma.arange(200, 0, -0.5)])
         airspeed_secs = len(airspeed_array) / airspeed_frequency
-        heading_array = np.ma.concatenate([np.ma.arange(len(airspeed_array) / 4) % 360,
+        heading_array = np.ma.concatenate([np.ma.arange(len(airspeed_array) / 4, dtype=float) % 360,
                                           [0] * (len(airspeed_array) / 4)])
 
         # DFC jumps exactly half way.

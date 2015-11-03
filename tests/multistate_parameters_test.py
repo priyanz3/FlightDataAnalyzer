@@ -4,6 +4,7 @@ import os
 import unittest
 
 from mock import patch
+from numpy.ma.testutils import assert_array_equal
 
 from hdfaccess.parameter import MappedArray
 from flightdatautilities import aircrafttables as at, units as ut
@@ -409,7 +410,7 @@ class TestAPEngaged(unittest.TestCase, NodeTest):
                    name='AP Engaged',
                    frequency=1,
                    offset=0.1)
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
     def test_dual_ap(self):
         # Two result in just "Engaged" state still
@@ -428,7 +429,7 @@ class TestAPEngaged(unittest.TestCase, NodeTest):
                    frequency=1,
                    offset=0.1)
 
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
     def test_triple_ap(self):
         ap1 = M(array=np.ma.array(data=[0,0,1,1,0,0]),
@@ -454,7 +455,7 @@ class TestAPEngaged(unittest.TestCase, NodeTest):
                    frequency=1,
                    offset=0.25)
 
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
 
 class TestAPUOn(unittest.TestCase):
@@ -543,7 +544,7 @@ class TestAPChannelsEngaged(unittest.TestCase, NodeTest):
                    name='AP Channels Engaged',
                    frequency=1,
                    offset=0.1)
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
     def test_dual_ap(self):
         ap1 = M(array=np.ma.array(data=[0,0,1,1,0,0]),
@@ -562,7 +563,7 @@ class TestAPChannelsEngaged(unittest.TestCase, NodeTest):
                    frequency=1,
                    offset=0.1)
 
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
     def test_triple_ap(self):
         ap1 = M(array=np.ma.array(data=[0,0,1,1,0,0]),
@@ -589,7 +590,7 @@ class TestAPChannelsEngaged(unittest.TestCase, NodeTest):
                    frequency=1,
                    offset=0.25)
 
-        ma_test.assert_array_equal(expected.array, eng.array)
+        assert_array_equal(expected.array, eng.array)
 
 
 class TestConfiguration(unittest.TestCase, NodeTest):
@@ -3290,4 +3291,4 @@ class TestSpeedControl(unittest.TestCase, NodeTest):
             array=np.ma.array((1, 0, 1, 1, 0, 1)),
             values_mapping={0: 'Manual', 1: 'Auto'},
         )
-        ma_test.assert_array_equal(node.array, expected.array)
+        assert_array_equal(node.array, expected.array)
