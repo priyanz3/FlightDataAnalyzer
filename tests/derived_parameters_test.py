@@ -4433,18 +4433,14 @@ class TestMagneticVariation(unittest.TestCase):
         mag_var.derive(lat, None, lon, None, alt_aal, start_datetime)
         ma_test.assert_masked_array_almost_equal(
             mag_var.array[0:10],
-            np.ma.array([-6.064, -6.065, -6.066,
-                         -6.068, -6.069, -6.070,
-                         -6.071, -6.073, -6.074,
-                         -6.075]), decimal=3)
+            np.ma.array([-5.989, -5.99, -5.991, -5.992, -5.994, -5.995, -5.996,
+                         -5.997, -5.998, -5.999]), decimal=3)
         # Test with Coarse parameters.
         mag_var.derive(None, lat, None, lon, alt_aal, start_datetime)
         ma_test.assert_masked_array_almost_equal(
             mag_var.array[300:310],
-            np.ma.array([-6.506, -6.507, -6.509,
-                         -6.511, -6.513, -6.514,
-                         -6.516, -6.518, -6.519,
-                         -6.521]), decimal=3)
+            np.ma.array([-6.425, -6.427, -6.428, -6.43, -6.432, -6.434, -6.435,
+                         -6.437, -6.439, -6.44]), decimal=3)
 
 class TestMagneticVariationFromRunway(unittest.TestCase):
     def test_can_operate(self):
