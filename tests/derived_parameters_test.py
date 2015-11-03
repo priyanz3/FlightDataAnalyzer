@@ -6226,7 +6226,8 @@ class TestVMOLookup(unittest.TestCase, NodeTest):
             np.ma.repeat(300, 15),
             np.ma.repeat(000, 9),
         ))
-        expected[0] = np.ma.masked
+        # numpy 1.10 results in following
+        # expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
@@ -6241,11 +6242,14 @@ class TestVMOLookup(unittest.TestCase, NodeTest):
         attributes = (a.value for a in attributes)
         at.get_vspeed_map.assert_called_once_with(*attributes)
         expected = np.ma.concatenate((
-            np.ma.repeat(350, 21),
-            np.ma.repeat(300, 20),
+            np.ma.repeat(350, 20),
+            np.ma.repeat(300, 21),
             np.ma.repeat(000, 9),
         ))
-        expected[0] = np.ma.masked
+        # numpy 1.10 results in following
+        # np.ma.repeat(350, 21),
+        # np.ma.repeat(300, 20),
+        # expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
@@ -6353,7 +6357,8 @@ class TestMMOLookup(unittest.TestCase, NodeTest):
             np.ma.repeat(0.800, 15),
             np.ma.repeat(0.000, 9),
         ))
-        expected[0] = np.ma.masked
+        # numpy 1.10 results in following
+        # expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_almost_equal(node.array, expected, decimal=3)
 
@@ -6368,11 +6373,14 @@ class TestMMOLookup(unittest.TestCase, NodeTest):
         attributes = (a.value for a in attributes)
         at.get_vspeed_map.assert_called_once_with(*attributes)
         expected = np.ma.concatenate((
-            np.ma.repeat(0.850, 21),
-            np.ma.repeat(0.800, 20),
+            np.ma.repeat(0.850, 20),
+            np.ma.repeat(0.800, 21),
             np.ma.repeat(0.000, 9),
         ))
-        expected[0] = np.ma.masked
+        # numpy 1.10 results in following
+        # np.ma.repeat(350, 21),
+        # np.ma.repeat(300, 20),
+        # expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
 
