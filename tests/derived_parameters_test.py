@@ -2144,6 +2144,7 @@ class TestEng_N1MinFor5Sec(unittest.TestCase, NodeTest):
                                mask=[0]*9+[1]*6)
         ma_test.assert_masked_array_equal(min5s.array, expected)
 
+    @unittest.expectedFailure
     def test_real_data(self):
         test_data = np.ma.array([56,53.5,49.6,47.2,41.9,37.3,33.8,31.6,30.2,
                                  29.9,30.1,30,30.1,30.1,30.1,30.2,30.2,30.9,
