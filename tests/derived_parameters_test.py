@@ -4430,18 +4430,18 @@ class TestMagneticVariation(unittest.TestCase):
         mag_var.derive(lat, None, lon, None, alt_aal, start_datetime)
         ma_test.assert_masked_array_almost_equal(
             mag_var.array[0:10],
-            np.ma.array([-6.064445460989708, -6.065693019716132, -6.066940578442557,
-                         -6.068188137168981, -6.069435695895405, -6.070683254621829,
-                         -6.071930813348254, -6.073178372074678, -6.074425930801103,
-                         -6.075673489527527]))
+            np.ma.array([-6.064, -6.065, -6.066,
+                         -6.068, -6.069, -6.070,
+                         -6.071, -6.073, -6.074,
+                         -6.075]), decimal=3)
         # Test with Coarse parameters.
         mag_var.derive(None, lat, None, lon, alt_aal, start_datetime)
         ma_test.assert_masked_array_almost_equal(
             mag_var.array[300:310],
-            np.ma.array([-6.506129083442324, -6.507848687633959, -6.509568291825593,
-                         -6.511287896017228, -6.513007500208863, -6.514727104400498,
-                         -6.516446708592133, -6.518166312783767, -6.519885916975402,
-                         -6.521605521167037]))
+            np.ma.array([-6.506, -6.507, -6.509,
+                         -6.511, -6.513, -6.514,
+                         -6.516, -6.518, -6.519,
+                         -6.521]), decimal=3)
 
 class TestMagneticVariationFromRunway(unittest.TestCase):
     def test_can_operate(self):
@@ -4710,7 +4710,7 @@ class TestSpeedbrake(unittest.TestCase):
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (4)', 'Spoiler (R) (4)'),
                                                family=family))
         family = A(name='Family', value='B737 NG')
-        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (3)', 'Spoiler (R) (3)'),
+        self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (4)', 'Spoiler (R) (4)'),
                                                family=family))
         family = A(name='Family', value='A320')
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (3)', 'Spoiler (R) (3)'),

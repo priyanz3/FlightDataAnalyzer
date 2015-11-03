@@ -1437,7 +1437,7 @@ class TestCalculateSurfaceAngle(unittest.TestCase):
     def test_calculate_flap_3(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_3.npz'))
         flap_exc, flap_inc, flap_lev = self._calculate_flap(array, self.flap_map_1)
-        early = [0] * 11 + [15] * 22
+        early = [0] * 8 + [15] * 25
         late = [0] * 24 + [15] * 9
         self.assertEqual(flap_exc.tolist(), late)
         self.assertEqual(flap_inc.tolist(), early)
@@ -1464,7 +1464,7 @@ class TestCalculateSurfaceAngle(unittest.TestCase):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_6.npz'))
         flap_exc, flap_inc, flap_lev = self._calculate_flap(array, self.flap_map_1)
         early = [30] * 11 + [0] * 38
-        late = [30] * 40 + [0] * 9
+        late = [30] * 41 + [0] * 8
         self.assertEqual(flap_exc.tolist(), early)
         self.assertEqual(flap_inc.tolist(), late)
         self.assertEqual(flap_lev.tolist(), early)
@@ -1607,23 +1607,19 @@ class TestCalculateSurfaceAngle(unittest.TestCase):
         self.assertTrue(np.ma.all(flap_exc[9243:-6] == 0))
         self.assertTrue(flap_exc.mask[-6:].all())
 
-        self.assertTrue(flap_inc.mask[:4].all())
-        self.assertTrue(np.ma.all(flap_inc[4:3031] == 0))
+        self.assertTrue(np.ma.all(flap_inc[:3031] == 0))
         self.assertTrue(np.ma.all(flap_inc[3031:3899] == 15))
         self.assertTrue(np.ma.all(flap_inc[3899:8790] == 0))
         self.assertTrue(np.ma.all(flap_inc[8790:8848] == 15))
         self.assertTrue(np.ma.all(flap_inc[8848:9271] == 30))
-        self.assertTrue(np.ma.all(flap_inc[9271:-6] == 0))
-        self.assertTrue(flap_inc.mask[-6:].all())
+        self.assertTrue(np.ma.all(flap_inc[9271:] == 0))
 
-        self.assertTrue(flap_lev.mask[:4].all())
-        self.assertTrue(np.ma.all(flap_lev[4:3031] == 0))
+        self.assertTrue(np.ma.all(flap_lev[:3031] == 0))
         self.assertTrue(np.ma.all(flap_lev[3031:3886] == 15))
         self.assertTrue(np.ma.all(flap_lev[3886:8790] == 0))
         self.assertTrue(np.ma.all(flap_lev[8790:8848] == 15))
         self.assertTrue(np.ma.all(flap_lev[8848:9243] == 30))
-        self.assertTrue(np.ma.all(flap_lev[9243:-6] == 0))
-        self.assertTrue(flap_lev.mask[-6:].all())
+        self.assertTrue(np.ma.all(flap_lev[9243:] == 0))
 
     def test_calculate_slat_1(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_slat_1.npz'))
@@ -6279,7 +6275,7 @@ class TestStepValues(unittest.TestCase):
                              15.38, 15.39, 15.37, 15.37, 15.41, 15.44])
         array = np.ma.concatenate((array,array[::-1]))
         stepped = step_values(array, (0, 1, 5, 15), step_at='including_transition')
-        self.assertEqual(list(stepped),[0]*11+[1]*3+[5]*19+[15]*30+[5]*19+[1]*6+[0]*8)
+        self.assertEqual(list(stepped),[0]*11+[1]*3+[5]*19+[15]*30+[5]*19+[1]*3+[0]*11)
 
     def test_step_including_transition_edge_case(self):
         # This set of values caused problems with a low sample rate flap (767-4 frame)
@@ -6287,6 +6283,7 @@ class TestStepValues(unittest.TestCase):
         stepped = step_values(array, (0, 1), hz=0.25, step_at='including_transition')
         self.assertEqual(list(stepped),[0]+[1]*6+[0]*3+[1]*2)
 
+    @unittest.skip("move_stop no longer in use")
     def test_step_trailing_edge_real_data(self):
         array = np.ma.array([0, 0, 0, 0, 0, 0, 0.12, 0.37, 0.5, 0.49, 0.49,
                              0.67, 0.98, 1.15, 1.28, 1.5, 1.71, 1.92, 2.12,

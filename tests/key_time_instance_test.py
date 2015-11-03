@@ -1299,6 +1299,8 @@ class TestFlapLeverSet(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = FlapLeverSet
+        # Testing decimal flap lever 17.5 not available in public model information.
+        self.node_class.NAME_VALUES['flap'].append('17.5')
         self.operational_combinations = [
             ('Flap Lever',),
             ('Flap Lever (Synthetic)',),
@@ -1316,6 +1318,7 @@ class TestFlapLeverSet(unittest.TestCase, NodeTest):
     def test_derive_basic(self):
         name = self.node_class.get_name()
         node = self.node_class()
+        
         node.derive(self.flap_lever, None)
         self.assertEqual(node, KTI(name=name, items=[
             KeyTimeInstance(index=10.5, name='Flap 0 Set'),
