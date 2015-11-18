@@ -5958,7 +5958,12 @@ class LatitudeAtLiftoff(KeyPointValueNode):
             return
 
         if lat_c:
-            self.create_kpvs_at_ktis(lat_c.array, liftoffs)
+            for lift in liftoffs:
+                # Touchdown may be masked for Coarse parameter.
+                self.create_kpv(
+                    lift.index,
+                    closest_unmasked_value(lat_c.array, lift.index).value,
+                )
             return
 
         value = None
@@ -6022,7 +6027,12 @@ class LongitudeAtLiftoff(KeyPointValueNode):
             return
 
         if lon_c:
-            self.create_kpvs_at_ktis(lon_c.array, liftoffs)
+            for lift in liftoffs:
+                # Touchdown may be masked for Coarse parameter.
+                self.create_kpv(
+                    lift.index,
+                    closest_unmasked_value(lon_c.array, lift.index).value,
+                )
             return
 
         value = None
