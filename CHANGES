@@ -9,6 +9,13 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.23.3
+-------
+ - Refactor most_common_value to support arrays of strings
+ - Fix when calculating lat/lon for flights preceded by high speed RTO
+ - Added A340/A380 to speedbrake parameters
+ - lat/lon at liftoff handle coarse masked values
+
 v0.23.2
 -------
  - Fix: Correctly detect Mobile phase at the begining of the data
