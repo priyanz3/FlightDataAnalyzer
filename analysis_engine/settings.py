@@ -393,6 +393,9 @@ REPAIR_DURATION = 10  # seconds
 REVERSE_THRUST_EFFECTIVE_EPR = 1.25 # %EPR
 REVERSE_THRUST_EFFECTIVE_N1 = 65 # %N1
 
+# A rotorspeed below which you just can't possibly be flying.
+ROTORSPEED_THRESHOLD = 85.0  # % Nr
+
 # Threshold for spoiler deployment when operating as speedbrake in flight.
 # See KPV "AirspeedWithSpoilerDeployedMax"
 SPOILER_DEPLOYED = 5.0 # deg
