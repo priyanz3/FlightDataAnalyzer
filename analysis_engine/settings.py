@@ -445,7 +445,12 @@ try:
     for k, v in copy(locals()).iteritems():
         if k.endswith('_MODULES') and k != 'NODE_MODULES':
             NODE_MODULES.extend(v)
-    NODE_MODULES = list(set(NODE_MODULES))
+    # We want to preserve the order of the modules as later we will want to
+    # use the nodes from the additional modules in preference to those in the
+    # analyzer.
+    seen = set()
+    seen_add = seen.add
+    NODE_MODULES = [x for x in NODE_MODULES if not (x in seen or seen_add(x))]
 except ImportError as err:
     # logger.info preferred, but stack trace is important when trying to
     # determine an unexpected ImportError lower down the line.
