@@ -367,12 +367,7 @@ def split_segments(hdf, aircraft_info):
     TODO: Use L3UQAR num power ups for difficult cases?
     '''
 
-    if aircraft_info.get('Engine Propulsion', None) == 'ROTOR':
-        speed = hdf['Nr']
-        speed_threshold = settings.ROTORSPEED_THRESHOLD
-    else:
-        speed = hdf['Airspeed']
-        speed_threshold = settings.AIRSPEED_THRESHOLD
+    speed, thresholds = _get_speed_parameter(hdf, aircraft_info)
 
     # Look for heading first
     try:
@@ -386,8 +381,8 @@ def split_segments(hdf, aircraft_info):
 
     # Look for Airspeed
     try:
-        airspeed_array = repair_mask(speed.array, repair_duration=None,
-                                     repair_above=speed_threshold)
+        speed_array = repair_mask(speed.array, repair_duration=None,
+                                     repair_above=thresholds['speed_threshold'])
     except ValueError:
         # Airspeed array is masked, most likely under min threshold so it did
         # not go fast.
@@ -397,9 +392,9 @@ def split_segments(hdf, aircraft_info):
             speed.array, speed.frequency, heading.array,
             heading.frequency, 0, hdf.duration, eng_arrays)]
 
-    airspeed_secs = len(airspeed_array) / speed.frequency
-    slow_array = np.ma.masked_less_equal(airspeed_array,
-                                         speed_threshold)
+    speed_secs = len(speed_array) / speed.frequency
+    slow_array = np.ma.masked_less_equal(speed_array,
+                                         thresholds['speed_threshold'])
 
     speedy_slices = np.ma.clump_unmasked(slow_array)
     if len(speedy_slices) <= 1:
@@ -410,8 +405,8 @@ def split_segments(hdf, aircraft_info):
         # Use the first and last available unmasked values to determine segment
         # type.
         return [_segment_type_and_slice(
-            airspeed_array, speed.frequency, heading.array,
-            heading.frequency, 0, airspeed_secs, eng_arrays)]
+            speed_array, speed.frequency, heading.array,
+            heading.frequency, 0, speed_secs, eng_arrays)]
 
     slow_slices = np.ma.clump_masked(slow_array)
 
@@ -446,7 +441,7 @@ def split_segments(hdf, aircraft_info):
             # Since we are working with masked slices, masked padded superframe
             # data will be included within the first slow_slice.
             continue
-        if slow_slice.stop == len(airspeed_array):
+        if slow_slice.stop == len(speed_array):
             # After the loop we will add the remaining data to a segment.
             break
 
@@ -463,11 +458,11 @@ def split_segments(hdf, aircraft_info):
         slice_stop_secs = slow_slice.stop / speed.frequency
 
         slow_duration = slice_stop_secs - slice_start_secs
-        if slow_duration < settings.MINIMUM_SPLIT_DURATION:
+        if slow_duration < thresholds['min_split_duration']:
             logger.info("Disregarding period of speed below '%s' "
                         "since '%s' is shorter than MINIMUM_SPLIT_DURATION "
-                        "('%s').", speed_threshold, slow_duration,
-                        settings.MINIMUM_SPLIT_DURATION)
+                        "('%s').", thresholds['min_split_duration'], slow_duration,
+                        thresholds['min_split_duration'])
             continue
 
         last_fast_index = slow_slice.stop
@@ -487,7 +482,7 @@ def split_segments(hdf, aircraft_info):
                 dfc_half_period, dfc_diff, eng_split_index=eng_split_index)
             if dfc_split_index:
                 segments.append(_segment_type_and_slice(
-                    airspeed_array, speed.frequency, heading.array,
+                    speed_array, speed.frequency, heading.array,
                     heading.frequency, start, dfc_split_index, eng_arrays))
                 start = dfc_split_index
                 logger.info("'Frame Counter' jumped within slow_slice '%s' "
@@ -506,7 +501,7 @@ def split_segments(hdf, aircraft_info):
                         eng_split_value, settings.MINIMUM_SPLIT_PARAM_VALUE,
                         slow_slice, eng_split_index)
             segments.append(_segment_type_and_slice(
-                airspeed_array, speed.frequency, heading.array,
+                speed_array, speed.frequency, heading.array,
                 heading.frequency, start, eng_split_index, eng_arrays))
             start = eng_split_index
             continue
@@ -526,7 +521,7 @@ def split_segments(hdf, aircraft_info):
                                         heading.frequency, rate_of_turn)
         if rot_split_index:
             segments.append(_segment_type_and_slice(
-                airspeed_array, speed.frequency, heading.array,
+                speed_array, speed.frequency, heading.array,
                 heading.frequency, start, rot_split_index, eng_arrays))
             start = rot_split_index
             logger.info("Splitting at index '%s' where rate of turn was below "
@@ -544,9 +539,26 @@ def split_segments(hdf, aircraft_info):
 
     # Add remaining data to a segment.
     segments.append(_segment_type_and_slice(
-        airspeed_array, speed.frequency, heading.array, heading.frequency,
-        start, airspeed_secs, eng_arrays))
+        speed_array, speed.frequency, heading.array, heading.frequency,
+        start, speed_secs, eng_arrays))
     return segments
+
+
+def _get_speed_parameter(hdf, aircraft_info):
+
+    thresholds = {}
+    if aircraft_info.get('Engine Propulsion', None) == 'ROTOR':
+        parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
+        thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
+        thresholds['min_split_duration'] = 10 # TODO: add to settings
+        thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
+    else:
+        parameter = hdf['Airspeed']
+        thresholds['speed_threshold'] = settings.AIRSPEED_THRESHOLD
+        thresholds['min_split_duration'] = settings.MINIMUM_SPLIT_DURATION
+        thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
+
+    return parameter, thresholds
 
 
 def _mask_invalid_years(array, latest_year):
@@ -750,7 +762,7 @@ def _calculate_start_datetime(hdf, fallback_dt):
 
 
 def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
-                        fallback_dt=None):
+                        fallback_dt=None, aircraft_info={}):
     """
     Get information about a segment such as type, hash, etc. and return a
     named tuple.
@@ -774,7 +786,7 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
     """
     # build information about a slice
     with hdf_file(hdf_segment_path) as hdf:
-        airspeed = hdf['Airspeed']
+        speed, thresholds = _get_speed_parameter(hdf, aircraft_info)
         duration = hdf.duration
         try:
             start_datetime = _calculate_start_datetime(hdf, fallback_dt)
@@ -790,15 +802,15 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
     if segment_type in ('START_AND_STOP', 'START_ONLY', 'STOP_ONLY'):
         # we went fast, so get the index
         spd_above_threshold = \
-            np.ma.where(airspeed.array > settings.AIRSPEED_THRESHOLD)
-        go_fast_index = spd_above_threshold[0][0] / airspeed.frequency
+            np.ma.where(speed.array > thresholds['speed_threshold'])
+        go_fast_index = spd_above_threshold[0][0] / speed.frequency
         go_fast_datetime = \
             start_datetime + timedelta(seconds=int(go_fast_index))
-        # Identification of raw data airspeed hash
-        airspeed_hash_sections = runs_of_ones(airspeed.array.data >
-                                              settings.AIRSPEED_THRESHOLD)
-        airspeed_hash = hash_array(airspeed.array.data, airspeed_hash_sections,
-                                   settings.AIRSPEED_HASH_MIN_SAMPLES)
+        # Identification of raw data speed hash
+        speed_hash_sections = runs_of_ones(speed.array.data >
+                                              thresholds['speed_threshold'])
+        speed_hash = hash_array(speed.array.data, speed_hash_sections,
+                                   thresholds['hash_min_samples'])
     #elif segment_type == 'GROUND_ONLY':
         ##Q: Create a groundspeed hash?
         #pass
@@ -806,13 +818,13 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
         go_fast_index = None
         go_fast_datetime = None
         # if not go_fast, create hash from entire file
-        airspeed_hash = sha_hash_file(hdf_segment_path)
+        speed_hash = sha_hash_file(hdf_segment_path)
     segment = Segment(
         segment_slice,
         segment_type,
         part,
         hdf_segment_path,
-        airspeed_hash,
+        speed_hash,
         start_datetime,
         go_fast_datetime,
         stop_datetime
