@@ -902,7 +902,7 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         write_segment(hdf_path, segment_slice, dest_path,
                       boundary=boundary)
         segment = append_segment_info(dest_path, segment_type, segment_slice,
-                                      part, fallback_dt=fallback_dt)
+                                      part, fallback_dt=fallback_dt, aircraft_info=aircraft_info)
 
         if previous_stop_dt and segment.start_dt < previous_stop_dt:
             # In theory, this should not happen - but be warned of superframe
