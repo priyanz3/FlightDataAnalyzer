@@ -7936,14 +7936,39 @@ class EngOilPressFor60SecDuringCruiseMax(KeyPointValueNode):
 
 class EngOilPressMin(KeyPointValueNode):
     '''
+    Only in flight to avoid zero pressure readings for stationary engines.
+
+    Extended to ignore cases where all data is zero, or single sample values are zero.
+    The problem is that some low sample rate, low pressure engines can have an erroneous
+    zero value that is below the rate limit, so is not detected by current spike detection.
     '''
 
     units = ut.PSI
 
     def derive(self, oil_press=P('Eng (*) Oil Press Min'),
                airborne=S('Airborne')):
-        # Only in flight to avoid zero pressure readings for stationary engines.
-        self.create_kpvs_within_slices(oil_press.array, airborne, min_value)
+
+        for air in [a.slice for a in airborne]:
+            air_count = slice_duration(air, 1.0)
+            min_p = np.ma.min(oil_press.array[air])
+            if min_p:
+                # The minimum is non-zero, so let's use that.
+                self.create_kpvs_within_slices(oil_press.array, [air], min_value)
+            else:
+                non_zero_press = np.ma.masked_equal(oil_press.array[air], min_p)
+                non_zero_count = np.ma.count(non_zero_press)
+                if air_count-non_zero_count == 1:
+                    # Only a single corrupt sample, so repair this
+                    repair_press = repair_mask(non_zero_press, repair_duration=1.0)
+                    index = np.ma.argmin(repair_press)
+                    value = repair_press[index]
+                elif non_zero_count > 1:
+                    # Some data was non-zero
+                    index = np.ma.argmin(oil_press.array[air])
+                    value = oil_press.array[air][index]
+                else:
+                    continue
+                self.create_kpv(index + air.start, value)
 
 
 class EngOilPressWarningDuration(KeyPointValueNode):

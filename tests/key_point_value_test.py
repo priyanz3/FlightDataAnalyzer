@@ -6761,16 +6761,64 @@ class TestEngOilPressFor60SecDuringCruiseMax(unittest.TestCase):
         self.assertEqual(under_pressure[0].value, 52)
 
 
-class TestEngOilPressMin(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestEngOilPressMin(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngOilPressMin
         self.operational_combinations = [('Eng (*) Oil Press Min', 'Airborne')]
-        self.function = min_value
 
-    @unittest.skip('Test Not Implemented')
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(opts, self.operational_combinations)
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        oil_p = P(
+            name='Eng (*) Oil Press Min',
+            array=np.ma.array(data=[50, 50, 50, 10, 10, 50, 50, 50], dtype=float),
+        )
+        airborne = buildsection('Airborne', 1, 6)
+        node = self.node_class()
+        node.derive(oil_p, airborne)
+        self.assertEqual(node, KPV('Eng Oil Press Min',
+                items=[KeyPointValue(
+                    index=3.0, value=10.0,
+                    name='Eng Oil Press Min')]))
+
+    def test_zero(self):
+        oil_p = P(
+            name='Eng (*) Oil Press Min',
+            array=np.ma.array(data=[50, 50, 50, 0, 0, 50, 50, 50], dtype=float),
+        )
+        airborne = buildsection('Airborne', 1, 6)
+        node = self.node_class()
+        node.derive(oil_p, airborne)
+        self.assertEqual(node, KPV('Eng Oil Press Min',
+                items=[KeyPointValue(
+                    index=3.0, value=0.0,
+                    name='Eng Oil Press Min')]))
+
+    def test_single_zero(self):
+        oil_p = P(
+            name='Eng (*) Oil Press Min',
+            array=np.ma.array(data=[50, 50, 50, 50, 0, 50, 45, 50], dtype=float),
+        )
+        airborne = buildsection('Airborne', 1, 6)
+        node = self.node_class()
+        node.derive(oil_p, airborne)
+        self.assertEqual(node, KPV('Eng Oil Press Min',
+                items=[KeyPointValue(
+                    index=6.0, value=45.0,
+                    name='Eng Oil Press Min')]))
+
+    def test_all_zero(self):
+        oil_p = P(
+            name='Eng (*) Oil Press Min',
+            array=np.ma.array(data=[0, 0, 0, 0, 0, 0, 0, 0], dtype=float),
+        )
+        airborne = buildsection('Airborne', 1, 6)
+        node = self.node_class()
+        node.derive(oil_p, airborne)
+        self.assertEqual(node, [])
 
 
 ##############################################################################
