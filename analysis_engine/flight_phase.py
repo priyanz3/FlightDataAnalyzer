@@ -1501,9 +1501,17 @@ class TakeoffRollOrRejectedTakeoff(FlightPhaseNode):
     For monitoring configuration warnings especially, this combines actual
     and rejected takeoffs into a single phase node for convenience.
     '''
+    @classmethod
+    def can_operate(cls, available):
+        return any_of(('Takeoff Roll', 'Rejected Takeoff'), available)
+
     def derive(self, trolls=S('Takeoff Roll'), rtoffs=S('Rejected Takeoff')):
-        self.create_phases([s.slice for s in trolls + rtoffs],
-                           name= "Takeoff Roll Or Rejected Takeoff")
+        phases = []
+        if trolls:
+            phases.extend([s.slice for s in trolls])
+        if rtoffs:
+            phases.extend([s.slice for s in rtoffs])
+        self.create_phases(phases, name= "Takeoff Roll Or Rejected Takeoff")
 
 
 class TakeoffRotation(FlightPhaseNode):

@@ -5207,7 +5207,7 @@ class HeadingDuringTakeoff(KeyPointValueNode):
 
     def derive(self,
                hdg=P('Heading Continuous'),
-               takeoffs=S('Takeoff Roll')):
+               takeoffs=S('Takeoff Roll Or Rejected Takeoff')):
 
         for takeoff in takeoffs:
             if takeoff.slice.start and takeoff.slice.stop:

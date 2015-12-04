@@ -4468,6 +4468,9 @@ class CoordinatesSmoothed(object):
         # Use ILS track for approach and landings in all localizer approches
         #-----------------------------------------------------------------------
 
+        if not approaches:
+            return lat_adj, lon_adj
+
         for approach in approaches:
 
             this_app_slice = approach.slice
@@ -4675,13 +4678,9 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
         return all_of((
             'Latitude Prepared',
             'Longitude Prepared',
-            'Approach Range',
             'Airspeed True',
             'Precise Positioning',
-            'Takeoff',
             'FDR Takeoff Runway',
-            'Touchdown',
-            'Approach Information',
             'Mobile'), available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
@@ -4695,7 +4694,7 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                gspd=P('Groundspeed'),
                tas=P('Airspeed True'),
                precise=A('Precise Positioning'),
-               toff=S('Takeoff'),
+               toff=S('Takeoff Roll Or Rejected Takeoff'),
                toff_rwy = A('FDR Takeoff Runway'),
                tdwns = S('Touchdown'),
                approaches = App('Approach Information'),
@@ -4728,13 +4727,9 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
         return all_of((
             'Latitude Prepared',
             'Longitude Prepared',
-            'Approach Range',
             'Airspeed True',
             'Precise Positioning',
-            'Takeoff',
             'FDR Takeoff Runway',
-            'Touchdown',
-            'Approach Information',
             'Mobile'), available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
@@ -4748,7 +4743,7 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                gspd = P('Groundspeed'),
                tas = P('Airspeed True'),
                precise =A('Precise Positioning'),
-               toff = S('Takeoff'),
+               toff = S('Takeoff Roll Or Rejected Takeoff'),
                toff_rwy = A('FDR Takeoff Runway'),
                tdwns = S('Touchdown'),
                approaches = App('Approach Information'),
@@ -6693,7 +6688,7 @@ class TrackDeviationFromRunway(DerivedParameterNode):
 
     def derive(self, track_true=P('Track True Continuous'),
                track_mag=P('Track Continuous'),
-               takeoff=S('Takeoff'),
+               takeoff=S('Takeoff Roll Or Rejected Takeoff'),
                to_rwy=A('FDR Takeoff Runway'),
                apps=App('Approach Information')):
 
