@@ -17,6 +17,7 @@ from operator import attrgetter
 from analysis_engine.library import (
     align,
     align_slices,
+    all_deps,
     find_edges,
     is_index_within_slice,
     is_index_within_slices,
@@ -298,9 +299,17 @@ def can_operate(cls, available):
     # Can operate if any are available.
     return set(cls.get_dependency_names()).intersection(available)
 
+@classmethod
+def can_operate(cls, available, actype=A('Aircraft Type')):
+    # Can't work on helicopters, otherwise check all available.
+    if actype.value == 'Helicopter':
+        return False
+    else:
+        return all_deps(cls, available)
+
         """
         # ensure all names are strings
-        return all(x in available for x in cls.get_dependency_names())
+        return all_deps(cls, available)
 
     @classmethod
     def get_operational_combinations(cls, **kwargs):

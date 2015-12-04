@@ -106,6 +106,10 @@ def actuator_mismatch(ap, ap_l, ap_r, act_l, act_r, surf, scaling, frequency):
     return mismatch
 
 
+def all_deps(cls, available):
+    return all(x in available for x in cls.get_dependency_names())
+
+
 def all_of(names, available):
     '''
     Returns True if all of the names are within the available list.
