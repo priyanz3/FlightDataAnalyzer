@@ -6748,7 +6748,7 @@ def track_linking(pos, local_pos):
     return local_pos
 
 
-def smooth_track_cost_function(lat_s, lon_s, lat, lon, hz):
+def smooth_track_cost_function(lat_s, lon_s, lat, lon, ac_type, hz):
     # Summing the errors from the recorded data is easy.
     from_data = np.sum((lat_s - lat)**2)+np.sum((lon_s - lon)**2)
 
@@ -6757,16 +6757,27 @@ def smooth_track_cost_function(lat_s, lon_s, lat, lon, hz):
     from_straight = np.sum(np.convolve(lat_s,slider,'valid')**2) + \
         np.sum(np.convolve(lon_s,slider,'valid')**2)
 
-    weight = 100
+    if ac_type and ac_type.value=='helicopter':
+        weight = 100 # As helicopters fly more slowly so we don't need such smoothing.
+    elif hz == 1.0:
+        weight = 1000
+    elif hz == 0.5:
+        weight = 300
+    elif hz == 0.25:
+        weight = 100
+    else:
+        raise ValueError('Lat/Lon sample rate not recognised in smooth_track_cost_function.')
+
     cost = from_data + weight*from_straight
     return cost
 
 
-def smooth_track(lat, lon, hz):
+def smooth_track(lat, lon, ac_type, hz):
     """
     Input:
     lat = Recorded latitude array
     lon = Recorded longitude array
+    ac_type = aircraft type (aeroplane or helicopter)
     hz = sample rate
 
     Returns:
@@ -6788,7 +6799,7 @@ def smooth_track(lat, lon, hz):
     slider[2] = 1-r
 
     cost_0 = float('inf')
-    cost = smooth_track_cost_function(lat_s, lon_s, lat, lon, hz)
+    cost = smooth_track_cost_function(lat_s, lon_s, lat, lon, ac_type, hz)
 
     while cost < cost_0:  # Iterate to an optimal solution.
         lat_last = np.ma.copy(lat_s)
@@ -6799,7 +6810,7 @@ def smooth_track(lat, lon, hz):
         lon_s.data[2:-2] = np.convolve(lon_last,slider,'valid')
 
         cost_0 = cost
-        cost = smooth_track_cost_function(lat_s, lon_s, lat, lon, hz)
+        cost = smooth_track_cost_function(lat_s, lon_s, lat, lon, ac_type, hz)
 
     if cost>0.1:
         logger.warn("Smooth Track Cost Function closed with cost %f.3",cost)

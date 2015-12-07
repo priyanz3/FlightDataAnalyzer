@@ -5149,7 +5149,7 @@ class CoordinatesStraighten(object):
     Superclass for LatitudePrepared and LongitudePrepared.
     '''
 
-    def _smooth_coordinates(self, coord1, coord2):
+    def _smooth_coordinates(self, coord1, coord2, ac_type):
         """
         Acceleration along track only used to determine the sample rate and
         alignment of the resulting smoothed track parameter.
@@ -5158,6 +5158,9 @@ class CoordinatesStraighten(object):
         :type coord1: DerivedParameterNode
         :param coord2: Either 'Latitude' or 'Longitude' parameter.
         :type coord2: DerivedParameterNode
+        :param ac_type: 'aeroplane' or 'helicopter'
+        :type ac_type: Attribute['Aircraft Type']
+
         :returns: coord1 smoothed.
         :rtype: np.ma.masked_array
         """
@@ -5177,7 +5180,7 @@ class CoordinatesStraighten(object):
             # Reject any data with invariant positions, i.e. sitting on stand.
             if np.ma.ptp(coord1_s[track])>0.0 and np.ma.ptp(coord2_s[track])>0.0:
                 coord1_s_track, coord2_s_track, cost = \
-                    smooth_track(coord1_s[track], coord2_s[track], coord1.frequency)
+                    smooth_track(coord1_s[track], coord2_s[track], ac_type, coord1.frequency)
                 array[track] = coord1_s_track
         return array
 
@@ -5197,7 +5200,8 @@ class LongitudePrepared(DerivedParameterNode, CoordinatesStraighten):
                         'Latitude At Liftoff',
                         'Longitude At Liftoff',
                         'Latitude At Touchdown',
-                        'Longitude At Touchdown'), available) and\
+                        'Longitude At Touchdown',
+                        'Aircraft Type'),  available) and\
                 any_of(('Heading', 'Heading True'), available))
 
     # Note force to 1Hz operation as latitude & longitude can be only
@@ -5212,14 +5216,15 @@ class LongitudePrepared(DerivedParameterNode, CoordinatesStraighten):
                lat_lift=KPV('Latitude At Liftoff'),
                lon_lift=KPV('Longitude At Liftoff'),
                lat_land=KPV('Latitude At Touchdown'),
-               lon_land=KPV('Longitude At Touchdown')):
+               lon_land=KPV('Longitude At Touchdown'),
+               ac_type=A('Aircraft Type')):
 
         if lat and lon:
             """
             This removes the jumps in longitude arising from the poor resolution of
             the recorded signal.
             """
-            self.array = self._smooth_coordinates(lon, lat)
+            self.array = self._smooth_coordinates(lon, lat, ac_type)
         else:
             hdg = hdg_true if hdg_true else hdg_mag
             speed = gspd if gspd else tas
@@ -5241,12 +5246,13 @@ class LatitudePrepared(DerivedParameterNode, CoordinatesStraighten):
 
     @classmethod
     def can_operate(cls, available):
-        return all_of(('Latitude', 'Longitude'), available) or \
+        return all_of(('Latitude', 'Longitude','Aircraft Type'), available) or \
                (all_of(('Airspeed True',
                         'Latitude At Liftoff',
                         'Longitude At Liftoff',
                         'Latitude At Touchdown',
-                        'Longitude At Touchdown'), available) and \
+                        'Longitude At Touchdown',
+                        'Aircraft Type'), available) and \
                 any_of(('Heading', 'Heading True'), available))
 
     # Note force to 1Hz operation as latitude & longitude can be only
@@ -5261,10 +5267,11 @@ class LatitudePrepared(DerivedParameterNode, CoordinatesStraighten):
                lat_lift=KPV('Latitude At Liftoff'),
                lon_lift=KPV('Longitude At Liftoff'),
                lat_land=KPV('Latitude At Touchdown'),
-               lon_land=KPV('Longitude At Touchdown')):
+               lon_land=KPV('Longitude At Touchdown'),
+               ac_type=A('Aircraft Type')):
 
         if lat and lon:
-            self.array = self._smooth_coordinates(lat, lon)
+            self.array = self._smooth_coordinates(lat, lon, ac_type)
         else:
             hdg = hdg_true if hdg_true else hdg_mag
             speed = gspd if gspd else tas
