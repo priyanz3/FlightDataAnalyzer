@@ -338,8 +338,12 @@ class BouncedLanding(FlightPhaseNode):
                         # duration too long to be a bounced landing!
                         # possible cause: Touch and go.
                         continue
+                    elif stop < start:
+                        # Possible condition for helicopters
+                        continue
                     elif start == stop:
                         stop += 1
+
                     scan = alt_aal.array[start:stop]
                     ht = max(scan)
                     if ht > BOUNCED_LANDING_THRESHOLD:
