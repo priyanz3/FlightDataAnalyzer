@@ -6508,19 +6508,19 @@ class TestSmoothTrack(unittest.TestCase):
     def test_smooth_track_latitude(self):
         lat = np.ma.array([0,0,0,1,1,1], dtype=float)
         lon = np.ma.zeros(6, dtype=float)
-        lat_s, lon_s, cost = smooth_track(lat, lon, 0.25)
+        lat_s, lon_s, cost = smooth_track(lat, lon, None, 0.25)
         self.assertLess (cost,26)
 
     def test_smooth_track_longitude(self):
         lon = np.ma.array([0,0,0,1,1,1], dtype=float)
         lat = np.ma.zeros(6, dtype=float)
-        lat_s, lon_s, cost = smooth_track(lat, lon, 0.25)
+        lat_s, lon_s, cost = smooth_track(lat, lon, None, 0.25)
         self.assertLess (cost,26)
 
     def test_smooth_track_sample_rate_change(self):
         lon = np.ma.array([0,0,0,1,1,1], dtype=float)
         lat = np.ma.zeros(6, dtype=float)
-        lat_s, lon_s, cost = smooth_track(lat, lon, 1.0)
+        lat_s, lon_s, cost = smooth_track(lat, lon, None, 1.0)
         self.assertLess (cost,251)
         self.assertGreater (cost,250)
 
@@ -6529,7 +6529,7 @@ class TestSmoothTrack(unittest.TestCase):
         lon = lon%27
         lat = np.ma.zeros(10000, dtype=float)
         start = clock()
-        lat_s, lon_s, cost = smooth_track(lat, lon, 0.25)
+        lat_s, lon_s, cost = smooth_track(lat, lon, None, 0.25)
         end = clock()
         self.assertLess(end-start, 1.0)
 

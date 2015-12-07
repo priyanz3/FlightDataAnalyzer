@@ -5195,7 +5195,7 @@ class LongitudePrepared(DerivedParameterNode, CoordinatesStraighten):
 
     @classmethod
     def can_operate(cls, available):
-        return all_of(('Latitude', 'Longitude'), available) or\
+        return all_of(('Latitude', 'Longitude','Aircraft Type'), available) or\
                (all_of(('Airspeed True',
                         'Latitude At Liftoff',
                         'Longitude At Liftoff',
