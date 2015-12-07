@@ -19,6 +19,7 @@ from analysis_engine.node import (
 from analysis_engine.library import (actuator_mismatch,
                                      air_track,
                                      align,
+                                     all_deps,
                                      all_of,
                                      any_of,
                                      alt2press,
@@ -4763,6 +4764,13 @@ class Mach(DerivedParameterNode):
     data is recorded.
     '''
 
+    @classmethod
+    def can_operate(cls, available, ac_type = A('Aircraft Type')):
+        if ac_type=='Helicopter':
+            return False
+        else:
+            return all_deps(cls, available)
+
     units = ut.MACH
 
     def derive(self, cas = P('Airspeed'), alt = P('Altitude STD Smoothed')):
@@ -4788,7 +4796,11 @@ class MagneticVariation(DerivedParameterNode):
     units = ut.DEGREE
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            # Short flight segments can result in problems with small arrays failing to interpolate. FIXME.
+            return False
+        else:
         lat = any_of(('Latitude', 'Latitude (Coarse)'), available)
         lon = any_of(('Longitude', 'Longitude (Coarse)'), available)
         return lat and lon and all_of(('Altitude AAL', 'Start Datetime'),
