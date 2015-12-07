@@ -201,7 +201,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
                 logger.warning("Disabling altitude on KML plot as it is "
                                "unavailable.")
         # Get altitude param from hdf.
-        if plot_altitude:
+        if plot_altitude and plot_altitude in hdf.keys():
             alt = derived_param_from_hdf(hdf[plot_altitude]).get_aligned(one_hz)
             alt.array = repair_mask(alt.array, frequency=alt.frequency,
                                     repair_duration=None) / METRES_TO_FEET
