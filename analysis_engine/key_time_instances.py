@@ -1155,7 +1155,7 @@ class Liftoff(KeyTimeInstanceNode):
                frame=A('Frame')):
 
         for air in airs:
-            index_acc = index_rad = index_gog = None
+            index_acc = index_rad = index_gog = index_lift = None
             index_air = air.start_edge
             if index_air is None:
                 continue
