@@ -2320,7 +2320,10 @@ class TestTakeoffRoll(unittest.TestCase):
 class TestTakeoffRollOrRejectedTakeoff(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(TakeoffRollOrRejectedTakeoff.get_operational_combinations(),
-                         [('Takeoff Roll', 'Rejected Takeoff',)])
+                         [('Takeoff Roll',),
+                          ('Rejected Takeoff',),
+                          ('Takeoff Roll', 'Rejected Takeoff')]
+                         )
 
     def test_derive(self):
         rolls = buildsections('Takeoff Roll', [5,15], [105.2,115.4])

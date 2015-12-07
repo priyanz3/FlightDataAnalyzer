@@ -310,9 +310,9 @@ class TestClimbAccelerationStart(unittest.TestCase):
 
 class TestClimbThrustDerateDeselected(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('AT Climb 1 Derate', 'AT Climb 2 Derate')]
-        opts = ClimbThrustDerateDeselected.get_operational_combinations()
-        self.assertEqual(opts, expected)
+        ac_family = A('Family', 'B787')
+        expected = ('AT Climb 1 Derate', 'AT Climb 2 Derate')
+        self.assertTrue(ClimbThrustDerateDeselected.can_operate(expected, ac_family=ac_family))
 
     def test_derive_basic(self):
         values_mapping = {0: 'Not Latched', 1: 'Latched'}

@@ -487,7 +487,7 @@ class AccelerationNormal20FtToFlareMax(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.G
 
@@ -663,7 +663,7 @@ class AccelerationNormalLiftoffTo35FtMax(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.G
 
@@ -2830,7 +2830,7 @@ class AirspeedRelativeWithConfigurationDuringDescentMin(KeyPointValueNode, FlapO
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     NAME_FORMAT = 'Airspeed Relative With Configuration %(conf)s During Descent Min'
     NAME_VALUES = NAME_VALUES_CONF.copy()
@@ -5379,7 +5379,7 @@ class HeightLossLiftoffTo35Ft(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.FT
 
@@ -5405,7 +5405,7 @@ class HeightLoss35To1000Ft(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.FT
 
@@ -5432,7 +5432,7 @@ class HeightLoss1000To2000Ft(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.FT
 
@@ -9109,7 +9109,7 @@ class FlareDuration20FtToTouchdown(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.SECOND
 
@@ -9148,7 +9148,7 @@ class FlareDistance20FtToTouchdown(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.METER
 

@@ -219,10 +219,10 @@ class ClimbStart(KeyTimeInstanceNode):
             # Assumes a Top Of Climb KTI exists after each Liftoff.
             toc = tocs.get_next(liftoff.index)
             if toc:
-            climb_slice = slice(liftoff.index, toc.index)
-            index = index_at_value(alt_aal.array, CLIMB_THRESHOLD, climb_slice)
-            if index:
-                self.create_kti(index)
+                climb_slice = slice(liftoff.index, toc.index)
+                index = index_at_value(alt_aal.array, CLIMB_THRESHOLD, climb_slice)
+                if index:
+                    self.create_kti(index)
 
 
 class ClimbAccelerationStart(KeyTimeInstanceNode):
@@ -326,7 +326,7 @@ class ClimbThrustDerateDeselected(KeyTimeInstanceNode):
     '''
     @classmethod
     def can_operate(cls, available, ac_family=A('Family')):
-        if ac_family == 'B787':
+        if ac_family.value == 'B787':
             return True
         else:
             return False
@@ -1054,7 +1054,7 @@ class TakeoffAccelerationStart(KeyTimeInstanceNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        return 'Airspeed' in available and 'Takeoff' in available
+            return 'Airspeed' in available and 'Takeoff' in available
 
     def derive(self, speed=P('Airspeed'), takeoffs=S('Takeoff'),
                accel=P('Acceleration Longitudinal Offset Removed')):

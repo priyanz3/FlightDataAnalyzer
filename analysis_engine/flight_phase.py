@@ -137,8 +137,8 @@ class GoAroundAndClimbout(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight')):
@@ -221,8 +221,8 @@ class EngHotelMode(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        return all_of(('Eng (2) Np', 'Eng (1) N1', 'Eng (2) N1', 'Grounded', 'Propeller Brake'), available) \
-            and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
+            return all_of(('Eng (2) Np', 'Eng (1) N1', 'Eng (2) N1', 'Grounded', 'Propeller Brake'), available) \
+                and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
 
 
     def derive(self, eng2_np=P('Eng (2) Np'),
@@ -257,8 +257,8 @@ class ApproachAndLanding(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight'),
@@ -300,8 +300,8 @@ class Approach(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight'),
@@ -504,7 +504,7 @@ class InitialCruise(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     def derive(self, cruises=S('Cruise')):
         cruise = cruises[0].slice
@@ -587,8 +587,8 @@ class DescentLowClimb(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight')):
@@ -1560,7 +1560,7 @@ class TakeoffRotation(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     align_frequency = 1
 
@@ -1583,7 +1583,7 @@ class TakeoffRotationWow(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     def derive(self, toff_rots=S('Takeoff Rotation')):
         for toff_rot in toff_rots:

@@ -3001,18 +3001,19 @@ class TestTrackDeviationFromRunway(unittest.TestCase):
              ('Track Continuous', 'Approach Information'),
              ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway'),
              ('Track True Continuous', 'Track Continuous', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Takeoff', 'Approach Information'),
+             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
              ('Track True Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff', 'FDR Takeoff Runway'),
-             ('Track Continuous', 'Takeoff', 'Approach Information'),
+             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
              ('Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff', 'Approach Information'),
+             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
              ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff', 'FDR Takeoff Runway', 'Approach Information')]
+             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information')
+             ]
         )
 
     def test_deviation(self):

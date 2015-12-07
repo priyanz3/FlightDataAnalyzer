@@ -7895,7 +7895,7 @@ class TestTakeoffRotation(unittest.TestCase):
 class TestHeadingDuringTakeoff(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringTakeoff
-        self.operational_combinations = [('Heading Continuous', 'Takeoff Roll')]
+        self.operational_combinations = [('Heading Continuous', 'Takeoff Roll Or Rejected Takeoff')]
 
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,2,4,7,9,8,6,3]))
