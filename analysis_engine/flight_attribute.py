@@ -871,7 +871,7 @@ class FlightType(FlightAttributeNode):
             raise InvalidFlightType('TOUCHDOWN_ONLY')
             #self.set_flight_attr('TOUCHDOWN_ONLY')
             #return
-        
+
         types = FlightType.Type
 
         if liftoffs and touchdowns:
