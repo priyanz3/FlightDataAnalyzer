@@ -1683,6 +1683,7 @@ class DistanceFlown(DerivedParameterNode):
     def derive(self, tas=P('Airspeed True'), airs=S('Airborne')):
 
         self.array = np_ma_zeros_like(tas.array)
+        if airs.get_first():
         start = airs.get_first().slice.start
         stop = airs.get_last().slice.stop
         _slice = slice(start, stop)
