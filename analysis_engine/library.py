@@ -6757,15 +6757,7 @@ def smooth_track_cost_function(lat_s, lon_s, lat, lon, hz):
     from_straight = np.sum(np.convolve(lat_s,slider,'valid')**2) + \
         np.sum(np.convolve(lon_s,slider,'valid')**2)
 
-    if hz == 1.0:
-        weight = 1000
-    elif hz == 0.5:
-        weight = 300
-    elif hz == 0.25:
         weight = 100
-    else:
-        raise ValueError('Lat/Lon sample rate not recognised in smooth_track_cost_function.')
-
     cost = from_data + weight*from_straight
     return cost
 
