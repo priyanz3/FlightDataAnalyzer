@@ -461,7 +461,7 @@ def split_segments(hdf, aircraft_info):
         if slow_duration < thresholds['min_split_duration']:
             logger.info("Disregarding period of speed below '%s' "
                         "since '%s' is shorter than MINIMUM_SPLIT_DURATION "
-                        "('%s').", thresholds['min_split_duration'], slow_duration,
+                        "('%s').", thresholds['speed_threshold'], slow_duration,
                         thresholds['min_split_duration'])
             continue
 
@@ -496,7 +496,7 @@ def split_segments(hdf, aircraft_info):
         if eng_split_value is not None and \
            eng_split_value < settings.MINIMUM_SPLIT_PARAM_VALUE:
             logger.info("Minimum of normalised split parameters ('%s') was "
-                        "below MINIMUM_SPLIT_PARAM_VALUE ('%s') within "
+                        "below  ('%s') within "
                         "slow_slice '%s' at index '%d'.",
                         eng_split_value, settings.MINIMUM_SPLIT_PARAM_VALUE,
                         slow_slice, eng_split_index)
@@ -548,10 +548,26 @@ def _get_speed_parameter(hdf, aircraft_info):
 
     thresholds = {}
     if aircraft_info.get('Engine Propulsion', None) == 'ROTOR':
+
         parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
-        thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
-        thresholds['min_split_duration'] = 10 # TODO: add to settings
+        thresholds['speed_threshold'] = 90.0 # settings.ROTORSPEED_THRESHOLD
+        thresholds['min_split_duration'] = 4 # Very short dips in rotor speed before recording stops.
+        # Let's try one minute on the ground as worth splitting.
+        # Set to 30 sec as this gives two splits and two keeps in the test data set
+        # TODO: add to settings
         thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
+
+        '''
+        # This works nicely, separating individual sectors.
+        parameter = hdf['Altitude Radio (L)']  # FIXME: merge L&R !
+        thresholds['speed_threshold'] = 1.0 # settings.ROTORSPEED_THRESHOLD
+        thresholds['min_split_duration'] = 60
+        # Let's try one minute on the ground as worth splitting.
+        # Set to 30 sec as this gives two splits and two keeps in the test data set
+        # TODO: add to settings
+        thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
+        '''
+
     else:
         parameter = hdf['Airspeed']
         thresholds['speed_threshold'] = settings.AIRSPEED_THRESHOLD
@@ -640,7 +656,7 @@ def has_constant_time(hdf):
 def calculate_fallback_dt(hdf, fallback_dt=None, fallback_relative_to_start=True):
     """
     Check the time parameters in the HDF5 file and update the fallback_dt.
-    
+
     Takes into account adjustment of fallback datetime if it's relative to
     the end of data and if there's a constant timebase within the data it
     will use this as the fallback datetime.
@@ -653,7 +669,7 @@ def calculate_fallback_dt(hdf, fallback_dt=None, fallback_relative_to_start=True
         logger.info("Reduced fallback_dt by %ddays %dhr %dmin to %s",
                     secs // 86400, secs % 86400 // 3600,
                     secs % 86400 % 3600 // 60, fallback_dt)
-        
+
     if not has_constant_time(hdf):
         # we don't need to do any further corrections
         return fallback_dt
@@ -832,7 +848,7 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
     return segment
 
 
-def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None, 
+def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
                           fallback_relative_to_start=True,
                           draw=False, dest_dir=None):
     """
@@ -904,7 +920,7 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         segment = append_segment_info(dest_path, segment_type, segment_slice,
                                       part, fallback_dt=fallback_dt, aircraft_info=aircraft_info)
 
-        if previous_stop_dt and segment.start_dt < previous_stop_dt:
+        if previous_stop_dt and segment.start_dt < previous_stop_dt - timedelta(0,4):
             # In theory, this should not happen - but be warned of superframe
             # padding?
             logger.warning(
