@@ -599,9 +599,8 @@ class AltitudeAAL(DerivedParameterNode):
             ralt_sections = np.ma.clump_unmasked(
                 np.ma.masked_outside(alt_rad_aal, 0.0, ALTITUDE_AAL_TRANS_ALT))
             if len(ralt_sections)==0:
-                # Either Altitude Radio did not drop below 100, or did not get
-                # above 100. Either way, we are better off working with just the
-                # pressure altitude signal.
+                # Altitude Radio did not drop below ALTITUDE_AAL_TRANS_ALT,
+                # so we are better off working with just the pressure altitude signal.
                 return self.shift_alt_std(alt_std, land_pitch)
 
         baro_sections = slices_not(ralt_sections, begin_at=0,
