@@ -7987,7 +7987,6 @@ class EngOilPressMin(KeyPointValueNode):
                airborne=S('Airborne')):
 
         for air in [a.slice for a in airborne]:
-            air_count = slice_duration(air, 1.0)
             min_p = np.ma.min(oil_press.array[air])
             if min_p:
                 # The minimum is non-zero, so let's use that.
@@ -7995,6 +7994,7 @@ class EngOilPressMin(KeyPointValueNode):
             else:
                 non_zero_press = np.ma.masked_equal(oil_press.array[air], min_p)
                 non_zero_count = np.ma.count(non_zero_press)
+                air_count = slice_duration(air, 1.0)
                 if air_count-non_zero_count == 1:
                     # Only a single corrupt sample, so repair this
                     repair_press = repair_mask(non_zero_press, repair_duration=1.0)
