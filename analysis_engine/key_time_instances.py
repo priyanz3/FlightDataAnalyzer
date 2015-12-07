@@ -247,7 +247,10 @@ class ClimbAccelerationStart(KeyTimeInstanceNode):
         prop = (eng_type and eng_type.value == 'PROP' and
                 'Eng (*) Np Max' in available)
         alt = all_of(('Engine Propulsion', 'Altitude AAL For Flight Phases'), available)
-        return 'Initial Climb' in available and (spd_sel or jet or prop or alt)
+        return 'Initial Climb' in available and \
+               (spd_sel or jet or prop or alt) and \
+               not (eng_type and eng_type.value == 'ROTOR')
+
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                initial_climbs=S('Initial Climb'),
