@@ -3,6 +3,7 @@ import numpy as np
 from analysis_engine import settings
 
 from analysis_engine.library import (
+    all_deps,
     all_of,
     any_of,
     bearing_and_distance,
@@ -132,7 +133,10 @@ class GoAroundAndClimbout(FlightPhaseNode):
     '''
 
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
+    def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
         return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
@@ -167,6 +171,14 @@ class Holding(FlightPhaseNode):
     as we are only looking for turns, and not bothered about the sense or
     actual heading angle.
     """
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return all_deps(cls, available)
+
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                hdg=P('Heading Increasing'),
                lat=P('Latitude Smoothed'), lon=P('Longitude Smoothed')):
@@ -205,7 +217,10 @@ class EngHotelMode(FlightPhaseNode):
     '''
 
     @classmethod
-    def can_operate(cls, available, family=A('Family')):
+    def can_operate(cls, available, family=A('Family'), ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         return all_of(('Eng (2) Np', 'Eng (1) N1', 'Eng (2) N1', 'Grounded', 'Propeller Brake'), available) \
             and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
 
@@ -236,8 +251,12 @@ class ApproachAndLanding(FlightPhaseNode):
     # (when offset > 0.5)
     align_offset = 0
 
+
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
+    def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
         return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
@@ -277,7 +296,10 @@ class Approach(FlightPhaseNode):
     Uses find_low_alts to exclude level offs and level flight sections.
     """
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
+    def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
         return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
@@ -473,6 +495,13 @@ class InitialCruise(FlightPhaseNode):
     align_frequency = 1.0
     align_offset = 0.0
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
+
     def derive(self, cruises=S('Cruise')):
         cruise = cruises[0].slice
         if cruise.stop - cruise.start > 330:
@@ -550,7 +579,10 @@ class DescentLowClimb(FlightPhaseNode):
     '''
 
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
+    def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
         return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
@@ -1519,7 +1551,15 @@ class TakeoffRotation(FlightPhaseNode):
     This is used by correlation tests to check control movements during the
     rotation and lift phases.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
+
     align_frequency = 1
+
     def derive(self, lifts=S('Liftoff')):
         if not lifts:
             return
@@ -1533,6 +1573,14 @@ class TakeoffRotationWow(FlightPhaseNode):
     Used by correlation tests which need to use only the rotation period while the mainwheels are on the ground. Specifically, AOA.
     '''
     name = 'Takeoff Rotation WOW'
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
+
     def derive(self, toff_rots=S('Takeoff Rotation')):
         for toff_rot in toff_rots:
             self.create_phase(slice(toff_rot.slice.start,

@@ -320,6 +320,12 @@ class ClimbThrustDerateDeselected(KeyTimeInstanceNode):
     Creates KTIs where both climb thrust derates are deselected.
     Specific to 787 operations.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_family=A('Family')):
+        if ac_family == 'B787':
+            return True
+        else:
+            return False
 
     def derive(self, climb_derate_1=P('AT Climb 1 Derate'),
                climb_derate_2=P('AT Climb 2 Derate'),):
@@ -1018,7 +1024,10 @@ class TakeoffAccelerationStart(KeyTimeInstanceNode):
     faulty sensor, or no longitudinal accelerometer.
     '''
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
         return 'Airspeed' in available and 'Takeoff' in available
 
     def derive(self, speed=P('Airspeed'), takeoffs=S('Takeoff'),

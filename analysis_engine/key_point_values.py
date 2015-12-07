@@ -36,6 +36,7 @@ from analysis_engine.node import KeyPointValueNode, KPV, KTI, P, S, A, M, App, S
 
 from analysis_engine.library import (ambiguous_runway,
                                      align,
+                                     all_deps,
                                      all_of,
                                      any_of,
                                      bearings_and_distances,
@@ -481,6 +482,12 @@ class AccelerationNormalMax(KeyPointValueNode):
 class AccelerationNormal20FtToFlareMax(KeyPointValueNode):
     '''
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.G
 
@@ -651,6 +658,12 @@ class AccelerationNormalAtTouchdown(KeyPointValueNode):
 class AccelerationNormalLiftoffTo35FtMax(KeyPointValueNode):
     '''
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.G
 
@@ -2811,6 +2824,13 @@ class AirspeedRelativeWithConfigurationDuringDescentMin(KeyPointValueNode, FlapO
     Conf settings (for all aircraft models) include:
     %(conf)s
     ''' % NAME_VALUES_CONF
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     NAME_FORMAT = 'Airspeed Relative With Configuration %(conf)s During Descent Min'
     NAME_VALUES = NAME_VALUES_CONF.copy()
@@ -5354,6 +5374,12 @@ class HeightLossLiftoffTo35Ft(KeyPointValueNode):
     the algorithm will still work with low sample rate (or even missing)
     radio altimeters.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.FT
 
@@ -5374,6 +5400,12 @@ class HeightLossLiftoffTo35Ft(KeyPointValueNode):
 class HeightLoss35To1000Ft(KeyPointValueNode):
     '''
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.FT
 
@@ -5395,6 +5427,12 @@ class HeightLoss35To1000Ft(KeyPointValueNode):
 class HeightLoss1000To2000Ft(KeyPointValueNode):
     '''
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.FT
 
@@ -9066,6 +9104,12 @@ class FlareDuration20FtToTouchdown(KeyPointValueNode):
     touchdown and the landing roll, so trying to measure this 20ft to
     touchdown difference is impractical.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.SECOND
 
@@ -9096,9 +9140,15 @@ class FlareDuration20FtToTouchdown(KeyPointValueNode):
 
 class FlareDistance20FtToTouchdown(KeyPointValueNode):
     '''
-    '''
     #TODO: Write a test for this function with less than one second between 20ft and touchdown, using interval arithmetic.
     #NAX_1_LN-DYC_20120104234127_22_L3UQAR___dev__sdb.001.hdf5
+    '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.METER
 
@@ -10059,6 +10109,12 @@ class PitchRate35To1000FtMax(KeyPointValueNode):
 class PitchRate35ToClimbAccelerationStartMax(KeyPointValueNode):
     '''
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return all_deps(cls, available)
 
     units = ut.DEGREE_S
 
