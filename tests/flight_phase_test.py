@@ -1242,8 +1242,14 @@ class TestDescent(unittest.TestCase):
 
 class TestFast(unittest.TestCase):
     def test_can_operate(self):
-        self.assertEqual(Fast.get_operational_combinations(),
-                         [('Airspeed For Flight Phases',)])
+        aeroplane = A('Aircraft Type', 'aeroplane')
+        helicopter = A('Aircraft Type', 'helicopter')
+        self.assertTrue(Fast.can_operate(('Airspeed For Flight Phases',),
+                                        ac_type=aeroplane))
+        self.assertTrue(Fast.can_operate(('Nr',),
+                                        ac_type=helicopter))
+        self.assertFalse(Fast.can_operate(('Airspeed For Flight Phases',),
+                                        ac_type=helicopter))
 
     def test_fast_phase_basic(self):
         slow_and_fast_data = np.ma.array(range(60, 120, 10) + [120] * 300 + \

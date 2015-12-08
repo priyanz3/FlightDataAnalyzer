@@ -620,7 +620,15 @@ class Fast(FlightPhaseNode):
     TODO: Discuss whether this assertion is reliable in the presence of air data corruption.
     '''
 
-    def derive(self, airspeed=P('Airspeed For Flight Phases')):
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return 'Nr' in available
+        else:
+            return 'Airspeed For Flight Phases' in available
+
+    def derive(self, airspeed=P('Airspeed For Flight Phases'), rotor_speed=P('Nr'),
+               ac_type=A('Aircraft Type')):
         """
         Did the aircraft go fast enough to possibly become airborne?
 
@@ -633,10 +641,15 @@ class Fast(FlightPhaseNode):
             (airspeed.array[1:-1]-AIRSPEED_THRESHOLD)
         test_array = np.ma.masked_outside(value_passing_array, 0.0, -100.0)
         """
-        fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)
-        fast_slices = np.ma.clump_unmasked(fast)
-        fast_slices = slices_remove_small_gaps(fast_slices, time_limit=30,
-                                               hz=self.frequency)
+        if ac_type and ac_type.value == 'helicopter':
+            fast = np.ma.masked_less(speed.array, 90.0)  # settings.ROTORSPEED_THRESHOLD
+            fast_slices = np.ma.clump_unmasked(fast)
+        else:
+            fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)
+            fast_slices = np.ma.clump_unmasked(fast)
+            fast_slices = slices_remove_small_gaps(fast_slices, time_limit=30,
+                                                   hz=self.frequency)
+
         self.create_phases(fast_slices)
 
 
