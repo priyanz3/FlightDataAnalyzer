@@ -25,6 +25,7 @@ from analysis_engine.library import (
     runs_of_ones,
     shift_slice,
     shift_slices,
+    slices_above,
     slices_and,
     slices_and_not,
     slices_from_to,
@@ -463,23 +464,27 @@ class Cruise(FlightPhaseNode):
     def derive(self,
                ccds=S('Climb Cruise Descent'),
                tocs=KTI('Top Of Climb'),
-               tods=KTI('Top Of Descent')):
+               tods=KTI('Top Of Descent'),
+               air_spd=P('Airspeed For Flight Phases')):
         # We may have many phases, tops of climb and tops of descent at this
         # time.
         # The problem is that they need not be in tidy order as the lists may
         # not be of equal lengths.
-        for ccd in ccds:
-            toc = tocs.get_first(within_slice=ccd.slice)
+
+        # ensure traveling greater than 50 kts in cruise
+        scope = slices_and(slices_above(air_spd.array, 50)[1], ccds.get_slices())
+        for ccd in scope:
+            toc = tocs.get_first(within_slice=ccd)
             if toc:
                 begin = toc.index
             else:
-                begin = ccd.slice.start
+                begin = ccd.start
 
-            tod = tods.get_last(within_slice=ccd.slice)
+            tod = tods.get_last(within_slice=ccd)
             if tod:
                 end = tod.index
             else:
-                end = ccd.slice.stop
+                end = ccd.stop
 
             # Some flights just don't cruise. This can cause headaches later
             # on, so we always cruise for at least one second !

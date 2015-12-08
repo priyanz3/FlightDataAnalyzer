@@ -1025,7 +1025,8 @@ class TestClimbing(unittest.TestCase):
 class TestCruise(unittest.TestCase):
     def test_can_operate(self):
         expected = [('Climb Cruise Descent',
-                     'Top Of Climb', 'Top Of Descent')]
+                     'Top Of Climb', 'Top Of Descent',
+                     'Airspeed For Flight Phases')]
         opts = Cruise.get_operational_combinations()
         self.assertEqual(opts, expected)
 
@@ -1047,9 +1048,10 @@ class TestCruise(unittest.TestCase):
         toc.derive(alt_p, ccd)
         tod = TopOfDescent()
         tod.derive(alt_p, ccd)
+        air_spd = Parameter('Altitude STD', np.ma.array([60] * len(alt_data)))
 
         test_phase = Cruise()
-        test_phase.derive(ccd, toc, tod)
+        test_phase.derive(ccd, toc, tod, air_spd)
         #===========================================================
 
         # With this test waveform, the peak at 31:32 is just flat enough
@@ -1069,10 +1071,12 @@ class TestCruise(unittest.TestCase):
         toc.derive(alt, ccd)
         tod = TopOfDescent()
         tod.derive(alt, ccd)
+        air_spd = Parameter('Altitude STD', np.ma.array([60] * len(alt_data)))
+
         test_phase = Cruise()
-        test_phase.derive(ccd, toc, tod)
+        test_phase.derive(ccd, toc, tod, air_spd)
         #===========================================================
-        self.assertEqual(test_phase[0].slice, slice(None,5))
+        self.assertEqual(test_phase[0].slice, slice(0,5))
         self.assertEqual(len(toc), 0)
         self.assertEqual(len(tod), 1)
 
@@ -1087,11 +1091,13 @@ class TestCruise(unittest.TestCase):
         toc.derive(alt, ccd)
         tod = TopOfDescent()
         tod.derive(alt, ccd)
+        air_spd = Parameter('Altitude STD', np.ma.array([60] * len(alt_data)))
+
         test_phase = Cruise()
-        test_phase.derive(ccd, toc, tod)
+        test_phase.derive(ccd, toc, tod, air_spd)
         #===========================================================
         expected = Cruise()
-        expected.create_section(slice(6, 7), 'Cruise')
+        expected.create_section(slice(6, 10), 'Cruise')
         self.assertEqual(test_phase, expected)
         self.assertEqual(len(toc), 1)
         self.assertEqual(len(tod), 0)
