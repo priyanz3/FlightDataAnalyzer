@@ -8777,7 +8777,7 @@ class HeadingVariation300To50Ft(KeyPointValueNode):
                head=P('Heading Continuous'),
                alt_aal=P('Altitude AAL For Flight Phases')):
 
-        for band in alt_aal.slices_from_to(300, 50):
+        for band in alt_aal.slices_from_to(300, 50, threshold = 0.25):
             dev = np.ma.ptp(head.array[band])
             self.create_kpv(band.stop, dev)
 
