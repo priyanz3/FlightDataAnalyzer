@@ -7876,6 +7876,12 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
     landing (passing 50ft) to the minimum throttle setting prior to
     application of reverse thrust.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
 
     units = ut.SECOND
 
