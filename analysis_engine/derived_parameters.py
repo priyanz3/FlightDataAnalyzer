@@ -5049,7 +5049,7 @@ class VerticalSpeedInertial(DerivedParameterNode):
         for speedy in fast:
             # Fix minor dropouts
             az_repair = repair_mask(az.array[speedy.slice], frequency=hz)
-                alt_rad_repair = repair_mask(alt_rad.array[speedy.slice], frequency=hz,
+            alt_rad_repair = repair_mask(alt_rad.array[speedy.slice], frequency=hz,
                                              repair_duration=None)
             alt_std_repair = repair_mask(alt_std.array[speedy.slice],
                                          frequency=hz)
