@@ -44,7 +44,9 @@ from analysis_engine.settings import (
     BOUNCED_LANDING_THRESHOLD,
     BOUNCED_MAXIMUM_DURATION,
     GROUNDSPEED_FOR_MOBILE,
+    HEADING_RATE_FOR_FLIGHT_PHASES,
     HEADING_RATE_FOR_MOBILE,
+    HEADING_RATE_FOR_TAXI_TURNS,
     HEADING_TURN_OFF_RUNWAY,
     HEADING_TURN_ONTO_RUNWAY,
     HOLDING_MAX_GSPD,
@@ -55,8 +57,7 @@ from analysis_engine.settings import (
     KTS_TO_MPS,
     LANDING_ROLL_END_SPEED,
     LANDING_THRESHOLD_HEIGHT,
-    HEADING_RATE_FOR_FLIGHT_PHASES,
-    HEADING_RATE_FOR_TAXI_TURNS,
+    ROTORSPEED_THRESHOLD,
     TAKEOFF_ACCELERATION_THRESHOLD,
     VERTICAL_SPEED_FOR_CLIMB_PHASE,
     VERTICAL_SPEED_FOR_DESCENT_PHASE,
@@ -100,7 +101,7 @@ class Airborne(FlightPhaseNode):
             if working_alt is None:
                 break
             airs = slices_remove_small_gaps(
-                np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 0.0)),
+                np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 1.0)),
                 time_limit=40, # 10 seconds was too short for Herc which flies below 0  AAL for 30 secs.
                 hz=alt_aal.frequency)
             # Make sure we propogate None ends to data which starts or ends in
@@ -642,7 +643,7 @@ class Fast(FlightPhaseNode):
         test_array = np.ma.masked_outside(value_passing_array, 0.0, -100.0)
         """
         if ac_type and ac_type.value == 'helicopter':
-            fast = np.ma.masked_less(speed.array, 90.0)  # settings.ROTORSPEED_THRESHOLD
+            fast = np.ma.masked_less(rotor_speed.array, ROTORSPEED_THRESHOLD)
             fast_slices = np.ma.clump_unmasked(fast)
         else:
             fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)

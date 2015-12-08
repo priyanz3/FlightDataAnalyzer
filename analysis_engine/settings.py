@@ -118,8 +118,9 @@ ACCEL_LON_OFFSET_LIMIT = 0.1 # g
 # The minimum sensible duration for being airborne, used to reject skips and bounced landings.
 AIRBORNE_THRESHOLD_TIME = 60  # secs
 
-# An airspeed below which you just can't possibly be flying.
+# An airspeed or rotor speed below which you just can't possibly be flying.
 AIRSPEED_THRESHOLD = 80  # kts
+ROTORSPEED_THRESHOLD = 90 # %
 
 # The minimum sensible duration for being declaring a START_AND_STOP
 AIRSPEED_THRESHOLD_TIME = 3 * 60  # secs
@@ -393,9 +394,6 @@ REPAIR_DURATION = 10  # seconds
 # Minimum engine speed for reverse thrust to be considered effective.
 REVERSE_THRUST_EFFECTIVE_EPR = 1.25 # %EPR
 REVERSE_THRUST_EFFECTIVE_N1 = 65 # %N1
-
-# A rotorspeed below which you just can't possibly be flying.
-ROTORSPEED_THRESHOLD = 85.0  # % Nr
 
 # Threshold for spoiler deployment when operating as speedbrake in flight.
 # See KPV "AirspeedWithSpoilerDeployedMax"
