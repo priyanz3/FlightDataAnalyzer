@@ -588,12 +588,13 @@ class AltitudeAAL(DerivedParameterNode):
             # take account of bounced landings and altimeters which read
             # small positive values on the ground.
             bounce_sections = [y for y in ralt_sections if np.ma.max(alt_rad[y]) > BOUNCED_LANDING_THRESHOLD]
-            bounce_end = bounce_sections[0].start
-            hundred_feet = bounce_sections[-1].stop
+            if bounce_sections:
+                bounce_end = bounce_sections[0].start
+                hundred_feet = bounce_sections[-1].stop
 
-            alt_result[bounce_end:hundred_feet] = alt_rad_aal[bounce_end:hundred_feet]
-            alt_result[:bounce_end] = 0.0
-            ralt_sections = [slice(0, hundred_feet)]
+                alt_result[bounce_end:hundred_feet] = alt_rad_aal[bounce_end:hundred_feet]
+                alt_result[:bounce_end] = 0.0
+                ralt_sections = [slice(0, hundred_feet)]
 
         elif mode=='over_gnd':
 
@@ -834,7 +835,7 @@ class AltitudeAAL(DerivedParameterNode):
             plt.plot(alt_rad.array, 'r-')
             plt.show()
         '''
-
+        alt_aal = np.ma.maximum(alt_aal, alt_rad.array.data)
         self.array = alt_aal
 
 
