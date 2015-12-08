@@ -25,6 +25,7 @@ from analysis_engine.library import (
     runs_of_ones,
     shift_slice,
     shift_slices,
+    slices_above,
     slices_and,
     slices_and_not,
     slices_from_to,
@@ -463,23 +464,27 @@ class Cruise(FlightPhaseNode):
     def derive(self,
                ccds=S('Climb Cruise Descent'),
                tocs=KTI('Top Of Climb'),
-               tods=KTI('Top Of Descent')):
+               tods=KTI('Top Of Descent'),
+               air_spd=P('Airspeed For Flight Phases')):
         # We may have many phases, tops of climb and tops of descent at this
         # time.
         # The problem is that they need not be in tidy order as the lists may
         # not be of equal lengths.
-        for ccd in ccds:
-            toc = tocs.get_first(within_slice=ccd.slice)
+
+        # ensure traveling greater than 50 kts in cruise
+        scope = slices_and(slices_above(air_spd.array, 50)[1], ccds.get_slices())
+        for ccd in scope:
+            toc = tocs.get_first(within_slice=ccd)
             if toc:
                 begin = toc.index
             else:
-                begin = ccd.slice.start
+                begin = ccd.start
 
-            tod = tods.get_last(within_slice=ccd.slice)
+            tod = tods.get_last(within_slice=ccd)
             if tod:
                 end = tod.index
             else:
-                end = ccd.slice.stop
+                end = ccd.stop
 
             # Some flights just don't cruise. This can cause headaches later
             # on, so we always cruise for at least one second !
@@ -615,7 +620,15 @@ class Fast(FlightPhaseNode):
     TODO: Discuss whether this assertion is reliable in the presence of air data corruption.
     '''
 
-    def derive(self, airspeed=P('Airspeed For Flight Phases')):
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return 'Nr' in available
+        else:
+            return 'Airspeed For Flight Phases' in available
+
+    def derive(self, airspeed=P('Airspeed For Flight Phases'), rotor_speed=P('Nr'),
+               ac_type=A('Aircraft Type')):
         """
         Did the aircraft go fast enough to possibly become airborne?
 
@@ -628,10 +641,15 @@ class Fast(FlightPhaseNode):
             (airspeed.array[1:-1]-AIRSPEED_THRESHOLD)
         test_array = np.ma.masked_outside(value_passing_array, 0.0, -100.0)
         """
-        fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)
-        fast_slices = np.ma.clump_unmasked(fast)
-        fast_slices = slices_remove_small_gaps(fast_slices, time_limit=30,
-                                               hz=self.frequency)
+        if ac_type and ac_type.value == 'helicopter':
+            fast = np.ma.masked_less(speed.array, 90.0)  # settings.ROTORSPEED_THRESHOLD
+            fast_slices = np.ma.clump_unmasked(fast)
+        else:
+            fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)
+            fast_slices = np.ma.clump_unmasked(fast)
+            fast_slices = slices_remove_small_gaps(fast_slices, time_limit=30,
+                                                   hz=self.frequency)
+
         self.create_phases(fast_slices)
 
 
