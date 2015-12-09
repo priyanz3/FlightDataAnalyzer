@@ -835,7 +835,8 @@ class AltitudeAAL(DerivedParameterNode):
             plt.plot(alt_rad.array, 'r-')
             plt.show()
         '''
-        alt_aal = np.ma.maximum(alt_aal, alt_rad.array.data)
+        if alt_rad:
+            alt_aal = np.ma.maximum(alt_aal, alt_rad.array.data)
         self.array = alt_aal
 
 
