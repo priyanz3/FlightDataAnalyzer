@@ -12516,14 +12516,13 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
     units = ut.KG
 
     @classmethod
-    def can_operate(cls, available, manufacturer=A('Manufacturer'), family=A('Family')):
+    def can_operate(cls, available, manufacturer=A('Manufacturer')):
         required_params = ('Gross Weight At Touchdown',
                            'Acceleration Normal At Touchdown',
                            'Rate Of Descent At Touchdown')
         return all_of(required_params, available) \
-            and family and family.value == 'A310'
-    # TODO: swap check once we have the conditions for other airbus families.
-            #and manufacturer and manufacturer.value == 'Airbus'
+            and manufacturer and manufacturer.value == 'Airbus'
+
 
     def derive(self, gw=KPV('Gross Weight At Touchdown'),
                acc_norm=KPV('Acceleration Normal At Touchdown'),

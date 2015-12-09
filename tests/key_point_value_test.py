@@ -11566,7 +11566,7 @@ class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
     def setUp(self):
         self.name = 'Gross Weight Conditional At Touchdown'
         self.node_class = GrossWeightConditionalAtTouchdown
-        self.family = A('Family', 'A310')
+        self.manufacturer = A('Manufacturer', 'Airbus')
         self.weight = KPV(name='Gross Weight At Touchdown', items=[
             KeyPointValue(name='Gross Weight At Touchdown', index=6107, value=109301),
         ])
@@ -11585,10 +11585,10 @@ class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
         available = ('Gross Weight At Touchdown',
                      'Acceleration Normal At Touchdown',
                      'Rate Of Descent At Touchdown')
-        self.assertTrue(self.node_class().can_operate(available, family=self.family))
-        self.assertFalse(self.node_class().can_operate(('Gross Weight At Touchdown',), family=self.family))
-        self.family.value = 'B737'
-        self.assertFalse(self.node_class().can_operate(available, family=self.family))
+        self.assertTrue(self.node_class().can_operate(available, manufacturer=self.manufacturer))
+        self.assertFalse(self.node_class().can_operate(('Gross Weight At Touchdown',), manufacturer=self.manufacturer))
+        self.manufacturer.value = 'Boeing'
+        self.assertFalse(self.node_class().can_operate(available, manufacturer=self.manufacturer))
 
 
     def test_derive(self):
