@@ -7881,7 +7881,7 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_deps(cls, available)
 
     units = ut.SECOND
 
