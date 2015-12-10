@@ -558,7 +558,7 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
     aircraft_info['Tail Number'] = tail_number
 
     # go through modules to get derived nodes
-    node_modules = additional_modules + settings.NODE_MODULES
+    node_modules = settings.NODE_MODULES + additional_modules
     derived_nodes = get_derived_nodes(node_modules)
 
     if requested:
