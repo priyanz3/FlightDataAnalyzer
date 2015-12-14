@@ -5128,6 +5128,13 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
 
     units = ut.SECOND
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
+
     def derive(self,
                gspd=P('Groundspeed'),
                tdwns=S('Touchdown'),
@@ -5227,7 +5234,9 @@ class HeadingDuringTakeoff(KeyPointValueNode):
 
     def derive(self,
                hdg=P('Heading Continuous'),
-               takeoffs=S('Takeoff Roll Or Rejected Takeoff')):
+               takeoffs=S('Takeoff Roll Or Rejected Takeoff'),
+               ac_type = A('Aircraft Type'),
+               toff_helos=S('Transition Hover To Flight')):
 
         for takeoff in takeoffs:
             if takeoff.slice.start and takeoff.slice.stop:
@@ -5244,13 +5253,25 @@ class HeadingTrueDuringTakeoff(KeyPointValueNode):
     We take the median true heading during the takeoff roll only as this avoids
     problems when turning onto the runway or with drift just after liftoff.
     The value is "assigned" to a time midway through the takeoff roll.
+
+    This KPV has been extended to accommodate helicopter transitions, so that the takeoff
+    runway can be identified where the aircraft is operating at a conventional airport.
     '''
 
     units = ut.DEGREE
 
     def derive(self,
                hdg_true=P('Heading True Continuous'),
-               takeoffs=S('Takeoff Roll')):
+               takeoffs=S('Takeoff Roll'),
+               ac_type = A('Aircraft Type'),
+               toff_helos=S('Transition Hover To Flight')):
+
+        if ac_type and ac_type.value=='aeroplane':
+            takeoffs = toff_aeros
+        elif ac_type and ac_type.value=='helicopter':
+            takeoffs = toff_helos
+        else:
+            raise ValueError ('Unrecognised aircraft type: %s', ac_type)
 
         for takeoff in takeoffs:
             if takeoff.slice.start and takeoff.slice.stop:
@@ -5267,29 +5288,46 @@ class HeadingDuringLanding(KeyPointValueNode):
     We take the median heading during the landing roll as this avoids problems
     with drift just before touchdown and heading changes when turning off the
     runway. The value is "assigned" to a time midway through the landing phase.
+
+    This KPV has been extended to accommodate helicopter transitions, so that the landing
+    runway can be identified where the aircraft is operating at a conventional airport.
     '''
 
     units = ut.DEGREE
 
+    @classmethod
+    def can_operate(cls, available):
+        fixed_wing = all_of(('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway'), available)
+        rotary_wing = all_of(('Heading Continuous', 'Transition Flight To Hover'), available)
+        return fixed_wing or rotary_wing
+
     def derive(self,
                hdg=P('Heading Continuous'),
                landings=S('Landing Roll'),
-               touchdowns=KTI('Touchdown'),
-               ldg_turn_off=KTI('Landing Turn Off Runway')):
+               land_aeros=KTI('Touchdown'),
+               ldg_turn_off=KTI('Landing Turn Off Runway'),
+               ac_type = A('Aircraft Type'),
+               land_helos=S('Transition Flight To Hover')):
 
-        for landing in landings:
-            # Check the slice is robust.
-            touchdown = touchdowns.get_first(within_slice=landing.slice)
-            turn_off = ldg_turn_off.get_first(within_slice=landing.slice)
-            start = touchdown.index if touchdown else landing.slice.start
-            stop = turn_off.index + 1 if turn_off else landing.slice.stop
-            if start and stop:
-                index = (start + stop) / 2.0
-                value = np.ma.median(hdg.array[start:stop])
-                # median result is rounded as
-                # -1.42108547152020037174224853515625E-14 == 360.0
-                # which is an invalid value for Heading
-                self.create_kpv(index, float(round(value, 8)) % 360.0)
+        if ac_type and ac_type.value=='aeroplane':
+            for landing in landings:
+                # Check the slice is robust.
+                touchdown = touchdowns.get_first(within_slice=landing.slice)
+                turn_off = ldg_turn_off.get_first(within_slice=landing.slice)
+                start = touchdown.index if touchdown else landing.slice.start
+                stop = turn_off.index + 1 if turn_off else landing.slice.stop
+                if start and stop:
+                    index = (start + stop) / 2.0
+                    value = np.ma.median(hdg.array[start:stop])
+                    # median result is rounded as
+                    # -1.42108547152020037174224853515625E-14 == 360.0
+                    # which is an invalid value for Heading
+                    self.create_kpv(index, float(round(value, 8)) % 360.0)
+
+        elif ac_type and ac_type.value=='helicopter':
+            for land_helo in land_helos:
+                index = land_helo.slice.start
+                self.create_kpv(index,  float(round(hdg.array[index], 8)) % 360.0)
 
 
 class HeadingTrueDuringLanding(KeyPointValueNode):
@@ -5298,13 +5336,23 @@ class HeadingTrueDuringLanding(KeyPointValueNode):
     problems with drift just before touchdown and heading changes when turning
     off the runway. The value is "assigned" to a time midway through the
     landing phase.
+
+    This KPV has been extended to accommodate helicopter transitions, so that the landing
+    runway can be identified where the aircraft is operating at a conventional airport.
     '''
 
     units = ut.DEGREE
 
     def derive(self,
                hdg=P('Heading True Continuous'),
-               landings=S('Landing Roll')):
+               land_aeros=S('Landing Roll'),
+               ac_type = A('Aircraft Type'),
+               land_helos=S('Transition Flight To Hover')):
+
+        if ac_type and ac_type.value=='aeroplane':
+            landings = land_aeros
+        elif ac_type and ac_type.value=='helicopter':
+            landings = land_helos
 
         for landing in landings:
             # Check the slice is robust.
@@ -5839,7 +5887,9 @@ class LatitudeAtTouchdown(KeyPointValueNode):
                tdwns=KTI('Touchdown'),
                land_afr_apt=A('AFR Landing Airport'),
                land_afr_rwy=A('AFR Landing Runway'),
-               lat_c=P('Latitude (Coarse)')):
+               lat_c=P('Latitude (Coarse)'),
+               ac_type = A('Aircraft Type'),
+               land_helos=KTI('Enter Transition Flight To Hover')):
         '''
         Note that Latitude (Coarse) is a superframe parameter with poor
         resolution recorded on some FDAUs. Keeping it at the end of the list
@@ -5849,7 +5899,12 @@ class LatitudeAtTouchdown(KeyPointValueNode):
         '''
         # 1. Attempt to use latitude parameter if available:
         if lat:
-            self.create_kpvs_at_ktis(lat.array, tdwns)
+            if ac_type and ac_type.value=='aeroplane':
+                self.create_kpvs_at_ktis(lat.array, tdwns)
+            elif ac_type and ac_type.value=='helicopter':
+                self.create_kpvs_at_ktis(lat.array, land_helos)
+            else:
+                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lat_c:
@@ -5913,13 +5968,20 @@ class LongitudeAtTouchdown(KeyPointValueNode):
                tdwns=KTI('Touchdown'),
                land_afr_apt=A('AFR Landing Airport'),
                land_afr_rwy=A('AFR Landing Runway'),
-               lon_c=P('Longitude (Coarse)')):
+               lon_c=P('Longitude (Coarse)'),
+               ac_type = A('Aircraft Type'),
+               land_helos=KTI('Exit Transition Flight To Hover')):
         '''
         See note relating to coarse latitude and longitude under Latitude At Touchdown
         '''
         # 1. Attempt to use longitude parameter if available:
         if lon:
-            self.create_kpvs_at_ktis(lon.array, tdwns)
+            if ac_type and ac_type.value=='aeroplane':
+                self.create_kpvs_at_ktis(lon.array, tdwns)
+            elif ac_type and ac_type.value=='helicopter':
+                self.create_kpvs_at_ktis(lon.array, land_helos)
+            else:
+                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lon_c:
@@ -5982,7 +6044,9 @@ class LatitudeAtLiftoff(KeyPointValueNode):
                liftoffs=KTI('Liftoff'),
                toff_afr_apt=A('AFR Takeoff Airport'),
                toff_afr_rwy=A('AFR Takeoff Runway'),
-               lat_c=P('Latitude (Coarse)')):
+               lat_c=P('Latitude (Coarse)'),
+               ac_type = A('Aircraft Type'),
+               toff_helos=KTI('Exit Transition Hover To Flight')):
         '''
         Note that Latitude Coarse is a superframe parameter with poor
         resolution recorded on some FDAUs. Keeping it at the end of the list
@@ -5992,7 +6056,12 @@ class LatitudeAtLiftoff(KeyPointValueNode):
         '''
         # 1. Attempt to use latitude parameter if available:
         if lat:
-            self.create_kpvs_at_ktis(lat.array, liftoffs)
+            if ac_type and ac_type.value=='aeroplane':
+                self.create_kpvs_at_ktis(lat.array, liftoffs)
+            elif ac_type and ac_type.value=='helicopter':
+                self.create_kpvs_at_ktis(lat.array, toff_helos)
+            else:
+                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lat_c:
@@ -6055,13 +6124,20 @@ class LongitudeAtLiftoff(KeyPointValueNode):
                liftoffs=KTI('Liftoff'),
                toff_afr_apt=A('AFR Takeoff Airport'),
                toff_afr_rwy=A('AFR Takeoff Runway'),
-               lon_c=P('Longitude (Coarse)')):
+               lon_c=P('Longitude (Coarse)'),
+               ac_type = A('Aircraft Type'),
+               toff_helos=KTI('Exit Transition Hover To Flight')):
         '''
         See note relating to coarse latitude and longitude under Latitude At Takeoff
         '''
         # 1. Attempt to use longitude parameter if available:
         if lon:
-            self.create_kpvs_at_ktis(lon.array, liftoffs)
+            if ac_type and ac_type.value=='aeroplane':
+                self.create_kpvs_at_ktis(lon.array, liftoffs)
+            elif ac_type and ac_type.value=='helicopter':
+                self.create_kpvs_at_ktis(lon.array, toff_helos)
+            else:
+                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lon_c:
