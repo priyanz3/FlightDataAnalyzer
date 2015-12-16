@@ -4943,9 +4943,11 @@ class DistanceFromRunwayStartToTouchdown(KeyPointValueNode):
         distance_to_tdn = runway_distance_from_end(rwy.value,
                                                    lat_tdn.get_last().value,
                                                    lon_tdn.get_last().value)
-        if distance_to_tdn < distance_to_start:  # sanity check
+        distance_start_tdn = distance_to_start - distance_to_tdn
+        if distance_start_tdn > -500:
+            # sanity check asumes landed on runway, allows for touching down on stopway
             self.create_kpv(tdwns.get_last().index,
-                            distance_to_start - distance_to_tdn)
+                            distance_start_tdn)
 
 
 class DistanceFromTouchdownToRunwayEnd(KeyPointValueNode):
