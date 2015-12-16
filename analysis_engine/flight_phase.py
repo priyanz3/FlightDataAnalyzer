@@ -1558,7 +1558,7 @@ class TakeoffRollOrRejectedTakeoff(FlightPhaseNode):
     '''
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Takeoff Roll', 'Rejected Takeoff'), available)
+        return any_of(('Takeoff Roll', 'Rejected Takeoff', 'Transition Hover To Flight'), available)
 
     def derive(self,
                trolls=S('Takeoff Roll'),

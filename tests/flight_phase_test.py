@@ -157,7 +157,7 @@ class TestAirborne(unittest.TestCase):
         fast = SectionNode('Fast', items=[Section(name='Airborne', slice=slice(3, 80, None), start_edge=3, stop_edge=80)])
         air = Airborne()
         air.derive(altitude, fast)
-        expected = [Section(name='Airborne', slice=slice(6, 80, None), start_edge=6, stop_edge=80)]
+        expected = [Section(name='Airborne', slice=slice(8, 80, None), start_edge=8, stop_edge=80)]
         self.assertEqual(list(air), expected)
 
     def test_airborne_phase_not_fast(self):
@@ -2334,7 +2334,11 @@ class TestTakeoffRollOrRejectedTakeoff(unittest.TestCase):
         self.assertEqual(TakeoffRollOrRejectedTakeoff.get_operational_combinations(),
                          [('Takeoff Roll',),
                           ('Rejected Takeoff',),
-                          ('Takeoff Roll', 'Rejected Takeoff')]
+                          ('Transition Hover To Flight',),
+                          ('Takeoff Roll', 'Rejected Takeoff'),
+                          ('Takeoff Roll', 'Transition Hover To Flight'),
+                          ('Rejected Takeoff', 'Transition Hover To Flight'),
+                          ('Takeoff Roll', 'Rejected Takeoff', 'Transition Hover To Flight')]
                          )
 
     def test_derive(self):
