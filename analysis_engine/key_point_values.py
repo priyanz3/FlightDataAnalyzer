@@ -5234,11 +5234,22 @@ class HeadingDuringTakeoff(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return all_of(('Heading Continuous', 'Transition Hover To Flight', 'Aircraft Type'), available)
+        else:
+            return all_of(('Heading Continuous', 'Takeoff Roll Or Rejected Takeoff'), available)
+
     def derive(self,
                hdg=P('Heading Continuous'),
                takeoffs=S('Takeoff Roll Or Rejected Takeoff'),
                ac_type = A('Aircraft Type'),
                toff_helos=S('Transition Hover To Flight')):
+
+        takeoffs = takeoffs
+        if ac_type and ac_type.value == 'helicopter':
+            takeoffs = toff_helos
 
         for takeoff in takeoffs:
             if takeoff.slice.start and takeoff.slice.stop:
@@ -5262,18 +5273,22 @@ class HeadingTrueDuringTakeoff(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return all_of(('Heading True Continuous', 'Transition Hover To Flight', 'Aircraft Type'), available)
+        else:
+            return all_of(('Heading True Continuous', 'Takeoff Roll Or Rejected Takeoff'), available)
+
     def derive(self,
                hdg_true=P('Heading True Continuous'),
-               takeoffs=S('Takeoff Roll'),
+               toff_aeros=S('Takeoff Roll'),
                ac_type = A('Aircraft Type'),
                toff_helos=S('Transition Hover To Flight')):
 
-        if ac_type and ac_type.value=='aeroplane':
-            takeoffs = toff_aeros
-        elif ac_type and ac_type.value=='helicopter':
+        takeoffs = toff_aeros
+        if ac_type and ac_type.value=='helicopter':
             takeoffs = toff_helos
-        else:
-            raise ValueError ('Unrecognised aircraft type: %s', ac_type)
 
         for takeoff in takeoffs:
             if takeoff.slice.start and takeoff.slice.stop:
@@ -5306,7 +5321,7 @@ class HeadingDuringLanding(KeyPointValueNode):
     def derive(self,
                hdg=P('Heading Continuous'),
                landings=S('Landing Roll'),
-               land_aeros=KTI('Touchdown'),
+               touchdowns=KTI('Touchdown'),
                ldg_turn_off=KTI('Landing Turn Off Runway'),
                ac_type = A('Aircraft Type'),
                land_helos=S('Transition Flight To Hover')):
@@ -5345,15 +5360,21 @@ class HeadingTrueDuringLanding(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return all_of(('Heading True Continuous', 'Transition Flight To Hover', 'Aircraft Type'), available)
+        else:
+            return all_of(('Heading True Continuous', 'Landing Roll'), available)
+
     def derive(self,
                hdg=P('Heading True Continuous'),
                land_aeros=S('Landing Roll'),
                ac_type = A('Aircraft Type'),
                land_helos=S('Transition Flight To Hover')):
 
-        if ac_type and ac_type.value=='aeroplane':
-            landings = land_aeros
-        elif ac_type and ac_type.value=='helicopter':
+        landings = land_aeros
+        if ac_type and ac_type.value == 'helicopter':
             landings = land_helos
 
         for landing in landings:
