@@ -828,13 +828,14 @@ class AltitudeAAL(DerivedParameterNode):
 
         '''
         # Quick visual check of the altitude aal.
+        import matplotlib.pyplot as plt
+        plt.plot(alt_aal, 'b-')
+        plt.plot(alt_std.array, 'y-')
         if alt_rad:
-            import matplotlib.pyplot as plt
-            plt.plot(alt_aal, 'b-')
-            plt.plot(alt_std.array, 'y-')
             plt.plot(alt_rad.array, 'r-')
-            plt.show()
+        plt.show()
         '''
+
         self.array = alt_aal
 
 
