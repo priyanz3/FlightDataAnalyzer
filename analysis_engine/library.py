@@ -3096,6 +3096,10 @@ def integrate(array, frequency, initial_value=0.0, scale=1.0,
     k = (scale * 0.5)/frequency
     to_int = k * (integrand + np.roll(integrand, d))
     edges = np.ma.flatnotmasked_edges(to_int)
+    # In some cases to_int and the rolled version may result in a completely masked result.
+    if edges is None:
+        return np_ma_masked_zeros_like(array)
+
     if direction == 'forwards':
         if edges[0] == 1:
             to_int[0] = initial_value
