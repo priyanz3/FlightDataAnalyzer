@@ -255,23 +255,30 @@ class ApproachAndLanding(FlightPhaseNode):
 
 
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+    def can_operate(cls, available, seg_type=A('Segment Type')):
+        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight'),
-               landings=S('Landing')):
+               landings=S('Landing'),
+               ac_type=A('Aircraft Type')):
+
+        if ac_type and ac_type.value=='helicopter':
+            # Helicopters may not climb significantly from one ILS approach to the next...
+            cycle_size = 200.0
+        else:
+            # ...whereas fixed wing are more prone to flying clear climbs after an approach.
+            cycle_size = 500.0
+
         # Prepare to extract the slices
         level_flights = level_flights.get_slices() if level_flights else None
 
         low_alt_slices = find_low_alts(
             alt_aal.array, alt_aal.frequency, 3000,
             stop_alt=0,
-            level_flights=level_flights)
+            level_flights=level_flights,
+            cycle_size=cycle_size)
 
         for low_alt in low_alt_slices:
             if not alt_aal.array[low_alt.start]:
