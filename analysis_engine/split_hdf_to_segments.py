@@ -200,7 +200,7 @@ def _get_eng_params(hdf, align_param=None):
     eng_params = (
         'Eng (1) N1', 'Eng (2) N1', 'Eng (3) N1', 'Eng (4) N1',
         'Eng (1) N2', 'Eng (2) N2', 'Eng (3) N2', 'Eng (4) N2',
-        'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np'
+        'Eng (1) Np', 'Eng (2) Np', 'Eng (3) Np', 'Eng (4) Np',
         'Eng (1) Fuel Flow', 'Eng (2) Fuel Flow', 'Eng (3) Fuel Flow', 'Eng (4) Fuel Flow'
     )
 
