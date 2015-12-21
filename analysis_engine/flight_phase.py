@@ -1255,13 +1255,17 @@ class Mobile(FlightPhaseNode):
     the taxi phases. As Heading Rate is derived directly from heading, this
     phase is guaranteed to be operable for very basic aircraft.
     '''
+    '''
     @classmethod
     def can_operate(cls, available):
         return 'Heading Rate' in available
+    '''
 
     def derive(self,
                rot=P('Heading Rate'),
-               gspd=P('Groundspeed')):
+               gspd=P('Groundspeed'),
+               airs=S('Airborne')):
+
         turning = np.ma.masked_less(np.ma.abs(rot.array), HEADING_RATE_FOR_MOBILE)
         movement = np.ma.flatnotmasked_edges(turning)
         start, stop = movement if movement is not None else (None, None)
@@ -1274,8 +1278,9 @@ class Mobile(FlightPhaseNode):
                 stop = max(stop, mobile[1]) if stop else mobile[1]
 
         if start is not None and stop is not None:
-            self.create_phase(slice(start, stop))
-
+            self.create_phases(slices_or([a.slice for a in airs], [slice(start, stop)]))
+        else:
+            self.create_phases(airs)
 
 class Stationary(FlightPhaseNode):
     """
