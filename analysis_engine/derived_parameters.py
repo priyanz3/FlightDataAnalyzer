@@ -897,7 +897,8 @@ class AltitudeAALForFlightPhases(DerivedParameterNode):
 
     def derive(self, alt_aal=P('Altitude AAL')):
 
-        self.array = repair_mask(alt_aal.array, repair_duration=None)
+        self.array = np.ma.maximum(repair_mask(alt_aal.array, repair_duration=None),
+                                   0.0)
 
 
 class AltitudeRadio(DerivedParameterNode):

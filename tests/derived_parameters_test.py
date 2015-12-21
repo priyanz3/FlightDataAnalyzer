@@ -1118,7 +1118,7 @@ class TestAltitudeAALForFlightPhases(unittest.TestCase):
     def test_altitude_AAL_for_flight_phases_basic(self):
         alt_4_ph = AltitudeAALForFlightPhases()
         alt_4_ph.derive(Parameter('Altitude AAL',
-                                  np.ma.array(data=[0,100,200,100,0],
+                                  np.ma.array(data=[-1,100,200,100,0],
                                               mask=[0,0,1,1,0])))
         expected = np.ma.array(data=[0,100,66,33,0],mask=False)
         # ...because data interpolates across the masked values and integer
