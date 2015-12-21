@@ -1730,7 +1730,15 @@ def find_low_alts(array, frequency, threshold_alt,
     low_alt_slices = []
     low_alt_cycles = []
 
-    pk_idxs, pk_vals = cycle_finder(array, min_step=cycle_size)
+    pk_to_pk = np.ma.ptp(array)
+    if pk_to_pk > cycle_size:
+        min_step = cycle_size
+    elif pk_to_pk > 0.0:
+        min_step = pk_to_pk * 0.5
+    else:
+        return []
+
+    pk_idxs, pk_vals = cycle_finder(array, min_step)
     # Convert cycles to slices.
     if not pk_vals[0]:
         if stop_alt != 0:
