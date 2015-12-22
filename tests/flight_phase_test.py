@@ -2099,7 +2099,7 @@ class TestTaxiing(unittest.TestCase):
 
 class TestTurningInAir(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('Heading Rate', 'Airborne')]
+        expected = [('Heading Rate', 'Airborne', 'Aircraft Type')]
         self.assertEqual(TurningInAir.get_operational_combinations(), expected)
 
     def test_turning_in_air_phase_basic(self):
