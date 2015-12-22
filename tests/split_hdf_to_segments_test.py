@@ -13,8 +13,7 @@ from analysis_engine.split_hdf_to_segments import (
     append_segment_info,
     calculate_fallback_dt,
     has_constant_time,
-    split_segments,
-    TimebaseError)
+    split_segments)
 from analysis_engine.node import P, Parameter
 
 from hdfaccess.file import hdf_file
@@ -58,12 +57,12 @@ class TestDateTimeFunctions(unittest.TestCase):
         new_dt = calculate_fallback_dt(hdf, dt, False)
         expected_dt = datetime(2012, 12, 12, 12, 12, 12, tzinfo=pytz.utc)
         self.assertEqual(new_dt, expected_dt)
-    
+
     def test_constant_time(self):
         hdf = mocked_hdf()('slow')
         # mocked hdf seconds increment
         self.assertFalse(has_constant_time(hdf))
-        
+
         #TODO: Test case for calculate_fallback_dt where has_constant_time is
         # True
 
@@ -289,7 +288,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice = segment_tuples[0]
-        self.assertEqual(segment_type, 'GROUND_ONLY', msg="Fast should not be long enought to be a START_AND_STOP")
+        self.assertEqual(segment_type, 'GROUND_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
         # Unmasked single flight less than 3 minutes.
@@ -301,7 +300,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice = segment_tuples[0]
-        self.assertEqual(segment_type, 'START_AND_STOP', msg="Fast should be long enought to be a START_AND_STOP")
+        self.assertEqual(segment_type, 'START_AND_STOP', msg="Fast should be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
 
@@ -533,26 +532,25 @@ class TestSegmentInfo(unittest.TestCase):
     def test_timestamps_in_past(self, hdf_file_patch, sha_hash_file_patch, logger_patch):
         # No longer raising exception, using epoch instead with exception logging,
         # allows segment to be created.
-        ### example where it goes fast
-        ##seg = append_segment_info('old timestamps', 'START_AND_STOP',
-        ##                          slice(10,1000), 4,
-        ##                          fallback_dt=datetime(2012,12,12,0,0,0))
-        ##self.assertEqual(seg.start_dt, datetime(2012,12,12,0,0,0))
-        ##self.assertEqual(seg.go_fast_dt, datetime(2012,12,12,0,6,52))
-        ##self.assertEqual(seg.stop_dt, datetime(2012,12,12,11,29,56))
-        seg = append_segment_info('invalid timestamps', 'START_AND_STOP',
-                                  slice(10, 1000), 4, fallback_dt=datetime(2009, 12, 12, 0, 0, 0,
-                                                                           tzinfo=pytz.utc))
+        # example where it goes fast
+        #seg = append_segment_info('old timestamps', 'START_AND_STOP',
+        #                          slice(10,1000), 4,
+        #                          fallback_dt=datetime(2012,12,12,0,0,0))
+        #self.assertEqual(seg.start_dt, datetime(2012,12,12,0,0,0))
+        #self.assertEqual(seg.go_fast_dt, datetime(2012,12,12,0,6,52))
+        #self.assertEqual(seg.stop_dt, datetime(2012,12,12,11,29,56))
+        append_segment_info(
+            'invalid timestamps', 'START_AND_STOP', slice(10, 1000), 4,
+            fallback_dt=datetime(2009, 12, 12, 0, 0, 0, tzinfo=pytz.utc))
         self.assertTrue(logger_patch.exception.called)
         self.assertEqual(logger_patch.exception.call_args[0], ('Unable to calculate timebase, using 1970-01-01 00:00:00+0000!',))
-
 
     @mock.patch('analysis_engine.split_hdf_to_segments.sha_hash_file')
     @mock.patch('analysis_engine.split_hdf_to_segments.hdf_file',
                 new_callable=mocked_hdf)
     def test_timestamps_in_future_use_fallback_year(self, hdf_file_patch, sha_hash_file_patch):
         # Using fallback time is no longer recommended
-        ### example where it goes fast
+        # example where it goes fast
         seg = append_segment_info('future timestamps', 'START_AND_STOP',
                                   slice(10, 1000), 4,
                                   fallback_dt=datetime(2012, 12, 12, 0, 0, 0, tzinfo=pytz.utc))
@@ -560,10 +558,10 @@ class TestSegmentInfo(unittest.TestCase):
         self.assertEqual(seg.go_fast_dt, datetime(2012, 12, 25, 0, 6, 52, tzinfo=pytz.utc))
         self.assertEqual(seg.stop_dt, datetime(2012, 12, 25, 11, 29, 56, tzinfo=pytz.utc))
         # This was true, but now we invalidate the Year component!
-        ### Raising exception is more pythonic
-        ##self.assertRaises(TimebaseError, append_segment_info,
-        ##                  'future timestamps', 'START_AND_STOP', slice(10,1000),
-        ##                  4, fallback_dt=datetime(2012,12,12,0,0,0))
+        # Raising exception is more pythonic
+        #self.assertRaises(TimebaseError, append_segment_info,
+        #                  'future timestamps', 'START_AND_STOP', slice(10,1000),
+        #                  4, fallback_dt=datetime(2012,12,12,0,0,0))
 
     @mock.patch('analysis_engine.split_hdf_to_segments.sha_hash_file')
     @mock.patch('analysis_engine.split_hdf_to_segments.hdf_file',
@@ -603,9 +601,9 @@ class TestSegmentInfo(unittest.TestCase):
         # No longer raising exception, using epoch instead
         #seg = append_segment_info('invalid timestamps', 'START_AND_STOP', slice(10,110), 2)
 
-        seg = append_segment_info('invalid timestamps', 'START_AND_STOP', slice(28000,34000), 6)
-        self.assertEqual(seg.start_dt, datetime(1970,1,1,0,0, tzinfo=pytz.utc)) # start of time!
-        self.assertEqual(seg.go_fast_dt, datetime(1970, 1, 1, 0, 6, 52, tzinfo=pytz.utc)) # went fast
+        seg = append_segment_info('invalid timestamps', 'START_AND_STOP', slice(28000, 34000), 6)
+        self.assertEqual(seg.start_dt, datetime(1970, 1, 1, 0, 0, tzinfo=pytz.utc))  # start of time!
+        self.assertEqual(seg.go_fast_dt, datetime(1970, 1, 1, 0, 6, 52, tzinfo=pytz.utc))  # went fast
         self.assertTrue(logger_patch.exception.called)
         self.assertEqual(logger_patch.exception.call_args[0], ('Unable to calculate timebase, using 1970-01-01 00:00:00+0000!',))
 
@@ -710,7 +708,7 @@ class TestSegmentInfo(unittest.TestCase):
         # fallback Year was used.
         self.assertEqual(res.year, datetime.now().year - 1)
         #self.assertEqual(res, datetime(2012,6,01,11,11,1))
-        
+
     def test_midnight_rollover(self):
         """
         When a flight starts just before midnight, the majority of the
@@ -721,10 +719,10 @@ class TestSegmentInfo(unittest.TestCase):
         # fallback is at start of the recording
         dt = datetime(2012, 12, 12, 23, 59, 58, tzinfo=pytz.utc)
         hdf = MockHDF({
-            'Hour': P('Hour', np.ma.array([23, 23] + [0]*18)),
-            'Minute': P('Minute', np.ma.array([59, 59] + [0]*18)),
+            'Hour': P('Hour', np.ma.array([23, 23] + [0] * 18)),
+            'Minute': P('Minute', np.ma.array([59, 59] + [0] * 18)),
             'Second': P('Minute', np.ma.array([58, 59] + range(18))),  # last two seconds and start of next flight
         }, duration=20)
         res = _calculate_start_datetime(hdf, dt)
         # result is the exact start of the data for the timestamp (not a day before!)
-        self.assertEqual(res, datetime(2012, 12, 12, 23, 59, 58, tzinfo=pytz.utc))    
+        self.assertEqual(res, datetime(2012, 12, 12, 23, 59, 58, tzinfo=pytz.utc))
