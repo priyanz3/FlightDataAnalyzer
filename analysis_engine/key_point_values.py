@@ -6079,12 +6079,10 @@ class LatitudeAtLiftoff(KeyPointValueNode):
         '''
         # 1. Attempt to use latitude parameter if available:
         if lat:
-            if ac_type and ac_type.value=='aeroplane':
+            if ac_type and ac_type.value=='aeroplane' and liftoffs:
                 self.create_kpvs_at_ktis(lat.array, liftoffs)
-            elif ac_type and ac_type.value=='helicopter':
+            elif ac_type and ac_type.value=='helicopter' and toff_helos:
                 self.create_kpvs_at_ktis(lat.array, toff_helos)
-            else:
-                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lat_c:
@@ -6155,12 +6153,10 @@ class LongitudeAtLiftoff(KeyPointValueNode):
         '''
         # 1. Attempt to use longitude parameter if available:
         if lon:
-            if ac_type and ac_type.value=='aeroplane':
+            if ac_type and ac_type.value=='aeroplane' and liftoffs:
                 self.create_kpvs_at_ktis(lon.array, liftoffs)
-            elif ac_type and ac_type.value=='helicopter':
+            elif ac_type and ac_type.value=='helicopter' and toff_helos:
                 self.create_kpvs_at_ktis(lon.array, toff_helos)
-            else:
-                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lon_c:
