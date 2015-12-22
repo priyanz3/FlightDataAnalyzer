@@ -6054,9 +6054,12 @@ class LatitudeAtLiftoff(KeyPointValueNode):
     units = ut.DEGREE
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = 'Liftoff'
+        if ac_type and ac_type.value=='helicopter':
+            required = 'Exit Transition Hover To Flight'
 
-        return 'Liftoff' in available and any_of(('Latitude',
+        return required in available and any_of(('Latitude',
                                                   'Latitude (Coarse)',
                                                   'AFR Takeoff Runway',
                                                   'AFR Takeoff Airport'),
@@ -6077,13 +6080,14 @@ class LatitudeAtLiftoff(KeyPointValueNode):
         rather than dragging other parameters down to its sample rate. See
         767 Delta data frame.
         '''
+        ktis = liftoffs
+        if ac_type and ac_type.value=='helicopter':
+            ktis = toff_helos
         # 1. Attempt to use latitude parameter if available:
         if lat:
-            if ac_type and ac_type.value=='aeroplane' and liftoffs:
-                self.create_kpvs_at_ktis(lat.array, liftoffs)
-            elif ac_type and ac_type.value=='helicopter' and toff_helos:
-                self.create_kpvs_at_ktis(lat.array, toff_helos)
-            return
+            if ktis:
+                self.create_kpvs_at_ktis(lat.array, ktis)
+                return
 
         if lat_c:
             for lift in liftoffs:
@@ -6097,7 +6101,7 @@ class LatitudeAtLiftoff(KeyPointValueNode):
         value = None
 
         # 2a. Attempt to use latitude of runway midpoint:
-        if value is None and toff_afr_rwy:
+        if toff_afr_rwy:
             lat_m, lon_m = calculate_runway_midpoint(toff_afr_rwy.value)
             value = lat_m
 
@@ -6106,7 +6110,9 @@ class LatitudeAtLiftoff(KeyPointValueNode):
             value = toff_afr_apt.value.get('latitude')
 
         if value is not None:
-            self.create_kpv(liftoffs[0].index, value)
+            first = ktis.get_first()
+            if first:
+                self.create_kpv(first.index, value)
             return
 
         # XXX: Is there something else we can do here other than fail?
@@ -6151,13 +6157,14 @@ class LongitudeAtLiftoff(KeyPointValueNode):
         '''
         See note relating to coarse latitude and longitude under Latitude At Takeoff
         '''
+        ktis = liftoffs
+        if ac_type and ac_type.value=='helicopter':
+            ktis = toff_helos
         # 1. Attempt to use longitude parameter if available:
         if lon:
-            if ac_type and ac_type.value=='aeroplane' and liftoffs:
-                self.create_kpvs_at_ktis(lon.array, liftoffs)
-            elif ac_type and ac_type.value=='helicopter' and toff_helos:
-                self.create_kpvs_at_ktis(lon.array, toff_helos)
-            return
+            if ktis:
+                self.create_kpvs_at_ktis(lon.array, ktis)
+                return
 
         if lon_c:
             for lift in liftoffs:
@@ -6180,7 +6187,9 @@ class LongitudeAtLiftoff(KeyPointValueNode):
             value = toff_afr_apt.value.get('longitude')
 
         if value is not None:
-            self.create_kpv(liftoffs[0].index, value)
+            first = ktis.get_first()
+            if first:
+                self.create_kpv(first.index, value)
             return
 
         # XXX: Is there something else we can do here other than fail?

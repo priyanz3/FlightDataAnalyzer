@@ -1255,11 +1255,11 @@ class Mobile(FlightPhaseNode):
     the taxi phases. As Heading Rate is derived directly from heading, this
     phase is guaranteed to be operable for very basic aircraft.
     '''
-    '''
+
     @classmethod
     def can_operate(cls, available):
-        return 'Heading Rate' in available
-    '''
+        return all_of(('Heading Rate', 'Airborne'), available)
+
 
     def derive(self,
                rot=P('Heading Rate'),

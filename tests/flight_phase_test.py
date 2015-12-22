@@ -1723,7 +1723,7 @@ class TestMobile(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = Mobile
-        self.operational_combinations = [('Heading Rate',), ('Heading Rate', 'Groundspeed')]
+        self.operational_combinations = [('Heading Rate', 'Airborne'), ('Heading Rate', 'Groundspeed', 'Airborne')]
 
     def test_rot_only(self):
         rot = np.ma.array([0, 0, 5, 5, 5, 0, 0])
