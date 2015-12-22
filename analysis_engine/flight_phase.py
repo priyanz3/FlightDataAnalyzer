@@ -44,7 +44,8 @@ from analysis_engine.settings import (
     BOUNCED_LANDING_THRESHOLD,
     BOUNCED_MAXIMUM_DURATION,
     GROUNDSPEED_FOR_MOBILE,
-    HEADING_RATE_FOR_FLIGHT_PHASES,
+    HEADING_RATE_FOR_FLIGHT_PHASES_FW,
+    HEADING_RATE_FOR_FLIGHT_PHASES_RW,
     HEADING_RATE_FOR_MOBILE,
     HEADING_RATE_FOR_TAXI_TURNS,
     HEADING_TURN_OFF_RUNWAY,
@@ -1720,12 +1721,18 @@ class TaxiOut(FlightPhaseNode):
 
 class TurningInAir(FlightPhaseNode):
     """
-    Rate of Turn is greater than +/- HEADING_RATE_FOR_FLIGHT_PHASES (%.2f) in the air
-    """ % HEADING_RATE_FOR_FLIGHT_PHASES
-    def derive(self, rate_of_turn=P('Heading Rate'), airborne=S('Airborne')):
-        turning = np.ma.masked_inside(repair_mask(rate_of_turn.array),
-                                      -HEADING_RATE_FOR_FLIGHT_PHASES,
-                                      HEADING_RATE_FOR_FLIGHT_PHASES)
+    Rate of Turn is greater than +/- HEADING_RATE_FOR_FLIGHT_PHASES in the air
+    """
+    def derive(self, rate_of_turn=P('Heading Rate'),
+               airborne=S('Airborne'),
+               ac_type=A('Aircraft Type')):
+
+        if ac_type.value=='helicopter':
+            rate = HEADING_RATE_FOR_FLIGHT_PHASES_RW
+        else:
+            rate = HEADING_RATE_FOR_FLIGHT_PHASES_FW
+
+        turning = np.ma.masked_inside(repair_mask(rate_of_turn.array), -rate, rate)
         turn_slices = np.ma.clump_unmasked(turning)
         for turn_slice in turn_slices:
             if any([is_slice_within_slice(turn_slice, air.slice)
