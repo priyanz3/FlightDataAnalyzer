@@ -1888,7 +1888,7 @@ class KeyPointValueNode(FormattedNameNode):
 
     create_kpvs_at_kpvs = create_kpvs_at_ktis  # both will work the same!
 
-    def create_kpvs_within_slices(self, array, slices, function, **kwargs):
+    def create_kpvs_within_slices(self, array, slices, function, min_duration=None, freq=None, **kwargs):
         '''
         Shortcut for creating KPVs from a number of slices by retrieving an
         index and value from function (for instance max_value).
@@ -1899,15 +1899,24 @@ class KeyPointValueNode(FormattedNameNode):
         :type slices: SectionNode or list of slices.
         :param function: Function which will return an index and value from the array.
         :type function: function
+        :param min_duration: Minimum duration for a slice to be meaningful.
+        :type min_duration: float
+        :param freq: Frequency of array samples (sec). Required if min_duration is provided.
+        :type freq: float
         :returns: None
         :rtype: None
         '''
+        if min_duration:
+            assert freq
+
         for slice_ in slices:
 
             if isinstance(slice_, Section):
                 index, value = function(array, slice_.slice,
                                         start_edge=slice_.start_edge,
                                         stop_edge=slice_.stop_edge)
+                begin = slice_.start_edge
+                end = slice_.stop_edge
             else:
                 # Where slice.stop is not a whole number, it is assumed that the
                 # value is an stop_edge rather than an inclusive pythonic end to a
@@ -1915,7 +1924,13 @@ class KeyPointValueNode(FormattedNameNode):
                 stop = slice_.stop if slice_.stop % 1 else None
                 index, value = function(array, slice_, start_edge=slice_.start,
                                         stop_edge=stop)
-            self.create_kpv(index, value, **kwargs)
+                begin = slice_.start
+                end = slice_.stop
+
+            if min_duration:
+                duration = (end-begin)/freq
+            if not min_duration or duration > min_duration:
+                self.create_kpv(index, value, **kwargs)
 
     def create_kpv_from_slices(self, array, slices, function, **kwargs):
         '''

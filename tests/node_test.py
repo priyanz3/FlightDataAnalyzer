@@ -1242,6 +1242,17 @@ class TestKeyPointValueNode(unittest.TestCase):
         self.assertEqual(list(knode),
                          [KeyPointValue(index=3.25, value=15, name='Kpv')])
 
+    def test_create_kpvs_within_slices_duration_test(self):
+        knode = self.knode
+        function = min_value
+
+        test_array = np.ma.arange(2, 50, 4)
+        slices = [slice(1,3), slice(6,16)]
+        knode.create_kpvs_within_slices(test_array, slices, function, min_duration=5.0, freq=1.0)
+        self.assertEqual(list(knode),
+                         [KeyPointValue(index=6, value=26, name='Kpv')])
+
+
     def test_create_kpv_from_slices(self):
         knode = self.knode
         slices = [slice(20, 30), slice(5, 10)]
