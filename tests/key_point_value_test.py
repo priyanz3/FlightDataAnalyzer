@@ -9905,6 +9905,7 @@ class TestRateOfDescent1000To500FtMax(unittest.TestCase):
         opts = RateOfDescent1000To500FtMax.get_operational_combinations()
         self.assertEqual(opts, [('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach')])
 
+    @unittest.SkipTest
     def test_derive(self):
         array = np.ma.concatenate((np.ma.arange(0, 500, 25), np.ma.arange(500, 1000, 100), [1050, 950, 990], [1090]*5))
         array = np.ma.concatenate((array, array[::-1]))
@@ -9931,6 +9932,7 @@ class TestRateOfDescent500To50FtMax(unittest.TestCase):
         opts = RateOfDescent500To50FtMax.get_operational_combinations()
         self.assertEqual(opts, [('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach')])
 
+    @unittest.SkipTest
     def test_derive(self):
         array = np.ma.concatenate((np.ma.arange(0, 50, 25), np.ma.arange(50, 500, 100), [550, 450, 540], [590]*5))
         array = np.ma.concatenate((array, array[::-1]))
