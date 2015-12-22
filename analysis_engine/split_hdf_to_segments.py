@@ -115,7 +115,7 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         slow_stop = speed_array[unmasked_stop] < thresholds['speed_threshold']
         threshold_exceedance = np.ma.sum(
             speed_array > thresholds['speed_threshold']) / speed_frequency
-        fast_for_long = threshold_exceedance > thresholds['min_split_duration']
+        fast_for_long = threshold_exceedance > thresholds['min_duration']
 
     # Find out if the aircraft moved
     if aircraft_info and aircraft_info['Aircraft Type']=='helicopter':
