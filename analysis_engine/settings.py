@@ -387,7 +387,8 @@ VERTICAL_SPEED_LAG_TC = 5.0  # sec
 
 # Heading Rate (rate of turn) limits for flight.
 # (Also used for validation of accelerometers on ground).
-HEADING_RATE_FOR_FLIGHT_PHASES = 2.0  # deg per second
+HEADING_RATE_FOR_FLIGHT_PHASES_FW = 2.0  # deg per second
+HEADING_RATE_FOR_FLIGHT_PHASES_RW = 10.0  # deg per second
 
 # Heading Rate limit for taxi event.
 HEADING_RATE_FOR_TAXI_TURNS = 5.0  # deg per second
