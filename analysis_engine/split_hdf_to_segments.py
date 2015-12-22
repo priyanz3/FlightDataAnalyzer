@@ -587,7 +587,8 @@ def _get_speed_parameter(hdf, aircraft_info):
         parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
         thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
         thresholds['min_duration'] = settings.ROTORSPEED_THRESHOLD_TIME
-        thresholds['min_split_duration'] = 4 # Very short dips in rotor speed before recording stops.
+        # Very short dips in rotor speed before recording stops.
+        thresholds['min_split_duration'] = settings.ROTOR_MINIMUM_SPLIT_DURATION
         # Let's try one minute on the ground as worth splitting.
         # Set to 30 sec as this gives two splits and two keeps in the test data set
         # TODO: add to settings
