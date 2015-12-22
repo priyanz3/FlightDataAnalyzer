@@ -5924,10 +5924,8 @@ class LatitudeAtTouchdown(KeyPointValueNode):
         if lat:
             if ac_type and ac_type.value=='aeroplane':
                 self.create_kpvs_at_ktis(lat.array, tdwns)
-            elif ac_type and ac_type.value=='helicopter':
+            elif ac_type and ac_type.value=='helicopter' and land_helos:
                 self.create_kpvs_at_ktis(lat.array, land_helos)
-            else:
-                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lat_c:
@@ -6001,10 +5999,8 @@ class LongitudeAtTouchdown(KeyPointValueNode):
         if lon:
             if ac_type and ac_type.value=='aeroplane':
                 self.create_kpvs_at_ktis(lon.array, tdwns)
-            elif ac_type and ac_type.value=='helicopter':
+            elif ac_type and ac_type.value=='helicopter' and land_helos:
                 self.create_kpvs_at_ktis(lon.array, land_helos)
-            else:
-                raise ValueError ('Unrecognised aircraft type: %s', ac_type)
             return
 
         if lon_c:
