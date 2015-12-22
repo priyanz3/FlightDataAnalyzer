@@ -4350,7 +4350,7 @@ class CoordinatesSmoothed(object):
             return [],[]
 
     def _adjust_track(self, lon, lat, ils_loc, app_range, hdg, gspd, tas,
-                      toff, toff_rwy, tdwns, approaches, mobile, precise):
+                      toff, toff_rwy, tdwns, approaches, mobile, precise, ac_type):
         '''
         Returns track adjustment
         '''
@@ -4381,91 +4381,92 @@ class CoordinatesSmoothed(object):
         except:
             toff_slice = None
 
-        if toff_slice and precise:
-            try:
-                lat_out, lon_out = self.taxi_out_track_pp(
-                    lat.array[begin:toff_slice.start],
-                    lon.array[begin:toff_slice.start],
-                    speed[begin:toff_slice.start],
-                    hdg.array[begin:toff_slice.start],
-                    freq)
-            except ValueError:
-                self.exception("'%s'. Using non smoothed coordinates for Taxi Out",
-                             self.__class__.__name__)
-                lat_out = lat.array[begin:toff_slice.start]
-                lon_out = lon.array[begin:toff_slice.start]
-            lat_adj[begin:toff_slice.start] = lat_out
-            lon_adj[begin:toff_slice.start] = lon_out
+        if ac_type and ac_type.value!='helicopter':
+            if toff_slice and precise:
+                try:
+                    lat_out, lon_out = self.taxi_out_track_pp(
+                        lat.array[begin:toff_slice.start],
+                        lon.array[begin:toff_slice.start],
+                        speed[begin:toff_slice.start],
+                        hdg.array[begin:toff_slice.start],
+                        freq)
+                except ValueError:
+                    self.exception("'%s'. Using non smoothed coordinates for Taxi Out",
+                                 self.__class__.__name__)
+                    lat_out = lat.array[begin:toff_slice.start]
+                    lon_out = lon.array[begin:toff_slice.start]
+                lat_adj[begin:toff_slice.start] = lat_out
+                lon_adj[begin:toff_slice.start] = lon_out
 
-        elif toff_slice and toff_rwy and toff_rwy.value:
+            elif toff_slice and toff_rwy and toff_rwy.value:
 
-            start_locn_recorded = runway_snap_dict(
-                toff_rwy.value,lat.array[toff_slice.start],
-                lon.array[toff_slice.start])
-            start_locn_default = toff_rwy.value['start']
-            _,distance = bearing_and_distance(start_locn_recorded['latitude'],
-                                              start_locn_recorded['longitude'],
-                                              start_locn_default['latitude'],
-                                              start_locn_default['longitude'])
+                start_locn_recorded = runway_snap_dict(
+                    toff_rwy.value,lat.array[toff_slice.start],
+                    lon.array[toff_slice.start])
+                start_locn_default = toff_rwy.value['start']
+                _,distance = bearing_and_distance(start_locn_recorded['latitude'],
+                                                  start_locn_recorded['longitude'],
+                                                  start_locn_default['latitude'],
+                                                  start_locn_default['longitude'])
 
-            if distance < 50:
-                # We may have a reasonable start location, so let's use that
-                start_locn = start_locn_recorded
-                initial_displacement = 0.0
+                if distance < 50:
+                    # We may have a reasonable start location, so let's use that
+                    start_locn = start_locn_recorded
+                    initial_displacement = 0.0
+                else:
+                    # The recorded start point is way off, default to 50m down the track.
+                    start_locn = start_locn_default
+                    initial_displacement = 50.0
+
+                # With imprecise navigation options it is common for the lowest
+                # speeds to be masked, so we pretend to accelerate smoothly from
+                # standstill.
+                if speed[toff_slice][0] is np.ma.masked:
+                    speed.data[toff_slice][0] = 0.0
+                    speed.mask[toff_slice][0]=False
+                    speed[toff_slice] = interpolate(speed[toff_slice])
+
+                # Compute takeoff track from start of runway using integrated
+                # groundspeed, down runway centreline to end of takeoff (35ft
+                # altitude). An initial value of 100m puts the aircraft at a
+                # reasonable position with respect to the runway start.
+                rwy_dist = np.ma.array(
+                    data = integrate(speed[toff_slice], freq,
+                                     initial_value=initial_displacement,
+                                     extend=True,
+                                     scale=KTS_TO_MPS),
+                    mask = np.ma.getmaskarray(speed[toff_slice]))
+
+                # Similarly the runway bearing is derived from the runway endpoints
+                # (this gives better visualisation images than relying upon the
+                # nominal runway heading). This is converted to a numpy masked array
+                # of the length required to cover the takeoff phase.
+                rwy_hdg = runway_heading(toff_rwy.value)
+                rwy_brg = np_ma_ones_like(speed[toff_slice])*rwy_hdg
+
+                # The track down the runway centreline is then converted to
+                # latitude and longitude.
+                lat_adj[toff_slice], lon_adj[toff_slice] = \
+                    latitudes_and_longitudes(rwy_brg,
+                                             rwy_dist,
+                                             start_locn)
+
+                lat_out, lon_out = self.taxi_out_track(toff_slice, lat_adj, lon_adj, speed, hdg, freq)
+
+                # If we have an array holding the taxi out track, then we use
+                # this, otherwise we hold at the startpoint.
+                if lat_out is not None and lat_out.size:
+                    lat_adj[:toff_slice.start] = lat_out
+                else:
+                    lat_adj[:toff_slice.start] = lat_adj[toff_slice.start]
+
+                if lon_out is not None and lon_out.size:
+                    lon_adj[:toff_slice.start] = lon_out
+                else:
+                    lon_adj[:toff_slice.start] = lon_adj[toff_slice.start]
+
             else:
-                # The recorded start point is way off, default to 50m down the track.
-                start_locn = start_locn_default
-                initial_displacement = 50.0
-
-            # With imprecise navigation options it is common for the lowest
-            # speeds to be masked, so we pretend to accelerate smoothly from
-            # standstill.
-            if speed[toff_slice][0] is np.ma.masked:
-                speed.data[toff_slice][0] = 0.0
-                speed.mask[toff_slice][0]=False
-                speed[toff_slice] = interpolate(speed[toff_slice])
-
-            # Compute takeoff track from start of runway using integrated
-            # groundspeed, down runway centreline to end of takeoff (35ft
-            # altitude). An initial value of 100m puts the aircraft at a
-            # reasonable position with respect to the runway start.
-            rwy_dist = np.ma.array(
-                data = integrate(speed[toff_slice], freq,
-                                 initial_value=initial_displacement,
-                                 extend=True,
-                                 scale=KTS_TO_MPS),
-                mask = np.ma.getmaskarray(speed[toff_slice]))
-
-            # Similarly the runway bearing is derived from the runway endpoints
-            # (this gives better visualisation images than relying upon the
-            # nominal runway heading). This is converted to a numpy masked array
-            # of the length required to cover the takeoff phase.
-            rwy_hdg = runway_heading(toff_rwy.value)
-            rwy_brg = np_ma_ones_like(speed[toff_slice])*rwy_hdg
-
-            # The track down the runway centreline is then converted to
-            # latitude and longitude.
-            lat_adj[toff_slice], lon_adj[toff_slice] = \
-                latitudes_and_longitudes(rwy_brg,
-                                         rwy_dist,
-                                         start_locn)
-
-            lat_out, lon_out = self.taxi_out_track(toff_slice, lat_adj, lon_adj, speed, hdg, freq)
-
-            # If we have an array holding the taxi out track, then we use
-            # this, otherwise we hold at the startpoint.
-            if lat_out is not None and lat_out.size:
-                lat_adj[:toff_slice.start] = lat_out
-            else:
-                lat_adj[:toff_slice.start] = lat_adj[toff_slice.start]
-
-            if lon_out is not None and lon_out.size:
-                lon_adj[:toff_slice.start] = lon_out
-            else:
-                lon_adj[:toff_slice.start] = lon_adj[toff_slice.start]
-
-        else:
-            print 'Cannot smooth taxi out'
+                print 'Cannot smooth taxi out'
 
         #-----------------------------------------------------------------------
         # Use ILS track for approach and landings in all localizer approches
@@ -4593,7 +4594,7 @@ class CoordinatesSmoothed(object):
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
-            if approach.type == 'LANDING':
+            if approach.type == 'LANDING' and ac_type!='helicopter':
                 # This function returns the lowest non-None offset.
                 try:
                     join_idx = min(filter(bool, [ils_join_offset,
@@ -4702,6 +4703,7 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                tdwns = S('Touchdown'),
                approaches = App('Approach Information'),
                mobile=S('Mobile'),
+               ac_type = A('Aircraft Type'),
                ):
         precision = bool(getattr(precise, 'value', False))
 
@@ -4712,7 +4714,7 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
 
         lat_adj, lon_adj = self._adjust_track(
             lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy, tdwns,
-            approaches, mobile, precision)
+            approaches, mobile, precision, ac_type)
         self.array = track_linking(lat.array, lat_adj)
 
 
@@ -4751,13 +4753,14 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                tdwns = S('Touchdown'),
                approaches = App('Approach Information'),
                mobile=S('Mobile'),
+               ac_type = A('Aircraft Type'),
                ):
         precision = bool(getattr(precise, 'value', False))
 
         hdg = hdg_true if hdg_true else hdg_mag
-        lat_adj, lon_adj = self._adjust_track(lon, lat, ils_loc, app_range, hdg,
-                                            gspd, tas, toff, toff_rwy,
-                                            tdwns, approaches, mobile, precision)
+        lat_adj, lon_adj = self._adjust_track(
+            lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy,
+            tdwns, approaches, mobile, precision, ac_type)
         self.array = track_linking(lon.array, lon_adj)
 
 
