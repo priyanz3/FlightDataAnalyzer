@@ -115,11 +115,11 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         slow_stop = speed_array[unmasked_stop] < thresholds['speed_threshold']
         threshold_exceedance = np.ma.sum(
             speed_array > thresholds['speed_threshold']) / speed_frequency
-        fast_for_long = threshold_exceedance > thresholds['min_split_duration']
+        fast_for_long = threshold_exceedance > thresholds['min_duration']
 
     # Find out if the aircraft moved
-    if aircraft_info and aircraft_info['Aircraft Type']=='helicopter':
-        gog=hdf['Gear On Ground']
+    if aircraft_info and aircraft_info['Aircraft Type'] == 'helicopter':
+        gog = hdf['Gear On Ground']
         gog_start = start * gog.frequency
         gog_stop = stop * gog.frequency
         temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
@@ -410,7 +410,7 @@ def split_segments(hdf, aircraft_info):
         return [_segment_type_and_slice(
             speed.array, speed.frequency, heading.array,
             heading.frequency, 0, hdf.duration, eng_arrays,
-                            aircraft_info, thresholds, hdf)]
+            aircraft_info, thresholds, hdf)]
 
     speed_secs = len(speed_array) / speed.frequency
     slow_array = np.ma.masked_less_equal(speed_array,
@@ -427,7 +427,7 @@ def split_segments(hdf, aircraft_info):
         return [_segment_type_and_slice(
             speed_array, speed.frequency, heading.array,
             heading.frequency, 0, speed_secs, eng_arrays,
-                            aircraft_info, thresholds, hdf)]
+            aircraft_info, thresholds, hdf)]
 
     slow_slices = np.ma.clump_masked(slow_array)
 
@@ -587,7 +587,8 @@ def _get_speed_parameter(hdf, aircraft_info):
         parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
         thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
         thresholds['min_duration'] = settings.ROTORSPEED_THRESHOLD_TIME
-        thresholds['min_split_duration'] = 4 # Very short dips in rotor speed before recording stops.
+        # Very short dips in rotor speed before recording stops.
+        thresholds['min_split_duration'] = settings.ROTOR_MINIMUM_SPLIT_DURATION
         # Let's try one minute on the ground as worth splitting.
         # Set to 30 sec as this gives two splits and two keeps in the test data set
         # TODO: add to settings
@@ -835,8 +836,8 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
         except TimebaseError:
             # Warn the user and store the fake datetime. The code on the other
             # side should check the datetime and avoid processing this file
-            logger.exception('Unable to calculate timebase, using '
-                           '1970-01-01 00:00:00+0000!')
+            logger.exception(
+                'Unable to calculate timebase, using 1970-01-01 00:00:00+0000!')
             start_datetime = datetime.utcfromtimestamp(0).replace(tzinfo=pytz.utc)
         stop_datetime = start_datetime + timedelta(seconds=duration)
         hdf.start_datetime = start_datetime
@@ -849,10 +850,10 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
         go_fast_datetime = \
             start_datetime + timedelta(seconds=int(go_fast_index))
         # Identification of raw data speed hash
-        speed_hash_sections = runs_of_ones(speed.array.data >
-                                              thresholds['speed_threshold'])
-        speed_hash = hash_array(speed.array.data, speed_hash_sections,
-                                   thresholds['hash_min_samples'])
+        speed_hash_sections = runs_of_ones(
+            speed.array.data > thresholds['speed_threshold'])
+        speed_hash = hash_array(
+            speed.array.data, speed_hash_sections, thresholds['hash_min_samples'])
     #elif segment_type == 'GROUND_ONLY':
         ##Q: Create a groundspeed hash?
         #pass
@@ -916,12 +917,11 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
 
         # now we know the Aircraft is correct, go and do the PRE FILE ANALYSIS
         if hooks.PRE_FILE_ANALYSIS:
-            logger.debug("Performing PRE_FILE_ANALYSIS analysis: %s",
-                        hooks.PRE_FILE_ANALYSIS.func_name)
+            logger.debug(
+                "Performing PRE_FILE_ANALYSIS analysis: %s", hooks.PRE_FILE_ANALYSIS.func_name)
             hooks.PRE_FILE_ANALYSIS(hdf, aircraft_info)
         else:
             logger.info("No PRE_FILE_ANALYSIS actions to perform")
-
 
         fallback_dt = calculate_fallback_dt(hdf, fallback_dt, fallback_relative_to_start)
         segment_tuples = split_segments(hdf, aircraft_info)
@@ -943,10 +943,11 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
 
         write_segment(hdf_path, segment_slice, dest_path,
                       boundary=boundary)
-        segment = append_segment_info(dest_path, segment_type, segment_slice,
-                                      part, fallback_dt=fallback_dt, aircraft_info=aircraft_info)
+        segment = append_segment_info(
+            dest_path, segment_type, segment_slice, part,
+            fallback_dt=fallback_dt, aircraft_info=aircraft_info)
 
-        if previous_stop_dt and segment.start_dt < previous_stop_dt - timedelta(0,4):
+        if previous_stop_dt and segment.start_dt < previous_stop_dt - timedelta(0, 4):
             # In theory, this should not happen - but be warned of superframe
             # padding?
             logger.warning(

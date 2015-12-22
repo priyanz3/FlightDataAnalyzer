@@ -7486,7 +7486,7 @@ class TestLatitudeAtLiftoff(unittest.TestCase, NodeTest):
     def test_derive_with_latitude(self):
         lat = P(name='Latitude')
         lat.array = Mock()
-        liftoffs = KTI(name='Liftoff')
+        liftoffs = KTI(name='Liftoff', items=[KeyTimeInstance(index=0)])
         afr_toff_rwy = None
         afr_toff_apt = None
         node = self.node_class()
@@ -7660,7 +7660,7 @@ class TestLongitudeAtLiftoff(unittest.TestCase, NodeTest):
     def test_derive_with_longitude(self):
         lon = P(name='Longitude')
         lon.array = Mock()
-        liftoffs = KTI(name='Liftoff')
+        liftoffs = KTI(name='Liftoff', items=[KeyTimeInstance(index=0)])
         afr_toff_rwy = None
         afr_toff_apt = None
         node = self.node_class()

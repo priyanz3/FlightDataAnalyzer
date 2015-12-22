@@ -1809,9 +1809,9 @@ class TestGearUp(unittest.TestCase, NodeTest):
         ]
 
     def test_derive__calc_gear_up(self):
-        gear_down_array = np.ma.array([1]*20 + [0]*60 + [1]*20, dtype=int)
+        gear_down_array = np.ma.array([0]*20 + [1]*60 + [0]*20, dtype=int)
         gear_down = M('Gear  Up Selected', gear_down_array,
-                      values_mapping={0: 'Up',1: 'Down'})
+                      values_mapping={0: 'Down',1: 'Up'})
         gear_red_warn_array = np.ma.array([0]*20 + [1]*15 + [0]*30 + [1]*15 + [0]*20, dtype=int)
         gear_red_warn = M('Gear (*) Red Warning', gear_red_warn_array,
                           values_mapping = {0: '-', 1: 'Warning'})
