@@ -6134,9 +6134,12 @@ class LongitudeAtLiftoff(KeyPointValueNode):
     units = ut.DEGREE
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = 'Liftoff'
+        if ac_type and ac_type.value=='helicopter':
+            required = 'Exit Transition Hover To Flight'
 
-        return 'Liftoff' in available and any_of(('Longitude',
+        return required in available and any_of(('Longitude',
                                                   'Longitude (Coarse)',
                                                   'AFR Takeoff Runway',
                                                   'AFR Takeoff Airport'),
