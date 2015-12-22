@@ -13,10 +13,17 @@ from math import floor
 from analysis_engine import hooks, settings
 from analysis_engine.datastructures import Segment
 from analysis_engine.node import P
-from analysis_engine.library import (align, calculate_timebase, hash_array,
-                                     min_value, normalise, repair_mask,
-                                     rate_of_change, runs_of_ones,
-                                     straighten_headings, vstack_params)
+from analysis_engine.library import (align,
+                                     calculate_timebase,
+                                     hash_array,
+                                     min_value,
+                                     normalise,
+                                     repair_mask,
+                                     rate_of_change,
+                                     runs_of_ones,
+                                     slices_remove_small_slices,
+                                     straighten_headings,
+                                     vstack_params)
 
 from hdfaccess.file import hdf_file
 from hdfaccess.utils import write_segment
@@ -48,8 +55,10 @@ def validate_aircraft(aircraft_info, hdf):
                                aircraft_info['Tail Number'])
 
 
-def _segment_type_and_slice(airspeed_array, airspeed_frequency, heading_array,
-                            heading_frequency, start, stop, eng_arrays):
+def _segment_type_and_slice(speed_array, speed_frequency,
+                            heading_array, heading_frequency,
+                            start, stop, eng_arrays,
+                            aircraft_info, thresholds, hdf):
     """
     Uses the Heading to determine whether the aircraft moved about at all and
     the airspeed to determine if it was a full or partial flight.
@@ -83,9 +92,10 @@ def _segment_type_and_slice(airspeed_array, airspeed_frequency, heading_array,
     * 'STOP_ONLY'
     * 'MID_FLIGHT'
     """
-    airspeed_start = start * airspeed_frequency
-    airspeed_stop = stop * airspeed_frequency
-    airspeed_array = airspeed_array[airspeed_start:airspeed_stop]
+
+    speed_start = start * speed_frequency
+    speed_stop = stop * speed_frequency
+    speed_array = speed_array[speed_start:speed_stop]
 
     heading_start = start * heading_frequency
     heading_stop = stop * heading_frequency
@@ -93,49 +103,58 @@ def _segment_type_and_slice(airspeed_array, airspeed_frequency, heading_array,
 
     try:
         unmasked_start, unmasked_stop = \
-            np.ma.flatnotmasked_edges(airspeed_array)
+            np.ma.flatnotmasked_edges(speed_array)
     except TypeError:
         # Raised when flatnotmasked_edges returns None because all data is
         # masked.
         # Either GROUND_ONLY or NO_MOVEMENT
         slow_start = slow_stop = fast_for_long = None
     else:
-        # Check Airspeed
-        slow_start = airspeed_array[unmasked_start] < settings.AIRSPEED_THRESHOLD
-        slow_stop = airspeed_array[unmasked_stop] < settings.AIRSPEED_THRESHOLD
+        # Check speed
+        slow_start = speed_array[unmasked_start] < thresholds['speed_threshold']
+        slow_stop = speed_array[unmasked_stop] < thresholds['speed_threshold']
         threshold_exceedance = np.ma.sum(
-            airspeed_array > settings.AIRSPEED_THRESHOLD) / airspeed_frequency
-        fast_for_long = threshold_exceedance > settings.AIRSPEED_THRESHOLD_TIME
+            speed_array > thresholds['speed_threshold']) / speed_frequency
+        fast_for_long = threshold_exceedance > thresholds['min_split_duration']
 
-    # Check Heading
-    if eng_arrays is not None:
-        heading_array = np.ma.masked_where(eng_arrays[heading_start:heading_stop] < settings.MIN_FAN_RUNNING, heading_array)
-    hdiff = np.ma.abs(np.ma.diff(heading_array)).sum()
+    # Find out if the aircraft moved
+    if aircraft_info and aircraft_info['Aircraft Type']=='helicopter':
+        gog=hdf['Gear On Ground']
+        gog_start = start * gog.frequency
+        gog_stop = stop * gog.frequency
+        temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
+        #gog_test = np.ma.masked_less(gog.array[gog_start:gog_stop], 1.0)
+        gog_test = np.ma.masked_less(temp, 1.0)
+        did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test))
+    else:
+        # Check Heading change for fixed wing.
+        if eng_arrays is not None:
+            heading_array = np.ma.masked_where(eng_arrays[heading_start:heading_stop] < settings.MIN_FAN_RUNNING, heading_array)
+        hdiff = np.ma.abs(np.ma.diff(heading_array)).sum()
+        did_move = hdiff > settings.HEADING_CHANGE_TAXI_THRESHOLD
 
-    heading_change = hdiff > settings.HEADING_CHANGE_TAXI_THRESHOLD
-
-    if not heading_change or (not fast_for_long and eng_arrays is None):
+    if not did_move or (not fast_for_long and eng_arrays is None):
         # added check for not fast for long and no engine params to avoid
         # lots of Herc ground runs
-        logger.debug("Heading did not change, aircraft did not move.")
+        logger.debug("Aircraft did not move.")
         segment_type = 'NO_MOVEMENT'
-        # e.g. hanger tests, esp. if airspeed changes!
+        # e.g. hanger tests, esp. if speed changes!
     elif not fast_for_long:
-        logger.debug("Airspeed was below threshold.")
+        logger.debug("speed was below threshold.")
         segment_type = 'GROUND_ONLY'  # e.g. RTO, re-positioning A/C
         #Q: report a go_fast?
     elif slow_start and slow_stop:
         logger.debug(
-            "Airspeed started below threshold, rose above and stopped below.")
+            "speed started below threshold, rose above and stopped below.")
         segment_type = 'START_AND_STOP'
     elif slow_start:
-        logger.debug("Airspeed started below threshold and stopped above.")
+        logger.debug("speed started below threshold and stopped above.")
         segment_type = 'START_ONLY'
     elif slow_stop:
-        logger.debug("Airspeed started above threshold and stopped below.")
+        logger.debug("speed started above threshold and stopped below.")
         segment_type = 'STOP_ONLY'
     else:
-        logger.debug("Airspeed started and stopped above threshold.")
+        logger.debug("speed started and stopped above threshold.")
         segment_type = 'MID_FLIGHT'
     logger.info("Segment type is '%s' between '%s' and '%s'.",
                 segment_type, start, stop)
@@ -379,18 +398,19 @@ def split_segments(hdf, aircraft_info):
 
     eng_arrays, _ = _get_eng_params(hdf, align_param=heading)
 
-    # Look for Airspeed
+    # Look for speed
     try:
         speed_array = repair_mask(speed.array, repair_duration=None,
-                                     repair_above=thresholds['speed_threshold'])
+                                  repair_above=thresholds['speed_threshold'])
     except ValueError:
-        # Airspeed array is masked, most likely under min threshold so it did
+        # speed array is masked, most likely under min threshold so it did
         # not go fast.
-        logger.warning("Airspeed is entirely masked. The entire contents of "
+        logger.warning("speed is entirely masked. The entire contents of "
                        "the data will be a GROUND_ONLY slice.")
         return [_segment_type_and_slice(
             speed.array, speed.frequency, heading.array,
-            heading.frequency, 0, hdf.duration, eng_arrays)]
+            heading.frequency, 0, hdf.duration, eng_arrays,
+                            aircraft_info, thresholds, hdf)]
 
     speed_secs = len(speed_array) / speed.frequency
     slow_array = np.ma.masked_less_equal(speed_array,
@@ -406,7 +426,8 @@ def split_segments(hdf, aircraft_info):
         # type.
         return [_segment_type_and_slice(
             speed_array, speed.frequency, heading.array,
-            heading.frequency, 0, speed_secs, eng_arrays)]
+            heading.frequency, 0, speed_secs, eng_arrays,
+                            aircraft_info, thresholds, hdf)]
 
     slow_slices = np.ma.clump_masked(slow_array)
 
@@ -481,9 +502,10 @@ def split_segments(hdf, aircraft_info):
                 slice_start_secs, slice_stop_secs, dfc.frequency,
                 dfc_half_period, dfc_diff, eng_split_index=eng_split_index)
             if dfc_split_index:
-                segments.append(_segment_type_and_slice(
-                    speed_array, speed.frequency, heading.array,
-                    heading.frequency, start, dfc_split_index, eng_arrays))
+                segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                        heading.array, heading.frequency,
+                                                        start, dfc_split_index, eng_arrays,
+                                                        aircraft_info, thresholds, hdf))
                 start = dfc_split_index
                 logger.info("'Frame Counter' jumped within slow_slice '%s' "
                             "at index '%d'.", slow_slice, dfc_split_index)
@@ -500,9 +522,10 @@ def split_segments(hdf, aircraft_info):
                         "slow_slice '%s' at index '%d'.",
                         eng_split_value, settings.MINIMUM_SPLIT_PARAM_VALUE,
                         slow_slice, eng_split_index)
-            segments.append(_segment_type_and_slice(
-                speed_array, speed.frequency, heading.array,
-                heading.frequency, start, eng_split_index, eng_arrays))
+            segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                    heading.array, heading.frequency,
+                                                    start, eng_split_index, eng_arrays,
+                                                    aircraft_info, thresholds, hdf))
             start = eng_split_index
             continue
         else:
@@ -520,9 +543,10 @@ def split_segments(hdf, aircraft_info):
         rot_split_index = _split_on_rot(slice_start_secs, slice_stop_secs,
                                         heading.frequency, rate_of_turn)
         if rot_split_index:
-            segments.append(_segment_type_and_slice(
-                speed_array, speed.frequency, heading.array,
-                heading.frequency, start, rot_split_index, eng_arrays))
+            segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                    heading.array, heading.frequency,
+                                                    start, rot_split_index, eng_arrays,
+                                                    aircraft_info, thresholds, hdf))
             start = rot_split_index
             logger.info("Splitting at index '%s' where rate of turn was below "
                         "'%s'.", rot_split_index,
@@ -538,9 +562,20 @@ def split_segments(hdf, aircraft_info):
                        "'%s'.", slow_slice)
 
     # Add remaining data to a segment.
-    segments.append(_segment_type_and_slice(
-        speed_array, speed.frequency, heading.array, heading.frequency,
-        start, speed_secs, eng_arrays))
+    segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                            heading.array, heading.frequency,
+                                            start, speed_secs, eng_arrays,
+                                            aircraft_info, thresholds, hdf))
+
+    '''
+    import matplotlib.pyplot as plt
+    for look in [speed_array, heading.array, dfc.array, eng_arrays]:
+        plt.plot(np.linspace(0, speed_secs, len(look)), look/np.ptp(look))
+    for seg in segments:
+        plt.plot([seg[1].start, seg[1].stop], [-0.5,+1])
+    plt.show()
+    '''
+
     return segments
 
 
@@ -550,29 +585,20 @@ def _get_speed_parameter(hdf, aircraft_info):
     if aircraft_info.get('Engine Propulsion', None) == 'ROTOR':
 
         parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
-        thresholds['speed_threshold'] = 90.0 # settings.ROTORSPEED_THRESHOLD
+        thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
+        thresholds['min_duration'] = settings.ROTORSPEED_THRESHOLD_TIME
         thresholds['min_split_duration'] = 4 # Very short dips in rotor speed before recording stops.
         # Let's try one minute on the ground as worth splitting.
         # Set to 30 sec as this gives two splits and two keeps in the test data set
         # TODO: add to settings
         thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
 
-        '''
-        # This works nicely, separating individual sectors.
-        parameter = hdf['Altitude Radio (L)']  # FIXME: merge L&R !
-        thresholds['speed_threshold'] = 1.0 # settings.ROTORSPEED_THRESHOLD
-        thresholds['min_split_duration'] = 60
-        # Let's try one minute on the ground as worth splitting.
-        # Set to 30 sec as this gives two splits and two keeps in the test data set
-        # TODO: add to settings
-        thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
-        '''
-
     else:
         parameter = hdf['Airspeed']
         thresholds['speed_threshold'] = settings.AIRSPEED_THRESHOLD
         thresholds['min_split_duration'] = settings.MINIMUM_SPLIT_DURATION
         thresholds['hash_min_samples'] = settings.AIRSPEED_HASH_MIN_SAMPLES
+        thresholds['min_duration'] = settings.AIRSPEED_THRESHOLD_TIME
 
     return parameter, thresholds
 
