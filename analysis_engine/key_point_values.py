@@ -10572,7 +10572,8 @@ class RateOfDescent1000To500FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(
             vrt_spd.array,
             alt_app_sections,
-            min_value
+            min_value,
+            min_duration=5.0, freq=vrt_spd.frequency
         )
 
 
@@ -10595,7 +10596,8 @@ class RateOfDescent500To50FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(
             vrt_spd.array,
             alt_app_sections,
-            min_value
+            min_value,
+            min_duration=5.0, freq=vrt_spd.frequency
         )
 
 
