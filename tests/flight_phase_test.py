@@ -1725,19 +1725,31 @@ class TestMobile(unittest.TestCase, NodeTest):
         self.node_class = Mobile
         self.operational_combinations = [('Heading Rate', 'Airborne'), ('Heading Rate', 'Groundspeed', 'Airborne')]
 
-    def test_rot_only(self):
-        rot = np.ma.array([0, 0, 5, 5, 5, 0, 0])
+    def test_gspd(self):
+        rot = np.ma.array([0, 0, 0, 0, 0, 0, 0])
+        gspd = np.ma.array([1, 2, 3, 5, 5, 2, 1])
+        airs = buildsection('Airborne',3,5)
         move = Mobile()
-        move.derive(P('Heading Rate', rot), None)
-        expected = buildsection('Mobile', 2, 4)
+        move.derive(P('Heading Rate', rot), P('Groundspeed', gspd), airs)
+        expected = buildsection('Mobile', 1, 6)
         self.assertEqual(move.get_slices(), expected.get_slices())
 
-    def test_gspd(self):
-        rot = np.ma.array([0, 0, 5, 5, 5, 0, 0])
-        gspd = np.ma.array([1, 2, 3, 5, 5, 2, 1])
+    def test_rot(self):
+        rot = np.ma.array([0, 4, 8, 8, 8, 4, 0])
+        gspd = np.ma.array([0, 0, 0, 0, 0, 0, 0])
+        airs = buildsection('Airborne',3,5)
         move = Mobile()
-        move.derive(P('Heading Rate', rot), P('Grundspeed', gspd))
-        expected = buildsection('Mobile', 1, 5)
+        move.derive(P('Heading Rate', rot), P('Groundspeed', gspd), airs)
+        expected = buildsection('Mobile', 1, 6)
+        self.assertEqual(move.get_slices(), expected.get_slices())
+
+    def test_airborne(self):
+        rot = np.ma.array([0, 0, 0, 0, 0, 0, 0])
+        gspd = np.ma.array([0, 0, 0, 0, 0, 0, 0])
+        airs = buildsection('Airborne',3,5)
+        move = Mobile()
+        move.derive(P('Heading Rate', rot), P('Groundspeed', gspd), airs)
+        expected = buildsection('Mobile', 3, 6)
         self.assertEqual(move.get_slices(), expected.get_slices())
 
 
