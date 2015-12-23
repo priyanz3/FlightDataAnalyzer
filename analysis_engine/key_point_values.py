@@ -6158,7 +6158,10 @@ class LongitudeAtLiftoff(KeyPointValueNode):
         '''
         ktis = liftoffs
         if ac_type and ac_type.value=='helicopter':
-            ktis = toff_helos
+            # If the helicopter transitioned cleanly this may be a better definition of the
+            # point of takeoff, certainly when the transition took place over a runway.
+            if toff_helos:
+                ktis = toff_helos
         # 1. Attempt to use longitude parameter if available:
         if lon:
             if ktis:
