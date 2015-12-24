@@ -1877,11 +1877,11 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
     # this slice
     peak = max_value(alt_data, ccd_slice)
     if mode == 'toc':
-        section_2 = slice(ccd_slice.start or 0, peak.index+1)
+        section_2 = slice(ccd_slice.start or 0, int(peak.index)+1)
         slope = SLOPE_FOR_TOC_TOD / frequency
     elif mode == 'tod':
         # Descent case
-        section_2 = slice(peak.index or 0, ccd_slice.stop or len(alt_data))
+        section_2 = slice(int(peak.index) or 0, ccd_slice.stop or len(alt_data))
         slope = -SLOPE_FOR_TOC_TOD / frequency
     else:
         raise ValueError('Invalid mode in find_toc_tod')
@@ -1889,7 +1889,11 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
     # Find the midpoint to separate tops and bottoms of climbs and descents.
     trough = min_value(alt_data, section_2)
     mid_alt = (peak.value + trough.value) / 2.0
-    mid_index = int(index_at_value(alt_data[section_2], mid_alt, endpoint='nearest') + (section_2.start or 0))
+    try:
+        mid_index = int(index_at_value(alt_data[section_2], mid_alt, endpoint='nearest') + (section_2.start or 0))
+    except:
+        # no peak found
+        return np.ma.argmax(alt_data)
 
     if mode == 'tod':
         # The first part is where the point of interest lies
@@ -1904,7 +1908,10 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
     ramp = timebase * slope
 
     test_slope = alt_data[section_4] - ramp
-    return np.ma.argmax(test_slope) + section_4.start
+    if len(test_slope):
+        return np.ma.argmax(test_slope) + section_4.start
+    else:
+        return section_4.start
 
 
 def find_edges(array, _slice=slice(None), direction='rising_edges'):

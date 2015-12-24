@@ -2563,6 +2563,11 @@ class TestFindTocTod(unittest.TestCase):
         ccd=slice(None, None, None)
         self.assertEqual(find_toc_tod(alt, ccd, 0.1, 'toc'), 6)
 
+    def test_starts_non_zero(self):
+        alt=np.ma.array([10,0,0,0,0,0,0])
+        alt *= 100
+        ccd=slice(0,7,None)
+        self.assertEqual(find_toc_tod(alt, ccd, 0.1, 'toc'), 0)
 
 class TestFirstOrderLag(unittest.TestCase):
 
