@@ -291,7 +291,7 @@ class ApproachAndLanding(FlightPhaseNode):
                 landing = landings.get_last()
                 if is_index_within_slice(landing.slice.start, low_alt):
                     low_alt = slice(low_alt.start, landing.slice.stop)
-
+            assert low_alt.start < landing.slice.stop
             self.create_phase(low_alt)
 
 
