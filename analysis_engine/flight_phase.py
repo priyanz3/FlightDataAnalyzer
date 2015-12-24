@@ -99,7 +99,7 @@ class Airborne(FlightPhaseNode):
             working_alt = alt_aal.array[start_point:stop_point]
 
             # Stop here if there is inadequate airborne data to process.
-            if working_alt is None:
+            if working_alt is None or np.ma.ptp(working_alt)==0.0:
                 break
             airs = slices_remove_small_gaps(
                 np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 1.0)),
