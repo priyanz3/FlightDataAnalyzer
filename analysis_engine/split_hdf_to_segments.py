@@ -123,9 +123,10 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         gog_start = start * gog.frequency
         gog_stop = stop * gog.frequency
         temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
-        #gog_test = np.ma.masked_less(gog.array[gog_start:gog_stop], 1.0)
         gog_test = np.ma.masked_less(temp, 1.0)
-        did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test))
+        # We have seeen 12-second spurious gog='Air' signals during rotor rundown. Hence increased limit.
+        did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test),
+                                              time_limit=30, hz=gog.frequency)
     else:
         # Check Heading change for fixed wing.
         if eng_arrays is not None:
