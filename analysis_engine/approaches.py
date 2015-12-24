@@ -73,11 +73,15 @@ class ApproachInformation(ApproachNode):
     """
 
     @classmethod
-    def can_operate(self, available):
+    def can_operate(self, available, ac_type=A('Aircraft Type')):
         '''
         '''
-        return all(n in available for n in ['Approach And Landing',
-                                            'Altitude AAL', 'Fast'])
+        if ac_type and ac_type.value == 'helicopter':
+            return all(n in available for n in ['Approach And Landing',
+                                                'Altitude AGL', 'Fast'])
+        else:
+            return all(n in available for n in ['Approach And Landing',
+                                                'Altitude AAL', 'Fast'])
 
     def _lookup_airport_and_runway(self, _slice, precise, lowest_lat,
                                    lowest_lon, lowest_hdg, appr_ils_freq,
@@ -177,13 +181,18 @@ class ApproachInformation(ApproachNode):
                land_afr_apt=A('AFR Landing Airport'),
                land_afr_rwy=A('AFR Landing Runway'),
                precision=A('Precise Positioning'),
-               turnoffs=KTI('Landing Turn Off Runway')):
+               turnoffs=KTI('Landing Turn Off Runway'),
+               alt_agl=P('Altitude AGL'),
+               ac_type=A('Aircraft Type')):
         precise = bool(getattr(precision, 'value', False))
 
         default_kwargs = {
             'precise': precise,
         }
 
+        alt = alt_aal
+        if ac_type and ac_type.value == 'helicopter':
+            alt = alt_agl
         app_slices = app.get_slices()
 
         for index, _slice in enumerate(app_slices):
@@ -192,7 +201,7 @@ class ApproachInformation(ApproachNode):
                 approach_type = 'LANDING'
                 landing = True
             # b) We have a touch and go if Altitude AAL reached zero:
-            elif np.ma.any(alt_aal.array[_slice] <= 0):
+            elif np.ma.any(alt.array[_slice] <= 0):
                 approach_type = 'TOUCH_AND_GO'
                 landing = False
             # c) In any other case we have a go-around:
