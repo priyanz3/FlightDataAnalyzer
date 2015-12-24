@@ -192,7 +192,7 @@ class TestAirborne(unittest.TestCase):
 
     def test_airborne_fast_with_gaps(self):
         alt_aal = P('Altitude AAL For Flight Phases',
-                    np.ma.array([10000]*60),frequency=0.1)
+                    np.ma.arange(60)+10000,frequency=0.1)
         fast = buildsections('Fast', [1,10],[15,24],[30,36],[40,50],[55,59])
         fast.frequency = 0.1
         air = Airborne()
@@ -202,6 +202,15 @@ class TestAirborne(unittest.TestCase):
         self.assertEqual(air[0].slice.stop, 24)
         self.assertEqual(air[1].slice.start, 30)
         self.assertEqual(air[1].slice.stop, 59)
+
+    def test_airborne_no_height_change(self):
+        alt_aal = P('Altitude AAL For Flight Phases',
+                    np.ma.array([10000]*60),frequency=0.1)
+        fast = buildsections('Fast', [1,10],[15,24],[30,36],[40,50],[55,59])
+        fast.frequency = 0.1
+        air = Airborne()
+        air.derive(alt_aal, fast)
+        self.assertEqual(len(air), 0)
 
 
 class TestApproachAndLanding(unittest.TestCase):
