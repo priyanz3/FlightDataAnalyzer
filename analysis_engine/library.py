@@ -1908,10 +1908,7 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
     ramp = timebase * slope
 
     test_slope = alt_data[section_4] - ramp
-    if len(test_slope):
-        return np.ma.argmax(test_slope) + section_4.start
-    else:
-        return section_4.start
+    return np.ma.argmax(test_slope) + section_4.start
 
 
 def find_edges(array, _slice=slice(None), direction='rising_edges'):
