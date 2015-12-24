@@ -6077,7 +6077,7 @@ class LatitudeAtLiftoff(KeyPointValueNode):
         767 Delta data frame.
         '''
         ktis = liftoffs
-        if ac_type and ac_type.value=='helicopter':
+        if ac_type and ac_type.value=='helicopter' and toff_helos:
             ktis = toff_helos
         # 1. Attempt to use latitude parameter if available:
         if lat:
