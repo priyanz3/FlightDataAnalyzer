@@ -3164,6 +3164,9 @@ class TestIndexAtValue(unittest.TestCase):
         array = np.ma.array(data=[1.,2.,3.],mask=[1,1,1])
         self.assertEqual(index_at_value(array,2.5, slice(0,3), endpoint='closing'), None)
 
+    def test_index_at_value_closing_to_start(self):
+        array = np.ma.array(data=[6, 5, 4])
+        self.assertEqual(index_at_value(array, 10, _slice=slice(3, 0, -1), endpoint='closing'), 0)
 
 class TestIndexClosestValue(unittest.TestCase):
     def test_index_closest_value(self):

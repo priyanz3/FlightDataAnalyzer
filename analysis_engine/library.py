@@ -7120,7 +7120,14 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
             try:
                 return (_slice.start or 0) + (step * diff_where[0][0])
             except IndexError:
-                return (_slice.stop - step) if _slice.stop else len(array) - 1
+                if start_index==None or stop_index==None:
+                    return len(array) - 1
+                else:
+                    if step==1:
+                        return (_slice.stop - step)
+                    else:
+                        return _slice.stop
+
         elif endpoint == 'nearest':
             closing_array = abs(array-threshold)
             return begin + step * np.ma.argmin(closing_array[_slice])
