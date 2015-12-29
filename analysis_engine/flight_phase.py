@@ -1277,7 +1277,7 @@ class Mobile(FlightPhaseNode):
                 start = min(start, mobile[0]) if start else mobile[0]
                 stop = max(stop, mobile[1]) if stop else mobile[1]
 
-        if airs is not None:
+        if airs and airs is not None:
             start = min(start, airs[0].slice.start) if start else airs[0].slice.start
             stop = max(stop, airs[-1].slice.stop) if stop else airs[-1].slice.stop
 
