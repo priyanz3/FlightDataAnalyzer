@@ -196,6 +196,26 @@ class TestClimbStart(unittest.TestCase):
         self.assertEqual(len(kti), 1)
         self.assertAlmostEqual(kti[0].index, 1384, 0)
 
+    def test_climb_start_for_helicopter_operation(self):
+        # This test case is borne out of actual helicopter data.
+        alt_aal = Parameter('Altitude AAL', np.ma.array([0]*17+[2000]*50+[0]*26+[2000]*50))
+        liftoffs = KTI('Liftoff', items=[KeyTimeInstance(0, 'Liftoff'),
+                                         KeyTimeInstance(3, 'Liftoff'),
+                                         KeyTimeInstance(7, 'Liftoff'),
+                                         KeyTimeInstance(12, 'Liftoff'),
+                                         KeyTimeInstance(15, 'Liftoff'),
+                                         KeyTimeInstance(91, 'Liftoff')])
+        tocs = KTI('Top Of Climb',
+                   items=[KeyTimeInstance(20, 'Top Of Climb'),
+                          KeyTimeInstance(30, 'Top Of Climb'),
+                          KeyTimeInstance(77, 'Top Of Climb'),
+                          KeyTimeInstance(84, 'Top Of Climb'),
+                          KeyTimeInstance(94, 'Top Of Climb')])
+        kti = ClimbStart()
+        kti.derive(alt_aal, liftoffs, tocs)
+        self.assertEqual(len(kti), 2)
+        self.assertEqual(kti[0].index, 16.5)
+        self.assertEqual(kti[1].index, 92.5)
 
 class TestClimbAccelerationStart(unittest.TestCase):
 

@@ -215,12 +215,13 @@ class ClimbStart(KeyTimeInstanceNode):
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'), liftoffs=KTI('Liftoff'),
                tocs=KTI('Top Of Climb')):
 
-        for liftoff in liftoffs:
-            # Assumes a Top Of Climb KTI exists after each Liftoff.
-            toc = tocs.get_next(liftoff.index)
-            if toc:
-                climb_slice = slice(liftoff.index, toc.index)
-                index = index_at_value(alt_aal.array, CLIMB_THRESHOLD, climb_slice)
+        to_scan = [[l.index, 'lift'] for l in liftoffs] + \
+            [[l.index, 'toc'] for l in tocs]
+        from operator import itemgetter
+        to_scan = sorted(to_scan, key=itemgetter(0))
+        for i in range(len(to_scan)-1):
+            if to_scan[i][1]=='lift' and to_scan[i+1][1]=='toc':
+                index = index_at_value(alt_aal.array, CLIMB_THRESHOLD, slice(to_scan[i][0], to_scan[i+1][0]))
                 if index:
                     self.create_kti(index)
 
