@@ -1139,6 +1139,15 @@ class TestInitialClimb(unittest.TestCase):
         self.assertEqual(ini_clb.get_first().slice.start, 20)
         self.assertEqual(ini_clb.get_first().slice.stop, 40)
 
+    def test_initial_climb_for_helicopter_operation(self):
+        # This test case is borne out of actual helicopter data.
+        toffs = buildsections('Takeoff', [5, 10], [15, 20])
+        climbs = build_kti('Climb Start', 30)
+        toc = build_kti('Top Of Climb', 40)
+        ini_clb = InitialClimb()
+        ini_clb.derive(toffs, climbs, toc)
+        self.assertEqual(len(ini_clb), 1)
+
 
 class TestInitialCruise(unittest.TestCase):
 

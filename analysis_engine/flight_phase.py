@@ -1116,21 +1116,17 @@ class InitialClimb(FlightPhaseNode):
                takeoffs=S('Takeoff'),
                climb_starts=KTI('Climb Start'),
                tocs=KTI('Top Of Climb')):
-        for takeoff in takeoffs:
-            begin = takeoff.stop_edge
-            if climb_starts:
-                for climb_start in climb_starts.get_ordered_by_index():
-                    end = climb_start.index
-                    if end > begin:
-                        self.create_phase(slice(begin, end), begin=begin, end=end)
-                        break
-            else:
-                # TOC was measured below 1000ft so use that as the endpoint.
-                for toc in tocs.get_ordered_by_index():
-                    end = toc.index
-                    if end > begin:
-                        self.create_phase(slice(begin, end), begin=begin, end=end)
-                        break
+
+        to_scan = [[t.stop_edge, 'takeoff'] for t in takeoffs] + \
+            [[c.index, 'climb'] for c in climb_starts]+ \
+            [[c.index, 'climb'] for c in tocs]
+        from operator import itemgetter
+        to_scan = sorted(to_scan, key=itemgetter(0))
+        for i in range(len(to_scan)-1):
+            if to_scan[i][1]=='takeoff' and to_scan[i+1][1]=='climb':
+                begin = to_scan[i][0]
+                end = to_scan[i+1][0]
+                self.create_phase(slice(begin, end), begin=begin, end=end)
 
 
 class LevelFlight(FlightPhaseNode):
