@@ -626,33 +626,10 @@ class EnterHold(KeyTimeInstanceNode):
         for hold in holds:
             self.create_kti(hold.slice.start)
 
-
 class ExitHold(KeyTimeInstanceNode):
     def derive(self, holds=S('Holding')):
         for hold in holds:
             self.create_kti(hold.slice.stop)
-
-
-
-
-class EnterHoverTaxi(KeyTimeInstanceNode):
-    def derive(self, holds=S('Hover Taxi')):
-        for hold in holds:
-            self.create_kti(hold.slice.start)
-class ExitHoverTaxi(KeyTimeInstanceNode):
-    def derive(self, holds=S('Hover Taxi')):
-        for hold in holds:
-            self.create_kti(hold.slice.stop)
-class EnterAutorotation(KeyTimeInstanceNode):
-    def derive(self, holds=S('Autorotation')):
-        for hold in holds:
-            self.create_kti(hold.slice.start)
-class ExitAutorotation(KeyTimeInstanceNode):
-    def derive(self, holds=S('Autorotation')):
-        for hold in holds:
-            self.create_kti(hold.slice.stop)
-
-
 
 
 class EngFireExtinguisher(KeyTimeInstanceNode):
