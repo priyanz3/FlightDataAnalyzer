@@ -6115,8 +6115,8 @@ class LatitudeAtLiftoff(KeyPointValueNode):
             return
 
         # XXX: Is there something else we can do here other than fail?
-        raise Exception('Unable to determine a latitude at liftoff.')
-
+        # raise Exception('Unable to determine a latitude at liftoff.')
+        value = None
 
 class LongitudeAtLiftoff(KeyPointValueNode):
     '''
@@ -6198,8 +6198,8 @@ class LongitudeAtLiftoff(KeyPointValueNode):
             return
 
         # XXX: Is there something else we can do here other than fail?
-        raise Exception('Unable to determine a longitude at liftoff.')
-
+        # raise Exception('Unable to determine a longitude at liftoff.')
+        value = None
 
 class LatitudeOffBlocks(KeyPointValueNode):
     '''
