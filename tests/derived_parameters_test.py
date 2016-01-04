@@ -112,9 +112,9 @@ from analysis_engine.derived_parameters import (
     Eng_NpAvg,
     Eng_NpMax,
     Eng_NpMin,
-    Eng_TorquePercentAvg,
-    Eng_TorquePercentMax,
-    Eng_TorquePercentMin,
+    Eng_TorqueAvg,
+    Eng_TorqueMax,
+    Eng_TorqueMin,
     Eng_VibBroadbandMax,
     Eng_VibN1Max,
     Eng_VibN2Max,
@@ -4029,56 +4029,26 @@ class TestEng_OilTempMin(unittest.TestCase):
 
 
 class TestEng_TorqueAvg(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
-    def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestEng_TorqueMax(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
-    def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestEng_TorqueMin(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
-    def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestEng_TorquePercentAvg(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng_TorquePercentAvg
+        self.node_class = Eng_TorqueAvg
 
     def test_can_operate(self):
         poss_combs = self.node_class.get_operational_combinations()
-        self.assertTrue(('Eng (1) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (2) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (3) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (4) Torque [%]',) in poss_combs)
+        self.assertTrue(('Eng (1) Torque',) in poss_combs)
+        self.assertTrue(('Eng (2) Torque',) in poss_combs)
+        self.assertTrue(('Eng (3) Torque',) in poss_combs)
+        self.assertTrue(('Eng (4) Torque',) in poss_combs)
 
     def test_derive(self):
         eng_1_array =    [0, 30, 50, 80, 100,   100, 70, 70, 70, 50, 50, 10,  0,  0, 0]
         eng_3_array =    [0,  0, 30, 60,  85,   100, 70, 70, 70, 50, 50, 30, 10, 10, 0]
         expected_array = [0, 15, 40, 70,  92.5, 100, 70, 70, 70, 50, 50, 20,  5,  5, 0]
 
-        eng_1 = P(name='Eng (1) Torque [%]', array=eng_1_array, frequency=1,
+        eng_1 = P(name='Eng (1) Torque', array=eng_1_array, frequency=1,
                  offset=0.1)
 
-        eng_3 = P(name='Eng (3) Torque [%]', array=eng_3_array, frequency=1,
+        eng_3 = P(name='Eng (3) Torque', array=eng_3_array, frequency=1,
                          offset=0.5)
 
         node = self.node_class()
@@ -4088,17 +4058,17 @@ class TestEng_TorquePercentAvg(unittest.TestCase):
         self.assertEqual(node.offset, 0.3)
 
 
-class TestEng_TorquePercentMax(unittest.TestCase):
+class TestEng_TorqueMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng_TorquePercentMax
+        self.node_class = Eng_TorqueMax
 
     def test_can_operate(self):
         poss_combs = self.node_class.get_operational_combinations()
-        self.assertTrue(('Eng (1) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (2) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (3) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (4) Torque [%]',) in poss_combs)
+        self.assertTrue(('Eng (1) Torque',) in poss_combs)
+        self.assertTrue(('Eng (2) Torque',) in poss_combs)
+        self.assertTrue(('Eng (3) Torque',) in poss_combs)
+        self.assertTrue(('Eng (4) Torque',) in poss_combs)
 
 
     def test_derive(self):
@@ -4106,10 +4076,10 @@ class TestEng_TorquePercentMax(unittest.TestCase):
         eng_3_array =    [0,  0, 30, 60,  85, 100, 70, 70, 70, 50, 50, 30, 10, 10, 0]
         expected_array = [0, 30, 50, 80, 100, 100, 70, 70, 70, 50, 50, 30, 10, 10, 0]
 
-        eng_1 = P(name='Eng (1) Torque [%]', array=eng_1_array, frequency=1,
+        eng_1 = P(name='Eng (1) Torque', array=eng_1_array, frequency=1,
                  offset=0.1)
 
-        eng_3 = P(name='Eng (3) Torque [%]', array=eng_3_array, frequency=1,
+        eng_3 = P(name='Eng (3) Torque', array=eng_3_array, frequency=1,
                 offset=0.5)
 
         node = self.node_class()
@@ -4119,17 +4089,17 @@ class TestEng_TorquePercentMax(unittest.TestCase):
         self.assertEqual(node.offset, 0.3)
 
 
-class TestEng_TorquePercentMin(unittest.TestCase):
+class TestEng_TorqueMin(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng_TorquePercentMin
+        self.node_class = Eng_TorqueMin
 
     def test_can_operate(self):
         poss_combs = self.node_class.get_operational_combinations()
-        self.assertTrue(('Eng (1) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (2) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (3) Torque [%]',) in poss_combs)
-        self.assertTrue(('Eng (4) Torque [%]',) in poss_combs)
+        self.assertTrue(('Eng (1) Torque',) in poss_combs)
+        self.assertTrue(('Eng (2) Torque',) in poss_combs)
+        self.assertTrue(('Eng (3) Torque',) in poss_combs)
+        self.assertTrue(('Eng (4) Torque',) in poss_combs)
 
 
     def test_derive(self):
@@ -4137,10 +4107,10 @@ class TestEng_TorquePercentMin(unittest.TestCase):
         eng_3_array =    [0,  0, 30, 60,  85, 100, 70, 70, 70, 50, 50, 30, 10, 10, 0]
         expected_array = [0,  0, 30, 60,  85, 100, 70, 70, 70, 50, 50, 10,  0,  0, 0]
 
-        eng_1 = P(name='Eng (1) Torque [%]', array=eng_1_array, frequency=1,
+        eng_1 = P(name='Eng (1) Torque', array=eng_1_array, frequency=1,
                  offset=0.1)
 
-        eng_3 = P(name='Eng (3) Torque [%]', array=eng_3_array, frequency=1,
+        eng_3 = P(name='Eng (3) Torque', array=eng_3_array, frequency=1,
                          offset=0.5)
 
         node = self.node_class()

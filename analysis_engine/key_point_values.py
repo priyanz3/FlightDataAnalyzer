@@ -8285,7 +8285,7 @@ class EngTorqueDuringTaxiMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
@@ -8298,7 +8298,7 @@ class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
@@ -8307,11 +8307,35 @@ class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
 
 
+class EngTorque65KtsTo35FtMin(KeyPointValueNode):
+    '''
+    KPV designed in accordance with ATR72 FCOM
+
+    Looks for the minimum Eng Torque between the aircraft reaching 65 kts
+    during takeoff and it it reaching an altitude of 35 ft (end of takeoff)
+    '''
+
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_trq_min=P('Eng (*) Torque Min'),
+               airspeed=P('Airspeed'),
+               takeoffs=S('Takeoff')):
+
+        for takeoff in takeoffs:
+            start = index_at_value(airspeed.array, 65, _slice=takeoff.slice,
+                                   endpoint='nearest')
+            self.create_kpvs_within_slices(eng_trq_min.array,
+                                           [slice(start, takeoff.slice.stop)],
+                                           min_value)
+
+
 class EngTorqueDuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    name = 'Eng Torque During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
@@ -8324,7 +8348,7 @@ class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
@@ -8340,7 +8364,7 @@ class EngTorque500To50FtMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
@@ -8357,7 +8381,7 @@ class EngTorque500To50FtMin(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_min=P('Eng (*) Torque Min'),
@@ -8374,147 +8398,10 @@ class EngTorqueWhileDescendingMax(KeyPointValueNode):
     '''
     '''
 
-    units = ut.FT_LB
+    units = ut.PERCENT
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
-               descending=S('Descending')):
-
-        self.create_kpv_from_slices(eng_trq_max.array, descending, max_value)
-
-
-##############################################################################
-# Engine Torque [%]
-
-
-class EngTorquePercentDuringTaxiMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] During Taxi Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
-               taxiing=S('Taxiing')):
-
-        self.create_kpv_from_slices(eng_trq_max.array, taxiing, max_value)
-
-
-class EngTorquePercentDuringTakeoff5MinRatingMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] During Takeoff 5 Min Rating Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
-               ratings=S('Takeoff 5 Min Rating')):
-
-        self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
-
-
-class EngTorquePercent65KtsTo35FtMin(KeyPointValueNode):
-    '''
-    KPV designed in accordance with ATR72 FCOM
-
-    Looks for the minimum Eng Torque [%] between the aircraft reaching 65 kts
-    during takeoff and it it reaching an altitude of 35 ft (end of takeoff)
-    '''
-
-    name = 'Eng Torque [%] 65 Kts To 35 Ft Min'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_min=P('Eng (*) Torque [%] Min'),
-               airspeed=P('Airspeed'),
-               takeoffs=S('Takeoff')):
-
-        for takeoff in takeoffs:
-            start = index_at_value(airspeed.array, 65, _slice=takeoff.slice,
-                                   endpoint='nearest')
-            self.create_kpvs_within_slices(eng_trq_min.array,
-                                           [slice(start, takeoff.slice.stop)],
-                                           min_value)
-
-
-class EngTorquePercentDuringGoAround5MinRatingMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] During Go Around 5 Min Rating Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
-               ratings=S('Go Around 5 Min Rating')):
-
-        self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
-
-
-class EngTorquePercentDuringMaximumContinuousPowerMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] During Maximum Continuous Power Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
-
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_trq_max.array, slices, max_value)
-
-
-class EngTorquePercent500To50FtMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] 500 To 50 Ft Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
-               alt_aal=P('Altitude AAL For Flight Phases')):
-
-        self.create_kpvs_within_slices(
-            eng_trq_max.array,
-            alt_aal.slices_from_to(500, 50),
-            max_value,
-        )
-
-
-class EngTorquePercent500To50FtMin(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] 500 To 50 Ft Min'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_min=P('Eng (*) Torque [%] Min'),
-               alt_aal=P('Altitude AAL For Flight Phases')):
-
-        self.create_kpvs_within_slices(
-            eng_trq_min.array,
-            alt_aal.slices_from_to(500, 50),
-            min_value,
-        )
-
-
-class EngTorquePercentWhileDescendingMax(KeyPointValueNode):
-    '''
-    '''
-
-    name = 'Eng Torque [%] While Descending Max'
-    units = ut.PERCENT
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque [%] Max'),
                descending=S('Descending')):
 
         self.create_kpv_from_slices(eng_trq_max.array, descending, max_value)
