@@ -9,6 +9,12 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.24.1
+-------
+ - Make 100% of tests pass
+ - Support for helicopters
+
+
 v0.23.2
 -------
  - Fix: Correctly detect Mobile phase at the begining of the data
