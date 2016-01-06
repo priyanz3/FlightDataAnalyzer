@@ -7,7 +7,7 @@ import numpy as np
 
 from pprint import pformat
 
-from flightdatautilities import aircrafttables as at, units as ut
+from flightdatautilities import aircrafttables as at, dateext, units as ut
 
 from hdfaccess.parameter import MappedArray
 
@@ -28,7 +28,6 @@ from analysis_engine.library import (
     including_transition,
     index_at_value,
     index_closest_value,
-    is_day,
     merge_masks,
     merge_two_parameters,
     moving_average,
@@ -420,7 +419,7 @@ class Daylight(MultistateDerivedParameterNode):
             lat = latitude.array[step]
             lon = longitude.array[step]
             if lat and lon:
-                if not is_day(curr_dt, lat, lon):
+                if not dateext.is_day(curr_dt, lat, lon):
                     # Replace values with Night
                     self.array[step] = 0
                 else:

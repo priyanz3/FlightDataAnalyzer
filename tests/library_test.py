@@ -7193,68 +7193,6 @@ class TestPress2Alt(unittest.TestCase):
         ##Truth = np.ma.array(data=[40000, 45000])
         ##ma_test.assert_masked_array_almost_equal (Value,Truth, decimal=-3)
 
-class TestIsDay(unittest.TestCase):
-    # Solstice times for 2012 at Stonehenge.
-    # Sunset on Wednesday 20th June 2012 is at 2126 hrs (9.26pm BST)
-    # Sunrise on Thursday 21st June 2012 is at 0452 hrs (4.52am BST)
-    def test_sunset(self):
-        self.assertEqual(is_day(datetime(2012,6,20,20,25), 51.1789, -1.8264, twilight=None), True)
-        self.assertEqual(is_day(datetime(2012,6,20,20,27), 51.1789, -1.8264, twilight=None), False)
-
-    def test_sunrise(self):
-        self.assertEqual(is_day(datetime(2012,6,21,03,51), 51.1789, -1.8264, twilight=None), False)
-        self.assertEqual(is_day(datetime(2012,6,21,03,53), 51.1789, -1.8264, twilight=None), True)
-
-    def test_location_west(self):
-        # Sunrise over the Goodyear, Az, office on New Year is 07:33 + 7 hours from UTC
-        self.assertEqual(is_day(datetime(2013,1,1,14,32), 33.449291, -112.359015, twilight=None), False)
-        self.assertEqual(is_day(datetime(2013,1,1,14,34), 33.449291, -112.359015, twilight=None), True)
-
-    def test_location_east(self):
-        # Sunrise over Sydney Harbour Bridge is 3 Jan 2013 05:49 -11 hours from UTC
-        self.assertEqual(is_day(datetime(2013,1,2,18,48), -33.85, 151.21, twilight=None), False)
-        self.assertEqual(is_day(datetime(2013,1,2,18,50), -33.85, 151.21, twilight=None), True)
-
-    def test_midnight_sun(self):
-        # July in Bodo is light all night
-        self.assertEqual(is_day(datetime(2013,6,21,0,0),  67.280356,  14.404916, twilight=None), True)
-
-    def test_midday_gloom(self):
-        # July in Ross Island can be miserable :o(
-        self.assertEqual(is_day(datetime(2013,6,21,0,0), -77.52474, 166.960313, twilight=None), False)
-
-    def test_twilight_libreville(self):
-        # Sunrise on 4 Jun 2012 at Libreville is 06:16. There will be a
-        # partial eclipse on that day visible from Libreville, if you're
-        # interested. Twilight is almost directly proportional to rotation as
-        # this is right on the equator, hence 6 deg = 24 mins.
-        self.assertEqual(is_day(datetime(2013,6,4,05,17), 0.454927, 9.411872, twilight=None), True)
-        self.assertEqual(is_day(datetime(2013,6,4,05,15), 0.454927, 9.411872, twilight=None), False)
-        self.assertEqual(is_day(datetime(2013,6,4,04,54), 0.454927, 9.411872, twilight='civil'), True)
-        self.assertEqual(is_day(datetime(2013,6,4,04,52), 0.454927, 9.411872), False)
-        self.assertEqual(is_day(datetime(2013,6,4,04,29), 0.454927, 9.411872, twilight='nautical'), True)
-        self.assertEqual(is_day(datetime(2013,6,4,04,05), 0.454927, 9.411872, twilight='astronomical'), True)
-
-    def test_uk_aip(self):
-        # These cases are taken from the United Kingdom AIP, page GEN 2.7.1 dated 13 Dec 2012.
-        #Carlisle winter morning
-        lat = 54.0 + 56.0/60.0 + 15.0/3600.0
-        lon = (2.0 + 48.0/60.0 + 33.0/3600.0) * -1.0
-        self.assertEqual(is_day(datetime(2012,1,15,7,43), lat, lon), False)
-        self.assertEqual(is_day(datetime(2012,1,15,7,45), lat, lon), True)
-
-        # Lands End summer evening
-        lat = 50.0 + 6.0/60.0 + 5.0/3600.0
-        lon = (5.0 + 40.0/60.0 + 14.0/3600.0) * -1.0
-        self.assertEqual(is_day(datetime(2012,6,18,21,21), lat, lon), False)
-        self.assertEqual(is_day(datetime(2012,6,18,21,19), lat, lon), True)
-
-        # Scatsta summer morning
-        lat = 60.0 + 25.0/60.0 + 58.0/3600.0
-        lon = (1.0 + 17.0/60.0 + 46.0/3600.0) * -1.0
-        self.assertEqual(is_day(datetime(2012,6,4,1,10), lat, lon), False)
-        self.assertEqual(is_day(datetime(2012,6,4,1,12), lat, lon), True)
-
 
 class TestSecondWindow(unittest.TestCase):
 

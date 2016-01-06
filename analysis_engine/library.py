@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import asin, atan2, ceil, cos, degrees, floor, log, radians, sin, sqrt
+from math import atan2, ceil, cos, floor, log, radians, sin, sqrt
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -7655,103 +7655,6 @@ def _press2alt_gradient(Pmb):
 
 def _press2alt_isothermal(Pmb):
     return 36089 - np.ma.log((Pmb/P0)/0.223361)*20806
-
-def is_day(when, latitude, longitude, twilight='civil'):
-    """
-    This simple function takes the date, time and location of any point on
-    the earth and return True for day and False for night.
-
-    :param when: Date and time in datetime format
-    :param longitude: Longitude in decimal degrees, east is positive
-    :param latitude: Latitude in decimal degrees, north is positive
-    :param twilight: optional twilight setting. Default='civil', None, 'nautical' or 'astronomical'.
-
-    :raises ValueError if twilight not recognised.
-
-    :returns boolean True = daytime (including twilight), False = nighttime.
-
-    This function is drawn from Jean Meeus' Astronomial Algorithms as
-    implemented by Michel J. Anders. In accordance with his Collective
-    Commons license, the reworked function is being released under the OSL
-    3.0 license by FDS as a part of the POLARIS project.
-
-    For FDM purposes, the actual time of sunrise and sunset is of no
-    interest, so function 12.6 is adapted to give just the day/night
-    decision, with allowance for different, generally recognised, twilight
-    tolerances.
-
-    FAA Regulation FAR 1.1 defines night as: "Night means the time between
-    the end of evening civil twilight and the beginning of morning civil
-    twilight, as published in the American Air Almanac, converted to local
-    time.
-
-    EASA EU OPS 1 Annex 1 item (76) states: 'night' means the period between
-    the end of evening civil twilight and the beginning of morning civil
-    twilight or such other period between sunset and sunrise as may be
-    prescribed by the appropriate authority, as defined by the Member State;
-
-    CAA regulations confusingly define night as 30 minutes either side of
-    sunset and sunrise, then include a civil twilight table in the AIP.
-
-    With these references, it was decided to make civil twilight the default.
-    """
-    if latitude is np.ma.masked or longitude is np.ma.masked:
-        return np.ma.masked
-    day = when.toordinal() - (734124-40529)
-    t = when.time()
-    time = (t.hour + t.minute/60.0 + t.second/3600.0)/24.0
-    # Julian Day
-    Jday     = day+2415019.5 + time
-    # Julian Century
-    Jcent    = (Jday-2451545.0)/36525  # (24.1)
-    # Siderial time at Greenwich (11.4)
-    Gstime   = (280.46061837 + 360.98564736629*(Jday-2451545.0) + (0.0003879331-Jcent/38710000) * Jcent * Jcent)%360.0
-    # Geom Mean Long Sun (deg)
-    Mlong    = (280.46645+Jcent*(36000.76983+Jcent*0.0003032))%360 # 24.2
-    # Geom Mean Anom Sun (deg)
-    Manom    = 357.52910+Jcent*(35999.05030-Jcent*(0.0001559+0.00000048*Jcent)) # 24.3
-    # Eccent Earth Orbit
-    ##### XXX: The following line is unused. Remove?
-    ####Eccent   = 0.016708617-Jcent*(0.000042037+0.0000001236*Jcent) # 24.4 (significantly changed from web version)
-    # Sun Eq of Ctr
-    Seqcent  = sin(radians(Manom))*(1.914600-Jcent*(0.004817+0.000014*Jcent))+sin(radians(2*Manom))*(0.019993-0.000101*Jcent)+sin(radians(3*Manom))*0.000290 # p152
-    # Sun True Long (deg)
-    Struelong= Mlong+Seqcent # Theta on p152
-    # Mean Obliq Ecliptic (deg)
-    Mobliq   = 23+(26+((21.448-Jcent*(46.815+Jcent*(0.00059-Jcent*0.001813))))/60)/60  # 21.2
-    # Obliq Corr (deg)
-    obliq    = Mobliq + 0.00256*cos(radians(125.04-1934.136*Jcent))  # 24.8
-    # Sun App Long (deg)
-    Sapplong = Struelong-0.00569-0.00478*sin(radians(125.04-1934.136*Jcent)) # Omega, Lambda p 152.
-    # Sun Declin (deg)
-    declination = degrees(asin(sin(radians(obliq))*sin(radians(Sapplong)))) # 24.7
-    # Sun Rt Ascen (deg)
-    rightasc = degrees(atan2(cos(radians(Mobliq))*sin(radians(Sapplong)),cos(radians(Sapplong))))
-
-    elevation = degrees(asin(sin(radians(latitude))*sin(radians(declination)) +
-                    cos(radians(latitude))*cos(radians(declination))*cos(radians(Gstime+longitude-rightasc))))
-
-    # Solar diamteter gives an adjustment of 0.833 deg, as the rim of the sun
-    # appears before the centre of the disk.
-    if twilight == None:
-        limit = -0.8333 # Allows for diameter of sun's disk
-    # For civil twilight, allow 6 deg
-    elif twilight == 'civil':
-        limit = -6.0
-    # For nautical twilight, allow 12 deg
-    elif twilight == 'nautical':
-            limit = -12.0
-    # For astronomical twilight, allow 18 deg
-    elif twilight == 'astronomical':
-            limit = -18.0
-    else:
-        raise ValueError('is_day called with unrecognised twilight zone')
-
-    if elevation > limit:
-        return True # It is Day
-    else:
-        return False # It is Night
-
 
 ##### TODO: Add memoize caching... Currently breaks tests!
 ####from flightdatautilities.cache import memoize
