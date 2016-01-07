@@ -4937,9 +4937,9 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 up_slope = integrate(az_washout[up], hz)
                 blend_end_error = roc[climb.stop-1] - up_slope[-1]
                 blend_slope = np.linspace(0.0, blend_end_error, climb.stop-climb.start)
-                roc[:lift_m5s] = 0.0
                 roc[lift_m5s:climb.start] = up_slope[:climb.start-lift_m5s]
                 roc[climb] = up_slope[climb.start-lift_m5s:] + blend_slope
+
                 '''
                 # Debug plot only.
                 import matplotlib.pyplot as plt
@@ -4964,7 +4964,7 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 blend = roc[down.start] - down_slope[0]
                 blend_slope = np.linspace(blend, -down_slope[-1], len(down_slope))
                 roc[down] = down_slope + blend_slope
-                roc[descent.stop+5*hz:] = 0.0
+
                 '''
                 # Debug plot only.
                 import matplotlib.pyplot as plt
