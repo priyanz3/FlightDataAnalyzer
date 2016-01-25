@@ -3,6 +3,7 @@
 import numpy as np
 import operator
 
+from collections import defaultdict
 from copy import deepcopy
 from math import ceil, copysign
 
@@ -12521,20 +12522,30 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
         return all_of(required_params, available) \
             and manufacturer and manufacturer.value == 'Airbus'
 
-
-    def derive(self, gw=KPV('Gross Weight At Touchdown'),
-               acc_norm=KPV('Acceleration Normal At Touchdown'),
-               vrt_spd=KPV('Rate Of Descent At Touchdown')):
+    def derive(self, gw_kpv=KPV('Gross Weight At Touchdown'),
+               acc_norm_kpv=KPV('Acceleration Normal At Touchdown'),
+               rod_kpv=KPV('Rate Of Descent At Touchdown')):
 
         acc_norm_limit = 1.7
-        vrt_spd_limit = 360
+        vrt_spd_limit = -360 # negative as rate of descent
 
-        for index, tdwn_gw in enumerate(gw):
-            hi_g = acc_norm[index].value and acc_norm[index].value > acc_norm_limit
-            hi_rod = vrt_spd[index].value and vrt_spd[index].value > vrt_spd_limit
+        if not gw_kpv:
+            self.warning('No Gross Weight At Touchdown KPVs')
+            return
 
-            if hi_g or hi_rod:
-                self.create_kpv(tdwn_gw.index, tdwn_gw.value)
+        # group kpvs by touchdown index, using tens as depending on alignment
+        # indexes may not match exactly
+        touchdowns = defaultdict(lambda: [None] * 3)
+        for idx, kpv in enumerate((gw_kpv, acc_norm_kpv, rod_kpv)):
+            for item in kpv:
+                touchdowns[int(item.index / 10)][idx] = item
+
+        for gw, acc_norm, rod in touchdowns.itervalues():
+            hi_g = acc_norm and acc_norm.value and acc_norm.value > acc_norm_limit
+            hi_rod = rod and rod.value and rod.value < vrt_spd_limit # less than as descending
+
+            if hi_g or hi_rod: # if either condition matched create KPV.
+                self.create_kpv(gw.index, gw.value)
 
 
 class GrossWeightDelta60SecondsInFlightMax(KeyPointValueNode):

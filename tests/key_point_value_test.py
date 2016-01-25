@@ -11489,7 +11489,7 @@ class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
             KeyPointValue(name='Acceleration Normal At Touchdown', index=6107, value=1.8),
         ])
         self.rod = KPV(name='Rate Of Descent At Touchdown', items=[
-            KeyPointValue(name='Rate Of Descent At Touchdown', index=6107, value=400),
+            KeyPointValue(name='Rate Of Descent At Touchdown', index=6107, value=-400),
         ])
         self.expected = KPV(name=self.name, items=[
             KeyPointValue(name=self.name, index=6107, value=109301),
@@ -11537,7 +11537,7 @@ class TestGrossWeightConditionalAtTouchdown(unittest.TestCase):
 
     def test_derive__gentle_touchdown(self):
         self.accel[0].value = 1.6
-        self.rod[0].value = 340
+        self.rod[0].value = -340
 
         node = self.node_class()
         node.derive(self.weight, self.accel, self.rod)
