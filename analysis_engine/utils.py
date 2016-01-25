@@ -7,7 +7,7 @@ import zipfile
 
 from collections import defaultdict
 from datetime import datetime
-from inspect import getargspec, isclass
+from inspect import getargspec, isclass, ismodule
 
 from hdfaccess.file import hdf_file
 from hdfaccess.utils import strip_hdf
@@ -144,17 +144,17 @@ def get_aircraft_info(tail_number):
     return aircraft_info
 
 
-def get_derived_nodes(module_names):
+def get_derived_nodes(modules):
     '''
     Create a key:value pair of each node_name to Node class for all Nodes
     within modules provided.
 
     sample module_names = ['path_to.module', 'analysis_engine.flight_phase',..]
 
-    :param module_names: Module names to import as locations on PYTHON PATH
-    :type module_names: List of Strings
-    :returns: Module name to Classes
-    :rtype: Dict
+    :param module_names: Modules or module names to import as locations on PYTHON PATH
+    :type module_names: [str or module]
+    :returns: Modules or module name to Classes
+    :rtype: dict
     '''
     # OPT: local variable to avoid module-level lookup.
     node_subclasses = NODE_SUBCLASSES
@@ -169,11 +169,11 @@ def get_derived_nodes(module_names):
                 return True
         return issubclass(value, superclass)
 
-    if isinstance(module_names, basestring):
+    if isinstance(modules, basestring) or ismodule(modules):
         # This has been done too often!
-        module_names = [module_names]
+        modules = [modules]
     nodes = {}
-    for name in module_names:
+    for module in modules:
         #Ref:
         #http://code.activestate.com/recipes/223972-import-package-modules-at-runtime/
         # You may notice something odd about the call to __import__(): why is
@@ -184,7 +184,8 @@ def get_derived_nodes(module_names):
         # loading "A.B.C"
         ##abstract_nodes = ['Node', 'Derived Parameter Node', 'Key Point Value Node', 'Flight Phase Node'
         ##print 'importing', name
-        module = __import__(name, globals(), locals(), [''])
+        if not ismodule(module):
+            module = __import__(module, globals(), locals(), [''])
         for c in vars(module).values():
             if isclassandsubclass(c, node_subclasses, Node) \
                     and c.__module__ != 'analysis_engine.node':

@@ -1,4 +1,6 @@
 import collections
+import imp
+import os
 import unittest
 import networkx as nx
 
@@ -14,7 +16,8 @@ from analysis_engine.dependency_graph import (
     process_order,
 )
 from analysis_engine.utils import get_derived_nodes
-  
+
+
 def flatten(l):
     "Flatten an iterable of many levels of depth (generator)"
     for el in l:
@@ -23,6 +26,12 @@ def flatten(l):
                 yield sub
         else:
             yield el
+
+
+def import_module(module_name):
+    return imp.load_source('tests.%s' % module_name,
+                           os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                        '%s.py' % module_name))
 
 
 class MockParam(Node):
@@ -305,12 +314,7 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
               'Longitudinal g', 'Lateral g', 'Normal g', 
               'Pitch', 'Roll', 
               ]
-        try:
-            # for test cmd line runners
-            derived = get_derived_nodes(['tests.sample_derived_parameters'])
-        except ImportError:
-            # for IDE test runners
-            derived = get_derived_nodes(['sample_derived_parameters'])
+        derived = get_derived_nodes([import_module('sample_derived_parameters')])
         nodes = NodeManager({'Start Datetime': datetime.now()}, 10, lfl_params,
                             requested, [], derived, {}, {})
         order, _ = dependency_order(nodes, draw=False)
@@ -331,12 +335,7 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
     def test_invalid_requirement_raises(self):
         lfl_params = []
         requested = ['Smoothed Track', 'Moment of Takeoff'] #it's called Moment Of Takeoff
-        try:
-            # for test cmd line runners
-            derived = get_derived_nodes(['tests.sample_derived_parameters'])
-        except ImportError:
-            # for IDE test runners
-            derived = get_derived_nodes(['sample_derived_parameters'])
+        derived = get_derived_nodes([import_module('sample_derived_parameters')])
         mgr = NodeManager({'Start Datetime': datetime.now()}, 10, lfl_params, requested, [],
                           derived, {}, {})
         self.assertRaises(nx.NetworkXError, dependency_order, mgr, draw=False)
@@ -346,12 +345,7 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
         # Gear Selected Down depends on Gear Down which depends on Gear Selected Down...!
         lfl_params = ['Airspeed', 'Gear (L) Down', 'Gear (L) Red Warning']
         requested = ['Airspeed At Gear Down Selected']
-        try:
-            # for test cmd line runners
-            derived = get_derived_nodes(['tests.sample_circular_dependency_nodes'])
-        except ImportError:
-            # for IDE test runners
-            derived = get_derived_nodes(['sample_circular_dependency_nodes'])
+        derived = get_derived_nodes([import_module('sample_circular_dependency_nodes')])
         mgr = NodeManager({'Start Datetime': datetime.now()}, 10, lfl_params, requested, [],
                           derived, {}, {})
         order, _ = dependency_order(mgr, draw=True)
