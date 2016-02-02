@@ -81,6 +81,8 @@ from analysis_engine.derived_parameters import (
     ClimbForFlightPhases,
     ControlColumn,
     ControlColumnForce,
+    ControlColumnForceCapt,
+    ControlColumnForceFO,
     ControlWheel,
     ControlWheelForce,
     CoordinatesSmoothed,
@@ -1764,6 +1766,57 @@ class TestControlColumn(unittest.TestCase):
         cc.derive(self.ccc, self.ccf)
         blend_two_parameters.assert_called_once_with(self.ccc, self.ccf)
 
+
+class TestControlColumnForceCapt(unittest.TestCase):
+
+    def test_can_operate(self):
+        expected = [('Control Column Force (Capt) Recorded',
+                     'Control Column Force (FO) Recorded')]
+        opts = ControlColumnForceCapt.get_operational_combinations()
+        self.assertEqual(opts, expected)
+
+    def test_control_column_force_capt(self):
+        ccf = ControlColumnForceCapt()
+        capt = np.ma.arange(0, 8, 0.1)
+        capt[6] = np.ma.masked
+        capt[26] = np.ma.masked
+        ccf.derive(
+            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
+            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
+        expected = np.ma.maximum(np.ma.arange(0, 8, 0.1), np.ma.array([3.0]*80))
+        expected[:31] = np.ma.masked
+        ma_test.assert_masked_array_equal(ccf.array, expected)
+
+    def test_control_column_force_capt_neg(self):
+        ccf = ControlColumnForceCapt()
+        capt = np.ma.arange(0, -8, -0.1)
+        capt[6] = np.ma.masked
+        capt[26] = np.ma.masked
+        ccf.derive(
+            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
+            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
+        expected = np.ma.minimum(np.ma.arange(0, -8, -0.1), np.ma.array([3.0]*80))
+        expected[:31] = np.ma.masked
+        ma_test.assert_masked_array_equal(ccf.array, expected)
+
+
+class TestControlColumnForceFO(unittest.TestCase):
+
+    def test_can_operate(self):
+        expected = [('Control Column Force (Capt) Recorded',
+                     'Control Column Force (FO) Recorded')]
+        opts = ControlColumnForceFO.get_operational_combinations()
+        self.assertEqual(opts, expected)
+
+    def test_control_column_force_fo(self):
+        ccf = ControlColumnForceFO()
+        capt = np.ma.arange(0, 8, 0.1)
+        ccf.derive(
+            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
+            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
+        expected = np.ma.maximum(np.ma.arange(0, 8, 0.1), np.ma.array([3.0]*80))
+        expected[31:] = np.ma.masked
+        ma_test.assert_masked_array_equal(ccf.array, expected)
 
 class TestControlColumnForce(unittest.TestCase):
 

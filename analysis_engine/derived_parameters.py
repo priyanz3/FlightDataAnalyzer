@@ -89,6 +89,7 @@ from analysis_engine.library import (actuator_mismatch,
                                      slices_from_to,
                                      slices_not,
                                      slices_or,
+                                     slices_remove_small_gaps,
                                      slices_remove_small_slices,
                                      smooth_track,
                                      straighten_altitudes,
@@ -1528,6 +1529,76 @@ class ControlColumnFO(DerivedParameterNode):
                 self.array = pot.array
 
 
+def select_ccf(force_capt, force_fo, hz, self):
+    """
+    This procedure computes the useful force signal from the two recorded signals
+    for 737 NG control column forces. This is because the scaling is only valid
+    for the larger signal. Should both pilots apply force, the result is indeterminate.
+
+    We convey the dominant signal and mask out the smaller signal, so that the analysts
+    are not presented with invalid data to inspect.
+    """
+    time_limit=5
+
+    # If the recorded force is masked, it must be of no interest,
+    # so substitute zero to force the other to be the larger signal.
+    capt = abs(force_capt.array.filled(0.0))
+    fo = abs(force_fo.array.filled(0.0))
+
+    # Calculate the signal ratio (avoiding the divide by zero situation)
+    ratio = np.ma.array(capt/(fo+0.001))
+
+    # The captain's side was the larger where the ratio was greater than unity
+    capt_larger = np.ma.clump_unmasked(np.ma.masked_less(ratio, 1.0))
+    # We throw away short periods in both senses
+    capt_largest = slices_remove_small_gaps(slices_remove_small_slices(capt_larger,
+                                                                       time_limit=time_limit,
+                                                                       hz=hz),
+                                            time_limit=time_limit,
+                                            hz=hz)
+
+    # The case where the first officer signal is largest is stored like this:
+    answer_capt = np_ma_masked_zeros_like(capt)
+    answer_fo = force_fo.array
+
+    # But if the captain's was largest, we overwrite with the data we want.
+    for big in capt_largest:
+        answer_capt[big] = force_capt.array[big]
+        answer_fo[big] = np.ma.masked
+
+    # We return both answers so that the single routine can be used for either side.
+    return answer_capt, answer_fo
+
+class ControlColumnForceCapt(DerivedParameterNode):
+    '''
+    Specifically for the 737NG, this determines which of the control columns is being used.
+    '''
+
+    units = ut.DECANEWTON
+    name = 'Control Column Force (Capt)'
+
+    def derive(self,
+               force_capt=P('Control Column Force (Capt) Recorded'),
+               force_fo=P('Control Column Force (FO) Recorded')):
+
+        self.array, _ = select_ccf(force_capt, force_fo, force_capt.frequency, self)
+
+class ControlColumnForceFO(DerivedParameterNode):
+    '''
+    Specifically for the 737NG, this determines which of the control columns is being used.
+    '''
+
+    units = ut.DECANEWTON
+    name = 'Control Column Force (FO)'
+
+    def derive(self,
+               force_capt=P('Control Column Force (Capt) Recorded'),
+               force_fo=P('Control Column Force (FO) Recorded')):
+
+        _, self.array = select_ccf(force_capt, force_fo, force_capt.frequency, self)
+
+
+
 class ControlColumnForce(DerivedParameterNode):
     '''
     The combined force from the captain and the first officer.
@@ -1540,8 +1611,6 @@ class ControlColumnForce(DerivedParameterNode):
                force_fo=P('Control Column Force (FO)')):
 
         self.array = force_capt.array + force_fo.array
-        # TODO: Check this summation is correct in amplitude and phase.
-        # Compare with Boeing charts for the 737NG.
 
 
 class ControlWheel(DerivedParameterNode):
