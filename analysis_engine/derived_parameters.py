@@ -1448,7 +1448,6 @@ class AOA(DerivedParameterNode):
             self.array = self.array * 1.661 - 1.404
 
 
-
 class ControlColumn(DerivedParameterNode):
     '''
     The position of the control column blended from the position of the captain
@@ -1494,8 +1493,9 @@ class ControlColumnCapt(DerivedParameterNode):
             self.array = synchro.array
         if pot:
             pot_samples = np.ma.count(pot.array)
-            if pot_samples>synchro_samples:
+            if pot_samples > synchro_samples:
                 self.array = pot.array
+
 
 class ControlColumnFO(DerivedParameterNode):
     '''
@@ -1525,37 +1525,34 @@ class ControlColumnFO(DerivedParameterNode):
             self.array = synchro.array
         if pot:
             pot_samples = np.ma.count(pot.array)
-            if pot_samples>synchro_samples:
+            if pot_samples > synchro_samples:
                 self.array = pot.array
 
 
-def select_ccf(force_capt, force_fo, hz, self):
-    """
+def select_ccf(force_capt, force_fo, hz):
+    '''
     This procedure computes the useful force signal from the two recorded signals
     for 737 NG control column forces. This is because the scaling is only valid
     for the larger signal. Should both pilots apply force, the result is indeterminate.
 
     We convey the dominant signal and mask out the smaller signal, so that the analysts
     are not presented with invalid data to inspect.
-    """
-    time_limit=5
+    '''
+    time_limit = 5
 
     # If the recorded force is masked, it must be of no interest,
     # so substitute zero to force the other to be the larger signal.
-    capt = abs(force_capt.array.filled(0.0))
-    fo = abs(force_fo.array.filled(0.0))
+    capt = np.ma.abs(force_capt.array.filled(0.0))
+    fo = np.ma.abs(force_fo.array.filled(0.0))
 
     # Calculate the signal ratio (avoiding the divide by zero situation)
-    ratio = np.ma.array(capt/(fo+0.001))
+    ratio = np.ma.array(capt / (fo + 0.001))
 
     # The captain's side was the larger where the ratio was greater than unity
     capt_larger = np.ma.clump_unmasked(np.ma.masked_less(ratio, 1.0))
     # We throw away short periods in both senses
-    capt_largest = slices_remove_small_gaps(slices_remove_small_slices(capt_larger,
-                                                                       time_limit=time_limit,
-                                                                       hz=hz),
-                                            time_limit=time_limit,
-                                            hz=hz)
+    capt_largest = slices_remove_small_gaps(slices_remove_small_slices(
+        capt_larger, time_limit=time_limit, hz=hz), time_limit=time_limit, hz=hz)
 
     # The case where the first officer signal is largest is stored like this:
     answer_capt = np_ma_masked_zeros_like(capt)
@@ -1569,6 +1566,7 @@ def select_ccf(force_capt, force_fo, hz, self):
     # We return both answers so that the single routine can be used for either side.
     return answer_capt, answer_fo
 
+
 class ControlColumnForceCapt(DerivedParameterNode):
     '''
     Specifically for the 737NG, this determines which of the control columns is being used.
@@ -1581,7 +1579,8 @@ class ControlColumnForceCapt(DerivedParameterNode):
                force_capt=P('Control Column Force (Capt) Recorded'),
                force_fo=P('Control Column Force (FO) Recorded')):
 
-        self.array, _ = select_ccf(force_capt, force_fo, force_capt.frequency, self)
+        self.array = select_ccf(force_capt, force_fo, force_capt.frequency)[0]
+
 
 class ControlColumnForceFO(DerivedParameterNode):
     '''
@@ -1595,8 +1594,7 @@ class ControlColumnForceFO(DerivedParameterNode):
                force_capt=P('Control Column Force (Capt) Recorded'),
                force_fo=P('Control Column Force (FO) Recorded')):
 
-        _, self.array = select_ccf(force_capt, force_fo, force_capt.frequency, self)
-
+        self.array = select_ccf(force_capt, force_fo, force_capt.frequency)[1]
 
 
 class ControlColumnForce(DerivedParameterNode):
@@ -1610,7 +1608,7 @@ class ControlColumnForce(DerivedParameterNode):
                force_capt=P('Control Column Force (Capt)'),
                force_fo=P('Control Column Force (FO)')):
 
-        self.array = force_capt.array + force_fo.array
+        self.array = np.ma.vstack([force_capt.array, force_fo.array]).sum(axis=0)
 
 
 class ControlWheel(DerivedParameterNode):

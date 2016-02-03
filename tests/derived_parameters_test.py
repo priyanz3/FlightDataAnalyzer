@@ -1829,9 +1829,11 @@ class TestControlColumnForce(unittest.TestCase):
     def test_control_column_force(self):
         ccf = ControlColumnForce()
         ccf.derive(
-            ControlColumnForce('Control Column Force (Capt)', np.ma.arange(8)),
-            ControlColumnForce('Control Column Force (FO)', np.ma.arange(8)))
-        np.testing.assert_array_almost_equal(ccf.array, np.ma.arange(0, 16, 2))
+            ControlColumnForce('Control Column Force (Capt)',
+                               np.ma.array([0,1,2,3], mask=[True, False, True, False])),
+            ControlColumnForce('Control Column Force (FO)',
+                               np.ma.array([4,5,6,7], mask=[False, True, True, False])))
+        self.assertEqual(ccf.array.tolist(), [4,1,None,10])
 
 
 class TestControlWheel(unittest.TestCase):
