@@ -4770,6 +4770,48 @@ class ControlWheelForceMax(KeyPointValueNode):
             max_value)
 
 
+class ControlColumnCheck(KeyPointValueNode):
+    """
+    See NTSB recommendation A-15-34.
+    """
+
+    units = ut.DEGREE
+
+    def derive(self, disp=P('Control Column'),
+               firsts=KTI('First Eng Start Before Liftoff'),
+               accels=KTI('Takeoff Acceleration Start')):
+        for first in firsts:
+            acc=accels.get_next(first.index)
+            self.create_kpv(acc.index,
+                            np.ma.ptp(disp.array[first.index:acc.index]))
+
+class ControlWheelCheck(KeyPointValueNode):
+    """
+    See NTSB recommendation A-15-34.
+    """
+    units = ut.DEGREE
+    def derive(self, disp=P('Control Wheel'),
+        firsts=KTI('First Eng Start Before Liftoff'),
+        accels=KTI('Takeoff Acceleration Start')):
+        for first in firsts:
+            acc=accels.get_next(first.index)
+            self.create_kpv(acc.index,
+                            np.ma.ptp(disp.array[first.index:acc.index]))
+
+class ControlRudderCheck(KeyPointValueNode):
+    """
+    See NTSB recommendation A-15-34.
+    """
+    units = ut.DEGREE
+    def derive(self, disp=P('Rudder'),
+        firsts=KTI('First Eng Start Before Liftoff'),
+        accels=KTI('Takeoff Acceleration Start')):
+        for first in firsts:
+            acc=accels.get_next(first.index)
+            self.create_kpv(acc.index,
+                            np.ma.ptp(disp.array[first.index:acc.index]))
+
+
 ##############################################################################
 # Runway Distances at Takeoff
 
