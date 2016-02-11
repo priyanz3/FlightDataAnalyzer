@@ -1385,7 +1385,9 @@ class Touchdown(KeyTimeInstanceNode):
             # With an estimate from the height and perhaps gear switch, set
             # up a period to scan across for accelerometer based
             # indications...
-            period = slice(max(floor(index_ref - dt_pre * hz), 0), ceil(index_ref + dt_post * hz))
+            period_end = ceil(index_ref + dt_post * hz)
+            period_start = index_at_value(alt.array, 5, _slice=slice(period_end, max(floor(index_ref - dt_pre * hz), 0), -1))
+            period = slice(period_start, period_end)
 
             if acc_long:
                 drag = np.ma.copy(acc_long.array[period])
@@ -1413,7 +1415,7 @@ class Touchdown(KeyTimeInstanceNode):
                             peak_ax = touch[ix_ax1]
                             ix_ax = ix_ax1
 
-                    index_wheel_touch = ix_ax+1+index_ref-dt_pre*hz
+                    index_wheel_touch = ix_ax+1+period.start
 
                 # Look for the onset of braking
 
@@ -1422,13 +1424,13 @@ class Touchdown(KeyTimeInstanceNode):
                                              gap=1*hz,
                                              ttp=3*hz)
                 if index_brake:
-                    index_brake += index_ref-dt_pre*hz
+                    index_brake += period.start
 
                 # Look for substantial deceleration
 
                 index_decel = index_at_value(drag, -0.1)
                 if index_decel:
-                    index_decel += index_ref-dt_pre*hz
+                    index_decel += period.start
 
             if acc_norm:
                 lift = acc_norm.array[period]
@@ -1441,7 +1443,7 @@ class Touchdown(KeyTimeInstanceNode):
                     bump[i-1]=lift[i]*lift[i+1]
                 peak_az = np.max(bump)
                 if peak_az > 0.01:
-                    index_az = np.argmax(bump)+index_ref-dt_pre*hz
+                    index_az = np.argmax(bump)+period.start
 
                 # The first real contact is indicated by an increase in g of
                 # more than 0.075, but this must be positive (hence the
@@ -1450,7 +1452,7 @@ class Touchdown(KeyTimeInstanceNode):
                     if lift[i] and lift[i+1]:
                         delta=lift[i+1]-lift[i]
                         if delta > 0.1:
-                            index_daz = i+1+index_ref-dt_pre*hz
+                            index_daz = i+1+period.start
                             break
 
             '''
@@ -1476,6 +1478,9 @@ class Touchdown(KeyTimeInstanceNode):
             # ...to find the best estimate...
             # If we have lots of measures, bias towards the earlier ones.
             index_tdn = np.median(index_list[:4])
+            # ensure detected touchdown point is not after Gear on Ground indicates on ground
+            if index_gog:
+                index_tdn = min(index_tdn, index_gog)
             self.create_kti(index_tdn)
 
             '''
@@ -1484,8 +1489,9 @@ class Touchdown(KeyTimeInstanceNode):
             import os
             name = 'Touchdown with values Ax=%.4f, Az=%.4f and dAz=%.4f' %(peak_ax, peak_az, delta)
             self.info(name)
-            timebase=np.linspace(-dt_pre*hz, dt_post*hz, (dt_pre+dt_post)*hz+1)
-            plot_period = slice(floor(index_ref-dt_pre*hz), floor(index_ref-dt_pre*hz+len(timebase)))
+            tz_offset = index_ref - period.start
+            timebase=np.linspace(-tz_offset, dt_post*hz, tz_offset+(dt_post*hz)+1)
+            plot_period = slice(floor(index_ref-tz_offset), floor(index_ref-tz_offset+len(timebase)))
             plt.figure()
             if alt:
                 plt.plot(timebase, alt.array[plot_period], 'o-r')
