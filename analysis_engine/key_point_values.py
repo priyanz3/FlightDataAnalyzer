@@ -4769,47 +4769,57 @@ class ControlWheelForceMax(KeyPointValueNode):
             force.array, fast.get_slices(),
             max_value)
 
+"""
+Compute the total travel of each control during the interval between first engine
+start and takeoff start of acceleration, as % of full travel for that control.
+"""
+def PreflightCheck(self, firsts, accels, disp, full_disp):
+    for first in firsts:
+        acc=accels.get_next(first.index)
+        travel = np.ma.ptp(disp.array[first.index:acc.index])
+        self.create_kpv(acc.index, (travel/full_disp)*100.0)
 
-class ControlColumnCheck(KeyPointValueNode):
+class ElevatorPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
-
-    units = ut.DEGREE
-
-    def derive(self, disp=P('Control Column'),
+    units = ut.PERCENT
+    def derive(self, disp=P('Elevator'), family=A('Family'),
                firsts=KTI('First Eng Start Before Liftoff'),
                accels=KTI('Takeoff Acceleration Start')):
-        for first in firsts:
-            acc=accels.get_next(first.index)
-            self.create_kpv(acc.index,
-                            np.ma.ptp(disp.array[first.index:acc.index]))
+        family_name = family.value if family else None
+        if family_name=='G-IV':
+            PreflightCheck(self, firsts, accels, disp, 37.0)
+        elif family_name=='B737 NG':
+            PreflightCheck(self, firsts, accels, disp, 43.0)
 
-class ControlWheelCheck(KeyPointValueNode):
+class AileronPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
-    units = ut.DEGREE
-    def derive(self, disp=P('Control Wheel'),
-        firsts=KTI('First Eng Start Before Liftoff'),
-        accels=KTI('Takeoff Acceleration Start')):
-        for first in firsts:
-            acc=accels.get_next(first.index)
-            self.create_kpv(acc.index,
-                            np.ma.ptp(disp.array[first.index:acc.index]))
+    units = ut.PERCENT
+    def derive(self, disp=P('Aileron'), family=A('Family'),
+               firsts=KTI('First Eng Start Before Liftoff'),
+               accels=KTI('Takeoff Acceleration Start')):
+        family_name = family.value if family else None
+        if family_name=='G-IV':
+            PreflightCheck(self, firsts, accels, disp, 20.0)
+        elif family_name=='B737 NG':
+            PreflightCheck(self, firsts, accels, disp, 36.5)
 
-class ControlRudderCheck(KeyPointValueNode):
+class RudderPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
-    units = ut.DEGREE
-    def derive(self, disp=P('Rudder'),
-        firsts=KTI('First Eng Start Before Liftoff'),
-        accels=KTI('Takeoff Acceleration Start')):
-        for first in firsts:
-            acc=accels.get_next(first.index)
-            self.create_kpv(acc.index,
-                            np.ma.ptp(disp.array[first.index:acc.index]))
+    units = ut.PERCENT
+    def derive(self, disp=P('Rudder'), family=A('Family'),
+               firsts=KTI('First Eng Start Before Liftoff'),
+               accels=KTI('Takeoff Acceleration Start')):
+        family_name = family.value if family else None
+        if family_name=='G-IV':
+            PreflightCheck(self, firsts, accels, disp, 44.0)
+        elif family_name=='B737 NG':
+            PreflightCheck(self, firsts, accels, disp, 58.0)
 
 
 ##############################################################################
