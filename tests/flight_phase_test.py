@@ -1770,6 +1770,15 @@ class TestMobile(unittest.TestCase, NodeTest):
         expected = buildsection('Mobile', 3, 6)
         self.assertEqual(move.get_slices(), expected.get_slices())
 
+    def test_mobile_from_start(self):
+        rot = np.ma.array([0, 0, 0, 0, 0, 0, 0])
+        gspd = np.ma.array([2, 2, 3, 5, 2, 0, 0])
+        airs = buildsection('Airborne',2,4)
+        move = Mobile()
+        move.derive(P('Heading Rate', rot), P('Groundspeed', gspd), airs)
+        expected = buildsection('Mobile', 0, 5)
+        self.assertEqual(move.get_slices(), expected.get_slices())
+
 
 class TestLevelFlight(unittest.TestCase, NodeTest):
 
