@@ -36,6 +36,8 @@ from analysis_engine.key_point_values import (
     AccelerationLateralAtTouchdown,
     AccelerationLateralDuringLandingMax,
     AccelerationLateralDuringTakeoffMax,
+    AccelerationLateralInTurnDuringTaxiInMax,
+    AccelerationLateralInTurnDuringTaxiOutMax,
     AccelerationLateralMax,
     AccelerationLateralOffset,
     AccelerationLateralWhileAirborneMax,
@@ -206,6 +208,8 @@ from analysis_engine.key_point_values import (
     EngEPRDuringMaximumContinuousPowerMax,
     EngEPRDuringTakeoff5MinRatingMax,
     EngEPRDuringTaxiMax,
+    EngEPRDuringTaxiInMax,
+    EngEPRDuringTaxiOutMax,
     EngEPRExceedEPRRedlineDuration,
     EngEPRFor5Sec1000To500FtMin,
     EngEPRFor5Sec500To50FtMin,
@@ -231,6 +235,8 @@ from analysis_engine.key_point_values import (
     EngN1DuringMaximumContinuousPowerMax,
     EngN1DuringTakeoff5MinRatingMax,
     EngN1DuringTaxiMax,
+    EngN1DuringTaxiInMax,
+    EngN1DuringTaxiOutMax,
     EngN1ExceededN1RedlineDuration,
     EngN1For5Sec1000To500FtMin,
     EngN1For5Sec500To50FtMin,
@@ -307,6 +313,10 @@ from analysis_engine.key_point_values import (
     GroundspeedAtTouchdown,
     GroundspeedDuringRejectedTakeoffMax,
     GroundspeedFlapChangeDuringTakeoffMax,
+    GroundspeedInStraightLineDuringTaxiInMax,
+    GroundspeedInStraightLineDuringTaxiOutMax,
+    GroundspeedInTurnDuringTaxiInMax,
+    GroundspeedInTurnDuringTaxiOutMax,
     GroundspeedMax,
     GroundspeedSpeedbrakeDuringTakeoffMax,
     GroundspeedSpeedbrakeHandleDuringTakeoffMax,
@@ -1042,6 +1052,28 @@ class TestAccelerationLateralWhileTaxiingTurnMax(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = AccelerationLateralWhileTaxiingTurnMax
         self.operational_combinations = [('Acceleration Lateral Smoothed', 'Taxiing', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestAccelerationLateralInTurnDuringTaxiInMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AccelerationLateralInTurnDuringTaxiInMax
+        self.operational_combinations = [('Acceleration Lateral Smoothed', 'Taxi In', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestAccelerationLateralInTurnDuringTaxiOutMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AccelerationLateralInTurnDuringTaxiOutMax
+        self.operational_combinations = [('Acceleration Lateral Smoothed', 'Taxi Out', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -5679,6 +5711,30 @@ class TestEngEPRDuringTaxiMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngEPRDuringTaxiOutMax(unittest.TestCase, CreateKPVFromSlicesTest):
+
+    def setUp(self):
+        self.node_class = EngEPRDuringTaxiOutMax
+        self.operational_combinations = [('Eng (*) EPR Max', 'Taxi Out')]
+        self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngEPRDuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
+
+    def setUp(self):
+        self.node_class = EngEPRDuringTaxiInMax
+        self.operational_combinations = [('Eng (*) EPR Max', 'Taxi In')]
+        self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngEPRDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -6211,6 +6267,29 @@ class TestEngN1DuringTaxiMax(unittest.TestCase, CreateKPVFromSlicesTest):
     def setUp(self):
         self.node_class = EngN1DuringTaxiMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Taxiing')]
+        self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
+
+    def setUp(self):
+        self.node_class = EngN1DuringTaxiInMax
+        self.operational_combinations = [('Eng (*) N1 Max', 'Taxi In')]
+        self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngN1DuringTaxiOutMax(unittest.TestCase, CreateKPVFromSlicesTest):
+
+    def setUp(self):
+        self.node_class = EngN1DuringTaxiOutMax
+        self.operational_combinations = [('Eng (*) N1 Max', 'Taxi Out')]
         self.function = max_value
 
     @unittest.skip('Test Not Implemented')
@@ -8681,11 +8760,55 @@ class TestGroundspeedWhileTaxiingStraightMax(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestGroundspeedInStraightLineDuringTaxiInMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GroundspeedInStraightLineDuringTaxiInMax
+        self.operational_combinations = [('Groundspeed', 'Taxi In', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestGroundspeedInStraightLineDuringTaxiOutMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GroundspeedInStraightLineDuringTaxiOutMax
+        self.operational_combinations = [('Groundspeed', 'Taxi Out', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestGroundspeedWhileTaxiingTurnMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedWhileTaxiingTurnMax
         self.operational_combinations = [('Groundspeed', 'Taxiing', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestGroundspeedInTurnDuringTaxiInMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GroundspeedInTurnDuringTaxiInMax
+        self.operational_combinations = [('Groundspeed', 'Taxi In', 'Turning On Ground')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestGroundspeedInTurnDuringTaxiOutMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GroundspeedInTurnDuringTaxiOutMax
+        self.operational_combinations = [('Groundspeed', 'Taxi Out', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

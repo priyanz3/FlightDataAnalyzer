@@ -359,6 +359,52 @@ class AccelerationLateralWhileTaxiingTurnMax(KeyPointValueNode):
         self.create_kpvs_within_slices(acc_lat_array, taxiing, max_abs_value)
 
 
+class AccelerationLateralInTurnDuringTaxiInMax(KeyPointValueNode):
+    '''
+    Lateral acceleration while taxiing normally occurs in turns, and leads to
+    wear on the undercarriage and discomfort for passengers. In extremis this
+    can lead to taxiway excursions. Lateral acceleration is used in preference
+    to groundspeed as this parameter is available on older aircraft and is
+    directly related to comfort.
+
+    We use the smoothed lateral acceleration which removes spikey signals due
+    to uneven surfaces.
+    '''
+
+    units = ut.G
+
+    def derive(self,
+               acc_lat=P('Acceleration Lateral Smoothed'),
+               taxiing=S('Taxi In'),
+               turns=S('Turning On Ground')):
+
+        acc_lat_array = mask_outside_slices(acc_lat.array, turns.get_slices())
+        self.create_kpvs_within_slices(acc_lat_array, taxiing, max_abs_value)
+
+
+class AccelerationLateralInTurnDuringTaxiOutMax(KeyPointValueNode):
+    '''
+    Lateral acceleration while taxiing normally occurs in turns, and leads to
+    wear on the undercarriage and discomfort for passengers. In extremis this
+    can lead to taxiway excursions. Lateral acceleration is used in preference
+    to groundspeed as this parameter is available on older aircraft and is
+    directly related to comfort.
+
+    We use the smoothed lateral acceleration which removes spikey signals due
+    to uneven surfaces.
+    '''
+
+    units = ut.G
+
+    def derive(self,
+               acc_lat=P('Acceleration Lateral Smoothed'),
+               taxiing=S('Taxi Out'),
+               turns=S('Turning On Ground')):
+
+        acc_lat_array = mask_outside_slices(acc_lat.array, turns.get_slices())
+        self.create_kpvs_within_slices(acc_lat_array, taxiing, max_abs_value)
+
+
 class AccelerationLateralOffset(KeyPointValueNode):
     '''
     This KPV computes the lateral accelerometer datum offset, as for
@@ -6630,6 +6676,34 @@ class EngEPRDuringTaxiMax(KeyPointValueNode):
         self.create_kpv_from_slices(eng_epr_max.array, taxiing, max_value)
 
 
+class EngEPRDuringTaxiOutMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng EPR During Taxi Out Max'
+    units = None
+
+    def derive(self,
+               eng_epr_max=P('Eng (*) EPR Max'),
+               taxiing=S('Taxi Out')):
+
+        self.create_kpv_from_slices(eng_epr_max.array, taxiing, max_value)
+
+
+class EngEPRDuringTaxiInMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng EPR During Taxi In Max'
+    units = None
+
+    def derive(self,
+               eng_epr_max=P('Eng (*) EPR Max'),
+               taxiing=S('Taxi In')):
+
+        self.create_kpv_from_slices(eng_epr_max.array, taxiing, max_value)
+
+
 class EngEPRDuringTakeoff5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -7335,6 +7409,35 @@ class EngN1DuringTaxiMax(KeyPointValueNode):
 
         self.create_kpv_from_slices(eng_n1_max.array, taxiing, max_value)
 
+class EngN1DuringTaxiOutMax(KeyPointValueNode):
+    '''
+    Maximum N1 of all Engines while taxiing; and indication of excessive use
+    of engine thrust during taxi.
+    '''
+
+    name = 'Eng N1 During Taxi Out Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n1_max=P('Eng (*) N1 Max'),
+               taxiing=S('Taxi Out')):
+
+        self.create_kpv_from_slices(eng_n1_max.array, taxiing, max_value)
+
+class EngN1DuringTaxiInMax(KeyPointValueNode):
+    '''
+    Maximum N1 of all Engines while taxiing; and indication of excessive use
+    of engine thrust during taxi.
+    '''
+
+    name = 'Eng N1 During Taxi In Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n1_max=P('Eng (*) N1 Max'),
+               taxiing=S('Taxi In')):
+
+        self.create_kpv_from_slices(eng_n1_max.array, taxiing, max_value)
 
 class EngN1DuringApproachMax(KeyPointValueNode):
     '''
@@ -9289,6 +9392,42 @@ class GroundspeedWhileTaxiingStraightMax(KeyPointValueNode):
         self.create_kpvs_within_slices(gnd_spd_array, taxiing, max_value)
 
 
+class GroundspeedInStraightLineDuringTaxiInMax(KeyPointValueNode):
+    '''
+    Groundspeed while not turning is rarely an issue, so we compute only one
+    KPV for taxi out and one for taxi in. The straight sections are identified
+    by masking the turning phases and then testing the resulting data.
+    '''
+
+    units = ut.KT
+
+    def derive(self,
+               gnd_spd=P('Groundspeed'),
+               taxiing=S('Taxi In'),
+               turns=S('Turning On Ground')):
+
+        gnd_spd_array = mask_inside_slices(gnd_spd.array, turns.get_slices())
+        self.create_kpvs_within_slices(gnd_spd_array, taxiing, max_value)
+
+
+class GroundspeedInStraightLineDuringTaxiOutMax(KeyPointValueNode):
+    '''
+    Groundspeed while not turning is rarely an issue, so we compute only one
+    KPV for taxi out and one for taxi in. The straight sections are identified
+    by masking the turning phases and then testing the resulting data.
+    '''
+
+    units = ut.KT
+
+    def derive(self,
+               gnd_spd=P('Groundspeed'),
+               taxiing=S('Taxi Out'),
+               turns=S('Turning On Ground')):
+
+        gnd_spd_array = mask_inside_slices(gnd_spd.array, turns.get_slices())
+        self.create_kpvs_within_slices(gnd_spd_array, taxiing, max_value)
+
+
 class GroundspeedWhileTaxiingTurnMax(KeyPointValueNode):
     '''
     The rate of change of heading used to detect a turn during taxi is %.2f
@@ -9300,6 +9439,40 @@ class GroundspeedWhileTaxiingTurnMax(KeyPointValueNode):
     def derive(self,
                gnd_spd=P('Groundspeed'),
                taxiing=S('Taxiing'),
+               turns=S('Turning On Ground')):
+
+        gnd_spd_array = mask_outside_slices(gnd_spd.array, turns.get_slices())
+        self.create_kpvs_within_slices(gnd_spd_array, taxiing, max_value)
+
+
+class GroundspeedInTurnDuringTaxiOutMax(KeyPointValueNode):
+    '''
+    The rate of change of heading used to detect a turn during taxi is %.2f
+    degrees per second.
+    ''' % HEADING_RATE_FOR_TAXI_TURNS
+
+    units = ut.KT
+
+    def derive(self,
+               gnd_spd=P('Groundspeed'),
+               taxiing=S('Taxi Out'),
+               turns=S('Turning On Ground')):
+
+        gnd_spd_array = mask_outside_slices(gnd_spd.array, turns.get_slices())
+        self.create_kpvs_within_slices(gnd_spd_array, taxiing, max_value)
+
+
+class GroundspeedInTurnDuringTaxiInMax(KeyPointValueNode):
+    '''
+    The rate of change of heading used to detect a turn during taxi is %.2f
+    degrees per second.
+    ''' % HEADING_RATE_FOR_TAXI_TURNS
+
+    units = ut.KT
+
+    def derive(self,
+               gnd_spd=P('Groundspeed'),
+               taxiing=S('Taxi In'),
                turns=S('Turning On Ground')):
 
         gnd_spd_array = mask_outside_slices(gnd_spd.array, turns.get_slices())
