@@ -1539,17 +1539,22 @@ def select_ccf(force_capt, force_fo, hz):
     are not presented with invalid data to inspect.
     '''
     time_limit = 5
+    if force_capt.hz > 1/64.:
+        window = (force_capt.hz * 320) - 1
+        offset = moving_average(force_capt.array - force_fo.array, window=window) / 2
+        force_capt.array -= offset
+        force_fo.array += offset
 
     # If the recorded force is masked, it must be of no interest,
     # so substitute zero to force the other to be the larger signal.
-    capt = np.ma.abs(force_capt.array.filled(0.0))
-    fo = np.ma.abs(force_fo.array.filled(0.0))
+    capt = np.ma.abs(force_capt.array.filled(0))
+    fo = np.ma.abs(force_fo.array.filled(0))
 
     # Calculate the signal ratio (avoiding the divide by zero situation)
     ratio = np.ma.array(capt / (fo + 0.001))
 
     # The captain's side was the larger where the ratio was greater than unity
-    capt_larger = np.ma.clump_unmasked(np.ma.masked_less(ratio, 1.0))
+    capt_larger = np.ma.clump_unmasked(np.ma.masked_less(ratio, 1))
     # We throw away short periods in both senses
     capt_largest = slices_remove_small_gaps(slices_remove_small_slices(
         capt_larger, time_limit=time_limit, hz=hz), time_limit=time_limit, hz=hz)

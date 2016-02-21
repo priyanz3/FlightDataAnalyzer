@@ -1317,7 +1317,7 @@ class TestVersion(unittest.TestCase):
         version = Version()
         version.set_flight_attr = Mock()
         version.derive()
-        version.set_flight_attr.assert_called_once_wth(__version__)
+        version.set_flight_attr.assert_called_once_with(__version__)
 
 
 ##############################################################################

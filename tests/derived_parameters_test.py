@@ -1782,22 +1782,18 @@ class TestControlColumnForceCapt(unittest.TestCase):
         capt[26] = np.ma.masked
         ccf.derive(
             ControlColumnForce('Control Column Force (Capt) Recorded', capt),
-            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
-        expected = np.ma.maximum(np.ma.arange(0, 8, 0.1), np.ma.array([3.0]*80))
-        expected[:31] = np.ma.masked
-        ma_test.assert_masked_array_equal(ccf.array, expected)
+            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.ones(80) * 3))
+        self.assertEqual(ccf.array.round(decimals=1).tolist(), [None] * 40 + [3.5, 3.6, 3.7, 3.8, 3.9, 4.0, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.7, 4.8, 4.9, 5.0, 5.1, 5.2, 5.3, 5.4, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6.0, 6.1, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.8, 6.9])
 
     def test_control_column_force_capt_neg(self):
         ccf = ControlColumnForceCapt()
-        capt = np.ma.arange(0, -8, -0.1)
+        capt = np.ma.arange(0, -2, -0.1)
         capt[6] = np.ma.masked
-        capt[26] = np.ma.masked
+        capt[15] = np.ma.masked
         ccf.derive(
             ControlColumnForce('Control Column Force (Capt) Recorded', capt),
-            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
-        expected = np.ma.minimum(np.ma.arange(0, -8, -0.1), np.ma.array([3.0]*80))
-        expected[:31] = np.ma.masked
-        ma_test.assert_masked_array_equal(ccf.array, expected)
+            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.ones(20)))
+        self.assertEqual(ccf.array.round(1).tolist(), [0.9, 0.8, 0.8, 0.7, 0.6, 0.5] + [None] * 14)
 
 
 class TestControlColumnForceFO(unittest.TestCase):
@@ -1816,7 +1812,8 @@ class TestControlColumnForceFO(unittest.TestCase):
             ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
         expected = np.ma.maximum(np.ma.arange(0, 8, 0.1), np.ma.array([3.0]*80))
         expected[31:] = np.ma.masked
-        ma_test.assert_masked_array_equal(ccf.array, expected)
+        self.assertEqual(ccf.array.round(decimals=1).tolist(), [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.3, 3.3, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.4, 3.5, 3.5] + [None] * 40)
+
 
 class TestControlColumnForce(unittest.TestCase):
 
@@ -1833,7 +1830,7 @@ class TestControlColumnForce(unittest.TestCase):
                                np.ma.array([0,1,2,3], mask=[True, False, True, False])),
             ControlColumnForce('Control Column Force (FO)',
                                np.ma.array([4,5,6,7], mask=[False, True, True, False])))
-        self.assertEqual(ccf.array.tolist(), [4,1,None,10])
+        self.assertEqual(ccf.array.tolist(), [4, 1, None, 10])
 
 
 class TestControlWheel(unittest.TestCase):
