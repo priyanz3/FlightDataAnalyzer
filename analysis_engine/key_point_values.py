@@ -8878,13 +8878,17 @@ class HeadingVariationTouchdownPlus4SecTo60KtsAirspeed(KeyPointValueNode):
     The final turnoff is ignored, as this may arise above 60kt IAS at a rapid
     exit turnoff. The highest variation from the mean heading is marked as
     the point of interest.
+
+    Airspeed True is used as this includes short term inertial corrections
+    that make this more reliable than indicated airspeed which can drop out
+    around 60 kts on some types.
     '''
 
     units = ut.DEGREE
 
     def derive(self,
                head=P('Heading Continuous'),
-               airspeed=P('Airspeed'),
+               airspeed=P('Airspeed True'),
                tdwns=KTI('Touchdown')):
 
         for tdwn in tdwns:

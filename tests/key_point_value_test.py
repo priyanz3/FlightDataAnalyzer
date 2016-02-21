@@ -2932,7 +2932,7 @@ class TestAirspeedWithFlapIncludingTransition20AndSlatFullyExtendedMax(unittest.
         self.assertFalse(self.node_class.can_operate(req_params, family=family), msg='KPV should not work for B767')
         family = A('Family', value='B777')
         self.assertTrue(self.node_class.can_operate(req_params, family=family))
-    
+
     @patch('analysis_engine.key_point_values.at.get_slat_map')
     def test_derive_basic(self, get_slat_map):
         get_slat_map.return_value = {x: str(x) for x in (0, 22, 32)}
@@ -5075,7 +5075,7 @@ class TestIANFinalApproachCourseDeviationMax(unittest.TestCase):
         self.assertEqual(node[1].index, 30362)
         self.assertAlmostEqual(node[1].value, 1.83, delta=0.01)
         self.assertEqual(node[1].name, 'IAN Final Approach Course Deviation 1000 To 500 Ft Max')
-    
+
         self.assertEqual(node[2].index, 30396)
         self.assertAlmostEqual(node[2].value, 1.09, delta=0.01) # Check
         self.assertEqual(node[2].name, 'IAN Final Approach Course Deviation 500 To 200 Ft Max')
@@ -8083,7 +8083,7 @@ class TestHeadingVariationTouchdownPlus4SecTo60KtsAirspeed(unittest.TestCase, No
 
     def setUp(self):
         self.node_class = HeadingVariationTouchdownPlus4SecTo60KtsAirspeed
-        self.operational_combinations = [('Heading Continuous', 'Airspeed', 'Touchdown')]
+        self.operational_combinations = [('Heading Continuous', 'Airspeed True', 'Touchdown')]
 
     def test_derive(self):
 
