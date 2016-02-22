@@ -1302,7 +1302,7 @@ class AltitudeSTD(DerivedParameterNode):
             #ALT_STDC = ALT_STDC * 0.8 + alt * 0.2
         elif alt_std_coarse and ivv:
             self.array = self._coarse_and_ivv(alt_std_coarse, ivv)
-            #ALT_STDC = (last_alt_std * 0.9) + (ALT_STD * 0.1) + (IVVR / 60.0)
+            #ALT_logical_orSTDC = (last_alt_std * 0.9) + (ALT_STD * 0.1) + (IVVR / 60.0)
             '''
 
 
@@ -1538,38 +1538,72 @@ def select_ccf(force_capt, force_fo, hz):
     We convey the dominant signal and mask out the smaller signal, so that the analysts
     are not presented with invalid data to inspect.
     '''
+    capt = force_capt.array
+    fo = force_fo.array
+    
+    '''
+    # Debug plotting
+    from matplotlib import pyplot as plt
+    import os
+    plt.plot(capt, linewidth=0.15, label='capt rec')
+    plt.plot(fo, linewidth=0.15, label='fo rec')
+    #plt.plot(force_capt.array - force_fo.array, linewidth=0.2)
+    #plt.plot(np.ma.abs(force_capt.array - force_fo.array), linewidth=0.2)
+    '''
+    
     time_limit = 5
     if force_capt.hz > 1/64.:
-        window = (force_capt.hz * 320) - 1
-        offset = moving_average(force_capt.array - force_fo.array, window=window) / 2
-        force_capt.array -= offset
-        force_fo.array += offset
-
-    # If the recorded force is masked, it must be of no interest,
-    # so substitute zero to force the other to be the larger signal.
-    capt = np.ma.abs(force_capt.array.filled(0))
-    fo = np.ma.abs(force_fo.array.filled(0))
-
-    # Calculate the signal ratio (avoiding the divide by zero situation)
-    ratio = np.ma.array(capt / (fo + 0.001))
-
-    # The captain's side was the larger where the ratio was greater than unity
-    capt_larger = np.ma.clump_unmasked(np.ma.masked_less(ratio, 1))
-    # We throw away short periods in both senses
-    capt_largest = slices_remove_small_gaps(slices_remove_small_slices(
-        capt_larger, time_limit=time_limit, hz=hz), time_limit=time_limit, hz=hz)
-
-    # The case where the first officer signal is largest is stored like this:
-    answer_capt = np_ma_masked_zeros_like(capt)
-    answer_fo = force_fo.array
-
-    # But if the captain's was largest, we overwrite with the data we want.
-    for big in capt_largest:
-        answer_capt[big] = force_capt.array[big]
-        answer_fo[big] = np.ma.masked
+        capt_offset = np.ma.array(
+            capt.data, mask=np.logical_or(capt.mask, np.abs(capt.data) > 0.5))
+        fo_offset = np.ma.array(
+            fo.data, mask=np.logical_or(fo.mask, np.abs(fo.data) > 0.5))
+        offset = capt_offset - fo_offset
+        if np.ma.count(offset):
+            offset = repair_mask(moving_average(offset, window=(force_capt.hz * 1024) - 1),
+                                 repair_duration=None, extrapolate=True) / 2
+            capt -= offset
+            fo += offset
+            # roughly center around zero
+            avg = np.ma.sum(offset) / len(offset)
+            capt -= avg
+            fo -= avg
+        window = (force_capt.hz * 64) - 1
+        capt_smooth = moving_average(capt, window=window)
+        fo_smooth = moving_average(fo, window=window)
+        '''
+        #plt.plot(capt_offset - fo_offset, linewidth=0.2, label='')
+        plt.plot(offset, linewidth=0.15, label='offset')
+        plt.plot(force_capt_smooth, linewidth=0.15, label='capt smooth')
+        plt.plot(force_fo_smooth, linewidth=0.15, label='fo smooth')
+        '''
+    
+    capt_abs = np.ma.abs(capt_smooth)
+    fo_abs = np.ma.abs(fo_smooth)
+    '''
+    plt.plot(capt_abs, linewidth=0.2, label='capt abs')
+    plt.plot(fo_abs, linewidth=0.2, label='fo abs')
+    '''
+    diff = np.ma.abs(capt_abs - fo_abs) > 0.1
+    capt_greater = capt_abs > fo_abs
+    fo_greater = fo_abs > capt_abs
+    capt_greater_slices = runs_of_ones(capt_greater.data & diff.data & np.logical_not(diff.mask))
+    fo_greater_slices = runs_of_ones(fo_greater.data & diff.data & np.logical_not(diff.mask))
+    
+    capt_answer = np_ma_masked_zeros_like(force_capt.array)
+    fo_answer = np_ma_masked_zeros_like(force_fo.array)
+    for s in capt_greater_slices:
+        capt_answer[s] = force_capt.array[s]
+    for s in fo_greater_slices:
+        fo_answer[s] = force_fo.array[s]
+    
+    '''
+    #plt.plot(np.ma.masked_less(np.ma.masked_greater(ratio, 8), 1), linewidth=0.15, label='ratio')
+    plt.legend(loc='upper left', prop={'size':6})
+    plt.savefig(os.path.join(os.path.expanduser('~'), 'control_column_force.svg'), dpi=3000)
+    '''
 
     # We return both answers so that the single routine can be used for either side.
-    return answer_capt, answer_fo
+    return capt_answer, fo_answer
 
 
 class ControlColumnForceCapt(DerivedParameterNode):
