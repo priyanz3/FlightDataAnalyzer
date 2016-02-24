@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import atan2, ceil, cos, floor, log, radians, sin, sqrt
+from math import atan2, ceil, copysign, cos, floor, log, radians, sin, sqrt
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -7006,6 +7006,98 @@ def subslice(orig, new):
         (orig.start or 0) + (new.stop or orig.stop or 0) * (orig.step or 1) # the bit after "+" isn't quite right!!
 
     return slice(start, stop, None if step == 1 else step)
+
+
+def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude, longitude, hz):
+    """
+    This routine computes the index into arrays latitude and longitude that
+    is a specified distance from the reference point.
+
+    :param distance: Distance from the reference point required.
+    :type distance: Integer, units nautical miles
+    :param index_ref: Index into the latitude and longitude arrays at reference point
+    :type index_ref: Integer. Note: This is only a help to speed the algorithm; accuracy is not important.
+    :param latitude_ref: Latitude of the reference point
+    :type latitude_ref: float, degrees latitude
+    :param longitude_ref: Longitude of the reference point
+    :type longitude_ref: float, degrees longitude
+    :param latitude: Latitude of the aircraft track
+    :type latitude: Numpy masked array
+    :param longitude: Longitude of the aircraft track
+    :type longitude: Numpy masked array
+    :param hz: Sample rate of latitude and longitude arrays
+    :type hz: Float
+
+    :param solution: Index into the latitude and longitude arrays
+    :type solution: Float
+    :param error: Error condition flag
+    :type error: Integer.
+         0 = No error,
+        -1 = attempt to scan further than data permits,
+        -2 = converged on wrong minimum,
+        +N = return from iteration algorithm.
+    """
+
+    def distance_error(index, *args):
+        radius = args[0]
+        latitude_ref = args[1]
+        longitude_ref = args[2]
+        latitude = args[3]
+        longitude = args[4]
+        index_ref = args[5]
+
+        rad = distance_at_index(index[0], longitude, latitude, latitude_ref, longitude_ref)
+        # and simply squaring the error allows robust minimum searching.
+        error = (rad - radius) ** 2.0
+        return error
+
+    # It is natural to hold the distance as an integer, but locally we need a float
+    _distance = float(distance)
+
+    # We start by guessing an index based on some sample results.
+    guess = copysign((abs(_distance)*17-850)*hz, _distance)
+    kti0 = max(0, min(index_ref + guess, len(latitude)))
+
+    # By constraining the boundaries we ensure the iteration does not
+    # stray outside the available array.
+    boundaries = [(0, len(latitude))]
+
+    kti = optimize.fmin_l_bfgs_b(distance_error, kti0,
+                                 fprime=None,
+                                 args = (abs(_distance),
+                                         latitude_ref,
+                                         longitude_ref,
+                                         latitude,
+                                         longitude,
+                                         index_ref,
+                                         ),
+                                 approx_grad=True,
+                                 epsilon=1.0E-3,
+                                 bounds=boundaries, maxfun=100)
+
+    solution_index = kti[0][0]
+    # To find out if this was a good answer, we compute the actual range and compare the error.
+    solution_range = distance_at_index(solution_index, longitude, latitude, latitude_ref, longitude_ref)
+    _dist_err = abs(abs(distance) - solution_range)
+
+    # Return the appropriate error code
+    if solution_index == boundaries[0][0] or solution_index == boundaries[0][1]:
+        error = -1
+    elif _dist_err > 0.01:
+        error = -2
+    else:
+        error = kti[2]['warnflag']
+
+    return solution_index, error
+
+
+def distance_at_index(i, longitude, latitude, latitude_ref, longitude_ref):
+    lon_i = value_at_index(longitude, i) or 0.0
+    lat_i = value_at_index(latitude, i) or 0.0
+    # The function _dist from the library provides the haversine distance in metres
+    # hence the conversion factor required to convert to nautical miles.
+    rad = (_dist(lat_i, lon_i, latitude_ref, longitude_ref) or 0.0)*0.000539957
+    return rad
 
 
 def index_closest_value(array, threshold, _slice=slice(None)):

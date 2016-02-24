@@ -10,6 +10,7 @@ from analysis_engine.library import (
     find_toc_tod,
     first_valid_sample,
     hysteresis,
+    index_at_distance,
     index_at_value,
     last_valid_sample,
     max_value,
@@ -32,6 +33,8 @@ from settings import (
     HYSTERESIS_ENG_START_STOP,
     CORE_START_SPEED,
     CORE_STOP_SPEED,
+    NAME_VALUES_ARRIVAL_DISTANCE,
+    NAME_VALUES_DEPARTURE_DISTANCE,
     MIN_FAN_RUNNING,
     NAME_VALUES_CLIMB,
     NAME_VALUES_DESCENT,
@@ -1837,3 +1840,58 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
         if slices:
             ix = slices[-1].start
             self.create_kti(ix)
+
+
+
+class DistanceFromDeparture(KeyTimeInstanceNode):
+    '''
+    Creates KTIs at certain distances from the departure airport.
+
+    Note that we avoid using liftoff, as the distance is measured from the airport
+    reference point, to avoid difference according to the runway in use.
+    '''
+    NAME_FORMAT = '%(distance)d Nm from Departure'
+    NAME_VALUES = NAME_VALUES_DEPARTURE_DISTANCE
+
+    def derive(self,
+               lifts=S('Liftoff'),
+               dep=A('FDR Takeoff Airport'),
+               lat=P('Latitude Smoothed'),
+               lon=P('Longitude Smoothed')):
+
+        # We can only handle single takeoffs at this time.
+        if len(lifts) != 1:
+            return
+
+        for distance in self.NAME_VALUES['distance']:
+            index, error = index_at_distance(distance, lifts[0].index,
+                                             dep.value.get('latitude'), dep.value.get('longitude'),
+                                             lat.array, lon.array, lat.frequency)
+            if not error:
+                self.create_kti(index, replace_values={'distance':distance})
+
+
+class DistanceFromArrival(KeyTimeInstanceNode):
+    '''
+    Creates KTIs at certain distances from the arrival airport.
+    '''
+    NAME_FORMAT = '%(distance)d Nm from Arrival'
+    NAME_VALUES = NAME_VALUES_ARRIVAL_DISTANCE
+
+    def derive(self,
+               lands=S('Touchdown'),
+               arr=A('FDR Landing Airport'),
+               lat=P('Latitude Smoothed'),
+               lon=P('Longitude Smoothed')):
+
+        # We can only handle single takeoffs at this time.
+        if len(lands) != 1:
+            return
+
+        for distance in self.NAME_VALUES['distance']:
+            # Index at distance uses negative distance arguments for looking back in time.
+            index, error = index_at_distance(-distance, lands[0].index,
+                                             arr.value.get('latitude'), arr.value.get('longitude'),
+                                             lat.array, lon.array, lat.frequency)
+            if not error:
+                self.create_kti(index, replace_values={'distance':distance})

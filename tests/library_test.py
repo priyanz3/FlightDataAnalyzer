@@ -3198,6 +3198,90 @@ class TestIndexClosestValue(unittest.TestCase):
         self.assertEqual(index_closest_value(array, -9, slice(5, 1, -1)), 2)
     '''
 
+class TestIndexAtDistance(unittest.TestCase):
+    def test_basic(self):
+        distance = 150.0
+        index_ref = 0
+        latitude_ref = 60.0
+        longitude_ref = 0.0
+        latitude = np.ma.array(range(600, 700)) / 10.0
+        longitude = np.ma.array(range(100)) / 10.0
+        result = index_at_distance(distance, index_ref,
+                                   latitude_ref, longitude_ref,
+                                   latitude, longitude, 1.0)
+        expected = 22.5
+        self.assertEqual(result[1], 0)
+        self.assertAlmostEqual(result[0], expected, places=1)
+
+    def test_offset(self):
+        distance = 150.0
+        index_ref = 30
+        latitude_ref = 60.0
+        longitude_ref = 0.0
+        latitude = np.ma.array(range(600, 700)) / 10.0
+        longitude = np.ma.array(range(100)) / 10.0
+        result = index_at_distance(distance, index_ref,
+                                   latitude[index_ref], longitude[index_ref],
+                                   latitude, longitude, 1.0)
+        # The answer is as basic test, but offset by 30 samples and due to the
+        # nonlinearity of the haversin function the answer is slightly different
+        # at this point on the earth, hence the additional 0.4.
+        expected = 22.5 + index_ref + 0.4
+        self.assertEqual(result[1], 0)
+        self.assertAlmostEqual(result[0], expected, places=1)
+
+    def test_backwards(self):
+        distance = -150.0
+        index_ref = 90
+        latitude_ref = 69.0
+        longitude_ref = 9.0
+        latitude = np.ma.array(range(600, 700)) / 10.0
+        longitude = np.ma.array(range(100)) / 10.0
+        result = index_at_distance(distance, index_ref,
+                                   latitude[index_ref], longitude[index_ref],
+                                   latitude, longitude, 1.0)
+        # A different nonlinearity applies further north and east:
+        expected = index_ref - 22.5 - 0.9
+        self.assertEqual(result[1], 0)
+        self.assertAlmostEqual(result[0], expected, places=1)
+
+    def test_too_far_forwards(self):
+        distance = 1000.0
+        index_ref = 0
+        latitude_ref = 60.0
+        longitude_ref = 0.0
+        latitude = np.ma.array(range(600, 700)) / 10.0
+        longitude = np.ma.array(range(100)) / 10.0
+        result = index_at_distance(distance, index_ref,
+                                   latitude_ref, longitude_ref,
+                                   latitude, longitude, 1.0)
+        self.assertEqual(result[1], -1)
+
+    def test_too_far_backwards(self):
+        distance = -1000.0
+        index_ref = 100
+        latitude_ref = 70.0
+        longitude_ref = 10.0
+        latitude = np.ma.array(range(600, 700)) / 10.0
+        longitude = np.ma.array(range(100)) / 10.0
+        result = index_at_distance(distance, index_ref,
+                                   latitude_ref, longitude_ref,
+                                   latitude, longitude, 1.0)
+        self.assertEqual(result[1], -1)
+
+"""
+    def test_short_flight(self):
+        # Example flight less than 150nm.
+        array = load(os.path.join(test_data_path, 'SAS_0_OY-KFI_05_Sep_2013_dat_598748_128_S.024.001-START_AND_STOP.hdf5.nod')).array
+        ...& confirm no 150 or 250 nm outputs are generated
+
+    def test_medium_flight(self):
+        # Example flight 150-250 nm.
+        array = load(os.path.join(test_data_path, 'NAX_8_LN-NOS_20120104003919_64_L3UQAR___dev__sdb.COP.001-START_AND_STOP.hdf5.nod')).array
+        ...& confirm 150 nm outputs ['150 Nm from Departure':1938.86, '150 Nm from Arrival':1091.239] are generated, and 250 nm are not.
+        Note: These are the right way round, as they overlap.
+
+"""
 
 class TestIndexOfFirstStart(unittest.TestCase):
     def test_index_start(self):
