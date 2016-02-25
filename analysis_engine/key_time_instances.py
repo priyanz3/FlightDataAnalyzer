@@ -33,8 +33,7 @@ from settings import (
     HYSTERESIS_ENG_START_STOP,
     CORE_START_SPEED,
     CORE_STOP_SPEED,
-    NAME_VALUES_ARRIVAL_DISTANCE,
-    NAME_VALUES_DEPARTURE_DISTANCE,
+    NAME_VALUES_DISTANCE,
     MIN_FAN_RUNNING,
     NAME_VALUES_CLIMB,
     NAME_VALUES_DESCENT,
@@ -1842,56 +1841,61 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
             self.create_kti(ix)
 
 
+class DistanceFromAirportMixin(object):
 
-class DistanceFromDeparture(KeyTimeInstanceNode):
+    def calculate(self, ktis, airport, lat, lon, direction):
+        # We can only handle single liftoffs or touchdowns at this time:
+        if len(ktis) != 1:
+            return
+
+        direction = -1 if direction == 'backward' else 1
+        for distance in self.NAME_VALUES['distance']:
+            try:
+                index = index_at_distance(
+                    direction * distance, ktis[0].index,
+                    airport.value.get('latitude'),
+                    airport.value.get('longitude'),
+                    lat.array, lon.array, lat.frequency)
+            except ValueError as e:
+                self.exception('Unable to determine distance from airport.')
+            else:
+                self.create_kti(index, replace_values={'distance': distance})
+
+
+class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     '''
     Creates KTIs at certain distances from the departure airport.
 
     Note that we avoid using liftoff, as the distance is measured from the airport
     reference point, to avoid difference according to the runway in use.
     '''
-    NAME_FORMAT = '%(distance)d Nm from Departure'
-    NAME_VALUES = NAME_VALUES_DEPARTURE_DISTANCE
+    NAME_FORMAT = '%(distance)d NM From Takeoff Airport'
+    NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
-               lifts=S('Liftoff'),
+               lifts=KTI('Liftoff'),
                dep=A('FDR Takeoff Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        # We can only handle single takeoffs at this time.
-        if len(lifts) != 1:
-            return
-
-        for distance in self.NAME_VALUES['distance']:
-            index, error = index_at_distance(distance, lifts[0].index,
-                                             dep.value.get('latitude'), dep.value.get('longitude'),
-                                             lat.array, lon.array, lat.frequency)
-            if not error:
-                self.create_kti(index, replace_values={'distance':distance})
+        self.calculate(lifts, dep, lat, lon, direction='forward')
 
 
-class DistanceFromArrival(KeyTimeInstanceNode):
+class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     '''
     Creates KTIs at certain distances from the arrival airport.
     '''
-    NAME_FORMAT = '%(distance)d Nm from Arrival'
-    NAME_VALUES = NAME_VALUES_ARRIVAL_DISTANCE
+    NAME_FORMAT = '%(distance)d NM From Landing Airport'
+    NAME_VALUES = NAME_VALUES_DISTANCE
+
+    @classmethod
+    def can_operate(cls, available):
+        return True
 
     def derive(self,
-               lands=S('Touchdown'),
+               lands=KTI('Touchdown'),
                arr=A('FDR Landing Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        # We can only handle single takeoffs at this time.
-        if len(lands) != 1:
-            return
-
-        for distance in self.NAME_VALUES['distance']:
-            # Index at distance uses negative distance arguments for looking back in time.
-            index, error = index_at_distance(-distance, lands[0].index,
-                                             arr.value.get('latitude'), arr.value.get('longitude'),
-                                             lat.array, lon.array, lat.frequency)
-            if not error:
-                self.create_kti(index, replace_values={'distance':distance})
+        self.calculate(lands, arr, lat, lon, direction='backward')

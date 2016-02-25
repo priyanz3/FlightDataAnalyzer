@@ -441,9 +441,7 @@ NAME_VALUES_CLIMB = {'altitude': [
 
 NAME_VALUES_DESCENT = {'altitude': NAME_VALUES_CLIMB['altitude'][::-1]}
 
-NAME_VALUES_DEPARTURE_DISTANCE = {'distance': [150, 250]}
-
-NAME_VALUES_ARRIVAL_DISTANCE = {'distance': NAME_VALUES_DEPARTURE_DISTANCE['distance'][::-1]}
+NAME_VALUES_DISTANCE = {'distance': [150, 250]}
 
 ##############################################################################
 # Custom Settings
