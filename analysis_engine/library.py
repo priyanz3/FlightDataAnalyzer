@@ -7046,7 +7046,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
         longitude = args[4]
         index_ref = args[5]
 
-        rad = distance_at_index(index[0], longitude, latitude, latitude_ref, longitude_ref)
+        rad = distance_at_index(index[0], latitude, longitude, latitude_ref, longitude_ref)
         # and simply squaring the error allows robust minimum searching.
         error = (rad - radius) ** 2.0
         return error
@@ -7077,7 +7077,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
 
     solution_index = kti[0][0]
     # To find out if this was a good answer, we compute the actual range and compare the error.
-    solution_range = distance_at_index(solution_index, longitude, latitude, latitude_ref, longitude_ref)
+    solution_range = distance_at_index(solution_index, latitude, longitude, latitude_ref, longitude_ref)
     _dist_err = abs(abs(distance) - solution_range)
 
     # Return the appropriate error code
@@ -7091,7 +7091,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
     return solution_index, error
 
 
-def distance_at_index(i, longitude, latitude, latitude_ref, longitude_ref):
+def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
     lon_i = value_at_index(longitude, i) or 0.0
     lat_i = value_at_index(latitude, i) or 0.0
     # The function _dist from the library provides the haversine distance in metres
