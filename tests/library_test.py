@@ -3212,7 +3212,7 @@ class TestIndexAtDistance(unittest.TestCase):
                                    latitude, longitude, 1.0)
         expected = 22.5
         self.assertEqual(result[1], 0)
-        self.assertAlmostEqual(result[0], expected, places=1)
+        self.assertAlmostEqual(result, expected, places=1)
 
     @unittest.skip('FIXME')
     def test_offset(self):
@@ -3230,7 +3230,7 @@ class TestIndexAtDistance(unittest.TestCase):
         # at this point on the earth, hence the additional 0.4.
         expected = 22.5 + index_ref + 0.4
         self.assertEqual(result[1], 0)
-        self.assertAlmostEqual(result[0], expected, places=1)
+        self.assertAlmostEqual(result, expected, places=1)
 
     @unittest.skip('FIXME')
     def test_backwards(self):
@@ -3246,7 +3246,7 @@ class TestIndexAtDistance(unittest.TestCase):
         # A different nonlinearity applies further north and east:
         expected = index_ref - 22.5 - 0.9
         self.assertEqual(result[1], 0)
-        self.assertAlmostEqual(result[0], expected, places=1)
+        self.assertAlmostEqual(result, expected, places=1)
 
     def test_too_far_forwards(self):
         distance = 1000.0
@@ -3255,10 +3255,10 @@ class TestIndexAtDistance(unittest.TestCase):
         longitude_ref = 0.0
         latitude = np.ma.array(range(600, 700)) / 10.0
         longitude = np.ma.array(range(100)) / 10.0
-        result = index_at_distance(distance, index_ref,
-                                   latitude_ref, longitude_ref,
-                                   latitude, longitude, 1.0)
-        self.assertEqual(result[1], -1)
+        with self.assertRaises(ValueError):
+            result = index_at_distance(
+                distance, index_ref, latitude_ref, longitude_ref, latitude,
+                longitude, 1.0)
 
     def test_too_far_backwards(self):
         distance = -1000.0
@@ -3267,10 +3267,10 @@ class TestIndexAtDistance(unittest.TestCase):
         longitude_ref = 10.0
         latitude = np.ma.array(range(600, 700)) / 10.0
         longitude = np.ma.array(range(100)) / 10.0
-        result = index_at_distance(distance, index_ref,
-                                   latitude_ref, longitude_ref,
-                                   latitude, longitude, 1.0)
-        self.assertEqual(result[1], -1)
+        with self.assertRaises(ValueError):
+            result = index_at_distance(
+                distance, index_ref, latitude_ref, longitude_ref, latitude,
+                longitude, 1.0)
 
 """
     def test_short_flight(self):
