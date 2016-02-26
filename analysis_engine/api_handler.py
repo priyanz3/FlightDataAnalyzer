@@ -31,11 +31,13 @@ class APIError(Exception):
     A generic exception class for an error when calling an API.
     '''
 
-    def __init__(self, message, url=None, method=None, data=None):
+    def __init__(self, message, url=None, method=None, params=None, data=None, json=None):
         super(APIError, self).__init__(message)
         self.url = url
         self.method = method
+        self.params = params
         self.data = data
+        self.json = json
 
 
 class IncompleteEntryError(APIError):
@@ -62,7 +64,7 @@ class APIHandlerHTTP(object):
     Restful HTTP API Handler.
     '''
 
-    def request(self, url, method='GET', data=None, **kw):
+    def request(self, url, method='GET', params=None, data=None, json=None, **kw):
         '''
         Makes a request to a URL and attempts to return the decoded content.
 
@@ -89,7 +91,7 @@ class APIHandlerHTTP(object):
                 a = requests.adapters.HTTPAdapter(max_retries=retries)
                 s.mount('http://', a)
                 s.mount('https://', a)
-                r = s.request(method, url, data, timeout=timeout)
+                r = s.request(method, url, params=params, data=data, json=json, timeout=timeout)
                 r.raise_for_status()
                 return r.json()
 
@@ -100,23 +102,23 @@ class APIHandlerHTTP(object):
                 message = 'No error message available or supplied.'
             if e.response.status_code == requests.codes.not_found:
                 logger.debug(message)
-                raise NotFoundError(message, url, method, data)
+                raise NotFoundError(message, url, method, params, data, json)
             else:
                 logger.exception(message)
-                raise APIError(message, url, method, data)
+                raise APIError(message, url, method, params, data, json)
         except requests.RequestException:
             message = 'Unexpected error with connection to the API.'
             logger.exception(message)
-            raise APIError(message, url, method, data)
+            raise APIError(message, url, method, params, data, json)
         except ValueError:
             # Note: JSONDecodeError only in simplejson or Python 3.5+
             message = 'Unexpected error decoding response from API.'
             logger.exception(message)
-            raise APIError(message, url, method, data)
+            raise APIError(message, url, method, params, data, json)
         except:
             message = 'Unexpected error from the API.'
             logger.exception(message)
-            raise APIError(message, url, method, data)
+            raise APIError(message, url, method, params, data, json)
 
 
 ##############################################################################

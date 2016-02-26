@@ -10,7 +10,6 @@
 import logging
 import os
 import simplejson
-import urllib
 import yaml
 
 from abc import ABCMeta, abstractmethod
@@ -228,11 +227,11 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
         :rtype: dict
         '''
         from analysis_engine.settings import BASE_URL
-        url = '%(base_url)s/api/airport/nearest.json?ll=%(ll)s' % {
+        url = '%(base_url)s/api/airport/nearest.json' % {
             'base_url': BASE_URL.rstrip('/'),
-            'll': '%f,%f' % (latitude, longitude),
         }
-        return self.request(url)['airport']
+        params = {'ll': '%f,%f' % (latitude, longitude)}
+        return self.request(url, params=params)['airport']
 
     def get_nearest_runway(self, airport, heading, latitude=None,
                            longitude=None, ils_freq=None, hint=None):
@@ -273,8 +272,7 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             params['ilsfreq'] = int(ils_freq * 1000)
         if hint in ['takeoff', 'landing', 'approach']:
             params['hint'] = hint
-        url += '?' + urllib.urlencode(params)
-        runway = self.request(url)['runway']
+        runway = self.request(url, params=params)['runway']
         if not runway.get('end'):
             raise IncompleteEntryError(
                 "Runway ident '%s' at '%s' has no end" %
