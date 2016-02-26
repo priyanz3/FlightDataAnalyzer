@@ -1845,7 +1845,7 @@ class DistanceFromAirportMixin(object):
 
     def calculate(self, ktis, airport, lat, lon, direction):
         # We can only handle single liftoffs or touchdowns at this time:
-        if len(ktis) != 1:
+        if len(ktis) != 1 or airport.value is None:
             return
 
         direction = -1 if direction == 'backward' else 1
