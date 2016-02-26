@@ -6,6 +6,7 @@ import os
 import sys
 
 from datetime import datetime, timedelta
+from networkx.readwrite import json_graph
 
 from flightdatautilities.filesystem_tools import copy_file
 
@@ -622,7 +623,7 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
         # Store version of FlightDataAnalyser
         hdf.analysis_version = __version__
         # Store dependency tree
-        hdf.dependency_tree = json.dumps(gr_st)
+        hdf.dependency_tree = json.dumps(json_graph.node_link_data(gr_st))
         # Store aircraft info
         hdf.set_attr('aircraft_info', aircraft_info)
         hdf.set_attr('achieved_flight_record', achieved_flight_record)
