@@ -10,7 +10,9 @@
 
 
 import logging
+import os
 import requests
+import sys
 
 from requests.packages.urllib3.util.retry import Retry
 
@@ -20,6 +22,12 @@ from requests.packages.urllib3.util.retry import Retry
 
 
 logger = logging.getLogger(name=__name__)
+
+
+if getattr(sys, 'frozen', False):
+    # XXX: Attempt to provide path to certificates in frozen applications:
+    path = os.path.join(os.path.dirname(sys.executable), 'cacert.pem')
+    os.environ.setdefault('REQUESTS_CA_BUNDLE', path)
 
 
 ##############################################################################
