@@ -8,8 +8,8 @@
 # Imports
 
 import logging
+import json
 import os
-import simplejson
 import yaml
 
 from abc import ABCMeta, abstractmethod
@@ -114,13 +114,13 @@ class AnalysisEngineAPI(object):
         :param airport: Value identifying the airport.
         :type airport: undefined
         :param heading: Magnetic heading.
-        :type heading: int # Q: could it be float?
+        :type heading: float/int
         :param latitude: Latitude in decimal degrees.
         :type latitude: float
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
         :param ils_freq: ILS localizer frequency of runway
-        :type ils_freq: float # Q: could/should it be int?
+        :type ils_freq: float float/int
         :raises NotFoundError: If runway cannot be found.
         :returns: Runway info dictionary.
         :rtype: dict
@@ -242,13 +242,13 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
         :param airport: Either ICAO code, IATA code or database ID of airport.
         :type airport: int or str
         :param heading: Magnetic heading.
-        :type heading: int # Q: could it be float?
+        :type heading: float/int
         :param latitude: Latitude in decimal degrees.
         :type latitude: float
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
         :param ils_freq: ILS Localizer frequency of the runway in KHz.
-        :type ils_freq: float # Q: could/should it be int?
+        :type ils_freq: float/int
         :param hint: Whether we are looking up a runway for 'takeoff',
                 'landing', or 'approach'.
         :type hint: str
@@ -308,10 +308,9 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
         '''
         Support loading both yaml and json. yaml is too slow for large files.
         '''
-        if os.path.splitext(path)[1] == '.json':
-            return simplejson.load(open(path, 'rb'))
-        else:
-            return yaml.load(open(path, 'rb'))
+        loader = json if os.path.splitext(path)[1] == '.json' else yaml
+        with open(path, 'rb') as f:
+            return loader.load(f)
 
     def __init__(self):
         '''
