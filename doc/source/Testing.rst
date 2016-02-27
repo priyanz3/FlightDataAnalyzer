@@ -134,7 +134,7 @@ against the copy
 .. code-block:: python
     :linenos:
 
-    from utilities.filesystem_tools import copy_file
+    from flightdatautilities.filesystem_tools import copy_file
     
     ...
     

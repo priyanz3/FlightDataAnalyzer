@@ -8,9 +8,8 @@
 # Imports
 
 import logging
+import json
 import os
-import simplejson
-import urllib
 import yaml
 
 from abc import ABCMeta, abstractmethod
@@ -43,13 +42,13 @@ class AnalysisEngineAPI(object):
     '''
 
     __metaclass__ = ABCMeta
-    
+
     @abstractmethod
     def get_aircraft(self, tail_number):
         '''
         Will either return an aircraft matching the tail number or raise an
         exception if one cannot be found.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -75,12 +74,12 @@ class AnalysisEngineAPI(object):
         :rtype: dict
         '''
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_analyser_profiles(self, tail_number):
         '''
         Will return analyser profiles enabled for an aircraft.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -100,8 +99,6 @@ class AnalysisEngineAPI(object):
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
         :raises NotFoundError: If airport cannot be found.
-        :raises InvalidAPIInputError: If latitude or longitude are out of
-                bounds.
         :returns: Airport info dictionary.
         :rtype: dict
         '''
@@ -109,7 +106,7 @@ class AnalysisEngineAPI(object):
 
     @abstractmethod
     def get_nearest_runway(self, airport, heading, latitude=None,
-            longitude=None, ils_freq=None, hint=None):
+                           longitude=None, ils_freq=None, hint=None):
         '''
         Will return the nearest runway from the specified airport using
         latitude, longitude, precision and ils freq.
@@ -117,16 +114,14 @@ class AnalysisEngineAPI(object):
         :param airport: Value identifying the airport.
         :type airport: undefined
         :param heading: Magnetic heading.
-        :type heading: int # Q: could it be float?
+        :type heading: float/int
         :param latitude: Latitude in decimal degrees.
         :type latitude: float
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
         :param ils_freq: ILS localizer frequency of runway
-        :type ils_freq: float # Q: could/should it be int?
+        :type ils_freq: float float/int
         :raises NotFoundError: If runway cannot be found.
-        :raises InvalidAPIInputError: If latitude, longitude or heading are out
-                of bounds.
         :returns: Runway info dictionary.
         :rtype: dict
         '''
@@ -165,12 +160,12 @@ class AnalysisEngineAPIHandlerDummy(AnalysisEngineAPI):
 class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
     '''
     '''
-    
+
     def get_aircraft(self, tail_number):
         '''
         Will either return an aircraft matching the tail number or raise an
         exception if one cannot be found.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -182,12 +177,12 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             'base_url': BASE_URL.rstrip('/'),
             'tail_number': tail_number,
         }
-        return self._attempt_request(url)['aircraft']
-    
+        return self.request(url)['aircraft']
+
     def get_analyser_profiles(self, tail_number):
         '''
         Will return analyser profiles enabled for an aircraft.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -199,8 +194,8 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             'base_url': BASE_URL.rstrip('/'),
             'tail_number': tail_number,
         }
-        return self._attempt_request(url)['analyser_profiles']
-    
+        return self.request(url)['analyser_profiles']
+
     def get_airport(self, code):
         '''
         Will either return an airport matching the code or raise an exception
@@ -217,7 +212,7 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             'base_url': BASE_URL.rstrip('/'),
             'code': code,
         }
-        return self._attempt_request(url)['airport']
+        return self.request(url)['airport']
 
     def get_nearest_airport(self, latitude, longitude):
         '''
@@ -228,17 +223,15 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
         :type latitude: float
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
-        :raises InvalidAPIInputError: If latitude or longitude are out of
-                bounds.
         :returns: Airport info dictionary.
         :rtype: dict
         '''
         from analysis_engine.settings import BASE_URL
-        url = '%(base_url)s/api/airport/nearest.json?ll=%(ll)s' % {
+        url = '%(base_url)s/api/airport/nearest.json' % {
             'base_url': BASE_URL.rstrip('/'),
-            'll': '%f,%f' % (latitude, longitude),
         }
-        return self._attempt_request(url)['airport']
+        params = {'ll': '%f,%f' % (latitude, longitude)}
+        return self.request(url, params=params)['airport']
 
     def get_nearest_runway(self, airport, heading, latitude=None,
                            longitude=None, ils_freq=None, hint=None):
@@ -249,19 +242,17 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
         :param airport: Either ICAO code, IATA code or database ID of airport.
         :type airport: int or str
         :param heading: Magnetic heading.
-        :type heading: int # Q: could it be float?
+        :type heading: float/int
         :param latitude: Latitude in decimal degrees.
         :type latitude: float
         :param longitude: Longitude in decimal degrees.
         :type longitude: float
         :param ils_freq: ILS Localizer frequency of the runway in KHz.
-        :type ils_freq: float # Q: could/should it be int?
+        :type ils_freq: float/int
         :param hint: Whether we are looking up a runway for 'takeoff',
                 'landing', or 'approach'.
         :type hint: str
         :raises NotFoundError: If the runway cannot be found.
-        :raises InvalidAPIInputError: If latitude, longitude or heading are out
-                of bounds.
         :returns: Runway info in the format {'ident': '27*', 'items': [{# ...},
                 {# ...},]}, 'ident' is either specific ('09L') or generalised
                 ('09*').  'items' is a list of matching runways.
@@ -281,8 +272,7 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             params['ilsfreq'] = int(ils_freq * 1000)
         if hint in ['takeoff', 'landing', 'approach']:
             params['hint'] = hint
-        url += '?' + urllib.urlencode(params)
-        runway = self._attempt_request(url)['runway']
+        runway = self.request(url, params=params)['runway']
         if not runway.get('end'):
             raise IncompleteEntryError(
                 "Runway ident '%s' at '%s' has no end" %
@@ -305,25 +295,23 @@ class AnalysisEngineAPIHandlerHTTP(AnalysisEngineAPI, APIHandlerHTTP):
             'base_url': BASE_URL.rstrip('/'),
             'tail_number': tail_number,
         }
-        return self._attempt_request(url)['data_exports']
+        return self.request(url)['data_exports']
 
 
 # Local API Handler
 ###################
 
 class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
-    
-    
+
     @staticmethod
     def _load_data(path):
         '''
         Support loading both yaml and json. yaml is too slow for large files.
         '''
-        if os.path.splitext(path)[1] == '.json':
-            return simplejson.load(open(path, 'rb'))
-        else:
-            return yaml.load(open(path, 'rb'))
-    
+        loader = json if os.path.splitext(path)[1] == '.json' else yaml
+        with open(path, 'rb') as f:
+            return loader.load(f)
+
     def __init__(self):
         '''
         Load aircraft, airports and runways from yaml config files.
@@ -346,12 +334,12 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
         logger.debug("Loading local API exports from '%s'",
                      LOCAL_API_EXPORTS_PATH)
         self.exports = self._load_data(LOCAL_API_EXPORTS_PATH)
-    
+
     def get_aircraft(self, tail_number):
         '''
         Will either return an aircraft matching the tail number or raise an
         exception if one cannot be found.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -363,7 +351,7 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
         except KeyError:
             raise NotFoundError("Local API Handler: Aircraft with tail number "
                                 "'%s' could not be found." % tail_number)
-    
+
     def get_airport(self, code):
         '''
         Will either return an airport matching the code or raise an exception
@@ -383,12 +371,12 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
             raise NotFoundError("Local API Handler: Airport with code '%s' "
                                 "could not be found." % code)
         return airport
-    
+
     def get_analyser_profiles(self, tail_number):
         '''
         Returns analyser profiles enabled for an aircraft. Currently
         not implemented.
-        
+
         :param tail_number: Aircraft tail number.
         :type tail_number: str
         :raises NotFoundError: If the aircraft cannot be found.
@@ -396,11 +384,11 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
         :rtype: []
         '''
         return []
-    
+
     def get_nearest_airport(self, latitude, longitude):
         '''
         Get the nearest airport from a pre-defined list.
-        
+
         :param latitude: Latitude value for looking up a runway.
         :type latitude: float
         :param longitude: Longitude value for looking up a runway.
@@ -417,7 +405,7 @@ class AnalysisEngineAPIHandlerLocal(AnalysisEngineAPI):
                                                        airport['latitude'],
                                                        airport['longitude'])[1]
             airports.append(airport)
-        
+
         airport = min(airports, key=itemgetter('distance'))
         return airport
 

@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import json
 import logging
 import os
 import sys
@@ -622,7 +623,7 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
         # Store version of FlightDataAnalyser
         hdf.analysis_version = __version__
         # Store dependency tree
-        hdf.dependency_tree = json_graph.dumps(gr_st)
+        hdf.dependency_tree = json.dumps(json_graph.node_link_data(gr_st))
         # Store aircraft info
         hdf.set_attr('aircraft_info', aircraft_info)
         hdf.set_attr('achieved_flight_record', achieved_flight_record)

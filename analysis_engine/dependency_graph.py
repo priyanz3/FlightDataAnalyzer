@@ -196,11 +196,11 @@ def draw_graph(graph, name, horizontal=False):
         ##import pygraphviz as pgv 
         # sudo apt-get install graphviz libgraphviz-dev
         # pip install pygraphviz
-        #Note: nx.to_agraph performs pygraphviz import
+        #Note: nx.nx_agraph.to_agraph performs pygraphviz import
         if horizontal:
             # set layout left to right before converting all nodes to new format
             graph.graph['graph'] = {'rankdir' : 'LR'}
-        G = nx.to_agraph(graph)
+        G = nx.nx_agraph.to_agraph(graph)
     except ImportError:
         logger.exception("Unable to import pygraphviz to draw graph '%s'", name)
         return

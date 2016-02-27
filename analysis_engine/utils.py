@@ -273,6 +273,7 @@ def list_parameters():
     ], fetch_names=True, fetch_dependencies=False)
     # Remove excluded names leaving parameters:
     parameters = set(list_everything()) - set(exclude)
+    parameters = {p for p in parameters if not p.startswith('AFR')}
     return sorted(parameters)
 
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
 ##############################################################################
 
 '''
@@ -8,24 +9,25 @@
 # Imports
 
 
-import httplib
-import httplib2
 import logging
 import os
-import simplejson as json
-import socket
-import time
-import urllib
+import requests
+import sys
 
-from analysis_engine import settings
+from requests.packages.urllib3.util.retry import Retry
 
 
 ##############################################################################
 # Globals
 
+
 logger = logging.getLogger(name=__name__)
 
-TIMEOUT = 15
+
+if getattr(sys, 'frozen', False):
+    # XXX: Attempt to provide path to certificates in frozen applications:
+    path = os.path.join(os.path.dirname(sys.executable), 'cacert.pem')
+    os.environ.setdefault('REQUESTS_CA_BUNDLE', path)
 
 
 ##############################################################################
@@ -37,27 +39,13 @@ class APIError(Exception):
     A generic exception class for an error when calling an API.
     '''
 
-    def __init__(self, message, uri=None, method=None, body=None):
-        '''
-        '''
+    def __init__(self, message, url=None, method=None, params=None, data=None, json=None):
         super(APIError, self).__init__(message)
-        self.uri = uri
+        self.url = url
         self.method = method
-        self.body = body
-
-
-class APIConnectionError(APIError):
-    '''
-    An exception to be raised when unable to connect to an API.
-    '''
-    pass
-
-
-class InvalidAPIInputError(APIError):
-    '''
-    An exception to be raised when input to an API in not valid.
-    '''
-    pass
+        self.params = params
+        self.data = data
+        self.json = json
 
 
 class IncompleteEntryError(APIError):
@@ -75,13 +63,6 @@ class NotFoundError(APIError):
     pass
 
 
-class UnknownAPIError(APIError):
-    '''
-    An exception to be raised when some unexpected API error occurred.
-    '''
-    pass
-
-
 ##############################################################################
 # HTTP API Handler
 
@@ -91,117 +72,61 @@ class APIHandlerHTTP(object):
     Restful HTTP API Handler.
     '''
 
-    def __init__(self, attempts=3, delay=2):
-        '''
-        Initialises an HTTP API handler.
-
-        :param attempts: Number of retry attempts before raising an exception.
-        :type attempts: int
-        :param delay: Time to wait between retrying requests.
-        :type delay: int or float
-        '''
-        self.attempts = max(attempts, 1)
-        self.delay = abs(delay)
-
-    def _request(self, uri, method='GET', body='', timeout=TIMEOUT):
+    def request(self, url, method='GET', params=None, data=None, json=None, **kw):
         '''
         Makes a request to a URL and attempts to return the decoded content.
 
-        :param uri: URI to request.
-        :type uri: str
-        :param method: Method of request.
+        :param url: url to connect to for handling the request.
+        :type url: str
+        :param method: method for the request.
         :type method: str
-        :param timeout: Request timeout in seconds.
-        :type timeout: int
-        :param body: Body to be encoded.
-        :type body: str, dict or tuple
-        :raises InvalidAPIInputError: If server returns 400.
-        :raises NotFoundError: If server returns 404.
-        :raises APIConnectionError: If the server does not respond or returns
-                401.
-        :raises UnknownAPIError: If the server returns 500 or an unexpected
-                status code.
-        :raises JSONDecodeError: If status code is 200, but content is not
-                JSON.
+        :param data: data to send in the body of the request.
+        :type data: mixed
+        :returns: the data fetched from the remote server.
+        :rtype: mixed
+        :raises: NotFoundError -- if no record could be found (server returns 404)
+        :raises: APIError -- if the server does not respond or returns an error.
         '''
-        # Prepare the request object:
-        body = urllib.urlencode(body)
-        disable_validation = not os.path.exists(settings.CA_CERTIFICATE_FILE)
-        http = httplib2.Http(
-            ca_certs=settings.CA_CERTIFICATE_FILE,
-            disable_ssl_certificate_validation=disable_validation,
-            timeout=timeout,
-            proxy_info=settings.API_PROXY_INFO,
-        )
-        headers = {'content-type':'application/x-www-form-urlencoded'}
+        backoff = kw.get('backoff', 0.2)
+        retries = kw.get('retries', 5)
+        timeout = kw.get('timeout', 15)
 
-        # Attempt to make the API request:
-        socket_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(timeout)
+        retries = Retry(total=retries, backoff_factor=backoff, status_forcelist=[503])
+
+        logger.debug('API Request: %s %s', method, url)
         try:
-            response, content = http.request(uri, method, body, headers=headers)
-        except (httplib2.ServerNotFoundError, socket.error, AttributeError):
-            # Usually a result of errors with DNS...
-            logger.exception("Connection Error")
-            raise APIConnectionError(uri, method, body)
-        finally:
-            socket.setdefaulttimeout(socket_timeout)
+            with requests.Session() as s:
+                a = requests.adapters.HTTPAdapter(max_retries=retries)
+                s.mount('http://', a)
+                s.mount('https://', a)
+                r = s.request(method, url, params=params, data=data, json=json, timeout=timeout)
+                r.raise_for_status()
+                return r.json()
 
-        # Check the status code of the response:
-        status = int(response['status'])
-        if not status == httplib.OK:
-            # Try to get an 'error' message from JSON if available:
+        except requests.HTTPError as e:
             try:
-                message = json.loads(content)['error']
-            except (json.JSONDecodeError, KeyError):
-                message = ''
-            # Try to get an 'error' message from JSON if available:
-            raise {
-                httplib.BAD_REQUEST: InvalidAPIInputError,
-                httplib.UNAUTHORIZED: APIConnectionError,
-                httplib.NOT_FOUND: NotFoundError,
-                httplib.INTERNAL_SERVER_ERROR: UnknownAPIError,
-            }.get(status, UnknownAPIError)(message, uri, method, body)
-
-        # Attempt to decode the response:
-        try:
-            # TODO: Set use_decimal to improve accuracy?
-            return json.loads(content)
-        except json.JSONDecodeError:
-            # Only JSON return types supported, any other return means server
-            # is not configured correctly
-            logger.exception("JSON decode error for '%s' - only JSON "
-                             "supported by this API. Server configuration "
-                             "error? %s\nBody: %s", method, uri, body)
-            raise
-
-    def _attempt_request(self, *args, **kwargs):
-        '''
-        Attempt the request the number of times specified by self.attempts.
-        If the specified number of attempts have failed, raise the exception
-        last raised.
-
-        :param args: Arguments passed into self._request.
-        :type args: list
-        :param kwargs: Keyword arguments passed into self._request.
-        :type kwargs: dict
-        :raises Exception: If self._request() does so in all attempts.
-        :returns: Decoded JSON object if successful.
-        :rtype: dict
-        '''
-        error = None
-        for attempt in range(self.attempts):
-            try:
-                msg = 'API Request args: %s | kwargs: %s' % (args, kwargs)
-                # This log message can be 60k characters.
-                logger.debug(msg[:2000])
-                return self._request(*args, **kwargs)
-            except (APIConnectionError, UnknownAPIError) as error:
-                msg = "'%s' error in request, retrying in %.2f seconds..."
-                logger.exception(msg, error, self.delay)
-                time.sleep(self.delay)
-        if isinstance(error, Exception):
-            raise error
+                message = e.response.json()['error']
+            except:
+                message = 'No error message available or supplied.'
+            if e.response.status_code == requests.codes.not_found:
+                logger.debug(message)
+                raise NotFoundError(message, url, method, params, data, json)
+            else:
+                logger.exception(message)
+                raise APIError(message, url, method, params, data, json)
+        except requests.RequestException:
+            message = 'Unexpected error with connection to the API.'
+            logger.exception(message)
+            raise APIError(message, url, method, params, data, json)
+        except ValueError:
+            # Note: JSONDecodeError only in simplejson or Python 3.5+
+            message = 'Unexpected error decoding response from API.'
+            logger.exception(message)
+            raise APIError(message, url, method, params, data, json)
+        except:
+            message = 'Unexpected error from the API.'
+            logger.exception(message)
+            raise APIError(message, url, method, params, data, json)
 
 
 ##############################################################################
@@ -226,7 +151,3 @@ def get_api_handler(handler_path, *args, **kwargs):
                                 fromlist=[class_name])
     handler_class = getattr(handler_module, class_name)
     return handler_class(*args, **kwargs)
-
-
-##############################################################################
-# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4

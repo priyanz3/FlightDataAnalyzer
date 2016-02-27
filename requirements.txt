@@ -1,13 +1,13 @@
 flightdatautilities
 geomag>=0.9
 hdfaccess
-httplib2>=0.7.0
 matplotlib
 networkx>=1.7
 numpy>=1.9.1
 python-dateutil
 pytz
 pyyaml
+requests
 scipy
 simplejson
 simplekml

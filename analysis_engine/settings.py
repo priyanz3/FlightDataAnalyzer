@@ -35,11 +35,6 @@ LOCAL_API_HANDLER = 'analysis_engine.api_handler_analysis_engine.AnalysisEngineA
 API_HANDLER = LOCAL_API_HANDLER
 BASE_URL = ''  # Must be configured to use HTTP API handler.
 
-# HTTP API Handlers support a proxy. Override in analyser_custom_settings.
-#import httplib2
-#API_PROXY_INFO = httplib2.ProxyInfo(httplib2.socks.PROXY_TYPE_HTTP, 'host', 80)
-API_PROXY_INFO = None
-
 ANALYZER_PATH = os.path.dirname(os.path.realpath(
     sys.executable if getattr(sys, 'frozen', False) else __file__))
 
@@ -52,10 +47,6 @@ LOCAL_API_EXPORTS_PATH = os.path.join(CONFIG_PATH, 'exports.yaml')
 
 # User's home directory, override in analyser_custom_settings.py
 WORKING_DIR = os.path.expanduser('~')
-
-# Location of the CA certificates to be used by the HTTP API handler:
-# Note: This is the system-wide default location on Ubuntu.
-CA_CERTIFICATE_FILE = '/etc/ssl/certs/ca-certificates.crt'
 
 # Cache parameters which are used more than n times in HDF
 CACHE_PARAMETER_MIN_USAGE = 0
@@ -441,9 +432,7 @@ NAME_VALUES_CLIMB = {'altitude': [
 
 NAME_VALUES_DESCENT = {'altitude': NAME_VALUES_CLIMB['altitude'][::-1]}
 
-NAME_VALUES_DEPARTURE_DISTANCE = {'distance': [150, 250]}
-
-NAME_VALUES_ARRIVAL_DISTANCE = {'distance': NAME_VALUES_DEPARTURE_DISTANCE['distance'][::-1]}
+NAME_VALUES_DISTANCE = {'distance': [150, 250]}
 
 ##############################################################################
 # Custom Settings
