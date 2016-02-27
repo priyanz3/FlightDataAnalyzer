@@ -9002,6 +9002,8 @@ class HeadingVariationTouchdownPlus4SecTo60KtsAirspeed(KeyPointValueNode):
                 to_scan = head.array[begin:end + 1]
                 if not np.ma.count(to_scan):
                     continue
+                # Correct for rounding down of array index at first data point.
+                to_scan[0] = value_at_index(head.array, begin)
                 indexes, values = cycle_finder(to_scan)
                 # If the final sample is due to a turnoff, remove this before
                 # examining the wanderings.

@@ -8171,7 +8171,7 @@ class TestHeadingVariationTouchdownPlus4SecTo60KtsAirspeed(unittest.TestCase, No
         # This value ensures the array is not artificially "quiet":
         heading.array[18] = 11
         heading.array[-5] = 20
-        airspeed = P('Airspeed', np.ma.arange(99, 50, -2))
+        airspeed = P('Airspeed True', np.ma.arange(99, 50, -2))
         airspeed.array[-5:] = np.ma.masked
         tdwns = KTI(name='Touchdown', items=[
             KeyTimeInstance(index=10, name='Touchdown'),
@@ -8188,7 +8188,7 @@ class TestHeadingVariationTouchdownPlus4SecTo60KtsAirspeed(unittest.TestCase, No
         heading.array[15] = 15
         # The final samples increase to represent a rapid exit turnoff.
         heading.array[-4:] = [12, 18, 24, 30]
-        airspeed = P('Airspeed', np.ma.arange(107, 58, -2))
+        airspeed = P('Airspeed True', np.ma.arange(107, 58, -2))
         tdwns = KTI(name='Touchdown', items=[
             KeyTimeInstance(index=4, name='Touchdown'),
             ])
@@ -8202,13 +8202,25 @@ class TestHeadingVariationTouchdownPlus4SecTo60KtsAirspeed(unittest.TestCase, No
         heading = P('Heading Continuous', np.ma.array([253.8]*35))
         spd_array = np.ma.array([np.ma.masked]*35)
         spd_array[:26] = np.ma.arange(118.8, 61.6, -2.2)
-        airspeed = P('Airspeed', spd_array)
+        airspeed = P('Airspeed True', spd_array)
         tdwns = KTI(name='Touchdown', items=[
             KeyTimeInstance(index=6, name='Touchdown'),
             ])
         node = self.node_class()
         node.derive(heading, airspeed, tdwns)
         self.assertEqual(len(node), 0, msg="Expected zero KPVs got %s" % len(node))
+
+    def test_first_sample_interpolation(self):
+        heading = P('Heading Continuous', np.ma.array([0]*5+[1, 1, 2, 1, 1.0]))
+        airspeed = P('Airspeed True', np.ma.array([100]*9+[0]))
+        tdwns = KTI(name='Touchdown', items=[
+            KeyTimeInstance(index=0.5, name='Touchdown'),])
+        hvt = HeadingVariationTouchdownPlus4SecTo60KtsAirspeed()
+        hvt.derive(heading, airspeed, tdwns)
+        self.assertEqual(hvt[0].value, 1.5)
+        self.assertEqual(hvt[0].index, 4.5)
+
+
 
 
 class TestHeadingVacatingRunway(unittest.TestCase, NodeTest):
