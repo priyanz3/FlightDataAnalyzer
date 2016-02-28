@@ -1287,7 +1287,7 @@ class InitialClimbStart(KeyTimeInstanceNode):
 
 class LandingStart(KeyTimeInstanceNode):
     # The Landing flight phase is computed to start passing through 50ft
-    # (nominally), so this KTI is just at the end of that phase.
+    # (nominally), so this KTI is just at the start of that phase.
     def derive(self, landings=S('Landing')):
         for landing in landings:
             if landing.start_edge:
