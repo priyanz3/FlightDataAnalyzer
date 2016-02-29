@@ -1888,10 +1888,6 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_FORMAT = '%(distance)d NM From Landing Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
-    @classmethod
-    def can_operate(cls, available):
-        return True
-
     def derive(self,
                lands=KTI('Touchdown'),
                arr=A('FDR Landing Airport'),
