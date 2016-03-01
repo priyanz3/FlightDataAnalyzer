@@ -1843,23 +1843,28 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromAirportMixin(object):
 
-    def calculate(self, ktis, airport, lat, lon, direction):
+    def calculate(self, ktis, holds, airport, lat, lon, direction):
         # We can only handle single liftoffs or touchdowns at this time:
         if len(ktis) != 1 or airport.value is None:
             return
 
         direction = -1 if direction == 'backward' else 1
         for distance in self.NAME_VALUES['distance']:
+            if holds:
+                reference = holds[0].slice.start
+            else:
+                reference = ktis[0].index
             try:
                 index = index_at_distance(
-                    direction * distance, ktis[0].index,
+                    direction * distance, reference,
                     airport.value.get('latitude'),
                     airport.value.get('longitude'),
                     lat.array, lon.array, lat.frequency)
             except ValueError as e:
                 self.exception('Unable to determine distance from airport.')
             else:
-                self.create_kti(index, replace_values={'distance': distance})
+                if index:
+                    self.create_kti(index, replace_values={'distance': distance})
 
 
 class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1878,12 +1883,17 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lifts, dep, lat, lon, direction='forward')
+        self.calculate(lifts, None, dep, lat, lon, direction='forward')
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     '''
     Creates KTIs at certain distances from the arrival airport.
+
+    The inclusion of Holding allows us to make a better estimate of the time to landing
+    for cases where the aircraft sits in a holding pattern for some time before being
+    cleared to land. Holding patterns are well within the 150/250nm range currently envisaged,
+    but this would need to be reviewed if lower ranges were to be added.
     '''
     NAME_FORMAT = '%(distance)d NM From Landing Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
@@ -1894,8 +1904,9 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
 
     def derive(self,
                lands=KTI('Touchdown'),
+               holds=S('Holding'),
                arr=A('FDR Landing Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lands, arr, lat, lon, direction='backward')
+        self.calculate(lands, holds, arr, lat, lon, direction='backward')
