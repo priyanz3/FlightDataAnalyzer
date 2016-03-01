@@ -12290,7 +12290,7 @@ class SpeedbrakeDeployedWithConfDuration(KeyPointValueNode):
 
         for air in airborne:
             spd_brk_dep = spd_brk.array[air.slice] == 'Deployed/Cmd Up'
-            conf_extend = conf.array[air.slice] >= 2.0
+            conf_extend = conf.array.raw[air.slice] >= 2.0
             array = spd_brk_dep & conf_extend
             slices = shift_slices(runs_of_ones(array), air.slice.start)
             self.create_kpvs_from_slice_durations(slices, self.frequency,
