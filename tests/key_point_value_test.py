@@ -500,7 +500,6 @@ from analysis_engine.key_point_values import (
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
     SpeedbrakeDeployedDuringGoAroundDuration,
-    SpeedbrakeDeployedWithConfDuration,
     SpeedbrakeDeployedWithFlapDuration,
     SpeedbrakeDeployedWithPowerOnDuration,
     StallWarningDuration,
@@ -11997,26 +11996,6 @@ class TestSpeedbrakeDeployed1000To20FtDuration(unittest.TestCase, NodeTest):
         self.assertEqual(
             node, [KeyPointValue(140, 20.0,
                                  'Speedbrake Deployed 1000 To 20 Ft Duration')])
-
-
-class TestSpeedbrakeDeployedWithConfDuration(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = SpeedbrakeDeployedWithConfDuration
-        self.operational_combinations = [('Speedbrake Selected', 'Configuration', 'Airborne')]
-
-    def test_derive_basic(self):
-        spd_brk_loop = [0] * 4 + [1] * 2 + [0] * 4
-        values_mapping = {0: 'Undeployed/Cmd Down', 1: 'Deployed/Cmd Up'}
-        spd_brk = M(
-            'Speedbrake Selected', values_mapping=values_mapping,
-            array=np.ma.array(spd_brk_loop * 3))
-        conf = P('Configuration', array=np.ma.array([0] * 10 + range(2, 22)))
-        airborne = buildsection('Airborne', 10, 20)
-        node = self.node_class()
-        node.derive(spd_brk, conf, airborne)
-        self.assertEqual(node, [
-            KeyPointValue(14, 2.0, 'Speedbrake Deployed With Conf Duration')])
 
 
 class TestSpeedbrakeDeployedWithFlapDuration(unittest.TestCase, NodeTest):

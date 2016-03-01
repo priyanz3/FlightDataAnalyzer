@@ -12274,29 +12274,6 @@ class SpeedbrakeDeployed1000To20FtDuration(KeyPointValueNode):
                                                   mark='start')
 
 
-# TODO: Properly test this and compare with flap version above!
-class SpeedbrakeDeployedWithConfDuration(KeyPointValueNode):
-    '''
-    Conf used here, but not tried or tested. Presuming conf 2 / conf 3 should
-    not be used with speedbrakes.
-    '''
-
-    units = ut.SECOND
-
-    def derive(self,
-               spd_brk=M('Speedbrake Selected'),
-               conf=P('Configuration'),
-               airborne=S('Airborne')):
-
-        for air in airborne:
-            spd_brk_dep = spd_brk.array[air.slice] == 'Deployed/Cmd Up'
-            conf_extend = conf.array.raw[air.slice] >= 2.0
-            array = spd_brk_dep & conf_extend
-            slices = shift_slices(runs_of_ones(array), air.slice.start)
-            self.create_kpvs_from_slice_durations(slices, self.frequency,
-                                                  mark='start')
-
-
 class SpeedbrakeDeployedWithFlapDuration(KeyPointValueNode):
     '''
     '''
