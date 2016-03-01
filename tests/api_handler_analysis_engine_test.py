@@ -1,9 +1,5 @@
 import responses
-import simplejson
-import socket
 import unittest
-
-from mock import Mock, patch
 
 from analysis_engine.api_handler import (
     APIError,

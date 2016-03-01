@@ -10,6 +10,7 @@ from analysis_engine.flight_phase import (
     Airborne,
     Approach,
     ApproachAndLanding,
+    Autorotation,
     BouncedLanding,
     ClimbCruiseDescent,
     Climbing,
@@ -29,6 +30,8 @@ from analysis_engine.flight_phase import (
     GoAround5MinRating,
     Grounded,
     Holding,
+    Hover,
+    HoverTaxi,
     IANFinalApproachCourseEstablished,
     IANGlidepathEstablished,
     ILSGlideslopeEstablished,
@@ -41,6 +44,7 @@ from analysis_engine.flight_phase import (
     LevelFlight,
     Mobile,
     RejectedTakeoff,
+    RotorsTurning,
     StraightAndLevel,
     Takeoff,
     Takeoff5MinRating,
@@ -56,13 +60,16 @@ from analysis_engine.flight_phase import (
 )
 from analysis_engine.key_time_instances import BottomOfDescent, TopOfClimb, TopOfDescent
 from analysis_engine.library import integrate, np_ma_zeros_like
-from analysis_engine.node import (A, App, ApproachItem, Attribute, KTI,
+from analysis_engine.node import (A, App, ApproachItem, KTI,
                                   KeyTimeInstance, KPV, KeyPointValue, M,
                                   Parameter, P, S, Section, SectionNode, load)
 from analysis_engine.process_flight import process_flight
 
 from analysis_engine.settings import AIRSPEED_THRESHOLD
 
+
+aeroplane = A('Aircraft Type', 'aeroplane')
+helicopter = A('Aircraft Type', 'helicopter')
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')
@@ -144,11 +151,15 @@ class TestAirborne(unittest.TestCase):
     # outside edges of the envelope.
     def test_can_operate(self):
         node = Airborne
-        expected = ('Altitude AAL For Flight Phases', 'Fast')
-        self.assertTrue(node.can_operate(expected, seg_type=Attribute('Segment Type', 'START_AND_STOP')))
-        self.assertFalse(node.can_operate(expected, seg_type=Attribute('Segment Type', 'GROUND_ONLY')))
+        available = ('Altitude AAL For Flight Phases', 'Fast')
+        self.assertTrue(node.can_operate(available, ac_type=aeroplane, seg_type=A('Segment Type', 'START_AND_STOP')))
+        self.assertFalse(node.can_operate(available, ac_type=aeroplane, seg_type=A('Segment Type', 'GROUND_ONLY')))
+        # aircraft deps invalid for helicopter
+        self.assertFalse(node.can_operate(available, ac_type=helicopter, seg_type=A('Segment Type', 'START_AND_STOP')))
+        available = ('Altitude Radio', 'Altitude AGL', 'Gear On Ground', 'Rotors Turning')
+        self.assertTrue(node.can_operate(available, ac_type=helicopter, seg_type=A('Segment Type', 'START_AND_STOP')))
 
-    def test_airborne_phase_basic(self):
+    def test_airborne_aircraft_basic(self):
         # First sample with altitude more than zero is 6, last with high speed is 80.
         vert_spd_data = np.ma.array([0] * 5 + range(0,400,20)+
                                     range(400,-400,-20)+
@@ -156,93 +167,149 @@ class TestAirborne(unittest.TestCase):
         altitude = Parameter('Altitude AAL For Flight Phases', integrate(vert_spd_data, 1, 0, 1.0/60.0))
         fast = SectionNode('Fast', items=[Section(name='Airborne', slice=slice(3, 80, None), start_edge=3, stop_edge=80)])
         air = Airborne()
-        air.derive(altitude, fast)
+        air.derive(aeroplane, altitude, fast)
         expected = [Section(name='Airborne', slice=slice(8, 80, None), start_edge=8, stop_edge=80)]
         self.assertEqual(list(air), expected)
 
-    def test_airborne_phase_not_fast(self):
+    def test_airborne_aircraft_not_fast(self):
         altitude_data = np.ma.array(range(0,10))
         alt_aal = Parameter('Altitude AAL For Flight Phases', altitude_data)
         fast = SectionNode('Fast')
         air = Airborne()
-        air.derive(alt_aal, fast)
+        air.derive(aeroplane, alt_aal, fast)
         self.assertEqual(air, [])
 
     @unittest.skip('TODO: Test to be amended')
-    def test_airborne_phase_started_midflight(self):
+    def test_airborne_aircraft_started_midflight(self):
         altitude_data = np.ma.array([100]*20+[60,30,10]+[0]*4)
         alt_aal = Parameter('Altitude AAL For Flight Phases', altitude_data)
         fast = buildsection('Fast', None, 25)
         air = Airborne()
-        air.derive(alt_aal, fast)
+        air.derive(aeroplane, alt_aal, fast)
         # The problem here is that buildsection now returns a slice to 24 and
         # a stop_edge to 23. Probably not worth fixing this test if we are
         # going to turn over to segments.
         expected = buildsection('Airborne', None, 23)
         self.assertEqual(air, expected)
 
-    def test_airborne_phase_ends_in_midflight(self):
+    def test_airborne_aircraft_ends_in_midflight(self):
         altitude_data = np.ma.array([0]*5+[30,80]+[100]*20)
         alt_aal = Parameter('Altitude AAL For Flight Phases', altitude_data)
         fast = buildsection('Fast', 2, None)
         air = Airborne()
-        air.derive(alt_aal, fast)
+        air.derive(aeroplane, alt_aal, fast)
         expected = buildsection('Airborne', 5, None)
         self.assertEqual(list(air), list(expected))
 
-    def test_airborne_fast_with_gaps(self):
+    def test_airborne_aircraft_fast_with_gaps(self):
         alt_aal = P('Altitude AAL For Flight Phases',
                     np.ma.arange(60)+10000,frequency=0.1)
         fast = buildsections('Fast', [1,10],[15,24],[30,36],[40,50],[55,59])
         fast.frequency = 0.1
         air = Airborne()
-        air.derive(alt_aal, fast)
+        air.derive(aeroplane, alt_aal, fast)
         self.assertEqual(len(air), 2)
         self.assertEqual(air[0].slice.start, 1)
         self.assertEqual(air[0].slice.stop, 24)
         self.assertEqual(air[1].slice.start, 30)
         self.assertEqual(air[1].slice.stop, 59)
 
-    def test_airborne_no_height_change(self):
+    def test_airborne_aircraft_no_height_change(self):
         alt_aal = P('Altitude AAL For Flight Phases',
                     np.ma.array([10000]*60),frequency=0.1)
         fast = buildsections('Fast', [1,10],[15,24],[30,36],[40,50],[55,59])
         fast.frequency = 0.1
         air = Airborne()
-        air.derive(alt_aal, fast)
+        air.derive(aeroplane, alt_aal, fast)
         self.assertEqual(len(air), 0)
+    
+    def test_airborne_helicopter_basic(self):
+        gog=M(name='Gear On Ground', array=np.ma.array([0]*3+[1]*5+[0]*30+[1]*5, dtype=int), frequency=1, offset=0, values_mapping={1:'Ground', 0:'Air'})
+        agl = P(name= 'Altitude AGL', array=np.ma.array([2.0]*4+[0.0]*3+[20.0]*30+[0.0]*6,dtype=float))
+        rtr = buildsection('Rotors Turning', 0, 40)
+        node=Airborne()
+        node.derive(helicopter, None, None, agl, agl, gog, rtr)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].slice.start, 3.5)
+        self.assertEqual(node[0].slice.stop, 36.95)
+    
+    def test_airborne_helicopter_short(self):
+        gog=M(name='Gear On Ground', array=np.ma.array([0]*3+[1]*5+[0]*10+[1]*5, dtype=int), frequency=1, offset=0, values_mapping={1:'Ground', 0:'Air'})
+        agl = P(name= 'Altitude AGL', array=np.ma.array([2.0, 0.0, 0.0]+[0.0]*4+[20.0]*10+[0.0]*6,dtype=float))
+        rtr = buildsection('Rotors Turning', 0, 40)
+        node=Airborne()
+        node.derive(helicopter, None, None, agl, agl, gog, rtr)
+        self.assertEqual(len(node), 1)
+
+    def test_airborne_helicopter_radio_refinement(self):
+        '''
+        Confirms that the beginning and end are trimmed to match the radio signal, not the (smoothed) AGL data.
+        '''
+        gog=M(name='Gear On Ground', array=np.ma.array([0]*3+[1]*5+[0]*10+[1]*5, dtype=int), frequency=1, offset=0, values_mapping={1:'Ground', 0:'Air'})
+        agl = P(name= 'Altitude AGL', array=np.ma.array([0.0]*6+[20.0]*12+[0.0]*5,dtype=float))
+        rad = P(name= 'Altitude Radio', array=np.ma.array([0.0]*7+[10.0]*10+[0.0]*6,dtype=float))
+        rtr = buildsection('Rotors Turning', 0, 40)
+        node=Airborne()
+        node.derive(helicopter, None, None, rad, agl, gog, rtr)
+        self.assertEqual(node[0].start_edge, 6.1)
+        self.assertEqual(node[0].stop_edge, 16.9)
+
+    def test_airborne_helicopter_overlap(self):
+        gog=M(name='Gear On Ground',  array=np.ma.array([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1], dtype=int), values_mapping={1:'Ground', 0:'Air'})
+        agl = P(name= 'Altitude AGL', array=np.ma.array([0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 2, 0], dtype=float), frequency=0.2)
+        rtr = buildsection('Rotors Turning', 0, 40)
+        node=Airborne()
+        node.derive(helicopter, None, None, agl, agl, gog, rtr)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].slice.start, 3.2)
+        self.assertEqual(node[0].slice.stop, 6)
+        self.assertEqual(node[1].slice.start, 8)
+        self.assertEqual(node[1].slice.stop, 10.5)
+
+    def test_airborne_helicopter_cant_fly_without_rotor_turning(self):
+        gog=M(name='Gear On Ground',  array=np.ma.array([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1], dtype=int), values_mapping={1:'Ground', 0:'Air'})
+        agl = P(name= 'Altitude AGL', array=np.ma.array([0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 2, 0], dtype=float), frequency=0.2)
+        rtr = buildsection('Rotors Turning', 0, 0)
+        node=Airborne()
+        node.derive(helicopter, None, None, agl, agl, gog, rtr)
+        self.assertEqual(len(node), 0)
 
 
 class TestApproachAndLanding(unittest.TestCase):
     def test_can_operate(self):
         node = ApproachAndLanding
-        start_stop = Attribute('Segment Type', 'START_AND_STOP')
-        ground_only = Attribute('Segment Type', 'GROUND_ONLY')
+        start_stop = A('Segment Type', 'START_AND_STOP')
+        ground_only = A('Segment Type', 'GROUND_ONLY')
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight', 'Landing',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Landing'),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight'),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
 
         self.assertFalse(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight'),
-                                              seg_type=ground_only))
+                                          ac_type=aeroplane, seg_type=ground_only))
+        # aircraft deps for helicopter invalid
+        self.assertFalse(node.can_operate(('Altitude AAL For Flight Phases', 'Landing'),
+                                          ac_type=helicopter, seg_type=start_stop))
+        self.assertTrue(node.can_operate(('Approach', 'Landing'),
+                                         ac_type=helicopter, seg_type=start_stop))
 
-    def test_approach_and_landing_basic(self):
+    def test_approach_and_landing_aircraft_basic(self):
         alt = np.ma.array(range(5000, 500, -500) + [0] * 10)
         # No Go-arounds detected
         gas = KTI(items=[])
         app = ApproachAndLanding()
-        app.derive(Parameter('Altitude AAL For Flight Phases', alt), None, None)
+        app.derive(aeroplane, Parameter('Altitude AAL For Flight Phases', alt), None, None, None)
         self.assertEqual(app.get_slices(), [slice(4.0, 9)])
 
-    def test_go_around_below_1500ft(self):
+    def test_approach_and_landing_aircraft_go_around_below_1500ft(self):
         alt_aal = load(os.path.join(test_data_path,
                                     'GoAroundAndClimbout_alt_aal.nod'))
         app_ldg = ApproachAndLanding()
-        app_ldg.derive(alt_aal, None, None)
+        app_ldg.derive(aeroplane, alt_aal, None, None, None)
         self.assertEqual(len(app_ldg), 6)
         self.assertAlmostEqual(app_ldg[0].slice.start, 1005, places=0)
         self.assertAlmostEqual(app_ldg[0].slice.stop, 1111, places=0)
@@ -257,7 +324,7 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_ldg[5].slice.start, 2680, places=0)
         self.assertAlmostEqual(app_ldg[5].slice.stop, 2806, places=0)
 
-    def test_go_around_2(self):
+    def test_approach_and_landing_aircraft_go_around_2(self):
         alt_aal = load(os.path.join(test_data_path, 'alt_aal_goaround.nod'))
         level_flights = SectionNode('Level Flight')
         level_flights.create_sections([
@@ -269,7 +336,7 @@ class TestApproachAndLanding(unittest.TestCase):
             slice(8433.0, 9058.0, None)])
         landings = buildsection('Landing', 10500, 10749)
         app_ldg = ApproachAndLanding()
-        app_ldg.derive(alt_aal, level_flights, landings)
+        app_ldg.derive(aeroplane, alt_aal, level_flights, None, landings)
         self.assertEqual(len(app_ldg), 4)
         self.assertAlmostEqual(app_ldg[0].slice.start, 3425, places=0)
         self.assertAlmostEqual(app_ldg[0].slice.stop, 3632, places=0)
@@ -281,11 +348,11 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_ldg[3].slice.stop, 10750, places=0)
 
 
-    def test_with_go_around_and_climbout_atr42_data(self):
+    def test_approach_and_landing_aircraft_with_go_around_and_climbout_atr42_data(self):
         alt_aal = load(os.path.join(test_data_path,
                                     'AltitudeAAL_ATR42_two_goarounds.nod'))
         app_ldg = ApproachAndLanding()
-        app_ldg.derive(alt_aal, None, None)
+        app_ldg.derive(aeroplane, alt_aal, None, None, None)
         self.assertEqual(len(app_ldg), 3)
         self.assertAlmostEqual(app_ldg[0].slice.start, 9771, places=0)
         self.assertAlmostEqual(app_ldg[0].slice.stop, 10810, places=0)
@@ -295,7 +362,7 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_ldg[2].slice.stop, 27359, places=0)
 
     @unittest.skip('Algorithm does not successfully this noisy signal.')
-    def test_146_oscillating_1(self):
+    def test_approach_and_landing_aircraft_146_oscillating_1(self):
         # Example flight with noisy alt aal
         array = load_compressed(os.path.join(test_data_path, 'find_low_alts_alt_aal_1.npz'))
         alt_aal = P('Altitude AAL For Flight Phases', frequency=2, array=array)
@@ -344,7 +411,7 @@ class TestApproachAndLanding(unittest.TestCase):
 
         app_lands = ApproachAndLanding(frequency=2)
 
-        app_lands.get_derived([alt_aal, level_flights, lands])
+        app_lands.get_derived([aeroplane, alt_aal, level_flights, None, lands])
         app_lands = app_lands.get_slices()
         self.assertEqual(len(app_lands), 3)
         self.assertAlmostEqual(app_lands[0].start, 3037, places=0)
@@ -355,7 +422,7 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_lands[2].stop, 22400, places=0)
 
     @unittest.skip('Algorithm is confused by oscillating altitude.')
-    def test_146_oscillating_2(self):
+    def test_approach_and_landing_aircraft_146_oscillating_2(self):
         # Example flight with noisy alt aal
         alt_aal = load(os.path.join(test_data_path, 'ApproachAndLanding_alt_aal_1.nod'))
         level_flights = load(os.path.join(test_data_path, 'ApproachAndLanding_level_flights_1.nod'))
@@ -363,48 +430,58 @@ class TestApproachAndLanding(unittest.TestCase):
 
         app_lands = ApproachAndLanding(frequency=2)
 
-        app_lands.get_derived([alt_aal, level_flights, landings])
+        app_lands.get_derived([aeroplane, alt_aal, level_flights, None, landings])
         app_lands = app_lands.get_slices()
         self.assertEqual(len(app_lands), 2)
         self.assertAlmostEqual(app_lands[0].start, 8824, places=0)
         self.assertAlmostEqual(app_lands[0].stop, 9980, places=0)
         self.assertAlmostEqual(app_lands[1].start, 29173, places=0)
         self.assertAlmostEqual(app_lands[1].stop, 29726, places=0)
+    
+    def test_approach_and_landing_helicopter(self):
+        apps = buildsection('Approach', 2, 5)
+        lands = buildsection('Landing', 4, 7)
+        node=ApproachAndLanding()
+        node.derive(helicopter, None, None, apps, lands)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node.get_slices()[0].start, 2)
+        self.assertEqual(node.get_slices()[0].stop, 8)
 
 
 class TestApproach(unittest.TestCase):
 
     def test_can_operate(self):
         node = Approach
-        start_stop = Attribute('Segment Type', 'START_AND_STOP')
-        ground_only = Attribute('Segment Type', 'GROUND_ONLY')
+        start_stop = A('Segment Type', 'START_AND_STOP')
+        ground_only = A('Segment Type', 'GROUND_ONLY')
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight', 'Landing',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Landing'),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight'),
-                                             seg_type=start_stop))
-
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertFalse(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight'),
-                                              seg_type=ground_only))
+                                          ac_type=aeroplane, seg_type=ground_only))
+        self.assertTrue(node.can_operate(('Altitude AGL', 'Altitude STD'),
+                                          ac_type=helicopter, seg_type=start_stop))
 
-    def test_approach_basic(self):
+    def test_approach_aircraft_basic(self):
         alt = np.ma.array(range(5000, 500, -500) + [50] + [0] * 10)
         app = Approach()
         land = buildsection('Landing', 11,14)
-        app.derive(Parameter('Altitude AAL For Flight Phases', alt), None, land)
+        app.derive(aeroplane, Parameter('Altitude AAL For Flight Phases', alt), None, land)
         self.assertEqual(app.get_slices(), [slice(4.0, 9)])
 
-    def test_ignore_takeoff(self):
+    def test_approach_aircraft_ignore_takeoff(self):
         alt = np.ma.array([0]*5+range(0,5000,500)+range(5000,500,-500)+[0]*5)
         app = Approach()
         land = buildsection('Landing', 11,14)
-        app.derive(Parameter('Altitude AAL For Flight Phases', alt), None, land)
+        app.derive(aeroplane, Parameter('Altitude AAL For Flight Phases', alt), None, land)
         self.assertEqual(len(app), 1)
 
-    def test_with_go_around_and_climbout_atr42_data(self):
+    def test_approach_aircraft_with_go_around_and_climbout_atr42_data(self):
         alt_aal = load(os.path.join(test_data_path,
                                     'AltitudeAAL_ATR42_two_goarounds.nod'))
         #alt_aal.array[9860:10180] = 2560
@@ -422,7 +499,7 @@ class TestApproach(unittest.TestCase):
             (25376, 25837),
         )
         app = Approach()
-        app.derive(alt_aal, level_flights, landing)
+        app.derive(aeroplane, alt_aal, level_flights, landing)
 
         self.assertEqual(len(app), 3)
         self.assertAlmostEqual(app[0].slice.start,10207, places=0)
@@ -431,6 +508,51 @@ class TestApproach(unittest.TestCase):
         self.assertAlmostEqual(app[1].slice.stop, 12631, places=0)
         self.assertAlmostEqual(app[2].slice.start,26926, places=0)
         self.assertAlmostEqual(app[2].slice.stop, 27342, places=0)
+
+
+class TestAutorotation(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Autorotation
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Eng (*) Np Max', 'Nr', 'Descending'),
+                                                    ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Eng (*) Np Max', 'Nr', 'Descending'),
+                                                     ac_type=aeroplane))
+
+    @unittest.SkipTest
+    def test_derive(self):
+        self.assertTrue(False)
+
+    def test_derive_no_auto(self):
+        descs = buildsections('Descending', [4,13], [15,27])
+        eng_np = P(name='Eng (*) Np Max', array=np.ma.array([100]*30,dtype=float))
+        nr = P(name= 'Nr', array=np.ma.array([100]*30,dtype=float))
+        node = Autorotation()
+        node.derive(eng_np , nr, descs)
+        self.assertEqual(len(node), 0)
+
+    def test_derive_one_auto(self):
+        descs = buildsections('Descending', [4,13], [15,27])
+        eng_np = P(name='Eng (*) Np Max', array=np.ma.array([100]*30,dtype=float))
+        nr = P(name= 'Nr', array=np.ma.array([100]*30,dtype=float))
+        nr.array[16:19] = 105
+        nr.array[22:26] = 102
+        node = Autorotation()
+        node.derive(eng_np , nr, descs)
+        self.assertEqual(len(node), 1)
+
+    def test_derive_two_autos(self):
+        descs = buildsections('Descending', [4,13], [15,27])
+        eng_np = P(name='Eng (*) Np Max', array=np.ma.array([100]*30,dtype=float))
+        nr = P(name= 'Nr', array=np.ma.array([100]*30,dtype=float))
+        nr.array[6:10] = 105
+        nr.array[18:20] = 102
+        node = Autorotation()
+        node.derive(eng_np , nr, descs)
+        self.assertEqual(len(node), 2)
 
 
 class TestBouncedLanding(unittest.TestCase):
@@ -468,6 +590,112 @@ class TestBouncedLanding(unittest.TestCase):
         bl.derive(aal, airs, fast)
         # should not create any bounced landings (used to create 20 at 8000ft)
         self.assertEqual(len(bl), 0)
+
+
+class TestHover(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Hover
+
+    def test_can_operate(self):
+        available = ('Altitude AGL', 'Airborne', 'Groundspeed')
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(available, ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(available, ac_type=aeroplane))
+
+    def test_derive_basic(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([0]*5+[10]*30+[0]*5,dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*40, dtype=float))
+        airs = buildsections('Airborne', [6, 26])
+        t_hf = buildsections('Transition Hover To Flight', [22, 24])
+        t_fh = buildsections('Transition Flight To Hover', [8, 10])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd, t_hf, t_fh)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].slice.start, 11)
+        self.assertEqual(node[0].slice.stop, 22)
+
+    def test_derive_null_transitions(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([0]*5+[10]*10+[0]*5,dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*20, dtype=float))
+        airs = buildsections('Airborne', [6, 16])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd, None, None)
+        self.assertEqual(len(node), 1)
+
+    def test_derive_too_high(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([310]*30,dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*30, dtype=float))
+        airs = buildsections('Airborne', [1,13], [15,27])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd)
+        self.assertEqual(len(node), 0)
+
+    def test_derive_too_short(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([0]*30,dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*30, dtype=float))
+        airs = buildsections('Airborne', [6,8], [15,27])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd)
+        self.assertEqual(len(node), 1)
+
+    def test_derive_not_without_transition(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([0]*5+[10]*45+[400]*50+[250]*50+[400]*30+[0]*20,dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*200, dtype=float))
+        airs = buildsections('Airborne', [6, 200])
+        t_hf = buildsections('Transition Hover To Flight', [22, 24])
+        t_fh = buildsections('Transition Flight To Hover', [180, 190])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd, t_hf, t_fh)
+        self.assertEqual(len(node), 2)
+
+    def test_derive_not_dip(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([310]*10+[290]*10+[310]*10, dtype=float))
+        gspd = P('Groundspeed', array=np.ma.array([0]*30, dtype=float))
+        airs = buildsections('Airborne', [0, 30])
+        t_hf = buildsections('Transition Hover To Flight', [2, 4])
+        t_fh = buildsections('Transition Flight To Hover', [28, 30])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd, t_hf, t_fh)
+        self.assertEqual(len(node), 0)
+
+    def test_derive_too_fast(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([10]*30, dtype=float), frequency=0.2)
+        gspd = P('Groundspeed', array=np.ma.array([0]*10+[20]*10+[0]*10, dtype=float))
+        airs = buildsections('Airborne', [0, 30])
+        t_hf = buildsections('Transition Hover To Flight', [2, 4])
+        t_fh = buildsections('Transition Flight To Hover', [28, 30])
+        node = Hover()
+        node.derive(alt_agl, airs, gspd)
+        self.assertEqual(len(node), 2)
+
+
+class TestHoverTaxi(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = HoverTaxi
+
+    def test_can_operate(self):
+        available = ('Altitude AGL', 'Airborne', 'Hover')
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(available, ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(available, ac_type=aeroplane))
+
+    def test_derive_basic(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([0]*5+[10]*30+[0]*5,dtype=float))
+        alt_agl.array[14] = 20.0
+        alt_agl.array[17] = 60.0
+        hovers = buildsections('Hover', [6, 8], [24,26])
+        airs = buildsections('Airborne', [6, 26])
+        t_hf = buildsections('Transition Hover To Flight', [12, 15])
+        t_fh = buildsections('Transition Flight To Hover', [18, 20])
+        node = HoverTaxi()
+        node.derive(alt_agl, airs, hovers, t_hf, t_fh)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].slice.start, 9)
+        self.assertEqual(node[0].slice.stop, 12)
+        self.assertEqual(node[1].slice.start, 21)
+        self.assertEqual(node[1].slice.stop, 24)
 
 
 class TestIANFinalApproachCourseEstablished(unittest.TestCase):
@@ -1174,8 +1402,8 @@ class TestInitialCruise(unittest.TestCase):
 class TestDescentLowClimb(unittest.TestCase):
     def test_can_operate(self):
         node = DescentLowClimb
-        start_stop = Attribute('Segment Type', 'START_AND_STOP')
-        ground_only = Attribute('Segment Type', 'GROUND_ONLY')
+        start_stop = A('Segment Type', 'START_AND_STOP')
+        ground_only = A('Segment Type', 'GROUND_ONLY')
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases',),
                                              seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Level Flight'),
@@ -1260,8 +1488,6 @@ class TestDescent(unittest.TestCase):
 
 class TestFast(unittest.TestCase):
     def test_can_operate(self):
-        aeroplane = A('Aircraft Type', 'aeroplane')
-        helicopter = A('Aircraft Type', 'helicopter')
         self.assertTrue(Fast.can_operate(('Airspeed For Flight Phases',),
                                         ac_type=aeroplane))
         self.assertTrue(Fast.can_operate(('Nr',),
@@ -1345,63 +1571,61 @@ class TestFast(unittest.TestCase):
 
 class TestGrounded(unittest.TestCase):
     def test_can_operate(self):
-        expected = [
-            ('HDF Duration',),
-            ('Airborne', 'HDF Duration'),
-            ('Airspeed For Flight Phases', 'HDF Duration'),
-            ('Airborne', 'Airspeed For Flight Phases', 'HDF Duration')
-        ]
+        self.assertTrue(Grounded.can_operate(('HDF Duration',), ac_type=aeroplane))
+        self.assertTrue(Grounded.can_operate(('Airborne', 'HDF Duration'), ac_type=aeroplane))
+        self.assertTrue(Grounded.can_operate(('Airspeed For Flight Phases', 'HDF Duration'), ac_type=aeroplane))
+        self.assertTrue(Grounded.can_operate(('Airborne', 'Airspeed For Flight Phases', 'HDF Duration'), ac_type=aeroplane))
+        self.assertFalse(Grounded.can_operate(('HDF Duration',), ac_type=helicopter))
+        self.assertTrue(Grounded.can_operate(('Airborne', 'Airspeed'), ac_type=helicopter))
 
-        self.assertEqual(Grounded.get_operational_combinations(), expected)
-
-    def test_grounded_phase_basic(self):
+    def test_grounded_aircraft_phase_basic(self):
         slow_and_fast_data = \
             np.ma.array(range(60, 120, 10) + [120] * 300 + range(120, 50, -10))
         ias = Parameter('Airspeed For Flight Phases', slow_and_fast_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', 2, 311)
         phase_grounded = Grounded()
-        phase_grounded.derive(air, ias, duration)
+        phase_grounded.derive(aeroplane, ias, duration, None, air)
         expected = buildsections('Grounded', [0, 2], [311, 313])
         self.assertEqual(phase_grounded.get_slices(), expected.get_slices())
 
-    def test_grounded_all_fast(self):
+    def test_grounded_aircraft_all_fast(self):
         grounded_data = np.ma.array([120] * 10)
         ias = Parameter('Airspeed For Flight Phases', grounded_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', None, None)
         phase_grounded = Grounded()
-        phase_grounded.derive(air, ias, duration)
+        phase_grounded.derive(aeroplane, ias, duration, None, air)
         expected = buildsection('Grounded', None, None)
         self.assertEqual(phase_grounded.get_slices(), expected.get_slices())
 
-    def test_grounded_all_slow(self):
+    def test_grounded_aircraft_all_slow(self):
         grounded_data = np.ma.array([12]*10)
         ias = Parameter('Airspeed For Flight Phases', grounded_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', None, None)
         phase_grounded = Grounded()
-        phase_grounded.derive(air, ias, duration)
+        phase_grounded.derive(aeroplane, ias, duration, None, air)
         expected = buildsection('Grounded', 0, 9)
         self.assertEqual(phase_grounded.get_first().slice, expected[0].slice)
 
-    def test_grounded_landing_only(self):
+    def test_grounded_aircraft_landing_only(self):
         grounded_data = np.ma.arange(110,60,-10)
         ias = Parameter('Airspeed For Flight Phases', grounded_data,1,0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne',None,4)
         phase_grounded = Grounded()
-        phase_grounded.derive(air, ias, duration)
+        phase_grounded.derive(aeroplane, ias, duration, None, air)
         expected = buildsection('Grounded',4,4)
         self.assertEqual(phase_grounded.get_first().slice, expected[0].slice)
 
-    def test_grounded_speeding_only(self):
+    def test_grounded_aircraft_speeding_only(self):
         grounded_data = np.ma.arange(60,120,10)
         ias = Parameter('Airspeed For Flight Phases', grounded_data,1,0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne',2,None)
         phase_grounded = Grounded()
-        phase_grounded.derive(air, ias, duration)
+        phase_grounded.derive(aeroplane, ias, duration, None, air)
         expected = buildsection('Grounded',0,1)
         self.assertEqual(phase_grounded.get_first().slice, expected[0].slice)
 
@@ -1449,8 +1673,8 @@ class TestGoAroundAndClimbout(unittest.TestCase):
 
     def test_can_operate(self):
         node = GoAroundAndClimbout
-        start_stop = Attribute('Segment Type', 'START_AND_STOP')
-        ground_only = Attribute('Segment Type', 'GROUND_ONLY')
+        start_stop = A('Segment Type', 'START_AND_STOP')
+        ground_only = A('Segment Type', 'GROUND_ONLY')
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases','Level Flight'),
                                              seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases',),
@@ -1578,10 +1802,11 @@ class TestGoAroundAndClimbout(unittest.TestCase):
 
 class TestHolding(unittest.TestCase):
     def test_can_operate(self):
-        self.assertEqual(Holding.get_operational_combinations(),
-                         [('Altitude AAL For Flight Phases',
-                          'Heading Increasing','Latitude Smoothed',
-                          'Longitude Smoothed')])
+        self.assertEqual(
+            Holding.get_operational_combinations(ac_type=aeroplane),
+            [('Altitude AAL For Flight Phases',
+             'Heading Increasing','Latitude Smoothed',
+             'Longitude Smoothed')])
 
     def test_straightish_not_detected(self):
         hdg=P('Heading Increasing', np.ma.arange(3000)*0.45)
@@ -1590,7 +1815,7 @@ class TestHolding(unittest.TestCase):
         lon=P('Longitude Smoothed', np.ma.array([24.0]*3000))
         hold=Holding()
         hold.derive(alt, hdg, lat, lon)
-        expected=[]
+        expected = []
         self.assertEqual(hold, expected)
 
     def test_bent_detected(self):
@@ -1654,62 +1879,67 @@ class TestHolding(unittest.TestCase):
 class TestLanding(unittest.TestCase):
     def test_can_operate(self):
         node = Landing
-        start_stop = Attribute('Segment Type', 'START_AND_STOP')
-        ground_only = Attribute('Segment Type', 'GROUND_ONLY')
+        start_stop = A('Segment Type', 'START_AND_STOP')
+        ground_only = A('Segment Type', 'GROUND_ONLY')
         self.assertTrue(node.can_operate(('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Heading Continuous', 'Altitude AAL For Flight Phases',),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases', 'Fast'),
-                                             seg_type=start_stop))
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertTrue(node.can_operate(('Altitude AAL For Flight Phases'),
-                                             seg_type=start_stop))
-
+                                         ac_type=aeroplane, seg_type=start_stop))
         self.assertFalse(node.can_operate(('Altitude AAL For Flight Phases'),
-                                              seg_type=ground_only))
+                                          ac_type=aeroplane, seg_type=ground_only))
+        self.assertTrue(node.can_operate(('Altitude AGL', 'Collective', 'Touchdown'),
+                                         ac_type=helicopter, seg_type=start_stop))
 
-    def test_landing_basic(self):
+    def test_landing_aircraft_basic(self):
         head = np.ma.array([20]*8+[10,0])
         alt_aal = np.ma.array([80,40,20,5]+[0]*6)
-        phase_fast = buildsection('Fast',0,5)
+        phase_fast = buildsection('Fast', 0, 5)
         landing = Landing()
-        landing.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = buildsection('Landing', 0.75, 9)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_turnoff(self):
+    def test_landing_aircraft_turnoff(self):
         head = np.ma.array([20]*15+range(20,0,-2))
         alt_aal = np.ma.array([80,40,20,5]+[0]*26)
         phase_fast = buildsection('Fast',0,5)
         landing = Landing()
-        landing.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = buildsection('Landing', 0.75, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_turnoff_left(self):
+    def test_landing_aircraft_turnoff_left(self):
         head = np.ma.array([20]*15+range(20,0,-2))*-1.0
         alt_aal = np.ma.array([80,40,20,5]+[0]*26)
         phase_fast = buildsection('Fast', 0, 5)
         landing = Landing()
-        landing.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = buildsection('Landing', 0.75, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_with_multiple_fast(self):
+    def test_landing_aircraft_with_multiple_fast(self):
         # ensure that the result is a single phase!
         head = np.ma.array([20]*15+range(20,0,-2))
         alt_aal = np.ma.array(range(140,0,-10)+[0]*26)
         # first test the first section that is not within the landing heights
         phase_fast = buildsections('Fast', [2, 5], [7, 10])
         landing = Landing()
-        landing.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         self.assertEqual(len(landing), 1)
         self.assertEqual(landing[0].slice.start, 9)
@@ -1718,12 +1948,23 @@ class TestLanding(unittest.TestCase):
         # second, test both sections are within the landing section of data
         phase_fast = buildsections('Fast', [0, 12], [14, 15])
         landing = Landing()
-        landing.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         self.assertEqual(len(landing), 1)
         self.assertEqual(landing[0].slice.start, 9)
         self.assertEqual(landing[0].slice.stop, 24)
+    
+    def test_landing_helicopter_basic(self):
+        alt_agl = P(name='Altitude AGL', array=np.ma.array([50]*5+range(45,0,-5)+[0]*5,dtype=float))
+        coll = P(name='Collective', array=np.ma.array([53]*5+range(48,3,-5)+[3]*5,dtype=float))
+        tdn=KTI(items=[KeyTimeInstance(15, 'Touchdown')])
+        node = Landing()
+        node.derive(helicopter, None, None, None, alt_agl, coll, tdn)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].slice.start, 10)
+        self.assertEqual(node[0].slice.stop, 15)
 
 
 class TestLandingRoll(unittest.TestCase):
@@ -1951,19 +2192,49 @@ class TestRejectedTakeoff(unittest.TestCase):
         self.assertEqual(len(node), 0)
 
 
+class TestRotorsTurning(unittest.TestCase):
+    def setUp(self):
+        self.node_class = RotorsTurning
+    
+    def test_can_operate(self):
+        self.assertTrue(self.node_class.can_operate(('Rotors Running'),
+                                                    ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Rotors Running'),
+                                                     ac_type=aeroplane))
+
+    def test_derive_basic(self):
+        running = M('Rotors Running', np.ma.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0]),
+                    values_mapping={0: 'Not Running', 1: 'Running',})
+        node=RotorsTurning()
+        node.derive(running)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].slice.start, 1)
+        self.assertEqual(node[0].slice.stop, 4)
+        self.assertEqual(node[1].slice.start, 7)
+        self.assertEqual(node[1].slice.stop, 11)
+
+
 class TestTakeoff(unittest.TestCase):
     def test_can_operate(self):
         # Airborne dependency added to avoid trying to derive takeoff when
         # aircraft never airborne
-        self.assertEqual(Takeoff.get_operational_combinations(),
-                         [('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast', 'Airborne')])
+        available = ('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast', 'Airborne')
+        seg_type = A('Segment Type', 'START_AND_STOP')
+        self.assertTrue(Takeoff.can_operate(available, ac_type=aeroplane, seg_type=seg_type))
+        seg_type.value = 'NO_MOVEMENT'
+        self.assertFalse(Takeoff.can_operate(available, ac_type=aeroplane, seg_type=seg_type))
+        seg_type.value = 'START_ONLY'
+        self.assertFalse(Takeoff.can_operate(available, ac_type=helicopter, seg_type=seg_type))
+        available = ('Altitude AGL', 'Collective', 'Liftoff')
+        self.assertTrue(Takeoff.can_operate(available, ac_type=helicopter, seg_type=seg_type))
 
     def test_takeoff_basic(self):
         head = np.ma.array([ 0,0,10,20,20,20,20,20,20,20,20])
         alt_aal = np.ma.array([0,0,0,0,0,0,0,0,10,30,70])
         phase_fast = buildsection('Fast', 6.5, 10)
         takeoff = Takeoff()
-        takeoff.derive(P('Heading Continuous', head),
+        takeoff.derive(aeroplane,
+                       P('Heading Continuous', head),
                        P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = buildsection('Takeoff', 1.5, 9.125)
@@ -1975,12 +2246,13 @@ class TestTakeoff(unittest.TestCase):
         This test aims to replicate the problem, and shows that with a None
         slice an empty takeoff phase is produced.
         '''
-        head = np.ma.array([ 0,0,10,20,20,20,20,20,20,20,20])
+        head = np.ma.array([0,0,10,20,20,20,20,20,20,20,20])
         alt_aal = np.ma.array([0,0,0,0,0,0,0,0,10,30,70])
         phase_fast = buildsection('Fast', None, None)
         takeoff = Takeoff()
-        takeoff.derive(P('Heading Continuous',head),
-                       P('Altitude AAL For Flight Phases',alt_aal),
+        takeoff.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = []
         self.assertEqual(takeoff, expected)
@@ -2218,11 +2490,12 @@ class TestEngHotelMode(unittest.TestCase):
         self.node_class = EngHotelMode
 
     def test_can_operate(self):
-        family = Attribute('Family', value='ATR-42')
+        family = A('Family', value='ATR-42')
         available = ['Eng (2) Np', 'Eng (1) N1', 'Eng (2) N1', 'Grounded', 'Propeller Brake']
-        self.assertTrue(self.node_class.can_operate(available, family=family))
+        self.assertTrue(self.node_class.can_operate(available, ac_type=aeroplane, family=family))
+        self.assertFalse(self.node_class.can_operate(available, ac_type=helicopter, family=family))
         family.value = 'B737'
-        self.assertFalse(self.node_class.can_operate(available, family=family))
+        self.assertFalse(self.node_class.can_operate(available, ac_type=aeroplane, family=family))
 
     def test_derive_basic(self):
         range_array = np.arange(0, 50, 5)
@@ -2392,8 +2665,8 @@ class TestTakeoffRollOrRejectedTakeoff(unittest.TestCase):
 
 class TestTakeoffRotation(unittest.TestCase):
     def test_can_operate(self):
-        self.assertEqual(TakeoffRotation.get_operational_combinations(),
-                         [('Liftoff',)])
+        self.assertTrue(TakeoffRotation.can_operate(('Liftoff',), ac_type=aeroplane))
+        self.assertFalse(TakeoffRotation.can_operate(('Liftoff',), ac_type=helicopter))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

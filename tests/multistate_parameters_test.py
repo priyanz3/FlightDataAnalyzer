@@ -36,6 +36,7 @@ from analysis_engine.multistate_parameters import (
     APVerticalMode,
     APUOn,
     APURunning,
+    ASEEngaged,
     Configuration,
     Daylight,
     DualInput,
@@ -75,6 +76,7 @@ from analysis_engine.multistate_parameters import (
     PackValvesOpen,
     PilotFlying,
     PitchAlternateLaw,
+    RotorsRunning,
     Slat,
     SlatExcludingTransition,
     SlatFullyExtended,
@@ -591,6 +593,63 @@ class TestAPChannelsEngaged(unittest.TestCase, NodeTest):
                    offset=0.25)
 
         assert_array_equal(expected.array, eng.array)
+
+
+class TestASEEngaged(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = ASEEngaged
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'aeroplane')), [])
+        opts = self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'helicopter'))
+        expected = [
+            ('ASE (1) Engaged',),
+            ('ASE (2) Engaged',),
+            ('ASE (3) Engaged',),
+            ('ASE (1) Engaged', 'ASE (2) Engaged'),
+            ('ASE (1) Engaged', 'ASE (3) Engaged'),
+            ('ASE (2) Engaged', 'ASE (3) Engaged'),
+            ('ASE (1) Engaged', 'ASE (2) Engaged', 'ASE (3) Engaged'),
+        ]
+        self.assertEqual(opts, expected)
+
+    def test_single_ase(self):
+        ase1 = M(array=np.ma.array(data=[0,0,1,1,0,0]),
+                values_mapping={1:'Engaged',0:'-'},
+                name='AP (1) Engaged')
+        ase2 = ase3 = None
+
+        node = self.node_class()
+        node.derive(ase1, ase2, ase3)
+
+        expected = M(array=np.ma.array(data=[0,0,1,1,0,0]),
+                     values_mapping={0: '-', 1: 'Engaged'},
+                     name='AP Engaged',
+                     frequency=1,
+                     offset=0.1)
+        np.testing.assert_array_equal(expected.array, node.array)
+
+    def test_dual_ap(self):
+        # Two result in just "Engaged" state still
+        ase1 = M(array=np.ma.array(data=[0,0,1,1,0,0]),
+                values_mapping={1:'Engaged',0:'-'},
+                name='AP (1) Engaged')
+        ase2 = M(array=np.ma.array(data=[0,0,0,1,1,0]),
+                values_mapping={1:'Engaged',0:'-'},
+                name='AP (2) Engaged')
+        ase3 = None
+
+        node = self.node_class()
+        node.derive(ase1, ase2, ase3)
+
+        expected = M(array=np.ma.array(data=[0,0,1,1,1,0]),
+                     values_mapping={0: '-', 1: 'Engaged'},
+                     name='AP Engaged',
+                     frequency=1,
+                     offset=0.1)
+
+        np.testing.assert_array_equal(expected.array, node.array)
 
 
 class TestConfiguration(unittest.TestCase, NodeTest):
@@ -2277,6 +2336,20 @@ class TestSlat(unittest.TestCase, NodeTest):
         self.assertIsInstance(node.array, MappedArray)
         self.assertEqual(node.frequency, 4)
         self.assertEqual(node.array.raw.tolist(), [0] * 11 + [25] * 62 + [None])
+
+
+class TestRotorsRunning(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorsRunning
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'aeroplane')), [])
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'helicopter')), [('Nr',)])
+    
+    @unittest.SkipTest
+    def test_derive(self):
+        self.assertTrue(False)
 
 
 class TestSlatExcludingTransition(unittest.TestCase, NodeTest):

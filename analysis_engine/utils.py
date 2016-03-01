@@ -6,7 +6,6 @@ import simplejson
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime
 from inspect import getargspec, isclass, ismodule
 
 from hdfaccess.file import hdf_file

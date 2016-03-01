@@ -5,9 +5,7 @@
 import numpy as np
 import pytz
 
-from collections import Counter
 from datetime import datetime
-from operator import itemgetter
 
 from analysis_engine import __version__, settings
 from analysis_engine.api_handler import get_api_handler, NotFoundError

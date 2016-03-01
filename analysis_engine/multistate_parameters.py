@@ -16,6 +16,7 @@ from analysis_engine.node import (
     M,
     P,
     S,
+    helicopter_only,
 )
 from analysis_engine.library import (
     all_of,
@@ -51,6 +52,7 @@ from settings import (
     MIN_FUEL_FLOW_RUNNING,
     REVERSE_THRUST_EFFECTIVE_EPR,
     REVERSE_THRUST_EFFECTIVE_N1,
+    ROTORS_TURNING,
 )
 
 logger = logging.getLogger(name=__name__)
@@ -308,6 +310,58 @@ class APURunning(MultistateDerivedParameterNode):
             self.array = np.ma.where(apu_voltage.array > 100.0, 'Running', '-')
         else:
             self.array = apu_bleed_valve_open.array == 'Open'
+
+
+class ASEEngaged(MultistateDerivedParameterNode):
+    '''
+    Determines if *any* of the "ASE (*) Engaged" parameters are recording the
+    state of Engaged.
+
+    This is a discrete with only the Engaged state.
+    '''
+
+    name = 'ASE Engaged'
+    values_mapping = {0: '-', 1: 'Engaged'}
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and \
+               any_of(cls.get_dependency_names(), available)
+
+    def derive(self,
+               ase1=M('ASE (1) Engaged'),
+               ase2=M('ASE (2) Engaged'),
+               ase3=M('ASE (3) Engaged')):
+        stacked = vstack_params_where_state(
+            (ase1, 'Engaged'),
+            (ase2, 'Engaged'),
+            (ase3, 'Engaged'),
+        )
+        self.array = stacked.any(axis=0)
+        self.offset = offset_select('mean', [ase1, ase2, ase3])
+
+
+class ASEChannelsEngaged(MultistateDerivedParameterNode):
+    '''
+    '''
+    name = 'ASE Channels Engaged'
+    values_mapping = {0: '-', 1: 'Single', 2: 'Dual', 3: 'Triple'}
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and len(available) >= 2
+
+    def derive(self,
+               ase1=M('ASE (1) Engaged'),
+               ase2=M('ASE (2) Engaged'),
+               ase3=M('ASE (3) Engaged')):
+        stacked = vstack_params_where_state(
+            (ase1, 'Engaged'),
+            (ase2, 'Engaged'),
+            (ase3, 'Engaged'),
+        )
+        self.array = stacked.sum(axis=0)
+        self.offset = offset_select('mean', [ase1, ase2, ase3])
 
 
 class Configuration(MultistateDerivedParameterNode):
@@ -1749,6 +1803,22 @@ class PitchAlternateLaw(MultistateDerivedParameterNode):
             (alt_law_1, 'Engaged'),
             (alt_law_2, 'Engaged'),
         ).any(axis=0)
+
+
+class RotorsRunning(MultistateDerivedParameterNode):
+    '''
+
+    '''
+
+    values_mapping = {
+        0: 'Not Running',
+        1: 'Running',
+    }
+    
+    can_operate = helicopter_only
+
+    def derive(self, nr=P('Nr')):
+        self.array = np.ma.where(nr.array > ROTORS_TURNING, 'Running', 'Not Running')
 
 
 class Slat(MultistateDerivedParameterNode):
