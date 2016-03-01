@@ -10831,7 +10831,7 @@ class Pitch50FtToTouchdownMax(KeyPointValueNode):
         
         self.create_kpvs_within_slices(
             pitch.array,
-            alt_aal.slices_to_kti(50, alt_aal or alt_agl),
+            (alt_aal or alt_agl).slices_to_kti(50, touchdowns),
             max_value)
 
 
