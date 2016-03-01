@@ -14,12 +14,11 @@ from flightdatautilities import aircrafttables as at, units as ut
 
 from analysis_engine.exceptions import DataFrameError
 from analysis_engine.node import (
-    A, App, DerivedParameterNode, KPV, KTI, M, P, S,
+    A, App, DerivedParameterNode, KPV, KTI, M, P, S, aeroplane_only, helicopter_only,
 )
 from analysis_engine.library import (actuator_mismatch,
                                      air_track,
                                      align,
-                                     all_deps,
                                      all_of,
                                      any_of,
                                      alt2press,
@@ -101,6 +100,8 @@ from analysis_engine.library import (actuator_mismatch,
 
 from settings import (AIRSPEED_THRESHOLD,
                       ALTITUDE_AAL_TRANS_ALT,
+                      ALTITUDE_AGL_SMOOTHING,
+                      ALTITUDE_AGL_TRANS_ALT,
                       ALTITUDE_RADIO_OFFSET_LIMIT,
                       AZ_WASHOUT_TC,
                       BOUNCED_LANDING_THRESHOLD,
@@ -306,10 +307,15 @@ class AirspeedForFlightPhases(DerivedParameterNode):
     '''
 
     units = ut.KT
+    
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ('Altitude Radio' if ac_type and ac_type.value == 'helicopter' else 'Airspeed') in available
 
-    def derive(self, airspeed=P('Airspeed')):
+    def derive(self, airspeed=P('Airspeed'), alt_rad=P('Altitude Radio'), ac_type=A('Aircraft Type')):
+        param = alt_rad if ac_type and ac_type.value == 'helicopter' else airspeed 
         self.array = hysteresis(
-            repair_mask(airspeed.array, repair_duration=None,
+            repair_mask(param.array, repair_duration=None,
                         raise_entirely_masked=False), HYSTERESIS_FPIAS)
 
 
@@ -902,6 +908,80 @@ class AltitudeAALForFlightPhases(DerivedParameterNode):
                                    0.0)
 
 
+class AltitudeAGL(DerivedParameterNode):
+    '''
+    This simple alorithm adopts radio altitude where available and merges pressure
+    altitude values a transition altitude, joining to the radio altitude segments
+    by making a linear adjustment.
+
+    Note that at high altitudes, the pressure altitude is still corrected, so flight
+    levels will be inaccurate.
+    '''
+    name = 'Altitude AGL'
+    units = ut.FT
+    
+    can_operate = helicopter_only
+
+    def derive(self, alt_rad=P('Altitude Radio'),
+               alt_baro=P('Altitude STD Smoothed'),
+               gog=M('Gear On Ground')):
+
+        # When was the helicopter on the ground?
+        gear_on_grounds = np.ma.clump_masked(np.ma.masked_equal(gog.array, 1))
+        # Compute the half period which we will need.
+        hp = int(alt_rad.frequency*ALTITUDE_AGL_SMOOTHING)/2
+        # We force the radio altitude to be zero when the gear shows 'Ground' state
+        alt_aal = moving_average(np.maximum(alt_rad.array, 0.0) * (1 - gog.array.data), window=hp*2+1, weightings=None)
+
+        # Refine the baro estimates
+        length = len(alt_aal)-1
+        baro_sections = np.ma.clump_masked(np.ma.masked_greater(alt_aal, ALTITUDE_AGL_TRANS_ALT))
+        for baro_section in baro_sections:
+            begin = max(baro_section.start - 1, 0)
+            end = min(baro_section.stop + 1, length)
+            start_diff = alt_baro.array[begin] - alt_aal[begin]
+            stop_diff = alt_baro.array[end] - alt_aal[end]
+            if start_diff is not np.ma.masked and stop_diff is not np.ma.masked:
+                diff = np.linspace(start_diff, stop_diff, end-begin-2)
+                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1]-diff
+            elif start_diff is not np.ma.masked:
+                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1] - start_diff
+            elif stop_diff is not np.ma.masked:
+                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1] - stop_diff
+            else:
+                pass
+        low_sections = np.ma.clump_unmasked(np.ma.masked_greater(alt_aal, 5))
+        for both in slices_and(low_sections, gear_on_grounds):
+            alt_aal[both] = 0.0
+
+        '''
+        # Quick visual check of the altitude aal.
+        import matplotlib.pyplot as plt
+        plt.plot(alt_baro.array, 'y-')
+        plt.plot(alt_rad.array, 'r-')
+        plt.plot(alt_aal, 'b-')
+        plt.show()
+        '''
+
+        self.array = alt_aal
+
+
+class AltitudeDensity(DerivedParameterNode):
+    '''
+    '''
+
+    units = ut.FT
+    
+    can_operate = helicopter_only
+
+    def derive(self, alt_std=P('Altitude STD'), sat=P('SAT'),
+               isa_temp=P('SAT International Standard Atmosphere')):
+        # TODO: libary function to convert to Alitude Density see Aero Calc.
+        # pressure altitude + [120 x (OAT - ISA Temp)]
+        #isa_temp = 15 - 1.98 / 1000 * std_array
+        self.array = alt_std.array + (120 * (sat.array - isa_temp.array))
+
+
 class AltitudeRadio(DerivedParameterNode):
     """
     There is a wide variety of radio altimeter installations with one, two or
@@ -1395,6 +1475,56 @@ class ClimbForFlightPhases(DerivedParameterNode):
             ups = np.ma.clump_unmasked(np.ma.masked_less(deltas,0.0))
             for up in ups:
                 self.array[air.slice][up] = np.ma.cumsum(deltas[up])
+
+
+class CyclicForeAft(DerivedParameterNode):
+    '''
+    '''
+    align = False
+    name = 'Cyclic Fore-Aft'
+    units = ut.PERCENT
+    
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+
+    def derive(self,
+               capt=P('Cyclic Fore-Aft (1)'),
+               fo=P('Cyclic Fore-Aft (2)')):
+
+        self.array, self.frequency, self.offset = blend_two_parameters(capt, fo)
+
+
+class CyclicLateral(DerivedParameterNode):
+    '''
+    '''
+    align = False
+    units = ut.PERCENT
+    
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+
+    def derive(self,
+               capt=P('Cyclic Lateral (1)'),
+               fo=P('Cyclic Lateral (2)')):
+
+        self.array, self.frequency, self.offset = blend_two_parameters(capt, fo)
+
+
+class CyclicAngle(DerivedParameterNode):
+    '''
+    '''
+    align = False
+    units = ut.PERCENT
+    
+    can_operate = helicopter_only
+
+    def derive(self,
+               cyclic_pitch=P('Cyclic Fore-Aft'),
+               cyclic_roll=P('Cyclic Lateral')):
+
+        self.array = np.ma.sqrt(cyclic_pitch.array ** 2 + cyclic_roll.array ** 2)
 
 
 class DescendForFlightPhases(DerivedParameterNode):
@@ -1932,7 +2062,6 @@ class Brake_TempMax(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -3123,6 +3252,22 @@ class Eng_TorqueMin(DerivedParameterNode):
         self.offset = offset_select('mean', [eng1, eng2, eng3, eng4])
 
 
+class TorqueAsymmetry(DerivedParameterNode):
+    '''
+    '''
+
+    align_frequency = 1 # Forced alignment to allow fixed window period.
+    align_offset = 0
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, torq_max=P('Eng (*) Torque Max'), torq_min=P('Eng (*) Torque Min')):
+        diff = (torq_max.array - torq_min.array)
+        window = 5 # 5 second window
+        self.array = moving_average(diff, window=window)
+
+
 ##############################################################################
 # Engine Vibration (N1)
 
@@ -3139,7 +3284,6 @@ class Eng_VibN1Max(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -3734,18 +3878,47 @@ class Groundspeed(DerivedParameterNode):
     units = ut.KT
 
     @classmethod
-    def can_operate(cls, available):
-        return any_of(('Groundspeed (1)','Groundspeed (2)'),
-                      available)
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return all_of(('Latitude Prepared', 'Longitude Prepared'), available)
+        else:
+            return any_of(('Groundspeed (1)', 'Groundspeed (2)'), available)
 
     def derive(self,
-               source_A = P('Groundspeed (1)'),
-               source_B = P('Groundspeed (2)')):
+               # aeroplane
+               source_A=P('Groundspeed (1)'),
+               source_B=P('Groundspeed (2)'),
+               # helicopter
+               lat=P('Latitude Prepared'),
+               lon=P('Longitude Prepared'),
+               ac_type=A('Aircraft Type')):
 
-        if source_A or source_B:
+        if ac_type and ac_type.value == 'helicopter':
+            '''
+            Calculation of Groundspeed from latitude and longitude
+
+            Made frame dependent to avoid inadvertant use of this code
+            where a groundspeed signal may be available under a different name.
+            '''
+            deg_to_metres = 1852*60 # 1852 m/nm & 60 nm/deg latitude
+            dlat = rate_of_change(lat, 2.0) * deg_to_metres
+            # There is no masked array cos function, but the mask will be
+            # carried forward as part of the latitude array anyway.
+            dlon = rate_of_change(lon, 2.0) * deg_to_metres *\
+                np.cos(np.radians(lat.array.data))
+        
+            gs = np.ma.sqrt(dlat*dlat+dlon*dlon) / 0.514 # kn per m/s
+        
+            # In some data segments, e.g. ground runs, the data is all masked, so don't create a derived parameter.
+            if np.ma.count(gs):
+                self.array = np.ma.masked_greater(gs, 400)
+            else:
+                self.array = np_ma_zeros_like(lat.array)
+            self.frequency = lat.frequency
+            self.offset = (lat.offset + lon.offset) / 2.0
+        else:
             self.array, self.frequency, self.offset = \
                 blend_two_parameters(source_A, source_B)
-
 
 
 class FlapAngle(DerivedParameterNode):
@@ -3882,6 +4055,38 @@ class SlatAngle(DerivedParameterNode):
     s1t = M('Slat (1) In Transit'),
     s1m = M('Slat (1) Mid Extended'),
 '''
+
+
+class Nr(DerivedParameterNode):
+    '''
+    Combination of rotor speed signals from two sources where required.
+    '''
+
+    align = False
+    units = ut.PERCENT
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+
+    def derive(self, p1=P('Nr (1)'), p2=P('Nr (2)')):
+        self.array, self.frequency, self.offset = \
+            blend_two_parameters(p1, p2)
+
+
+class TailRotorPedal(DerivedParameterNode):
+    '''
+    '''
+
+    align = False
+    units = ut.PERCENT
+
+    def derive(self,
+               capt=P('Tail Rotor Pedal (1)'),
+               fo=P('Tail Rotor Pedal (2)')):
+
+        self.array, self.frequency, self.offset = blend_two_parameters(capt, fo)
+
 
 class SlatAngle(DerivedParameterNode):
     '''
@@ -4415,7 +4620,7 @@ class CoordinatesSmoothed(object):
         except:
             toff_slice = None
 
-        if ac_type and ac_type.value!='helicopter':
+        if ac_type and ac_type.value != 'helicopter':
             if toff_slice and precise:
                 try:
                     lat_out, lon_out = self.taxi_out_track_pp(
@@ -4628,7 +4833,7 @@ class CoordinatesSmoothed(object):
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
-            if approach.type == 'LANDING' and ac_type!='helicopter':
+            if approach.type == 'LANDING' and ac_type and ac_type.value != 'helicopter':
                 # This function returns the lowest non-None offset.
                 try:
                     join_idx = min(filter(bool, [ils_join_offset,
@@ -4803,17 +5008,12 @@ class Mach(DerivedParameterNode):
     Mach derived from air data parameters for aircraft where no suitable Mach
     data is recorded.
     '''
-
-    @classmethod
-    def can_operate(cls, available, ac_type = A('Aircraft Type')):
-        if ac_type=='Helicopter':
-            return False
-        else:
-            return all_deps(cls, available)
+    
+    can_operate = aeroplane_only
 
     units = ut.MACH
 
-    def derive(self, cas = P('Airspeed'), alt = P('Altitude STD Smoothed')):
+    def derive(self, cas=P('Airspeed'), alt=P('Altitude STD Smoothed')):
         dp = cas2dp(cas.array)
         p = alt2press(alt.array)
         self.array = dp_over_p2mach(dp/p)

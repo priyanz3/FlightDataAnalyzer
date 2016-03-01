@@ -40,7 +40,7 @@ from analysis_engine.flight_attribute import (
     Version,
 )
 
-from flight_phase_test import buildsection, buildsections
+from flight_phase_test import buildsection
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')

@@ -26,7 +26,8 @@ from analysis_engine.library import (
     slices_remove_small_gaps,
 )
 
-from analysis_engine.node import A, M, P, S, KTI, KeyTimeInstanceNode
+from analysis_engine.node import (
+    A, M, P, S, KTI, KeyTimeInstanceNode, helicopter_only)
 
 from settings import (
     CLIMB_THRESHOLD,
@@ -1132,7 +1133,13 @@ class Liftoff(KeyTimeInstanceNode):
                alt_rad=P('Altitude Radio Offset Removed'),
                gog=M('Gear On Ground'),
                airs=S('Airborne'),
-               frame=A('Frame')):
+               frame=A('Frame'),
+               ac_type=A('Aircraft Type')):
+
+        if ac_type and ac_type.value == 'helicopter':
+            for air in airs:
+                self.create_kti(air.start_edge)
+            return
 
         for air in airs:
             index_acc = index_rad = index_gog = index_lift = None
@@ -1339,7 +1346,15 @@ class Touchdown(KeyTimeInstanceNode):
                lands=S('Landing'),
                flap=P('Flap'),
                manufacturer=A('Manufacturer'),
-               family=A('Family')):
+               family=A('Family'),
+               # helicopter
+               airs=S('Airborne'),
+               ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            for air in airs:
+                self.create_kti(air.stop_edge)
+            return
+
         # The preamble here checks that the landing we are looking at is
         # genuine, it's not just because the data stopped in mid-flight. We
         # reduce the scope of the search for touchdown to avoid triggering in
@@ -1898,10 +1913,6 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_FORMAT = '%(distance)d NM From Landing Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
-    @classmethod
-    def can_operate(cls, available):
-        return True
-
     def derive(self,
                lands=KTI('Touchdown'),
                holds=S('Holding'),
@@ -1910,3 +1921,171 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lon=P('Longitude Smoothed')):
 
         self.calculate(lands, holds, arr, lat, lon, direction='backward')
+
+
+#################################################################
+# Helicopter: Hover
+
+
+class EnterHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+class EnterHoverTaxi(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Hover Taxi')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitHoverTaxi(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Hover Taxi')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+class EnterTransitionHoverToFlight(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Hover To Flight')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitTransitionHoverToFlight(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Hover To Flight')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+class EnterTransitionFlightToHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Flight To Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitTransitionFlightToHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Flight To Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+#################################################################
+# Helicopter: Autorotation
+
+
+class EnterAutorotation(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Autorotation')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitAutorotation(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Autorotation')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+#################################################################
+# Helicopter: Takeoff
+
+
+class EnterTakeoff(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Takeoff')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitTakeoff(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Takeoff')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+#################################################################
+# Helicopter: ILS
+
+
+class EnterILSTuned(KeyTimeInstanceNode):
+    name = 'Enter ILS Tuned'
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('ILS Localizer Established')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitILSTuned(KeyTimeInstanceNode):
+    name = 'Exit ILS Tuned'
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('ILS Localizer Established')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+#################################################################
+# Helicopter: Approach And Landing
+
+
+class EnterApproachAndLanding(KeyTimeInstanceNode):
+    name = 'Enter Approach And Landing'
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Approach And Landing')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+
+class ExitApproachAndLanding(KeyTimeInstanceNode):
+    name='Exit Approach And Landing'
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Approach And Landing')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)

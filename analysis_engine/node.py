@@ -2551,6 +2551,16 @@ class Attribute(object):
         }
 
 
+@classmethod
+def aeroplane_only(cls, available, ac_type=Attribute('Aircraft Type')):
+    return ac_type and ac_type.value == 'aeroplane' and all_deps(cls, available)
+
+
+@classmethod
+def helicopter_only(cls, available, ac_type=Attribute('Aircraft Type')):
+    return ac_type and ac_type.value == 'helicopter' and all_deps(cls, available)
+
+
 # The following acronyms are intended to be used as placeholder values
 # for kwargs in Node derive methods. Cannot instantiate Node subclass without
 # implementing derive.

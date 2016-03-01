@@ -9,6 +9,7 @@ from analysis_engine.library import (
     bearing_and_distance,
     cycle_finder,
     find_low_alts,
+    filter_slices_duration,
     first_order_washout,
     first_valid_sample,
     heading_diff,
@@ -19,6 +20,7 @@ from analysis_engine.library import (
     last_valid_sample,
     moving_average,
     nearest_neighbour_mask_repair,
+    peak_curvature,
     rate_of_change,
     rate_of_change_array,
     repair_mask,
@@ -28,6 +30,7 @@ from analysis_engine.library import (
     slices_above,
     slices_and,
     slices_and_not,
+    slices_below,
     slices_from_to,
     slices_not,
     slices_or,
@@ -36,7 +39,7 @@ from analysis_engine.library import (
     slices_remove_small_slices,
 )
 
-from analysis_engine.node import A, App, FlightPhaseNode, P, S, KTI, KPV, M
+from analysis_engine.node import A, App, FlightPhaseNode, P, S, KTI, KPV, M, aeroplane_only, helicopter_only
 
 from analysis_engine.settings import (
     AIRBORNE_THRESHOLD_TIME,
@@ -62,42 +65,62 @@ from analysis_engine.settings import (
     TAKEOFF_ACCELERATION_THRESHOLD,
     VERTICAL_SPEED_FOR_CLIMB_PHASE,
     VERTICAL_SPEED_FOR_DESCENT_PHASE,
+    
+    AIRBORNE_THRESHOLD_TIME_RW,
+    AUTOROTATION_SPLIT,
+    HOVER_GROUNDSPEED_LIMIT,
+    HOVER_HEIGHT_LIMIT,
+    HOVER_MIN_DURATION,
+    HOVER_MIN_HEIGHT,
+    HOVER_TAXI_HEIGHT,
+    LANDING_COLLECTIVE_PERIOD,
+    LANDING_HEIGHT,
+    LANDING_TRACEBACK_PERIOD,
+    TAKEOFF_PERIOD,
+    ROTOR_TRANSITION_ALTITUDE,
+    ROTOR_TRANSITION_SPEED_LOW,
+    ROTOR_TRANSITION_SPEED_HIGH,
 )
 
 
 class Airborne(FlightPhaseNode):
     '''
-    Periods where the aircraft is in the air, includes periods where on the
-    ground for short periods (touch and go).
-
-    TODO: Review whether depending upon the "dips" calculated by Altitude AAL
-    would be more sensible as this will allow for negative AAL values longer
-    than the remove_small_gaps time_limit.
+    Periods where the aircraft is in the air.
     '''
 
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
-
-    def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
-               fast=S('Fast')):
-
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+            return False
+        elif ac_type and ac_type.value == 'helicopter':
+            return all_of(('Altitude Radio', 'Altitude AGL', 'Gear On Ground', 'Rotors Turning'), available)
+        else:
+            return 'Altitude AAL For Flight Phases' in available
+    
+    def _derive_aircraft(self, alt_aal, fast):
+        '''
+        Periods where the aircraft is in the air, includes periods where on the
+        ground for short periods (touch and go).
+    
+        TODO: Review whether depending upon the "dips" calculated by Altitude AAL
+        would be more sensible as this will allow for negative AAL values longer
+        than the remove_small_gaps time_limit.
+        '''
         # Remove short gaps in going fast to account for aerobatic manoeuvres
         speedy_slices = slices_remove_small_gaps(fast.get_slices(),
                                                  time_limit=60, hz=fast.frequency)
-
+    
         # Just find out when altitude above airfield is non-zero.
         for speedy in speedy_slices:
             # Stop here if the aircraft never went fast.
             if speedy.start is None and speedy.stop is None:
                 break
-
+    
             start_point = speedy.start or 0
             stop_point = speedy.stop or len(alt_aal.array)
             # Restrict data to the fast section (it's already been repaired)
             working_alt = alt_aal.array[start_point:stop_point]
-
+    
             # Stop here if there is inadequate airborne data to process.
             if working_alt is None or np.ma.ptp(working_alt)==0.0:
                 break
@@ -122,6 +145,89 @@ class Airborne(FlightPhaseNode):
                     if (duration / alt_aal.hz) > AIRBORNE_THRESHOLD_TIME:
                         self.create_phase(shift_slice(slice(begin, end),
                                                       start_point))
+    
+    def _derive_helicopter(self, alt_rad, alt_agl, gog, rtr):
+        '''
+        We do not use Altitude AGL as the smoothing function causes values close to the
+        ground to be elevated.
+    
+        On the AS330 Puma, the Gear On Ground signal is only sampled once per frame
+        so is only used to confirm validity of the radio altimeter signal.
+        '''
+        # When was the gear in the air?
+        gear_off_grounds = np.ma.clump_masked(np.ma.masked_equal(gog.array, 0))
+        # Confirm the rotors were turning at this time:
+        gear_off_grounds = slices_and(gear_off_grounds, rtr.get_slices())
+
+        # When did the radio altimeters indicate airborne?
+
+        airs = slices_remove_small_gaps(
+            np.ma.clump_unmasked(np.ma.masked_less_equal(alt_agl.array, 1.0)),
+            time_limit=AIRBORNE_THRESHOLD_TIME_RW, hz=alt_agl.frequency)
+        # Both is a reliable indication of being in the air.
+        for air in airs:
+            for goff in gear_off_grounds:
+                # Providing they relate to each other :o)
+                if slices_overlap(air, goff):
+                    start_index = max(air.start, goff.start)
+                    end_index = min(air.stop, goff.stop)
+
+                    better_begin = index_at_value(alt_rad.array, 1.0, _slice=slice(max(start_index-5*alt_rad.frequency, 0), start_index+5*alt_rad.frequency))
+                    if better_begin:
+                        begin = better_begin
+                    else:
+                        begin = start_index
+
+                    better_end = index_at_value(alt_rad.array, 1.0, _slice=slice(max(end_index+5*alt_rad.frequency, 0), end_index-5*alt_rad.frequency, -1))
+                    if better_end:
+                        end = better_end
+                    else:
+                        end = end_index
+
+                    duration = end - begin
+                    if (duration / alt_rad.hz) > AIRBORNE_THRESHOLD_TIME_RW:
+                        self.create_phase(slice(begin, end))
+    
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               fast=S('Fast'),
+               # helicopter
+               alt_rad=P('Altitude Radio'),
+               alt_agl=P('Altitude AGL'),
+               gog=M('Gear On Ground'),
+               rtr=S('Rotors Turning')):
+        if ac_type and ac_type.value == 'helicopter':
+            self._derive_helicopter(alt_rad, alt_agl, gog, rtr)
+        else:
+            self._derive_aircraft(alt_aal, fast)
+
+
+class Autorotation(FlightPhaseNode):
+    '''
+    Look for at least 1% difference between the highest power turbine speed
+    and the rotor speed.
+    This is bound to happen in a descent, and we define the autorotation
+    period as from the initial onset
+    to the final establishment of normal operation.
+
+    Note: For Autorotation KPV: Detect maximum Nr during the Autorotation phase.
+    '''
+    
+    can_operate = helicopter_only
+    
+    def derive(self, max_np=P('Eng (*) Np Max'),
+               nr=P('Nr'), descs=S('Descending')):
+        for desc in descs:
+            # Look for split in shaft speeds.
+            delta = nr.array[desc.slice] - max_np.array[desc.slice]
+            split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
+            split_ends = np.ma.clump_unmasked(split)
+            if split_ends:
+                self.create_phase(shift_slice(slice(split_ends[0].start,
+                                                    split_ends[-1].stop ),
+                                              desc.slice.start))
 
 
 class GoAroundAndClimbout(FlightPhaseNode):
@@ -139,9 +245,8 @@ class GoAroundAndClimbout(FlightPhaseNode):
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
         if ac_type and ac_type.value == 'helicopter':
             return False
-        else:
-            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
+        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
+        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                level_flights=S('Level Flight')):
@@ -174,13 +279,8 @@ class Holding(FlightPhaseNode):
     as we are only looking for turns, and not bothered about the sense or
     actual heading angle.
     """
-
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            return all_deps(cls, available)
+    
+    can_operate = aeroplane_only
 
     def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
                hdg=P('Heading Increasing'),
@@ -221,11 +321,7 @@ class EngHotelMode(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, family=A('Family'), ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            return all_of(('Eng (2) Np', 'Eng (1) N1', 'Eng (2) N1', 'Grounded', 'Propeller Brake'), available) \
-                and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
+        return ac_type and ac_type.value == 'aeroplane' and all_deps(cls, available) and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
 
 
     def derive(self, eng2_np=P('Eng (2) Np'),
@@ -236,7 +332,6 @@ class EngHotelMode(FlightPhaseNode):
         pos_hotel = (eng2_n1.array > 45) & (eng2_np.array <= 0) & (eng1_n1.array < 40) & (prop_brake.array == 'On')
         hotel_mode = slices_and(runs_of_ones(pos_hotel), groundeds.get_slices())
         self.create_phases(hotel_mode)
-
 
 
 class ApproachAndLanding(FlightPhaseNode):
@@ -256,22 +351,15 @@ class ApproachAndLanding(FlightPhaseNode):
 
 
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
-
-    def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
-               level_flights=S('Level Flight'),
-               landings=S('Landing'),
-               ac_type=A('Aircraft Type')):
-
-        if ac_type and ac_type.value=='helicopter':
-            # Helicopters may not climb significantly from one ILS approach to the next...
-            cycle_size = 200.0
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+            return False
+        elif ac_type and ac_type.value == 'helicopter':
+            return all_of(('Approach', 'Landing'), available)
         else:
-            # ...whereas fixed wing are more prone to flying clear climbs after an approach.
-            cycle_size = 500.0
-
+            return 'Altitude AAL For Flight Phases' in available
+    
+    def _derive_aircraft(self, alt_aal, level_flights, landings):
         # Prepare to extract the slices
         level_flights = level_flights.get_slices() if level_flights else None
 
@@ -279,7 +367,7 @@ class ApproachAndLanding(FlightPhaseNode):
             alt_aal.array, alt_aal.frequency, 3000,
             stop_alt=0,
             level_flights=level_flights,
-            cycle_size=cycle_size)
+            cycle_size=500.0)
 
         for low_alt in low_alt_slices:
             if not alt_aal.array[low_alt.start]:
@@ -292,6 +380,29 @@ class ApproachAndLanding(FlightPhaseNode):
                 if is_index_within_slice(landing.slice.start, low_alt):
                     low_alt = slice(low_alt.start, landing.slice.stop)
             self.create_phase(low_alt)
+    
+    def _derive_helicopter(self, apps, landings):
+        phases = []
+        for new_phase in apps:
+            phases = slices_or(phases, [new_phase.slice])
+        for new_phase in landings:
+            phases = slices_or(phases, [new_phase.slice])
+        self.create_phases(phases)
+
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               level_flights=S('Level Flight'),
+               # helicopter
+               apps=S('Approach'),
+               # shared
+               landings=S('Landing')):
+        
+        if ac_type and ac_type.value=='helicopter':
+            self._derive_helicopter(apps, landings)
+        else:
+            self._derive_aircraft(alt_aal, level_flights, landings)
 
 
 class Approach(FlightPhaseNode):
@@ -306,15 +417,14 @@ class Approach(FlightPhaseNode):
     """
     @classmethod
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
+        elif ac_type and ac_type.value == 'helicopter':
+            return all_of(('Altitude AGL', 'Altitude STD'), available)
         else:
-            correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-            return 'Altitude AAL For Flight Phases' in available and correct_seg_type
-
-    def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
-               level_flights=S('Level Flight'),
-               landings=S('Landing')):
+            return 'Altitude AAL For Flight Phases' in available
+    
+    def _derive_aircraft(self, alt_aal, level_flights, landings):
         level_flights = level_flights.get_slices() if level_flights else None
         low_alts = find_low_alts(alt_aal.array, alt_aal.frequency, 3000,
                                  start_alt=3000, stop_alt=50,
@@ -326,6 +436,31 @@ class Approach(FlightPhaseNode):
                alt_aal.array[low_alt.stop] and \
                alt_aal.array[low_alt.start] > alt_aal.array[low_alt.stop]:
                 self.create_phase(low_alt)
+    
+    def _derive_helicopter(self, alt_agl, alt_std):
+        apps = slices_from_to(alt_agl.array, 500, 100, threshold=1.0)
+        for app in apps[1]:
+            begin = peak_curvature(alt_std.array,
+                                   _slice=slice(app.start, app.start - 300 * alt_std.frequency, -1),
+                                   curve_sense='Convex')
+            end = index_at_value(alt_agl.array, 0.0,
+                                 _slice=slice(app.stop, None),
+                                 endpoint='first_closing')
+            self.create_phase(slice(begin, end))
+    
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               level_flights=S('Level Flight'),
+               landings=S('Landing'),
+               # helicopter
+               alt_agl=P('Altitude AGL'),
+               alt_std=P('Altitude STD')):
+        if ac_type and ac_type.value == 'helicopter':
+            self._derive_helicopter(alt_agl, alt_std)
+        else:
+            self._derive_aircraft(alt_aal, level_flights, landings)
 
 
 class BouncedLanding(FlightPhaseNode):
@@ -511,13 +646,8 @@ class InitialCruise(FlightPhaseNode):
 
     align_frequency = 1.0
     align_offset = 0.0
-
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            return all_deps(cls, available)
+    
+    can_operate = aeroplane_only
 
     def derive(self, cruises=S('Cruise')):
         cruise = cruises[0].slice
@@ -732,6 +862,84 @@ class GearRetracted(FlightPhaseNode):
         slices_remove_small_bits = lambda g: slices_remove_small_gaps(
             slices_remove_small_slices(g, count=2), count=2)
         self.create_phases(slices_remove_small_bits(gear_up))
+
+
+class Hover(FlightPhaseNode):
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and \
+               all_of(('Altitude AGL', 'Airborne', 'Groundspeed'), available)
+
+    def derive(self, alt_agl=P('Altitude AGL'),
+               airs=S('Airborne'),
+               gspd=P('Groundspeed'),
+               trans_hfs=S('Transition Hover To Flight'),
+               trans_fhs=S('Transition Flight To Hover')):
+
+        low_flights = []
+        hovers = []
+
+        for air in airs:
+            lows = slices_below(alt_agl.array[air.slice], HOVER_HEIGHT_LIMIT)[1]
+            for low in lows:
+                if np.ma.min(alt_agl.array[shift_slice(low, air.slice.start)]) <= HOVER_MIN_HEIGHT:
+                    low_flights.extend([shift_slice(low, air.slice.start)])
+        slows = slices_below(gspd.array, HOVER_GROUNDSPEED_LIMIT)[1]
+        low_flights = slices_and(low_flights, slows)
+        # Remove periods identified already as transitions.
+        for low_flight in low_flights:
+            if trans_fhs:
+                for trans_fh in trans_fhs:
+                    if slices_overlap(low_flight, trans_fh.slice):
+                        low_flight = slice(trans_fh.slice.stop, low_flight.stop)
+
+            if trans_hfs:
+                for trans_hf in trans_hfs:
+                    if slices_overlap(low_flight, trans_hf.slice):
+                        low_flight = slice(low_flight.start, trans_hf.slice.start)
+
+            hovers.extend([low_flight])
+
+        # Exclude transition periods and trivial periods of operation.
+        self.create_phases(filter_slices_duration(hovers, HOVER_MIN_DURATION, frequency=alt_agl.frequency))
+
+
+class HoverTaxi(FlightPhaseNode):
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return ac_type and ac_type.value == 'helicopter' and \
+               all_of(('Altitude AGL', 'Airborne', 'Hover'), available)
+
+    def derive(self, alt_agl=P('Altitude AGL'),
+               airs=S('Airborne'),
+               hovers=S('Hover'),
+               trans_hfs=S('Transition Hover To Flight'),
+               trans_fhs=S('Transition Flight To Hover')):
+
+        low_flights = []
+        air_taxis = []
+        taxis = []
+
+        if airs:
+            for air in airs:
+                lows = slices_below(alt_agl.array[air.slice], HOVER_TAXI_HEIGHT)[1]
+                taxis = shift_slices(lows, air.slice.start)
+        # Remove periods identified already as transitions.
+        if taxis:
+            for taxi in slices_and_not(taxis, [h.slice for h in hovers]):
+                if trans_fhs:
+                    for trans_fh in trans_fhs:
+                        if slices_overlap(taxi, trans_fh.slice):
+                            taxi = slice(trans_fh.slice.stop, taxi.stop)
+
+                if trans_hfs:
+                    for trans_hf in trans_hfs:
+                        if slices_overlap(taxi, trans_hf.slice):
+                            taxi = slice(taxi.start, trans_hf.slice.start)
+
+                air_taxis.extend([taxi])
+
+        self.create_phases(air_taxis)
 
 
 def scan_ils(beam, ils_dots, height, scan_slice, frequency,
@@ -1176,11 +1384,13 @@ class Grounded(FlightPhaseNode):
     '''
 
     @classmethod
-    def can_operate(cls, available):
-        return 'HDF Duration' in available
-
-    def derive(self, air=S('Airborne'), speed=P('Airspeed For Flight Phases'),
-               hdf_duration=A('HDF Duration')):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return all_of(('Airborne', 'Airspeed'), available)
+        else:
+            return 'HDF Duration' in available
+    
+    def _derive_aircraft(self, speed, hdf_duration, air):
         data_end = hdf_duration.value * self.frequency if hdf_duration else None
         if air:
             gnd_phases = slices_not(air.get_slices(), begin_at=0, end_at=data_end)
@@ -1194,8 +1404,29 @@ class Grounded(FlightPhaseNode):
         else:
             # no airborne so must be all on ground
             gnd_phases = [slice(0,data_end,None)]
-
+    
         self.create_phases(gnd_phases)
+    
+    def _derive_helicopter(self, air, airspeed):
+        '''
+        Needed for AP Engaged KPV.
+        '''
+        all_data = slice(0, len(airspeed.array))
+        self.create_sections(slices_and_not([all_data], air.get_slices()))
+
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               speed=P('Airspeed For Flight Phases'),
+               hdf_duration=A('HDF Duration'),
+               # helicopter
+               airspeed=P('Airspeed'),
+               # shared
+               air=S('Airborne')):
+        if ac_type and ac_type.value == 'helicopter':
+            self._derive_helicopter(air, airspeed)
+        else:
+            self._derive_aircraft(speed, hdf_duration, air)
 
 
 class Taxiing(FlightPhaseNode):
@@ -1257,7 +1488,6 @@ class Mobile(FlightPhaseNode):
     def can_operate(cls, available):
         return all_of(('Heading Rate', 'Airborne'), available)
 
-
     def derive(self,
                rot=P('Heading Rate'),
                gspd=P('Groundspeed'),
@@ -1279,6 +1509,7 @@ class Mobile(FlightPhaseNode):
             stop = max(stop, airs[-1].slice.stop) if stop else airs[-1].slice.stop
 
         self.create_phase(slice(start, stop))
+
 
 class Stationary(FlightPhaseNode):
     """
@@ -1303,12 +1534,15 @@ class Landing(FlightPhaseNode):
     flight conditions, and thereby make sure the 50ft startpoint is exact.
     '''
     @classmethod
-    def can_operate(cls, available, seg_type=A('Segment Type')):
-        correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
-        return 'Altitude AAL For Flight Phases' in available and correct_seg_type
-
-    def derive(self, head=P('Heading Continuous'),
-               alt_aal=P('Altitude AAL For Flight Phases'), fast=S('Fast')):
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+            return False
+        elif ac_type and ac_type.value == 'helicopter':
+            return all_of(('Altitude AGL', 'Collective', 'Touchdown'), available)
+        else:
+            return 'Altitude AAL For Flight Phases' in available
+    
+    def _derive_aircraft(self, head, alt_aal, fast):
         phases = []
         for speedy in fast:
             # See takeoff phase for comments on how the algorithm works.
@@ -1357,6 +1591,38 @@ class Landing(FlightPhaseNode):
             new_phase = [slice(landing_begin, landing_end)]
             phases = slices_or(phases, new_phase)
         self.create_phases(phases)
+    
+    def _derive_helicopter(self, alt_agl, coll, tdns):
+        phases = []
+        for tdn in tdns:
+            # Scan back to find either when we descend through LANDING_HEIGHT or had peak hover height.
+            to_scan = tdn.index - alt_agl.frequency*LANDING_TRACEBACK_PERIOD
+            landing_begin = index_at_value(alt_agl.array, LANDING_HEIGHT,
+                                           _slice=slice(tdn.index, to_scan , -1),
+                                           endpoint='first_closing')
+
+            # Scan forwards to find lowest collective shortly after touchdown.
+            to_scan = tdn.index + coll.frequency*LANDING_COLLECTIVE_PERIOD
+            landing_end = tdn.index + np.ma.argmin(coll.array[tdn.index:to_scan])
+
+            new_phase = [slice(landing_begin, landing_end)]
+            phases = slices_or(phases, new_phase)
+        self.create_phases(phases)
+
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               head=P('Heading Continuous'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               fast=S('Fast'),
+               # helicopter
+               alt_agl=P('Altitude AGL'),
+               coll=P('Collective'),
+               tdns=S('Touchdown')):
+        if ac_type and ac_type.value == 'helicopter':
+            self._derive_helicopter(alt_agl, coll, tdns)
+        else:
+            self._derive_aircraft(head, alt_aal, fast)
 
 
 class LandingRoll(FlightPhaseNode):
@@ -1450,6 +1716,19 @@ class RejectedTakeoff(FlightPhaseNode):
                     self.create_phase(slice(start, stop))
 
 
+class RotorsTurning(FlightPhaseNode):
+    '''
+    Used to suppress nuisance warnings on the ground.
+
+    Note: Rotors Running is the Multistate parameter, while Rotors Turning is the flight phase.
+    '''
+    
+    can_operate = helicopter_only
+    
+    def derive(self, rotors=M('Rotors Running')):
+        self.create_sections(runs_of_ones(rotors.array == 'Running'))
+
+
 class Takeoff(FlightPhaseNode):
     """
     This flight phase starts as the aircraft turns onto the runway and ends
@@ -1460,12 +1739,17 @@ class Takeoff(FlightPhaseNode):
     introduced by hysteresis, which is applied to avoid hunting in level
     flight conditions, and make sure the 35ft endpoint is exact.
     """
-
-    def derive(self, head=P('Heading Continuous'),
-               alt_aal=P('Altitude AAL For Flight Phases'),
-               fast=S('Fast'),
-               airs=S('Airborne')): # If never airborne didnt takeoff.
-
+    
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+            return False
+        elif ac_type and ac_type.value == 'helicopter':
+            return all_of(('Altitude AGL', 'Collective', 'Liftoff'), available)
+        else:
+            return all_of(('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast', 'Airborne'), available)
+    
+    def _derive_aircraft(self, head, alt_aal, fast, airs):
         # Note: This algorithm works across the entire data array, and
         # not just inside the speedy slice, so the final indexes are
         # absolute and not relative references.
@@ -1523,6 +1807,30 @@ class Takeoff(FlightPhaseNode):
             #-------------------------------------------------------------------
             # Create a phase for this takeoff
             self.create_phase(slice(takeoff_begin, takeoff_end))
+    
+    def _derive_helicopter(self, alt_agl, coll, lifts):
+        for lift in lifts:
+            begin = max(lift.index - TAKEOFF_PERIOD * alt_agl.frequency, 0)
+            end = min(lift.index + TAKEOFF_PERIOD * alt_agl.frequency, len(alt_agl.array) - 1)
+            self.create_phase(slice(begin, end))
+    
+    def derive(self,
+               ac_type=A('Aircraft Type'),
+               # aircraft
+               head=P('Heading Continuous'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               fast=S('Fast'),
+               airs=S('Airborne'), # If never airborne didnt takeoff.
+               # helicopter
+               alt_agl=P('Altitude AGL'),
+               coll=P('Collective'),
+               lifts=S('Liftoff')):
+        if ac_type and ac_type.value == 'helicopter':
+            self._derive_helicopter(alt_agl, coll, lifts)
+        else:
+            self._derive_aircraft(head, alt_aal, fast, airs)
+
+
 
 
 class TakeoffRoll(FlightPhaseNode):
@@ -1589,12 +1897,8 @@ class TakeoffRotation(FlightPhaseNode):
     This is used by correlation tests to check control movements during the
     rotation and lift phases.
     '''
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            return all_deps(cls, available)
+    
+    can_operate = aeroplane_only
 
     align_frequency = 1
 
@@ -1606,19 +1910,15 @@ class TakeoffRotation(FlightPhaseNode):
         end = lift_index + 15
         self.create_phase(slice(start, end))
 
+
 class TakeoffRotationWow(FlightPhaseNode):
     '''
     Used by correlation tests which need to use only the rotation period while the mainwheels are on the ground. Specifically, AOA.
     '''
     name = 'Takeoff Rotation WOW'
-
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return False
-        else:
-            return all_deps(cls, available)
-
+    
+    can_operate = aeroplane_only
+    
     def derive(self, toff_rots=S('Takeoff Rotation')):
         for toff_rot in toff_rots:
             self.create_phase(slice(toff_rot.slice.start,
@@ -1714,6 +2014,58 @@ class TaxiOut(FlightPhaseNode):
                                              taxi_start)
                     self.create_phase(slice(taxi_start, taxi_stop),
                                       name="Taxi Out")
+
+
+class TransitionHoverToFlight(FlightPhaseNode):
+    '''
+    The pilot normally makes a clear nose down pitching motion to initiate the
+    transition from the hover, and with airspeed built, will raise the nose and
+    initiate a clear climb to mark the end of the transition phase and start of the climb.
+    '''
+    
+    can_operate = helicopter_only
+    
+    def derive(self, alt_agl=P('Altitude AGL'),
+               ias=P('Airspeed'),
+               airs=S('Airborne'),
+               pitch_rate=P('Pitch Rate')):
+        for air in airs:
+            lows = np.ma.clump_unmasked(np.ma.masked_greater(alt_agl.array[air.slice],
+                                                             ROTOR_TRANSITION_ALTITUDE))
+            for low in lows:
+                trans_slices = slices_from_to(ias.array[air.slice][low],
+                                              ROTOR_TRANSITION_SPEED_LOW,
+                                              ROTOR_TRANSITION_SPEED_HIGH,
+                                              threshold=1.0)[1]
+                if trans_slices:
+                    for trans in trans_slices:
+                        base = air.slice.start + low.start
+                        ext_start = base  + trans.start - 10*ias.frequency
+                        ext_stop = base + trans.stop + 10*ias.frequency
+                        trans_start = np.ma.argmin(pitch_rate.array[ext_start:base+ trans.start]) + ext_start
+                        trans_end = peak_curvature(alt_agl.array, slice(trans_start, ext_stop))
+                        self.create_phase(slice(trans_start, trans_end))
+
+
+class TransitionFlightToHover(FlightPhaseNode):
+    '''
+    Forward flight to hover transitions are weakly defined from a flight parameter
+    perspective, so we only reply upon airspeed changes.
+    '''
+    
+    can_operate = helicopter_only
+
+    def derive(self, alt_agl=P('Altitude AGL'),
+               ias=P('Airspeed'),
+               airs=S('Airborne'),
+               pitch_rate=P('Pitch Rate')):
+        for air in airs:
+            trans_slices = slices_from_to(ias.array[air.slice],
+                                          ROTOR_TRANSITION_SPEED_HIGH,
+                                          ROTOR_TRANSITION_SPEED_LOW,
+                                          threshold=1.0)[1]
+
+            self.create_phases(shift_slices(trans_slices, air.slice.start))
 
 
 class TurningInAir(FlightPhaseNode):

@@ -17,16 +17,13 @@ from analysis_engine.json_tools import (
     sort_dict,
 )
 from analysis_engine.node import (
-    ApproachItem,
     ApproachNode,
     DerivedParameterNode,
     FlightPhaseNode,
-    KeyPointValue,
     KeyPointValueNode,
     KeyTimeInstance,
     KeyTimeInstanceNode,
     MultistateDerivedParameterNode,
-    Section,
     SectionNode,
 )
 
