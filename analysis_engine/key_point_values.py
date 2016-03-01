@@ -14395,12 +14395,13 @@ class TakeoffRatingDuration(KeyPointValueNode):
                         break
                 else:
                     continue
-            if rating_end:
-                self.create_kpvs_from_slice_durations(
-                    (slice(toff_idx, rating_end),),
-                    self.frequency,
-                    mark='end'
-                )
+            if rating_end is None:
+                rating_end = accel_start.index + (300 * self.frequency)
+            self.create_kpvs_from_slice_durations(
+                (slice(accel_start.index, rating_end),),
+                self.frequency,
+                mark='end'
+            )
 
 
 ##############################################################################
@@ -14417,4 +14418,3 @@ class SATMax(KeyPointValueNode):
 
     def derive(self, sat=P('SAT')):
         self.create_kpv(*max_value(sat.array))
-
