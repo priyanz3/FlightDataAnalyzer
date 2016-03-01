@@ -2260,7 +2260,8 @@ class TestTakeoff(unittest.TestCase):
 
 class TestTaxiOut(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('Mobile', 'Takeoff', 'First Eng Start Before Liftoff')]
+        expected = [('Mobile', 'Takeoff'),
+                    ('Mobile', 'Takeoff', 'First Eng Start Before Liftoff')]
         self.assertEqual(TaxiOut.get_operational_combinations(), expected)
 
     def test_taxi_out(self):

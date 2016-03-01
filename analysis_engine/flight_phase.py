@@ -1447,13 +1447,12 @@ class Taxiing(FlightPhaseNode):
     def can_operate(cls, available, seg_type=A('Segment Type')):
         ground_only = seg_type and seg_type.value == 'GROUND_ONLY' and \
             all_of(('Mobile', 'Rejected Takeoff'), available)
-        default = all_of(('Mobile', 'Takeoff', 'Landing', 'Airborne',
-                             'Rejected Takeoff'), available)
+        default = all_of(('Mobile', 'Takeoff', 'Landing', 'Airborne'), available)
         return default or ground_only
 
     def derive(self, mobiles=S('Mobile'), gspd=P('Groundspeed'),
                toffs=S('Takeoff'), lands=S('Landing'),
-               rtos = S('Rejected Takeoff'),
+               rtos=S('Rejected Takeoff'),
                airs=S('Airborne')):
         # XXX: There should only be one Mobile slice.
         if gspd:
@@ -1998,6 +1997,10 @@ class TaxiOut(FlightPhaseNode):
     This takes the period from start of data to start of takeoff as the taxi
     out, and the end of the landing to the end of the data as taxi in.
     """
+    @classmethod
+    def can_operate(cls, available):
+        return all_of(('Mobile', 'Takeoff'), available)
+    
     def derive(self, gnds=S('Mobile'), toffs=S('Takeoff'),
                first_eng_starts=KTI('First Eng Start Before Liftoff')):
         if toffs:

@@ -1142,7 +1142,7 @@ class Liftoff(KeyTimeInstanceNode):
             return
 
         for air in airs:
-            index_acc = index_rad = index_gog = index_lift = None
+            index_acc = index_vs = index_rad = index_gog = index_lift = None
             index_air = air.start_edge
             if index_air is None:
                 continue
@@ -1157,7 +1157,7 @@ class Liftoff(KeyTimeInstanceNode):
             if vert_spd:
                 index_vs = index_at_value(
                     vert_spd.array, VERTICAL_SPEED_FOR_LIFTOFF, to_scan)
-            else:
+            elif vert_spd_baro:
                 # Fallback to pressure rate of climb
                 index_vs = index_at_value(vert_spd_baro.array,
                                           VERTICAL_SPEED_FOR_LIFTOFF,
