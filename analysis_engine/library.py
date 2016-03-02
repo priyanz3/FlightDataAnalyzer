@@ -7048,8 +7048,8 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
         secs = abs_d * 30.0
     else:
         # More distant ranges at higher speeds
-        secs = abs_d * 10
-    guess = copysign(secs*hz, _distance)
+        secs = abs_d * 20
+    guess = copysign(secs * hz, _distance)
     estimate = max(0, min(index_ref + guess, len(latitude)))
 
     # By constraining the boundaries we ensure the iteration does not
