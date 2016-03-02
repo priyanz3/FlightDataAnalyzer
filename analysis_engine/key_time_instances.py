@@ -1876,7 +1876,8 @@ class DistanceFromAirportMixin(object):
             self.create_kti(index, replace_values={'distance': distance})
             return index
 
-    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, distance, direction):
+    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, distance,
+                  direction='forward'):
         # We can only handle single liftoffs or touchdowns at this time:
         if len(ktis) != 1 or datum_lat is None or datum_lon is None:
             return
@@ -1965,7 +1966,6 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                 ix = self.calculate_fallback(
                     lifts, land_lat, land_lon,
                     lat, lon, distance)
-                pass
 
 
 class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1981,10 +1981,12 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lands, None,
-                       rwy.value['start']['latitude'],
-                       rwy.value['start']['longitude'],
-                       lat, lon, direction='backward')
+        for distance in self.NAME_VALUES['distance']:
+            self.calculate(
+                lands, None,
+                rwy.value['start']['latitude'],
+                rwy.value['start']['longitude'],
+                lat, lon, distance, direction='backward')
 
         """
         # We only handle simple approaches as the meaning for go-arounds or
