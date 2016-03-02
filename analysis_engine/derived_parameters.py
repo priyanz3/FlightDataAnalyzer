@@ -1659,7 +1659,7 @@ class ControlColumnFO(DerivedParameterNode):
                 self.array = pot.array
 
 
-def select_ccf(force_capt, force_fo, hz):
+def select_ccf(force_capt, force_fo):
     '''
     This procedure computes the useful force signal from the two recorded signals
     for 737 NG control column forces. This is because the scaling is only valid
@@ -1668,73 +1668,54 @@ def select_ccf(force_capt, force_fo, hz):
     We convey the dominant signal and mask out the smaller signal, so that the analysts
     are not presented with invalid data to inspect.
     '''
-    capt = force_capt.array
-    fo = force_fo.array
+    hz = force_capt.hz
+    
+    def positive(array):
+        array_min = np.ma.min(array)
+        if array_min <= 0:
+            array -= array_min
+        return array
+    
+    capt = positive(force_capt.array)
+    fo = positive(force_fo.array)
+    
+    def smooth(array):
+        return moving_average(second_window(array, hz, 32, extend_window=True), window=(hz * 64) - 1)
+    
+    capt_smooth = smooth(capt)
+    fo_smooth = smooth(fo)
+    
+    def smooth_offset(array):
+        return moving_average(np.ma.abs(array), window=(hz * 64) - 1)
+    
+    capt_offset = smooth_offset(capt - capt_smooth)
+    fo_offset = smooth_offset(fo - fo_smooth)
+    
+    diff = np.ma.abs(capt_offset - fo_offset) > 0.2
+    capt_greater = np_ma_masked_zeros_like(capt)
+    fo_greater = np_ma_masked_zeros_like(fo)
+    capt_idxs = np.ma.logical_and(capt_offset > fo_offset, diff)
+    fo_idxs = np.ma.logical_and(fo_offset > capt_offset, diff)
+    capt_greater[capt_idxs] = force_capt.array[capt_idxs]
+    fo_greater[fo_idxs] = force_fo.array[fo_idxs]
     
     '''
     # Debug plotting
     from matplotlib import pyplot as plt
     import os
-    plt.plot(capt, linewidth=0.15, label='capt rec')
-    plt.plot(fo, linewidth=0.15, label='fo rec')
-    #plt.plot(force_capt.array - force_fo.array, linewidth=0.2)
-    #plt.plot(np.ma.abs(force_capt.array - force_fo.array), linewidth=0.2)
-    '''
-    
-    time_limit = 5
-    if force_capt.hz > 1/64.:
-        capt_offset = np.ma.array(
-            capt.data, mask=np.logical_or(capt.mask, np.abs(capt.data) > 0.5))
-        fo_offset = np.ma.array(
-            fo.data, mask=np.logical_or(fo.mask, np.abs(fo.data) > 0.5))
-        offset = capt_offset - fo_offset
-        if np.ma.count(offset):
-            offset = repair_mask(moving_average(offset, window=(force_capt.hz * 1024) - 1),
-                                 repair_duration=None, extrapolate=True) / 2
-            capt -= offset
-            fo += offset
-            # roughly center around zero
-            avg = np.ma.sum(offset) / len(offset)
-            capt -= avg
-            fo -= avg
-        window = (force_capt.hz * 64) - 1
-        capt_smooth = moving_average(capt, window=window)
-        fo_smooth = moving_average(fo, window=window)
-        '''
-        #plt.plot(capt_offset - fo_offset, linewidth=0.2, label='')
-        plt.plot(offset, linewidth=0.15, label='offset')
-        plt.plot(force_capt_smooth, linewidth=0.15, label='capt smooth')
-        plt.plot(force_fo_smooth, linewidth=0.15, label='fo smooth')
-        '''
-    
-    capt_abs = np.ma.abs(capt_smooth)
-    fo_abs = np.ma.abs(fo_smooth)
-    '''
-    plt.plot(capt_abs, linewidth=0.2, label='capt abs')
-    plt.plot(fo_abs, linewidth=0.2, label='fo abs')
-    '''
-    diff = np.ma.abs(capt_abs - fo_abs) > 0.1
-    capt_greater = capt_abs > fo_abs
-    fo_greater = fo_abs > capt_abs
-    capt_greater_slices = runs_of_ones(capt_greater.data & diff.data & np.logical_not(diff.mask))
-    fo_greater_slices = runs_of_ones(fo_greater.data & diff.data & np.logical_not(diff.mask))
-    
-    capt_answer = np_ma_masked_zeros_like(force_capt.array)
-    fo_answer = np_ma_masked_zeros_like(force_fo.array)
-    for s in capt_greater_slices:
-        capt_answer[s] = force_capt.array[s]
-    for s in fo_greater_slices:
-        fo_answer[s] = force_fo.array[s]
-    
-    '''
-    #plt.plot(np.ma.masked_less(np.ma.masked_greater(ratio, 8), 1), linewidth=0.15, label='ratio')
-    plt.legend(loc='upper left', prop={'size':6})
+    plt.plot(capt, linewidth=0.05, label='capt')
+    plt.plot(fo, linewidth=0.05, label='fo')
+    plt.plot(capt_smooth, linewidth=0.05, label='capt smooth')
+    plt.plot(fo_smooth, linewidth=0.05, label='fo smooth')
+    plt.plot(capt_offset, linewidth=0.05, label='capt offset')
+    plt.plot(fo_offset, linewidth=0.05, label='fo offset')
+    plt.plot(capt_greater, linewidth=0.05, label='capt greater')
+    plt.plot(fo_greater, linewidth=0.05, label='fo greater')
+    plt.legend(loc='upper left', prop={'size': 6})
     plt.savefig(os.path.join(os.path.expanduser('~'), 'control_column_force.svg'), dpi=3000)
     '''
-
-    # We return both answers so that the single routine can be used for either side.
-    return capt_answer, fo_answer
-
+    
+    return capt_greater, fo_greater
 
 class ControlColumnForceCapt(DerivedParameterNode):
     '''
@@ -1748,7 +1729,7 @@ class ControlColumnForceCapt(DerivedParameterNode):
                force_capt=P('Control Column Force (Capt) Recorded'),
                force_fo=P('Control Column Force (FO) Recorded')):
 
-        self.array = select_ccf(force_capt, force_fo, force_capt.frequency)[0]
+        self.array = select_ccf(force_capt, force_fo)[0]
 
 
 class ControlColumnForceFO(DerivedParameterNode):
@@ -1763,7 +1744,7 @@ class ControlColumnForceFO(DerivedParameterNode):
                force_capt=P('Control Column Force (Capt) Recorded'),
                force_fo=P('Control Column Force (FO) Recorded')):
 
-        self.array = select_ccf(force_capt, force_fo, force_capt.frequency)[1]
+        self.array = select_ccf(force_capt, force_fo)[1]
 
 
 class ControlColumnForce(DerivedParameterNode):
@@ -2030,7 +2011,6 @@ class Brake_TempAvg(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -2062,6 +2042,7 @@ class Brake_TempMax(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
+
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -3238,7 +3219,6 @@ class Eng_TorqueMin(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -3284,6 +3264,7 @@ class Eng_VibN1Max(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
+
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
