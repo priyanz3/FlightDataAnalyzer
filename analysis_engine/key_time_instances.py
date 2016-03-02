@@ -40,6 +40,7 @@ from settings import (
     NAME_VALUES_DESCENT,
     NAME_VALUES_ENGINE,
     NAME_VALUES_LEVER,
+    NAME_VALUES_RANGES,
     TAKEOFF_ACCELERATION_THRESHOLD,
     TRANSITION_ALTITUDE,
     VERTICAL_SPEED_FOR_LIFTOFF,
@@ -1858,9 +1859,9 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromAirportMixin(object):
 
-    def calculate(self, ktis, holds, airport, lat, lon, direction):
+    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, direction):
         # We can only handle single liftoffs or touchdowns at this time:
-        if len(ktis) != 1 or airport.value is None:
+        if len(ktis) != 1 or datum_lat is None or datum_lon is None:
             return
 
         direction = -1 if direction == 'backward' else 1
@@ -1869,11 +1870,11 @@ class DistanceFromAirportMixin(object):
                 reference = holds[0].slice.start
             else:
                 reference = ktis[0].index
+
             try:
                 index = index_at_distance(
                     direction * distance, reference,
-                    airport.value.get('latitude'),
-                    airport.value.get('longitude'),
+                    datum_lat, datum_lon,
                     lat.array, lon.array, lat.frequency)
             except ValueError as e:
                 self.exception('Unable to determine distance from airport.')
@@ -1898,7 +1899,10 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lifts, None, dep, lat, lon, direction='forward')
+        self.calculate(lifts, None,
+                       dep.value.get('latitude'),
+                       dep.value.get('longitude'),
+                       lat, lon, direction='forward')
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1920,7 +1924,50 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lands, holds, arr, lat, lon, direction='backward')
+        self.calculate(lands, holds,
+                       arr.value.get('latitude'),
+                       arr.value.get('longitude'),
+                       lat, lon, direction='backward')
+
+
+class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
+    '''
+    Creates KTIs at certain distances from the arrival threshold.
+    '''
+    NAME_FORMAT = '%(distance)d NM From Threshold'
+    NAME_VALUES = NAME_VALUES_RANGES
+
+    def derive(self,
+               lands=KTI('Touchdown'),
+               rwy=A('FDR Landing Runway'),
+               lat=P('Latitude Smoothed'),
+               lon=P('Longitude Smoothed')):
+
+        self.calculate(lands, None,
+                       rwy.value['start']['latitude'],
+                       rwy.value['start']['longitude'],
+                       lat, lon, direction='backward')
+
+        """
+        # We only handle simple approaches as the meaning for go-arounds or
+        # similar cases becomes difficult to assess.
+        if rwy.value is None or len(tdwns)!=1:
+            return
+
+        for distance in self.NAME_VALUES['distance']:
+            try:
+                index = index_at_distance(
+                    -distance, tdwns.get_first().index,
+                    rwy.value['start']['latitude'],
+                    rwy.value['start']['longitude'],
+                    lat.array, lon.array, lat.frequency)
+            except ValueError as e:
+                self.exception('Unable to determine distance from threshold.')
+            else:
+                self.create_kpv(index,
+                                value_at_index(alt_std.array, index),
+                                replace_values={'distance': distance})
+        """
 
 
 #################################################################

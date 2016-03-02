@@ -7050,15 +7050,23 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
     _distance = float(distance)
 
     # We start by guessing an index based on some sample results.
-    guess = copysign((abs(_distance)*17-850)*hz, _distance)
-    kti0 = max(0, min(index_ref + guess, len(latitude)))
+    #   the distance estimate
+    abs_d = abs(_distance)
+    if abs_d < 10:
+        # Flown at low speed; about a minute for the last two miles
+        secs = abs_d * 30.0
+    else:
+        # More distant ranges at higher speeds
+        secs = abs_d * 10
+    guess = copysign(secs*hz, _distance)
+    estimate = max(0, min(index_ref + guess, len(latitude)))
 
     # By constraining the boundaries we ensure the iteration does not
     # stray outside the available array.
     boundaries = [(0, len(latitude))]
 
     kti = optimize.fmin_l_bfgs_b(
-        distance_error, kti0,
+        distance_error, estimate,
         fprime=None,
         args = (
             abs(_distance),
@@ -7081,6 +7089,9 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
     if solution_index == boundaries[0][0] or solution_index == boundaries[0][1]:
         raise ValueError('Attempted to scan further than data permits.')
     elif _dist_err > 0.01:
+        # This can happen if the flight is too short (i.e. less than 250nm if that is the distance requested)
+        # It can also arise if the wrong runway has been identified, so the actual position is the closest point
+        # on the approach to the correct (but unidentified) runway.
         raise ValueError('Converged on the wrong minimum.')
     elif error:
         raise ValueError('Returned early from iteration algorithm: %d' % error)
