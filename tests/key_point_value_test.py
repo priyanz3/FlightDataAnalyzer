@@ -12782,45 +12782,25 @@ class TestTCASTAWarningDuration(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = TCASTAWarningDuration
-        self.operational_combinations = [('TCAS TA', 'Airborne'),
-                                         ('TCAS Combined Control', 'Airborne'),
-                                         ('TCAS TA', 'TCAS Combined Control', 'Airborne')]
+        self.operational_combinations = [('TCAS TA', 'Airborne'),]
 
     def test_derive(self):
-        values_mapping = {
-            0: 'A',
-            1: 'B',
-            2: 'C',
-            3: 'D',
-            4: 'E',
-            5: 'F',
-            6: 'Preventive',
-        }
-        tcas = M(
-            'TCAS Combined Control', array=np.ma.array([0,1,2,3,4,6,6,6,4,5]),
-            values_mapping=values_mapping)
+        values_mapping = {0: '-', 1: 'TA'}
+        ta = M('TCAS TA', array=np.ma.array([0,0,0,0,0,1,1,1,0,0]),
+               values_mapping=values_mapping)
         airborne = buildsection('Airborne', 2, 6)
         node = self.node_class()
-        node.derive(None, tcas, airborne)
+        node.derive(ta, airborne)
         self.assertEqual([KeyPointValue(5.0, 2.0, 'TCAS TA Warning Duration')],
                          node)
 
     def test_ignore_one_second_TAs(self):
-        values_mapping = {
-            0: 'A',
-            1: 'B',
-            2: 'C',
-            3: 'D',
-            4: 'E',
-            5: 'F',
-            6: 'Preventive',
-        }
-        tcas = M(
-            'TCAS Combined Control', array=np.ma.array([0,0,6,0,0,6,0,0,6,0]),
-            values_mapping=values_mapping)
+        values_mapping = {0: '-', 1: 'TA'}
+        ta = M('TCAS TA', array=np.ma.array([0,0,1,0,0,1,0,0,1,0]),
+               values_mapping=values_mapping)
         airborne = buildsection('Airborne', 1, 9)
         node = self.node_class()
-        node.derive(None, tcas, airborne)
+        node.derive(ta, airborne)
         self.assertEqual(node, [])
 
 
