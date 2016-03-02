@@ -191,7 +191,7 @@ class DestinationAirport(FlightAttributeNode):
             return
 
         value = most_common_value(dest.array, threshold=0.45)
-        if value is None:
+        if value is None or not value.isalpha():
             return
 
         api = get_api_handler(settings.API_HANDLER)
