@@ -4265,7 +4265,7 @@ class HeadingContinuous(DerivedParameterNode):
                 head_fo.array += corr
 
                 self.array, self.frequency, self.offset = blend_two_parameters(head_capt, head_fo)
-            else:
+            elif np.ma.count(head_mag.array):
                 self.array = repair_mask(straighten_headings(head_mag.array))
 
 
