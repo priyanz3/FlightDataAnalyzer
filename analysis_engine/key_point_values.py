@@ -40,6 +40,7 @@ from analysis_engine.node import (
 
 from analysis_engine.library import (ambiguous_runway,
                                      align,
+                                     all_deps,
                                      all_of,
                                      any_of,
                                      bearings_and_distances,
