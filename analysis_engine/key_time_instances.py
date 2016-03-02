@@ -1872,7 +1872,9 @@ class DistanceFromAirportMixin(object):
         # convert meters to nautical miles
         distances *= 0.000539957
         index = index_at_value(distances, distance)
-        pass
+        if index:
+            self.create_kti(index, replace_values={'distance': distance})
+            return index
 
     def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, distance, direction):
         # We can only handle single liftoffs or touchdowns at this time:
