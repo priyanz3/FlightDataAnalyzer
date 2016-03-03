@@ -1988,27 +1988,6 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
                 rwy.value['start']['longitude'],
                 lat, lon, distance, direction='backward')
 
-        """
-        # We only handle simple approaches as the meaning for go-arounds or
-        # similar cases becomes difficult to assess.
-        if rwy.value is None or len(tdwns)!=1:
-            return
-
-        for distance in self.NAME_VALUES['distance']:
-            try:
-                index = index_at_distance(
-                    -distance, tdwns.get_first().index,
-                    rwy.value['start']['latitude'],
-                    rwy.value['start']['longitude'],
-                    lat.array, lon.array, lat.frequency)
-            except ValueError as e:
-                self.exception('Unable to determine distance from threshold.')
-            else:
-                self.create_kpv(index,
-                                value_at_index(alt_std.array, index),
-                                replace_values={'distance': distance})
-        """
-
 
 #################################################################
 # Helicopter: Hover

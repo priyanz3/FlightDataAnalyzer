@@ -23,6 +23,7 @@ from analysis_engine.key_time_instances import (
     ClimbAccelerationStart,
     ClimbStart,
     ClimbThrustDerateDeselected,
+    DistanceFromThreshold,
     EngFireExtinguisher,
     EngStart,
     EngStop,
@@ -1791,6 +1792,49 @@ class TestSecsToTouchdown(unittest.TestCase):
                 KeyTimeInstance(index=70, name='30 Secs To Touchdown'),
             ]
         )
+
+
+class TestDistanceFromThreshold(unittest.TestCase):
+    def test_can_operate(self):
+        self.assertEqual(
+            DistanceFromThreshold.get_operational_combinations(),
+            [('Touchdown', 'FDR Landing Runway', 'Latitude Smoothed', 'Longitude Smoothed')])
+
+    def test_derive(self):
+        lands = [KeyTimeInstance(index=96, name='Touchdown')]
+        rwy = A(name='FDR Landing Runway', value={
+            'start': {'latitude': 0, 'longitude': 0},
+            'end': {'latitude': 0, 'longitude': -0.03},
+        })
+        test = np.ma.array(range(128,-1,-1))
+        # 3 NM to zero in first 96 samples
+        lat = P('Latitude', test*0.0) # On equator
+        lon = P('Longitude', np.ma.maximum(test-32,0)/(32.0*60))
+        dft = DistanceFromThreshold()
+        dft.derive(lands, rwy, lat, lon)
+
+        self.assertEqual(dft[0].index, 96)
+        self.assertAlmostEqual(dft[1].index, 64, places=1)
+        self.assertAlmostEqual(dft[2].index,32, places=1)
+
+    def test_derive_beyond_array(self):
+        lands = [KeyTimeInstance(index=96, name='Touchdown')]
+        rwy = A(name='FDR Landing Runway', value={
+            'start': {'latitude': 0, 'longitude': 0},
+            'end': {'latitude': 0, 'longitude': -0.03},
+        })
+        test = np.ma.array(range(128,-1,-1))
+        # 1.5 NM to zero in first 96 samples
+        lat = P('Latitude', test*0.0) # On equator
+        lon = P('Longitude', np.ma.maximum(test-32,0)/(64.0*60))
+        dft = DistanceFromThreshold()
+        dft.derive(lands, rwy, lat, lon)
+
+        self.assertEqual(dft[0].index, 96)
+        # Note shifted 1nm point as flying at half the speed
+        self.assertAlmostEqual(dft[1].index, 32, places=1)
+        # Array is too short to include 2nm point
+        self.assertRaises(ValueError)
 
 
 class TestAutoland(unittest.TestCase):
