@@ -377,6 +377,14 @@ class TestDestinationAirport(unittest.TestCase):
         self.node.derive(self.dest, self.afr_dest)
         self.assertEqual(self.node.value, get_airport.return_value)
         get_airport.assert_called_once_with('FDSL')
+    
+    def test_derive_invalid(self):
+        dest_array = np.ma.array(
+            ['000', '0000', '0000', '0000', '00', '0000'],
+            mask=[True, False, False, False, False, True])
+        dest = P('Destination', array=dest_array)
+        self.node.derive(dest, None)
+        self.assertEqual(self.node.value, None)
 
 
 class TestDuration(unittest.TestCase):

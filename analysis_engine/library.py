@@ -29,6 +29,8 @@ from settings import (
     TRUCK_OR_TRAILER_PERIOD,
 )
 
+EARTH_RADIUS = 6371000
+
 # There is no numpy masked array function for radians, so we just multiply thus:
 deg2rad = radians(1.0)
 
@@ -2261,39 +2263,28 @@ def first_order_washout(param, time_constant, hz, gain=1.0, initial_value=None):
     return masked_first_order_filter(y_term, x_term, param, initial_value)
 
 
-def _dist(lat1_d, lon1_d, lat2_d, lon2_d):
-    """
+def _dist(lat1, lon1, lat2, lon2):
+    '''
     Haversine formula for calculating distances between coordinates.
 
-    :param lat1_d: latitude of first point
-    :type lat1_d: float, units = degrees latitude
-    :param lon1_d: longitude of first point
-    :type lon1_d: float, units = degrees longitude
-    :param lat2_d: latitude of second point
-    :type lat2_d: float, units = degrees latitude
-    :param lon2_d: longitude of second point
-    :type lon2_d: float, units = degrees longitude
+    This function has been adapted to work with numpy arrays or single values.
 
-    :return _dist: distance between the two points
-    :type _dist: float (units=metres)
+    :param lat1: latitude (degrees)
+    :type lat1: float or numpy.array
+    :param lon1: longitude (degrees)
+    :type lon1: float or numpy.array
+    :param lat2: latitude (degrees)
+    :type lat2: float or numpy.array
+    :param lon2: longitude (degrees)
+    :type lon2: float or numpy.array
 
-    """
-    if (lat1_d == 0.0 and lon1_d == 0.0) or (lat2_d == 0.0 and lon2_d == 0.0):
-        # Being asked for a distance from nowhere point on the Atlantic.
-        # Decline to get sucked into this trap !
-        return None
-
-    lat1 = radians(lat1_d)
-    lon1 = radians(lon1_d)
-    lat2 = radians(lat2_d)
-    lon2 = radians(lon2_d)
-
-    dlat = lat2-lat1
-    dlon = lon2-lon1
-
-    a = sin(dlat/2) * sin(dlat/2) + \
-        sin(dlon/2) * sin(dlon/2) * cos(lat1) * cos(lat2)
-    return 2 * atan2(sqrt(a), sqrt(1-a)) * 6371000
+    :returns: distance between the two points
+    :rtype: float (units=metres)
+    '''
+    sdlat2 = np.sin(np.radians(lat1 - lat2) / 2.) ** 2
+    sdlon2 = np.sin(np.radians(lon1 - lon2) / 2.) ** 2
+    a = sdlat2 + sdlon2 * np.cos(np.radians(lat1)) * np.cos(np.radians(lat2))
+    return 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * EARTH_RADIUS
 
 
 def runway_distance_from_end(runway, *args, **kwds):
@@ -7057,8 +7048,8 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
         secs = abs_d * 30.0
     else:
         # More distant ranges at higher speeds
-        secs = abs_d * 10
-    guess = copysign(secs*hz, _distance)
+        secs = abs_d * 20
+    guess = copysign(secs * hz, _distance)
     estimate = max(0, min(index_ref + guess, len(latitude)))
 
     # By constraining the boundaries we ensure the iteration does not

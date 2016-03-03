@@ -1842,26 +1842,6 @@ class TestControlColumnForceCapt(unittest.TestCase):
                      'Control Column Force (FO) Recorded')]
         opts = ControlColumnForceCapt.get_operational_combinations()
         self.assertEqual(opts, expected)
-
-    def test_control_column_force_capt(self):
-        ccf = ControlColumnForceCapt()
-        capt = np.ma.arange(20, 28, 0.1)
-        capt[6] = np.ma.masked
-        capt[76] = np.ma.masked
-        ccf.derive(
-            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
-            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.ones(80) * 25))
-        self.assertEqual(ccf.array.round(decimals=1).tolist(), [None] * 52 + [25.2, 25.3, 25.4, 25.5, 25.6, 25.7, 25.8, 25.9, 26.0, 26.1, 26.2, 26.3, 26.4, 26.5, 26.6, 26.7, 26.8, 26.9, 27.0, 27.1, 27.2, 27.3, 27.4, 27.5, None, 27.7, 27.8, 27.9])
-
-    def test_control_column_force_capt_neg(self):
-        ccf = ControlColumnForceCapt()
-        capt = np.ma.arange(0, -2, -0.1)
-        capt[6] = np.ma.masked
-        capt[15] = np.ma.masked
-        ccf.derive(
-            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
-            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.ones(20)))
-        self.assertEqual(ccf.array.round(1).tolist(), [None] * 16 +  [-1.6, -1.7, -1.8, -1.9])
     
     def test_control_column_force_capt_real_data_1(self):
         ccf = ControlColumnForceCapt()
@@ -1872,7 +1852,29 @@ class TestControlColumnForceCapt(unittest.TestCase):
                                 load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_1.npz')),
                                 frequency=2)
         ccf.derive(capt, fo)
-        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(x, y) for x, y in [(582, 790), (800, 1032), (2596, 2739), (15166, 15326), (15546, 15592), (15616, 16224)]])
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(*x) for x in [(964, 1393), (1579, 1621), (1632, 1704), (12506, 12507), (12511, 12720), (12726, 12731), (12733, 12735), (12737, 12876), (13624, 13688)]])
+    
+    def test_control_column_force_capt_real_data_2(self):
+        ccf = ControlColumnForceCapt()
+        capt = ControlColumnForce('Control Column Force (Capt) Recorded',
+                                  load_compressed(os.path.join(test_data_path, 'control_column_force_capt_recorded_2.npz')),
+                                  frequency=2)
+        fo = ControlColumnForce('Control Column Force (FO) Recorded',
+                                load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_2.npz')),
+                                frequency=2)
+        ccf.derive(capt, fo)
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(*x) for x in [(1208, 1401), (2582, 2597), (35043, 35225), (35704, 35722), (35723, 35724), (35725, 35731), (35734, 35735), (35744, 35757), (35758, 35759), (35760, 35763)]])
+    
+    def test_control_column_force_capt_real_data_3(self):
+        ccf = ControlColumnForceCapt()
+        capt = ControlColumnForce('Control Column Force (Capt) Recorded',
+                                  load_compressed(os.path.join(test_data_path, 'control_column_force_capt_recorded_3.npz')),
+                                  frequency=2)
+        fo = ControlColumnForce('Control Column Force (FO) Recorded',
+                                load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_3.npz')),
+                                frequency=2)
+        ccf.derive(capt, fo)
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(*x) for x in [(1332, 1344), (1369, 1378), (2788, 2933), (6067, 6090), (8568, 8737), (8868, 8950)]])
 
 
 class TestControlColumnForceFO(unittest.TestCase):
@@ -1882,16 +1884,6 @@ class TestControlColumnForceFO(unittest.TestCase):
                      'Control Column Force (FO) Recorded')]
         opts = ControlColumnForceFO.get_operational_combinations()
         self.assertEqual(opts, expected)
-
-    def test_control_column_force_fo(self):
-        ccf = ControlColumnForceFO()
-        capt = np.ma.arange(0, 8, 0.1)
-        ccf.derive(
-            ControlColumnForce('Control Column Force (Capt) Recorded', capt),
-            ControlColumnForce('Control Column Force (FO) Recorded', np.ma.array([3.0]*80)))
-        expected = np.ma.maximum(np.ma.arange(0, 8, 0.1), np.ma.array([3.0]*80))
-        expected[31:] = np.ma.masked
-        self.assertEqual(ccf.array.round(decimals=1).tolist(), [3] * 29 + [None] * 51)
     
     def test_control_column_force_fo_real_data_1(self):
         ccf = ControlColumnForceFO()
@@ -1902,7 +1894,30 @@ class TestControlColumnForceFO(unittest.TestCase):
                                 load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_1.npz')),
                                 frequency=2)
         ccf.derive(capt, fo)
-        self.assertEqual(np.ma.clump_unmasked(ccf.array), [])
+        # probably false positives, but not during takeoff and landing
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(331, 416)])
+    
+    def test_control_column_force_fo_real_data_2(self):
+        ccf = ControlColumnForceFO()
+        capt = ControlColumnForce('Control Column Force (Capt) Recorded',
+                                  load_compressed(os.path.join(test_data_path, 'control_column_force_capt_recorded_2.npz')),
+                                  frequency=2)
+        fo = ControlColumnForce('Control Column Force (FO) Recorded',
+                                load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_2.npz')),
+                                frequency=2)
+        ccf.derive(capt, fo)
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(*x) for x in [(3183, 3247), (8856, 8880), (8890, 8899), (35722, 35723), (35724, 35725), (35731, 35734), (35735, 35744), (35757, 35758), (35759, 35760), (35763, 35768), (35848, 35856)]])
+    
+    def test_control_column_force_fo_real_data_3(self):
+        ccf = ControlColumnForceFO()
+        capt = ControlColumnForce('Control Column Force (Capt) Recorded',
+                                  load_compressed(os.path.join(test_data_path, 'control_column_force_capt_recorded_3.npz')),
+                                  frequency=2)
+        fo = ControlColumnForce('Control Column Force (FO) Recorded',
+                                load_compressed(os.path.join(test_data_path, 'control_column_force_fo_recorded_3.npz')),
+                                frequency=2)
+        ccf.derive(capt, fo)
+        self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(*x) for x in [(129, 259), (979, 1266), (3070, 3092), (5245, 5346), (5636, 5645), (5893, 5921), (5922, 5928), (5942, 5987), (6146, 6790), (6797, 6919), (6922, 6924), (6926, 6932), (6933, 6934), (6942, 6958), (6961, 6970), (6987, 7088), (7573, 7579), (11013, 11033), (11728, 12076), (12109, 12218), (12219, 12222), (12488, 12552)]])
 
 
 class TestControlColumnForce(unittest.TestCase):

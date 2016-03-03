@@ -2670,20 +2670,20 @@ class TestSpeedbrakeDeployed(unittest.TestCase):
         self.node_class = SpeedbrakeDeployed
 
     def test_derive(self):
-        result = [ 0,  0,  0,  1,  1,  1,  1,  0,  0,  0]
+        result = [ 0,  0,  0,  0,  0,  1,  1,  0,  0,  0]
         node = self.node_class()
-        node.derive(self.deployed_l, self.deployed_r, *[None] * 16)
+        node.derive(None, self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result)
 
     def test_derive_masked_value(self):
         self.deployed_l.array.mask = [ 0,  0,  0,  1,  0,  1,  0,  0,  1,  0]
         self.deployed_r.array.mask = [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
-        result_array = [ 0,  0,  0,  0,  1,  0,  1,  0,  0,  0]
+        result_array = [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0]
         result_mask =  [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
         node = self.node_class()
-        node.derive(self.deployed_l, self.deployed_r, *[None] * 16)
+        node.derive(None, self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result_array)
         np.testing.assert_equal(node.array.mask, result_mask)
 

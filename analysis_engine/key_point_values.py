@@ -41,6 +41,7 @@ from analysis_engine.node import (
 
 from analysis_engine.library import (ambiguous_runway,
                                      align,
+                                     all_deps,
                                      all_of,
                                      any_of,
                                      bearings_and_distances,
@@ -13068,20 +13069,11 @@ class TCASTAWarningDuration(KeyPointValueNode):
     name = 'TCAS TA Warning Duration'
     units = ut.SECOND
 
-    @classmethod
-    def can_operate(cls, available):
-        return any_of(('TCAS TA', 'TCAS Combined Control'), available) \
-            and 'Airborne' in available
-
     def derive(self, tcas_ta=M('TCAS TA'),
-               tcas=M('TCAS Combined Control'), airs=S('Airborne')):
+               airs=S('Airborne')):
 
         for air in airs:
-            if tcas_ta:
-                ras_local = tcas_ta.array[air.slice] == 'TA'
-            else:
-                # If the TA is not recorded separately:
-                ras_local = tcas.array[air.slice] == 'Preventive'
+            ras_local = tcas_ta.array[air.slice] == 'TA'
 
             ras_slices = shift_slices(runs_of_ones(ras_local), air.slice.start)
             self.create_kpvs_from_slice_durations(ras_slices, self.frequency,
@@ -13115,6 +13107,7 @@ class TCASRAWarningDuration(KeyPointValueNode):
                                                          'Altitude Lost',
                                                          'Up Advisory Corrective',
                                                          'Down Advisory Corrective',
+                                                         'Preventive',
                                                          ignore_missing=True)
 
             ras_slices = shift_slices(runs_of_ones(ras_local), air.slice.start)
@@ -13139,6 +13132,7 @@ class TCASRAReactionDelay(KeyPointValueNode):
                                                      'Altitude Lost',
                                                      'Up Advisory Corrective',
                                                      'Down Advisory Corrective',
+                                                     'Preventive',
                                                      ignore_missing=True)
             ras = shift_slices(runs_of_ones(ras_local), air.slice.start)
             # Assume that the reaction takes place during the TCAS RA period:
@@ -13185,6 +13179,7 @@ class TCASRAInitialReactionStrength(KeyPointValueNode):
                                                      'Altitude Lost',
                                                      'Up Advisory Corrective',
                                                      'Down Advisory Corrective',
+                                                     'Preventive',
                                                      ignore_missing=True)
             ras = shift_slices(runs_of_ones(ras_local), air.slice.start)
             # We assume that the reaction takes place during the TCAS RA
@@ -13241,6 +13236,7 @@ class TCASRAToAPDisengagedDuration(KeyPointValueNode):
                                                      'Altitude Lost',
                                                      'Up Advisory Corrective',
                                                      'Down Advisory Corrective',
+                                                     'Preventive',
                                                      ignore_missing=True)
             ras = shift_slices(runs_of_ones(ras_local), air.slice.start)
             # Assume that the reaction takes place during the TCAS RA period:

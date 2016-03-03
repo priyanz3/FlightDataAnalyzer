@@ -2231,6 +2231,9 @@ class SmokeWarning(MultistateDerivedParameterNode):
 
 class SpeedbrakeDeployed(MultistateDerivedParameterNode):
     '''
+    Follows same logic as when deriving speedbaker from spoiler angles two
+    matching spoilers in deployed state indicates speedbrake, single side
+    depolyment indicates roll.
     '''
     values_mapping = {
         0: '-',
@@ -2261,11 +2264,18 @@ class SpeedbrakeDeployed(MultistateDerivedParameterNode):
                l_out=M('Spoiler (L) Outboard Deployed'),
                r_out=M('Spoiler (R) Outboard Deployed')):
 
-        params = (dep, l, r,
-                  l1, l2, l3, l4, l5, l6, l7,
-                  r1, r2, r3, r4, r5, r6, r7,
-                  l_out, r_out)
-        stack = vstack_params_where_state(*[(p, 'Deployed') for p in params])
+        left = (l, l1, l2, l3, l4, l5, l6, l7, l_out)
+        right = (r, r1, r2, r3, r4, r5, r6, r7, r_out)
+        pairs = zip(left, right)
+
+        combined = [dep.array] if dep else []
+        for pair in pairs:
+            if pair[0] and pair[1]:
+                pair_stack = vstack_params_where_state(*[(p, 'Deployed') for p in pair])
+                combined.append(pair_stack.all(axis=0))
+        stack = np.ma.vstack(combined)
+
+        #stack = vstack_params_where_state(*[(p, 'Deployed') for p in params])
 
         array = np_ma_zeros_like(stack[0], dtype=np.short)
         array = np.ma.where(stack.any(axis=0), 1, array)

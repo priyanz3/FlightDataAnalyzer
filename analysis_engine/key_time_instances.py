@@ -1859,28 +1859,46 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromAirportMixin(object):
 
-    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, direction):
+    def calculate_fallback(self, ktis, datum_lat, datum_lon, lat, lon, distance):
+        # We can only handle single liftoffs or touchdowns at this time:
+        from library import _dist
+
+        if len(ktis) != 1:
+            return
+
+        reference = ktis[0].index
+
+        distances = _dist(lat.array, lon.array, [datum_lat], [datum_lon])
+        # convert meters to nautical miles
+        distances *= 0.000539957
+        index = index_at_value(distances, distance)
+        if index:
+            self.create_kti(index, replace_values={'distance': distance})
+            return index
+
+    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, distance,
+                  direction='forward'):
         # We can only handle single liftoffs or touchdowns at this time:
         if len(ktis) != 1 or datum_lat is None or datum_lon is None:
             return
 
         direction = -1 if direction == 'backward' else 1
-        for distance in self.NAME_VALUES['distance']:
-            if holds:
-                reference = holds[0].slice.start
-            else:
-                reference = ktis[0].index
+        if holds:
+            reference = holds[0].slice.start
+        else:
+            reference = ktis[0].index
 
-            try:
-                index = index_at_distance(
-                    direction * distance, reference,
-                    datum_lat, datum_lon,
-                    lat.array, lon.array, lat.frequency)
-            except ValueError as e:
-                self.exception('Unable to determine distance from airport.')
-            else:
-                if index:
-                    self.create_kti(index, replace_values={'distance': distance})
+        try:
+            index = index_at_distance(
+                direction * distance, reference,
+                datum_lat, datum_lon,
+                lat.array, lon.array, lat.frequency)
+        except ValueError as e:
+            self.exception('Unable to determine distance from airport.')
+        else:
+            if index:
+                self.create_kti(index, replace_values={'distance': distance})
+                return index
 
 
 class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1899,10 +1917,17 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lifts, None,
-                       dep.value.get('latitude'),
-                       dep.value.get('longitude'),
-                       lat, lon, direction='forward')
+        toff_lat = dep.value.get('latitude')
+        toff_lon = dep.value.get('longitude')
+        for distance in self.NAME_VALUES['distance']:
+            ix = self.calculate(
+                lifts, None, toff_lat, toff_lon,
+                lat, lon, distance, direction='forward')
+            if not ix:
+                self.warning('Falling back to array method.')
+                ix = self.calculate_fallback(
+                    lifts, toff_lat, toff_lon,
+                    lat, lon, distance)
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1918,16 +1943,29 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
+               lifts=KTI('Liftoff'),
                lands=KTI('Touchdown'),
                holds=S('Holding'),
                arr=A('FDR Landing Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lands, holds,
-                       arr.value.get('latitude'),
-                       arr.value.get('longitude'),
-                       lat, lon, direction='backward')
+        import time
+
+        land_lat = arr.value.get('latitude')
+        land_lon = arr.value.get('longitude')
+        for distance in self.NAME_VALUES['distance']:
+            now = time.time()
+            ix = self.calculate(
+                lands, holds,
+                land_lat, land_lon,
+                lat, lon, distance, direction='backward')
+            if not ix:
+                self.warning('Falling back to array method.')
+                # Fallback method does not support backwards scanning
+                ix = self.calculate_fallback(
+                    lifts, land_lat, land_lon,
+                    lat, lon, distance)
 
 
 class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1943,10 +1981,12 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        self.calculate(lands, None,
-                       rwy.value['start']['latitude'],
-                       rwy.value['start']['longitude'],
-                       lat, lon, direction='backward')
+        for distance in self.NAME_VALUES['distance']:
+            self.calculate(
+                lands, None,
+                rwy.value['start']['latitude'],
+                rwy.value['start']['longitude'],
+                lat, lon, distance, direction='backward')
 
         """
         # We only handle simple approaches as the meaning for go-arounds or
