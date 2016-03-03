@@ -8701,6 +8701,16 @@ class TestElevatorDuringLandingMin(unittest.TestCase,
 
 class TestHeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, NodeTest):
 
+    hdg = P('Heading True Continuous', np.ma.array([45]*11))
+    ias = P('Airspeed', np.ma.array(range(60, 170, 10)))
+    pch = P('Pitch', np.ma.array([0]*8+[4, 5, 6]))
+    toff = buildsection('Takeoff', 2, 10)
+    rwy = A(name='FDR Takeoff Runway', value={
+        'start': {'latitude': -.01, 'longitude': -.01},
+        'end': {'latitude': +0.01, 'longitude': +0.01},
+        'identifier':'040',
+    })
+
     def setUp(self):
         self.node_class = HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff
         self.operational_combinations = [(
