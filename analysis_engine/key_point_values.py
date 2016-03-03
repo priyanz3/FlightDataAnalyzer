@@ -28,6 +28,7 @@ from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
                                       NAME_VALUES_CONF,
                                       NAME_VALUES_ENGINE,
                                       NAME_VALUES_LEVER,
+                                      NAME_VALUES_RANGES,
                                       HEADING_RATE_FOR_TAXI_TURNS,
                                       REVERSE_THRUST_EFFECTIVE_EPR,
                                       REVERSE_THRUST_EFFECTIVE_N1,
@@ -4697,6 +4698,29 @@ class AltitudeAtMachMax(KeyPointValueNode):
         # Aligns altitude to mach to ensure we have the most accurate altitude
         # reading at the point of maximum mach:
         self.create_kpvs_at_kpvs(alt_std.array, max_mach)
+
+########################################
+# Altitude: On Approach
+
+class AltitudeAtRangesOnApproach(KeyPointValueNode):
+    '''
+    '''
+
+    NAME_FORMAT = 'Altitude At %(distance)d NM On Approach'
+    NAME_VALUES = NAME_VALUES_RANGES
+
+    units = ut.FT
+
+    def derive(self, alt = P('Altitude AAL'),
+               dist_ktis = KTI('Distance From Threshold')):
+
+        for distance in NAME_VALUES_RANGES['distance']:
+            kti = dist_ktis.get_first(name='%d NM From Threshold' % distance)
+            self.create_kpv(kti.index,
+                            value_at_index(alt.array, kti.index),
+                            replace_values={'distance':distance})
+
+
 
 
 ##############################################################################
