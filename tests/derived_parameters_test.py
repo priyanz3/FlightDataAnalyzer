@@ -1897,6 +1897,7 @@ class TestControlColumnForceFO(unittest.TestCase):
         # probably false positives, but not during takeoff and landing
         self.assertEqual(np.ma.clump_unmasked(ccf.array), [slice(331, 416)])
     
+    @unittest.skip('Skipping due to differing results on jenkins server despite numpy and scipy versions being identical')
     def test_control_column_force_fo_real_data_2(self):
         ccf = ControlColumnForceFO()
         capt = ControlColumnForce('Control Column Force (Capt) Recorded',

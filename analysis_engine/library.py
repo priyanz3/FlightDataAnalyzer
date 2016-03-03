@@ -5999,6 +5999,32 @@ def slice_round(_slice):
     return slice(start, stop, _slice.step)
 
 
+def slices_split(slices, index):
+    '''
+    Split slices at index.
+
+    Returns a new list of slices with the matching one of them split at index
+    (if applicable).
+
+    :param slices: Slices to split
+    :type slices: list of slices
+    :param index: Index at which to split slices
+    :type index: int
+
+    :returns: Split slices
+    :rtype: list of slices
+    '''
+    result = []
+    for sl in slices:
+        if is_index_within_slice(index, sl):
+            result.append(slice(sl.start, index))
+            result.append(slice(index, sl.stop))
+        else:
+            result.append(sl)
+
+    return result
+
+
 def slices_round(slices):
     '''
     Round an iterable of slices.

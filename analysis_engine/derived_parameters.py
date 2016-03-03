@@ -90,6 +90,7 @@ from analysis_engine.library import (actuator_mismatch,
                                      slices_or,
                                      slices_remove_small_gaps,
                                      slices_remove_small_slices,
+                                     slices_split,
                                      smooth_track,
                                      straighten_altitudes,
                                      straighten_headings,
@@ -307,13 +308,13 @@ class AirspeedForFlightPhases(DerivedParameterNode):
     '''
 
     units = ut.KT
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         return ('Altitude Radio' if ac_type and ac_type.value == 'helicopter' else 'Airspeed') in available
 
     def derive(self, airspeed=P('Airspeed'), alt_rad=P('Altitude Radio'), ac_type=A('Aircraft Type')):
-        param = alt_rad if ac_type and ac_type.value == 'helicopter' else airspeed 
+        param = alt_rad if ac_type and ac_type.value == 'helicopter' else airspeed
         self.array = hysteresis(
             repair_mask(param.array, repair_duration=None,
                         raise_entirely_masked=False), HYSTERESIS_FPIAS)
@@ -919,7 +920,7 @@ class AltitudeAGL(DerivedParameterNode):
     '''
     name = 'Altitude AGL'
     units = ut.FT
-    
+
     can_operate = helicopter_only
 
     def derive(self, alt_rad=P('Altitude Radio'),
@@ -971,7 +972,7 @@ class AltitudeDensity(DerivedParameterNode):
     '''
 
     units = ut.FT
-    
+
     can_operate = helicopter_only
 
     def derive(self, alt_std=P('Altitude STD'), sat=P('SAT'),
@@ -1483,7 +1484,7 @@ class CyclicForeAft(DerivedParameterNode):
     align = False
     name = 'Cyclic Fore-Aft'
     units = ut.PERCENT
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
@@ -1500,7 +1501,7 @@ class CyclicLateral(DerivedParameterNode):
     '''
     align = False
     units = ut.PERCENT
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
@@ -1517,7 +1518,7 @@ class CyclicAngle(DerivedParameterNode):
     '''
     align = False
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self,
@@ -1669,28 +1670,28 @@ def select_ccf(force_capt, force_fo):
     are not presented with invalid data to inspect.
     '''
     hz = force_capt.hz
-    
+
     def positive(array):
         array_min = np.ma.min(array)
         if array_min <= 0:
             array -= array_min
         return array
-    
+
     capt = positive(force_capt.array)
     fo = positive(force_fo.array)
-    
+
     def smooth(array):
         return moving_average(second_window(array, hz, 32, extend_window=True), window=(hz * 64) - 1)
-    
+
     capt_smooth = smooth(capt)
     fo_smooth = smooth(fo)
-    
+
     def smooth_offset(array):
         return moving_average(np.ma.abs(array), window=(hz * 64) - 1)
-    
+
     capt_offset = smooth_offset(capt - capt_smooth)
     fo_offset = smooth_offset(fo - fo_smooth)
-    
+
     diff = np.ma.abs(capt_offset - fo_offset) > 0.2
     capt_greater = np_ma_masked_zeros_like(capt)
     fo_greater = np_ma_masked_zeros_like(fo)
@@ -1698,7 +1699,7 @@ def select_ccf(force_capt, force_fo):
     fo_idxs = np.ma.logical_and(fo_offset > capt_offset, diff)
     capt_greater[capt_idxs] = force_capt.array[capt_idxs]
     fo_greater[fo_idxs] = force_fo.array[fo_idxs]
-    
+
     '''
     # Debug plotting
     from matplotlib import pyplot as plt
@@ -1714,7 +1715,7 @@ def select_ccf(force_capt, force_fo):
     plt.legend(loc='upper left', prop={'size': 6})
     plt.savefig(os.path.join(os.path.expanduser('~'), 'control_column_force.svg'), dpi=3000)
     '''
-    
+
     return capt_greater, fo_greater
 
 class ControlColumnForceCapt(DerivedParameterNode):
@@ -3887,9 +3888,9 @@ class Groundspeed(DerivedParameterNode):
             # carried forward as part of the latitude array anyway.
             dlon = rate_of_change(lon, 2.0) * deg_to_metres *\
                 np.cos(np.radians(lat.array.data))
-        
+
             gs = np.ma.sqrt(dlat*dlat+dlon*dlon) / 0.514 # kn per m/s
-        
+
             # In some data segments, e.g. ground runs, the data is all masked, so don't create a derived parameter.
             if np.ma.count(gs):
                 self.array = np.ma.masked_greater(gs, 400)
@@ -4989,7 +4990,7 @@ class Mach(DerivedParameterNode):
     Mach derived from air data parameters for aircraft where no suitable Mach
     data is recorded.
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.MACH
@@ -5396,6 +5397,11 @@ class CoordinatesStraighten(object):
 
         # Now we just smooth the valid sections.
         tracks = np.ma.clump_unmasked(coord1_s)
+        # Skip the -180 / 180 roll over point from the smoothing
+        coord1_roll_overs = np.where(
+            np.ma.abs(np.ma.ediff1d(coord1_s)) > 350)[0]
+        for ro in coord1_roll_overs:
+            tracks = slices_split(tracks, ro)
         for track in tracks:
             # Reject any data with invariant positions, i.e. sitting on stand.
             if np.ma.ptp(coord1_s[track])>0.0 and np.ma.ptp(coord2_s[track])>0.0:
