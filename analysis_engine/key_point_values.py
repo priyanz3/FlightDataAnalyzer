@@ -9232,9 +9232,17 @@ class HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(KeyPointValueNod
                     "'%s' did not transition through 5 deg in '%s' slice '%s'.",
                     pitch.name, toffs.name, toff.slice)
                 continue
-            scan = slice(start, stop)
-            dev = runway_deviation(head.array, rwy.value)
-            index, value = max_abs_value(dev, scan)
+            scan = slice(ceil(start), ceil(stop))
+            # The data to test is extended to include aligned endpoints for the
+            # 80kt and 5deg conditions. This also reduces the computational load as
+            # we don't have to work out the deviation from the takeoff runway for all the flight.
+            to_test = np.ma.concatenate([
+                np.ma.array([value_at_index(head.array, start)]),
+                head.array[scan],
+                np.ma.array([value_at_index(head.array, stop)]),
+                ])
+            dev = runway_deviation(to_test, rwy.value)
+            index, value = max_abs_value(dev, slice(0,len(dev)))
             self.create_kpv(index, value)
 
 

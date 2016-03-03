@@ -8711,10 +8711,38 @@ class TestHeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(unittest.Tes
             'FDR Takeoff Runway',
         )]
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
 
+    def test_no_deviation(self):
+        node = self.node_class()
+        node.derive(self.hdg, self.ias, self.pch, self.toff, self.rwy)
+        self.assertAlmostEqual(node[0].value, 0.0, places=5)
+
+    def test_with_deviation(self):
+        hdg = P('Heading True Continuous', np.ma.array([40]*11))
+        node = self.node_class()
+        node.derive(hdg, self.ias, self.pch, self.toff, self.rwy)
+        self.assertAlmostEqual(node[0].value, -5.0, places=5)
+
+    def test_with_transient_deviation(self):
+        hdg = P('Heading True Continuous', np.ma.array([45]*8+[50]*3))
+        node = self.node_class()
+        node.derive(hdg, self.ias, self.pch, self.toff, self.rwy)
+        self.assertAlmostEqual(node[0].value, 5.0, places=5)
+
+    def test_with_transient_deviation_at_5_deg(self):
+        hdg = P('Heading True Continuous', np.ma.array([45]*8+[50, 55, 60]))
+        # Pitch passes 5 deg as heading goes through 52.5 = +7.5 deg from datum.
+        pch = P('Pitch', np.ma.array([0]*8+[4, 6, 6]))
+        node = self.node_class()
+        node.derive(hdg, self.ias, pch, self.toff, self.rwy)
+        self.assertAlmostEqual(node[0].value, 7.5, places=5)
+
+    def test_with_transient_deviation_at_80_kts(self):
+        hdg = P('Heading True Continuous', np.ma.array(range(35,46)))
+        ias = P('Airspeed', np.ma.array(range(55, 165, 10)))
+        node = self.node_class()
+        node.derive(hdg, ias, self.pch, self.toff, self.rwy)
+        self.assertAlmostEqual(node[0].value, -7.5, places=5)
 
 class TestHeadingDeviationFromRunwayAtTOGADuringTakeoff(unittest.TestCase, NodeTest):
 
