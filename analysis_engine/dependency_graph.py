@@ -24,6 +24,24 @@ not_windows = sys.platform not in ('win32', 'win64') # False for Windows :-(
 TODO:
 =====
 
+* Getting important: Circular dependencies need to have a priority to determine which order to evaluate a node's successors.
+
+node_succ_dict is a dictionary which is iterated over when using
+node.successors() in dependencies3(). If somewhere in each of a node's
+successor's tree there is a circular dependency to another one of the node's
+successor's tree (i.e. we're at the node which can make the choice which
+circular dependant to process first) we can evaluate a priority. Is it more
+important to process Groundspeed using just Gspd (1) first so that Latitude
+can use Groundspeed for smoothing??
+
+
+
+before Latitude Lat/Long or is it more important to
+calculate the Lat/Long from the Groundspeed? The priority should include the
+fact that if a parameter is recorded, it is already available.
+
+Q: 
+
 * Nice to have: reverse digraph to get arrows poitning towards the root - use
   pre's rather than successors in tree traversal
 """
