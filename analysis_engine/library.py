@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import asin, atan2, ceil, cos, degrees, floor, log, radians, sin, sqrt
+from math import atan2, ceil, copysign, cos, floor, log, radians, sin, sqrt
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -28,6 +28,8 @@ from settings import (
     TRUCK_OR_TRAILER_INTERVAL,
     TRUCK_OR_TRAILER_PERIOD,
 )
+
+EARTH_RADIUS = 6371000
 
 # There is no numpy masked array function for radians, so we just multiply thus:
 deg2rad = radians(1.0)
@@ -2261,39 +2263,28 @@ def first_order_washout(param, time_constant, hz, gain=1.0, initial_value=None):
     return masked_first_order_filter(y_term, x_term, param, initial_value)
 
 
-def _dist(lat1_d, lon1_d, lat2_d, lon2_d):
-    """
+def _dist(lat1, lon1, lat2, lon2):
+    '''
     Haversine formula for calculating distances between coordinates.
 
-    :param lat1_d: latitude of first point
-    :type lat1_d: float, units = degrees latitude
-    :param lon1_d: longitude of first point
-    :type lon1_d: float, units = degrees longitude
-    :param lat2_d: latitude of second point
-    :type lat2_d: float, units = degrees latitude
-    :param lon2_d: longitude of second point
-    :type lon2_d: float, units = degrees longitude
+    This function has been adapted to work with numpy arrays or single values.
 
-    :return _dist: distance between the two points
-    :type _dist: float (units=metres)
+    :param lat1: latitude (degrees)
+    :type lat1: float or numpy.array
+    :param lon1: longitude (degrees)
+    :type lon1: float or numpy.array
+    :param lat2: latitude (degrees)
+    :type lat2: float or numpy.array
+    :param lon2: longitude (degrees)
+    :type lon2: float or numpy.array
 
-    """
-    if (lat1_d == 0.0 and lon1_d == 0.0) or (lat2_d == 0.0 and lon2_d == 0.0):
-        # Being asked for a distance from nowhere point on the Atlantic.
-        # Decline to get sucked into this trap !
-        return None
-
-    lat1 = radians(lat1_d)
-    lon1 = radians(lon1_d)
-    lat2 = radians(lat2_d)
-    lon2 = radians(lon2_d)
-
-    dlat = lat2-lat1
-    dlon = lon2-lon1
-
-    a = sin(dlat/2) * sin(dlat/2) + \
-        sin(dlon/2) * sin(dlon/2) * cos(lat1) * cos(lat2)
-    return 2 * atan2(sqrt(a), sqrt(1-a)) * 6371000
+    :returns: distance between the two points
+    :rtype: float (units=metres)
+    '''
+    sdlat2 = np.sin(np.radians(lat1 - lat2) / 2.) ** 2
+    sdlon2 = np.sin(np.radians(lon1 - lon2) / 2.) ** 2
+    a = sdlat2 + sdlon2 * np.cos(np.radians(lat1)) * np.cos(np.radians(lat2))
+    return 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * EARTH_RADIUS
 
 
 def runway_distance_from_end(runway, *args, **kwds):
@@ -6008,6 +5999,32 @@ def slice_round(_slice):
     return slice(start, stop, _slice.step)
 
 
+def slices_split(slices, index):
+    '''
+    Split slices at index.
+
+    Returns a new list of slices with the matching one of them split at index
+    (if applicable).
+
+    :param slices: Slices to split
+    :type slices: list of slices
+    :param index: Index at which to split slices
+    :type index: int
+
+    :returns: Split slices
+    :rtype: list of slices
+    '''
+    result = []
+    for sl in slices:
+        if is_index_within_slice(index, sl):
+            result.append(slice(sl.start, index))
+            result.append(slice(index, sl.stop))
+        else:
+            result.append(sl)
+
+    return result
+
+
 def slices_round(slices):
     '''
     Round an iterable of slices.
@@ -7006,6 +7023,106 @@ def subslice(orig, new):
         (orig.start or 0) + (new.stop or orig.stop or 0) * (orig.step or 1) # the bit after "+" isn't quite right!!
 
     return slice(start, stop, None if step == 1 else step)
+
+
+def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude, longitude, hz):
+    '''
+    This routine computes the index into arrays latitude and longitude that
+    is a specified distance from the reference point.
+
+    :param distance: Distance from the reference point required.
+    :type distance: int, units nautical miles
+    :param index_ref: Index into the latitude and longitude arrays at reference point
+    :type index_ref: int. Note: This is only a help to speed the algorithm; accuracy is not important.
+    :param latitude_ref: Latitude of the reference point
+    :type latitude_ref: float, degrees latitude
+    :param longitude_ref: Longitude of the reference point
+    :type longitude_ref: float, degrees longitude
+    :param latitude: Latitude of the aircraft track
+    :type latitude: np.ma.array
+    :param longitude: Longitude of the aircraft track
+    :type longitude: np.ma.array
+    :param hz: Sample rate of latitude and longitude arrays
+    :type hz: float
+
+    :returns: Index into the latitude and longitude arrays
+    :rtype: float
+    :raises: ValueError
+    '''
+
+    def distance_error(index, *args):
+        radius = args[0]
+        latitude_ref = args[1]
+        longitude_ref = args[2]
+        latitude = args[3]
+        longitude = args[4]
+        index_ref = args[5]
+
+        rad = distance_at_index(index[0], latitude, longitude, latitude_ref, longitude_ref)
+        # and simply squaring the error allows robust minimum searching.
+        error = (rad - radius) ** 2.0
+        return error
+
+    # It is natural to hold the distance as an integer, but locally we need a float
+    _distance = float(distance)
+
+    # We start by guessing an index based on some sample results.
+    #   the distance estimate
+    abs_d = abs(_distance)
+    if abs_d < 10:
+        # Flown at low speed; about a minute for the last two miles
+        secs = abs_d * 30.0
+    else:
+        # More distant ranges at higher speeds
+        secs = abs_d * 20
+    guess = copysign(secs * hz, _distance)
+    estimate = max(0, min(index_ref + guess, len(latitude)))
+
+    # By constraining the boundaries we ensure the iteration does not
+    # stray outside the available array.
+    boundaries = [(0, len(latitude))]
+
+    kti = optimize.fmin_l_bfgs_b(
+        distance_error, estimate,
+        fprime=None,
+        args = (
+            abs(_distance),
+            latitude_ref,
+            longitude_ref,
+            latitude,
+            longitude,
+            index_ref,
+        ),
+        approx_grad=True,
+        epsilon=1.0E-3,
+        bounds=boundaries, maxfun=100)
+
+    solution_index = kti[0][0]
+    # To find out if this was a good answer, we compute the actual range and compare the error.
+    solution_range = distance_at_index(solution_index, latitude, longitude, latitude_ref, longitude_ref)
+    _dist_err = abs(abs(distance) - solution_range)
+
+    error = kti[2]['warnflag']
+    if solution_index == boundaries[0][0] or solution_index == boundaries[0][1]:
+        raise ValueError('Attempted to scan further than data permits.')
+    elif _dist_err > 0.01:
+        # This can happen if the flight is too short (i.e. less than 250nm if that is the distance requested)
+        # It can also arise if the wrong runway has been identified, so the actual position is the closest point
+        # on the approach to the correct (but unidentified) runway.
+        raise ValueError('Converged on the wrong minimum.')
+    elif error:
+        raise ValueError('Returned early from iteration algorithm: %d' % error)
+    else:
+        return solution_index
+
+
+def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
+    lon_i = value_at_index(longitude, i) or 0.0
+    lat_i = value_at_index(latitude, i) or 0.0
+    # The function _dist from the library provides the haversine distance in metres
+    # hence the conversion factor required to convert to nautical miles.
+    rad = (_dist(lat_i, lon_i, latitude_ref, longitude_ref) or 0.0) * 0.000539957
+    return rad
 
 
 def index_closest_value(array, threshold, _slice=slice(None)):
