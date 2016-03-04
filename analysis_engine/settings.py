@@ -441,6 +441,9 @@ NAME_VALUES_CLIMB = {'altitude': [
 
 NAME_VALUES_DESCENT = {'altitude': NAME_VALUES_CLIMB['altitude'][::-1]}
 
+# Review comment in DistanceFromLandingAirport before adding smaller values to this list.
+NAME_VALUES_DISTANCE = {'distance': [150, 250]}
+
 ##############################################################################
 # Custom Settings
 
