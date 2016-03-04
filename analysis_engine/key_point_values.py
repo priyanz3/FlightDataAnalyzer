@@ -4703,11 +4703,11 @@ class AltitudeAtMachMax(KeyPointValueNode):
 ########################################
 # Altitude: On Approach
 
-class AltitudeAtRangesOnApproach(KeyPointValueNode):
+class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
     '''
     '''
 
-    NAME_FORMAT = 'Altitude At %(distance)d NM On Approach'
+    NAME_FORMAT = 'Altitude At %(distance)d NM From Threshold'
     NAME_VALUES = NAME_VALUES_RANGES
 
     units = ut.FT
