@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import atan2, ceil, copysign, cos, degrees, floor, log, radians, sin, sqrt
+from math import asin, atan2, ceil, copysign, cos, degrees, floor, log, radians, sin, sqrt
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
