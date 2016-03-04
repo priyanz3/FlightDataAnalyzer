@@ -1036,10 +1036,14 @@ class TakeoffAccelerationStart(KeyTimeInstanceNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return 'Airspeed' in available and 'Takeoff' in available
+            if 'Acceleration Longitudinal' in available:
+                return all_of(('Airspeed', 'Takeoff', 'Acceleration Longitudinal Offset Removed'), available)
+            else:
+                return all_of(('Airspeed', 'Takeoff'), available)
 
     def derive(self, speed=P('Airspeed'), takeoffs=S('Takeoff'),
-               accel=P('Acceleration Longitudinal Offset Removed')):
+               accel=P('Acceleration Longitudinal Offset Removed'),
+               accel_raw=P('Acceleration Longitudinal')):
         for takeoff in takeoffs:
             start_accel = None
             if accel:

@@ -492,6 +492,9 @@ class AccelerationLongitudinalOffset(KeyPointValueNode):
             delta = total_sum / float(total_count)
             if abs(delta) < ACCEL_LON_OFFSET_LIMIT:
                 self.create_kpv(0, delta)
+            else:
+                self.warning("Acceleration Longitudinal offset '%s' greater than limit '%s'",
+                             delta, ACCEL_LON_OFFSET_LIMIT)
 
 
 class AccelerationLongitudinalDuringTakeoffMax(KeyPointValueNode):

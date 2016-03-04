@@ -687,7 +687,8 @@ class TestTakeoffAccelerationStart(unittest.TestCase):
         self.assertEqual(\
             TakeoffAccelerationStart.get_operational_combinations(),
             [('Airspeed', 'Takeoff'),
-             ('Airspeed', 'Takeoff', 'Acceleration Longitudinal Offset Removed')])
+             ('Airspeed', 'Takeoff', 'Acceleration Longitudinal Offset Removed'),
+             ('Airspeed', 'Takeoff', 'Acceleration Longitudinal Offset Removed', 'Acceleration Longitudinal')])
 
     def test_takeoff_acceleration_start(self):
         # This test uses the same airspeed data as the library routine test,

@@ -168,11 +168,6 @@ class AccelerationLongitudinalOffsetRemoved(DerivedParameterNode):
 
     units = ut.G
 
-    @classmethod
-    def can_operate(cls, available):
-
-        return 'Acceleration Longitudinal' in available
-
     def derive(self,
                acc=P('Acceleration Longitudinal'),
                offset=KPV('Acceleration Longitudinal Offset')):
