@@ -5393,10 +5393,14 @@ class CoordinatesStraighten(object):
         # Now we just smooth the valid sections.
         tracks = np.ma.clump_unmasked(coord1_s)
         # Skip the -180 / 180 roll over point from the smoothing
-        coord1_roll_overs = np.where(
+        coord1_roll_overs = 1 + np.where(
             np.ma.abs(np.ma.ediff1d(coord1_s)) > 350)[0]
         for ro in coord1_roll_overs:
             tracks = slices_split(tracks, ro)
+            # Mask the value after roll over which will be broken by the
+            # split FIXME: consider using align = False in the
+            # LongitudePrepared instead
+            coord1_s.mask[ro] = True
         for track in tracks:
             # Reject any data with invariant positions, i.e. sitting on stand.
             if np.ma.ptp(coord1_s[track])>0.0 and np.ma.ptp(coord2_s[track])>0.0:
