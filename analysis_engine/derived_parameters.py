@@ -5403,9 +5403,10 @@ class CoordinatesStraighten(object):
             coord1_s.mask[ro] = True
         for track in tracks:
             # Reject any data with invariant positions, i.e. sitting on stand.
-            if np.ma.ptp(coord1_s[track])>0.0 and np.ma.ptp(coord2_s[track])>0.0:
+            if np.ma.ptp(coord1_s[track]) > 0.0 and np.ma.ptp(coord2_s[track]) > 0.0:
                 coord1_s_track, coord2_s_track, cost = \
-                    smooth_track(coord1_s[track], coord2_s[track], ac_type, coord1.frequency)
+                    smooth_track(coord1_s[track], coord2_s[track], ac_type,
+                                 coord1.frequency)
                 array[track] = coord1_s_track
         return array
 
