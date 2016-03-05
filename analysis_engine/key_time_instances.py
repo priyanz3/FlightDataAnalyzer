@@ -1917,6 +1917,8 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
+        if not dep.value:
+            return # Empty handed; nothing we can do.
         toff_lat = dep.value.get('latitude')
         toff_lon = dep.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
@@ -1952,6 +1954,8 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
 
         import time
 
+        if not arr.value:
+            return # Empty handed; nothing we can do.
         land_lat = arr.value.get('latitude')
         land_lon = arr.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
@@ -1981,6 +1985,8 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
+        if not rwy.value:
+            return # Empty handed; nothing we can do.
         for distance in self.NAME_VALUES['distance']:
             self.calculate(
                 lands, None,

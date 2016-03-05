@@ -4715,6 +4715,8 @@ class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
     def derive(self, alt = P('Altitude AAL'),
                dist_ktis = KTI('Distance From Threshold')):
 
+        if not dist_ktis:
+            return # Empty handed; nothing we can do.
         for distance in NAME_VALUES_RANGES['distance']:
             kti = dist_ktis.get_first(name='%d NM From Threshold' % distance)
             self.create_kpv(kti.index,
