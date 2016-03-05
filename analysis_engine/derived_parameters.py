@@ -5886,12 +5886,11 @@ class Headwind(DerivedParameterNode):
         headwind = windspeed.array * np.ma.cos((wind_dir.array-head.array)*rad_scale)
 
         # If we have airspeed and groundspeed, overwrite the values for the
-        # altitudes below one hundred feet. Note this is done in a
-        # deliberately crude manner so that the different computations may be
-        # identified easily by the analyst.
+        # altitudes below one hundred feet.
         if aspd and gspd:
             for below_100ft in alt_aal.slices_below(100):
-                headwind[below_100ft] = aspd.array[below_100ft] - gspd.array[below_100ft]
+                headwind[below_100ft] = moving_average((aspd.array[below_100ft] - gspd.array[below_100ft]),
+                                                       window=5)
         self.array = headwind
 
 
