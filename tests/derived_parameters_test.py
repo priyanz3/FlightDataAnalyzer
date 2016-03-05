@@ -3742,22 +3742,23 @@ class TestHeadwind(unittest.TestCase):
 
     def test_headwind_below_100ft(self):
         # create consistent 20 kt windspeed on the tail
-        wspd = P('Wind Speed', np.ma.array([20]*20))
-        wdir = P('Wind Direction Continuous', np.ma.array([180]*20))
-        head = P('Heading True Continuous', np.ma.array([0]*20))
+        wspd = P('Wind Speed', np.ma.array([20.0]*40))
+        wdir = P('Wind Direction Continuous', np.ma.array([180.0]*40))
+        head = P('Heading True Continuous', np.ma.array([0.0]*40))
         # create a 40 kt difference between Airspeed and speed over ground
-        gspd = P('Groundspeed', np.ma.array([220]*20))
-        aspd = P('Airpseed True', np.ma.array([180]*20))
+        gspd = P('Groundspeed', np.ma.array([220.0]*40))
+        gspd.array[4] = 200.0
+        aspd = P('Airpseed True', np.ma.array([180.0]*40))
         # first 5 and last 5 samples are below 100ft
-        alt = P('Altitude AAL', np.ma.array([50]*5 + [5000]*10 + [40]*5))
+        alt = P('Altitude AAL', np.ma.array([50.0]*10 + [5000.0]*20 + [40.0]*10))
         hw = Headwind()
         hw.derive(aspd, wspd, wdir, head, alt, gspd)
         # below 100ft
-        np.testing.assert_equal(hw.array[:5], [-40]*5)
+        np.testing.assert_equal(hw.array[:10], [-40.0, -40.0, -36.0, -36.0, -36.0, -36.0, -36.0, -40.0, -40.0, -40.0])
         # above 100ft
-        np.testing.assert_equal(hw.array[5:15], [-20]*10)
+        np.testing.assert_equal(hw.array[10:30], [-20]*20)
         # below 100ft
-        np.testing.assert_equal(hw.array[15:], [-40]*5)
+        np.testing.assert_equal(hw.array[30:], [-40]*10)
 
 
 class TestWindAcrossLandingRunway(unittest.TestCase):
