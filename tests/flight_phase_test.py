@@ -2326,8 +2326,6 @@ class TestTaxiing(unittest.TestCase):
     def test_can_operate(self):
         combinations = Taxiing.get_operational_combinations()
         expected = [
-            ('Mobile', 'Takeoff', 'Landing', 'Airborne'),
-            ('Mobile', 'Groundspeed', 'Takeoff', 'Landing', 'Airborne'),
             ('Mobile', 'Takeoff', 'Landing', 'Rejected Takeoff', 'Airborne'),
             ('Mobile', 'Groundspeed', 'Takeoff', 'Landing', 'Rejected Takeoff', 'Airborne'),
         ]

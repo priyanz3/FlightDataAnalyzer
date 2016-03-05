@@ -1447,7 +1447,7 @@ class Taxiing(FlightPhaseNode):
     def can_operate(cls, available, seg_type=A('Segment Type')):
         ground_only = seg_type and seg_type.value == 'GROUND_ONLY' and \
             all_of(('Mobile', 'Rejected Takeoff'), available)
-        default = all_of(('Mobile', 'Takeoff', 'Landing', 'Airborne'), available)
+        default = all_of(('Mobile', 'Takeoff', 'Landing', 'Airborne', 'Rejected Takeoff'), available)
         return default or ground_only
 
     def derive(self, mobiles=S('Mobile'), gspd=P('Groundspeed'),

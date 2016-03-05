@@ -168,11 +168,6 @@ class AccelerationLongitudinalOffsetRemoved(DerivedParameterNode):
 
     units = ut.G
 
-    @classmethod
-    def can_operate(cls, available):
-
-        return 'Acceleration Longitudinal' in available
-
     def derive(self,
                acc=P('Acceleration Longitudinal'),
                offset=KPV('Acceleration Longitudinal Offset')):
@@ -4910,8 +4905,10 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
-    def derive(self, lat=P('Latitude Prepared'),
+    def derive(self,
+               # align to longitude to avoid wrap around artifacts
                lon=P('Longitude Prepared'),
+               lat=P('Latitude Prepared'),
                hdg_mag=P('Heading Continuous'),
                ils_loc=P('ILS Localizer'),
                app_range=P('Approach Range'),
@@ -4960,8 +4957,10 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
-    def derive(self, lat = P('Latitude Prepared'),
+    def derive(self,
+               # align to longitude to avoid wrap around artifacts
                lon = P('Longitude Prepared'),
+               lat = P('Latitude Prepared'),
                hdg_mag=P('Heading Continuous'),
                ils_loc = P('ILS Localizer'),
                app_range = P('Approach Range'),
@@ -5398,15 +5397,16 @@ class CoordinatesStraighten(object):
         # Now we just smooth the valid sections.
         tracks = np.ma.clump_unmasked(coord1_s)
         # Skip the -180 / 180 roll over point from the smoothing
-        coord1_roll_overs = np.where(
+        coord1_roll_overs = 1 + np.where(
             np.ma.abs(np.ma.ediff1d(coord1_s)) > 350)[0]
         for ro in coord1_roll_overs:
             tracks = slices_split(tracks, ro)
         for track in tracks:
             # Reject any data with invariant positions, i.e. sitting on stand.
-            if np.ma.ptp(coord1_s[track])>0.0 and np.ma.ptp(coord2_s[track])>0.0:
+            if np.ma.ptp(coord1_s[track]) > 0.0 and np.ma.ptp(coord2_s[track]) > 0.0:
                 coord1_s_track, coord2_s_track, cost = \
-                    smooth_track(coord1_s[track], coord2_s[track], ac_type, coord1.frequency)
+                    smooth_track(coord1_s[track], coord2_s[track], ac_type,
+                                 coord1.frequency)
                 array[track] = coord1_s_track
         return array
 
@@ -5433,7 +5433,8 @@ class LongitudePrepared(DerivedParameterNode, CoordinatesStraighten):
     # Note force to 1Hz operation as latitude & longitude can be only
     # recorded at 0.25Hz.
     def derive(self,
-               lat=P('Latitude'), lon=P('Longitude'),
+               # align to longitude to avoid wrap around artifacts
+               lon=P('Longitude'), lat=P('Latitude'),
                hdg_mag=P('Heading'),
                hdg_true=P('Heading True'),
                tas=P('Airspeed True'),
@@ -5484,7 +5485,8 @@ class LatitudePrepared(DerivedParameterNode, CoordinatesStraighten):
     # Note force to 1Hz operation as latitude & longitude can be only
     # recorded at 0.25Hz.
     def derive(self,
-               lat=P('Latitude'), lon=P('Longitude'),
+               # align to longitude to avoid wrap around artifacts
+               lon=P('Longitude'), lat=P('Latitude'),
                hdg_mag=P('Heading'),
                hdg_true=P('Heading True'),
                tas=P('Airspeed True'),
