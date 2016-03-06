@@ -265,6 +265,7 @@ from analysis_engine.key_point_values import (
     EngN3DuringTakeoff5MinRatingMax,
     EngN3DuringTaxiMax,
     EngN3ExceededN3RedlineDuration,
+    EngNp72To80PercentDurationMax,
     EngNpDuringClimbMin,
     EngNpDuringGoAround5MinRatingMax,
     EngNpDuringMaximumContinuousPowerMax,
@@ -7581,6 +7582,33 @@ class TestEngNpMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
 
+
+class TestEngNp72To80PercentDurationMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = EngNp72To80PercentDurationMax
+
+    def test_can_operate(self):
+        ac_series = A(name='Series', value='Jetstream 41')
+        expected = [('Eng (1) NP', 'Eng (2) NP'),]
+        for combination in expected:
+            self.assertTrue(self.node_class().can_operate(combination, ac_series))
+        ac_series.value = 'Jetstream'
+        for combination in expected:
+            self.assertFalse(self.node_class().can_operate(combination, ac_series))
+
+    def test_derive(self):
+        eng_1 = P(name='Eng (1) NP', array=np.ma.array(range(70,82)))
+        node = self.node_class()
+        node.derive(eng_1, eng_1) # Intentional duplication of data
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].name, 'Eng (1) Np 72 To 80 Percent Duration Max')
+        self.assertEqual(node[0].index, 3)
+        self.assertEqual(node[0].value, 7)
+        self.assertEqual(node[1].name, 'Eng (2) Np 72 To 80 Percent Duration Max')
+        self.assertEqual(node[1].index, 3)
+        self.assertEqual(node[1].value, 7)
 
 ##############################################################################
 # Engine Throttles
