@@ -449,6 +449,11 @@ class AccelerationLateralFor5SecMax(KeyPointValueNode):
     '''
     '''
 
+    @classmethod
+    def can_operate(cls, available, frame=A('Frame')):
+        # The timing interval is incompatible with the 787 data rate, hence the current restriction.
+        return not(frame.value.startswith('787'))
+
     units = ut.G
 
     def derive(self, accel_lat=P('Acceleration Lateral Offset Removed')):
