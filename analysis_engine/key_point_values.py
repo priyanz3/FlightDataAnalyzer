@@ -9900,10 +9900,12 @@ class FuelQtyWingDifference787Max(KeyPointValueNode):
         total = right_wing.array + left_wing.array
         xp = [38500, 66100] # For these total fuel weights in the wings...
         yp = [2300, 1300] # these are the permitted imbalance levels.
-        imbalance_limit = data=np.interp(total, xp, yp)
+        imbalance_limit = np.interp(total, xp, yp)
         imbalance_percent = (diff/imbalance_limit) * 100.0
         # Second_window needs a time window that is a binary power of the sample rate
         # so we use 32 seconds, in place of the specified 30 seconds.
+        # Note that second_window ignores masks, so the quantization of 787 fuel data
+        # is not a problem using this technique.
         self.create_kpv_from_slices(
             second_window(imbalance_percent, left_wing.frequency, 32.0),
             airbornes.get_slices(),
