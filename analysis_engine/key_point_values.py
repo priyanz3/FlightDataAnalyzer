@@ -9849,6 +9849,34 @@ class FuelQtyWingDifferenceMax(KeyPointValueNode):
             max_abs_value
         )
 
+class FuelQtyWingDifference787Max(KeyPointValueNode):
+    '''
+    Maximum proportion of the 787 permitted imbalance where positive
+    difference is additional fuel in Right hand tank.
+    '''
+
+    @classmethod
+    def can_operate(cls, available, frame=A('Frame')):
+        return frame.value.startswith('787')
+
+    units = ut.PERCENT
+
+    def derive(self, left_wing=P('Fuel Qty (L)'), right_wing=P('Fuel Qty (R)'),
+               airbornes=S('Airborne')):
+
+        diff = right_wing.array - left_wing.array
+        total = right_wing.array + left_wing.array
+        xp = [38500, 66100] # For these total fuel weights in the wings...
+        yp = [2300, 1300] # these are the permitted imbalance levels.
+        imbalance_limit = data=np.interp(total, xp, yp)
+        imbalance_percent = (diff/imbalance_limit) * 100.0
+        # Second_window needs a time window that is a binary power of the sample rate
+        # so we use 32 seconds, in place of the specified 30 seconds.
+        self.create_kpv_from_slices(
+            second_window(imbalance_percent, left_wing.frequency, 32.0),
+            airbornes.get_slices(),
+            max_abs_value)
+
 
 class FuelQtyLowWarningDuration(KeyPointValueNode):
     '''

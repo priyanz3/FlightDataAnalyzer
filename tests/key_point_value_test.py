@@ -315,6 +315,7 @@ from analysis_engine.key_point_values import (
     FuelQtyAtTouchdown,
     FuelQtyLowWarningDuration,
     FuelQtyWingDifferenceMax,
+    FuelQtyWingDifference787Max,
     GearDownToLandingFlapConfigurationDuration,
     GrossWeightAtLiftoff,
     GrossWeightAtTouchdown,
@@ -9424,6 +9425,50 @@ class TestFuelQtyWingDifferenceMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 2)
         self.assertEqual(node[0].value, -15)
+
+class TestFuelQtyWingDifference787Max(unittest.TestCase):
+    def test_can_operate(self):
+        opts = FuelQtyWingDifference787Max.get_operational_combinations()
+        self.assertEqual(opts, [('Fuel Qty (L)', 'Fuel Qty (R)', 'Airborne')])
+
+    def test_derive_basic(self):
+        '''
+        These values are on the permitted imbalance line, below, on, midway and above the turning points.
+        '''
+        qty_l = P('Fuel Qty (L)', array=np.ma.array([16150, 18100, 27050, 32400, 35650]), frequency=1.0/16)
+        qty_r = P('Fuel Qty (R)', array=np.ma.array([13850, 20400, 25250, 33700, 34350]), frequency=1.0/16)
+        airs = buildsection('Airborne', 0, 6)
+        node = FuelQtyWingDifference787Max()
+        node.derive(qty_l, qty_r, airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 0)
+        self.assertEqual(node[0].value, -100.0)
+
+    def test_derive_handed(self):
+        qty_l = P('Fuel Qty (L)', array=np.ma.array([16150, 20400, 27050, 33700, 35650]), frequency=1.0/16)
+        qty_r = P('Fuel Qty (R)', array=np.ma.array([13850, 18100, 25250, 32400, 34350]), frequency=1.0/16)
+        airs = buildsection('Airborne', 0, 6)
+        node = FuelQtyWingDifference787Max()
+        node.derive(qty_l, qty_r, airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 0)
+        self.assertEqual(node[0].value, -100.0)
+        qty_r = P('Fuel Qty (R)', array=np.ma.array([16150, 20400, 27050, 33700, 35650]), frequency=1.0/16)
+        qty_l = P('Fuel Qty (L)', array=np.ma.array([13850, 18100, 25250, 32400, 34350]), frequency=1.0/16)
+        node = FuelQtyWingDifference787Max()
+        node.derive(qty_l, qty_r, airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 0)
+        self.assertEqual(node[0].value, 100.0)
+
+    def test_masked_operation(self):
+        qty_l = P('Fuel Qty (L)', array=np.ma.array(data=[16150, 18100, 27050, 32400, 35650],
+                                                    mask=[0,0,1,0,0]), frequency=1.0/16)
+        qty_r = P('Fuel Qty (R)', array=np.ma.array([13850, 20400, 25250, 33700, 34350]), frequency=1.0/16)
+        airs = buildsection('Airborne', 0, 6)
+        node = FuelQtyWingDifference787Max()
+        node.derive(qty_l, qty_r, airs)
+        self.assertEqual(len(node), 0)
 
 
 class TestFuelJettisonDuration(unittest.TestCase, CreateKPVsWhereTest):
