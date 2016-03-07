@@ -7910,9 +7910,9 @@ class AirspeedMinusV2(DerivedParameterNode):
             return
 
         for phase in phases:
-            value = v2.get_last(within_slice=phase).value
-            if value is not None:
-                self.array[phase] = airspeed.array[phase] - value
+            my_v2 = v2.get_last(within_slice=phase)
+            if my_v2 is not None and my_v2.value is not None:
+                self.array[phase] = airspeed.array[phase] - my_v2.value
 
 
 class AirspeedMinusV2For3Sec(DerivedParameterNode):
