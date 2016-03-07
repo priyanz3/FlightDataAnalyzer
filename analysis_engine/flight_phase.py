@@ -502,15 +502,13 @@ class ClimbCruiseDescent(FlightPhaseNode):
     def derive(self, alt_std=P('Altitude STD Smoothed'),
                airs=S('Airborne')):
         for air in airs:
-            altitudes = alt_std.array[air.slice]
+            alts = repair_mask(alt_std.array[air.slice], repair_duration=None)
             # We squash the altitude signal above 10,000ft so that changes of
             # altitude to create a new flight phase have to be 10 times
             # greater; 500ft changes below 10,000ft are significant, while
             # above this 5,000ft is more meaningful.
-            alt_squash = np.ma.where(altitudes>10000,
-                                     (altitudes-10000)/10.0+10000,
-                                     altitudes
-                                     )
+            alt_squash = np.ma.where(
+                alts > 10000, (alts - 10000) / 10.0 + 10000, alts)
             pk_idxs, pk_vals = cycle_finder(alt_squash,
                                             min_step=HYSTERESIS_FPALT_CCD)
 
