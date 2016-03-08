@@ -3255,10 +3255,10 @@ class TestIndexAtDistance(unittest.TestCase):
         longitude_ref = 0.0
         latitude = np.ma.array(range(600, 700)) / 10.0
         longitude = np.ma.array(range(100)) / 10.0
-        with self.assertRaises(ValueError):
-            result = index_at_distance(
-                distance, index_ref, latitude_ref, longitude_ref, latitude,
-                longitude, 1.0)
+        result = index_at_distance(
+            distance, index_ref, latitude_ref, longitude_ref, latitude,
+            longitude, 1.0)
+        self.assertIsNone(result)
 
     def test_too_far_backwards(self):
         distance = -1000.0
@@ -3267,10 +3267,10 @@ class TestIndexAtDistance(unittest.TestCase):
         longitude_ref = 10.0
         latitude = np.ma.array(range(600, 700)) / 10.0
         longitude = np.ma.array(range(100)) / 10.0
-        with self.assertRaises(ValueError):
-            result = index_at_distance(
-                distance, index_ref, latitude_ref, longitude_ref, latitude,
-                longitude, 1.0)
+        result = index_at_distance(
+            distance, index_ref, latitude_ref, longitude_ref, latitude,
+            longitude, 1.0)
+        self.assertIsNone(result)
 
 """
     def test_short_flight(self):
