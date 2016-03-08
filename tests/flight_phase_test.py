@@ -1176,7 +1176,7 @@ class TestClimbCruiseDescent(unittest.TestCase):
         camel = ClimbCruiseDescent()
         # Needs to get above 15000ft and below 10000ft to create this phase.
         testwave = np.ma.cos(np.arange(0, 3.14 * 2, 0.1)) * (-3000) + 12500
-        air=buildsection('Airborne', 0, 62)
+        air = buildsection('Airborne', 0, 62)
         camel.derive(Parameter('Altitude STD Smoothed',
                                np.ma.array(testwave)), air)
         self.assertEqual(len(camel), 1)
@@ -1187,7 +1187,7 @@ class TestClimbCruiseDescent(unittest.TestCase):
         # Needs to get above 15000ft and below 10000ft to create this phase.
         testwave = np.ma.cos(np.arange(0, 3.14 * 4, 0.1)) * (-3000) + 12500
         # plot_parameter (testwave)
-        air=buildsection('Airborne',0,122)
+        air = buildsection('Airborne',0,122)
         camel.derive(Parameter('Altitude STD Smoothed',
                                np.ma.array(testwave)), air)
         self.assertEqual(len(camel), 2)
@@ -1198,10 +1198,20 @@ class TestClimbCruiseDescent(unittest.TestCase):
         # Needs to get above 15000ft and below 10000ft to create this phase.
         testwave = np.ma.cos(np.arange(0, 3.14 * 6, 0.1)) * (-3000) + 12500
         # plot_parameter (testwave)
-        air=buildsection('Airborne',0,186)
+        air = buildsection('Airborne',0,186)
         camel.derive(Parameter('Altitude STD Smoothed',
                                np.ma.array(testwave)), air)
         self.assertEqual(len(camel), 3)
+    
+    def test_climb_cruise_descent_repair_mask(self):
+        # If the Altitude STD mask isn't repaired, a spurious cycle is reported
+        # by cycle_finder which results in an infinite loop.
+        camel = ClimbCruiseDescent()
+        air = buildsection('Airborne', 619, 5325)
+        camel.derive(Parameter('Altitude STD Smoothed',
+                               load_compressed(os.path.join(test_data_path, 'climb_cruise_descent_alt_std.npz'))),
+                     air)
+        self.assertEqual(len(camel), 1)
 
 
 
