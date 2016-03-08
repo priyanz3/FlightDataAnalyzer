@@ -9452,7 +9452,7 @@ class TestFuelQtyWingDifferenceMax(unittest.TestCase):
 
 class TestFuelQtyWingDifference787Max(unittest.TestCase):
     def test_can_operate(self):
-        opts = FuelQtyWingDifference787Max.get_operational_combinations()
+        opts = FuelQtyWingDifference787Max.get_operational_combinations(frame=A('Frame', value='787_frame'))
         self.assertEqual(opts, [('Fuel Qty (L)', 'Fuel Qty (R)', 'Airborne')])
 
     def test_derive_basic(self):

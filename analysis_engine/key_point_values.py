@@ -9917,7 +9917,10 @@ class FuelQtyWingDifference787Max(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available, frame=A('Frame')):
-        return frame.value.startswith('787')
+        if frame and frame.value.startswith('787'):
+            return all_deps(cls, available)
+        else:
+            return False
 
     units = ut.PERCENT
 
