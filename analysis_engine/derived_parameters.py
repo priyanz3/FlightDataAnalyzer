@@ -5892,8 +5892,8 @@ class Headwind(DerivedParameterNode):
         if aspd and gspd:
             for below_100ft in alt_aal.slices_below(100):
                 try:
-                headwind[below_100ft] = moving_average((aspd.array[below_100ft] - gspd.array[below_100ft]),
-                                                       window=5)
+                    headwind[below_100ft] = moving_average((aspd.array[below_100ft] - gspd.array[below_100ft]),
+                                                           window=5)
                 except:
                     pass # Leave the data unchanged as one of the parameters is fully masked.
         self.array = headwind
