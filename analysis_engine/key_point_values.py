@@ -9240,54 +9240,78 @@ class HeightOfBouncedLanding(KeyPointValueNode):
 
 class HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     '''
-    FDS developed this KPV to support the UK CAA Significant Seven programme.
+    FDS originally developed this KPV to support the UK CAA Significant Seven programme.
     "Excursions - Take off (Lateral). Heading changes on runway before rotation
     commenced. During rotation on some types, the a/c may be allowed to
-    weathercock into wind."
-
-    The heading deviation is measured as the largest deviation from the runway
-    centreline between 80kts airspeed and 5 deg nose pitch up, at which time
-    the weight is clearly coming off the mainwheels (we avoid using weight on
+    weathercock into wind." The heading deviation was measured as the largest deviation
+    from the runway centreline between 80kts airspeed and 5 deg nose pitch up, at which
+    time the weight is clearly coming off the mainwheels (we avoid using weight on
     nosewheel as this is often not recorded).
+
+    This was often misinterpreted by analysts and customers who thought it was relating
+    to heading deviations up to the start of rotation. Therefore the event was revised thus:
+
+    1. The heading to be based on aircraft heading which is the median aircraft heading
+    from the start of the take-off roll to 80 kts.
+    2. The end of the event will be at a rotation rate of 1.5 deg/sec or, where recorded,
+    the last recorded moment of nosewheel on the ground.
     '''
+
+    @classmethod
+    def can_operate(cls, available):
+        return all_of(('Heading True Continuous', 'Airspeed', 'Pitch Rate', 'Takeoff'), available)
 
     units = ut.DEGREE
 
     def derive(self,
+               nosewheel=P('Gear (N) On Ground'),
                head=P('Heading True Continuous'),
                airspeed=P('Airspeed'),
-               pitch=P('Pitch'),
+               pitch_rate=P('Pitch Rate'),
                toffs=S('Takeoff'),
-               rwy=A('FDR Takeoff Runway')):
+               ):
 
-        if ambiguous_runway(rwy):
-            return
-        # checks for multiple takeoffs from a single takeoff runway (rejected?)
         for toff in toffs:
-            start = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
-            if not start:
+            begin = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
+            if not begin:
                 self.warning(
                     "'%s' did not transition through 80 kts in '%s' slice '%s'.",
                     airspeed.name, toffs.name, toff.slice)
                 continue
-            stop = index_at_value(pitch.array, 5.0, _slice=toff.slice)
-            if not stop:
+            datum_heading = np.ma.median(head.array[toff.slice.start:begin])
+
+            end=None
+            if nosewheel:
+                end = index_at_value(nosewheel.array.data, 0.0, _slice=toff.slice)
+            if not end: # Fallback
+                end = index_at_value(pitch_rate.array, 1.5, _slice=toff.slice)
+            if not end:
                 self.warning(
-                    "'%s' did not transition through 5 deg in '%s' slice '%s'.",
-                    pitch.name, toffs.name, toff.slice)
+                    "No end condition identified in takeoff slice '%s'.",
+                    toff.slice)
                 continue
-            scan = slice(ceil(start), ceil(stop))
+
+            scan = slice(ceil(begin), ceil(end))
             # The data to test is extended to include aligned endpoints for the
-            # 80kt and 5deg conditions. This also reduces the computational load as
+            # 80kt and 1.5deg conditions. This also reduces the computational load as
             # we don't have to work out the deviation from the takeoff runway for all the flight.
             to_test = np.ma.concatenate([
-                np.ma.array([value_at_index(head.array, start)]),
+                np.ma.array([value_at_index(head.array, begin)]),
                 head.array[scan],
-                np.ma.array([value_at_index(head.array, stop)]),
+                np.ma.array([value_at_index(head.array, end)]),
                 ])
-            dev = runway_deviation(to_test, rwy.value)
+            dev = to_test - datum_heading
             index, value = max_abs_value(dev, slice(0,len(dev)))
-            self.create_kpv(index, value)
+
+            # The true index is offset and may be either of the special end conditions.
+            if index==0:
+                true_index = begin
+            elif index==len(to_test)-1:
+                true_index = end
+            else:
+                true_index = index + toff.slice.start
+
+            self.create_kpv(true_index, value)
 
 
 class HeadingDeviationFromRunwayAtTOGADuringTakeoff(KeyPointValueNode):
