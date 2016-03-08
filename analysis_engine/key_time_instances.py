@@ -1892,17 +1892,15 @@ class DistanceFromAirportMixin(object):
         else:
             reference = ktis[0].index
 
-        try:
-            index = index_at_distance(
-                direction * distance, reference,
-                datum_lat, datum_lon,
-                lat.array, lon.array, lat.frequency)
-        except ValueError as e:
-            self.exception('Unable to determine distance from airport.')
+        index = index_at_distance(
+            direction * distance, reference,
+            datum_lat, datum_lon,
+            lat.array, lon.array, lat.frequency)
+        if index is not None:
+            self.create_kti(index, replace_values={'distance': distance})
+            return index
         else:
-            if index:
-                self.create_kti(index, replace_values={'distance': distance})
-                return index
+            self.warning('Unable to determine distance from airport.')
 
 
 class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):

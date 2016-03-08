@@ -7104,14 +7104,17 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
 
     error = kti[2]['warnflag']
     if solution_index == boundaries[0][0] or solution_index == boundaries[0][1]:
-        raise ValueError('Attempted to scan further than data permits.')
+        logger.warning('Attempted to scan further than data permits.')
+        return
     elif _dist_err > 0.01:
         # This can happen if the flight is too short (i.e. less than 250nm if that is the distance requested)
         # It can also arise if the wrong runway has been identified, so the actual position is the closest point
         # on the approach to the correct (but unidentified) runway.
-        raise ValueError('Converged on the wrong minimum.')
+        logger.warning('Converged on the wrong minimum.')
+        return
     elif error:
-        raise ValueError('Returned early from iteration algorithm: %d' % error)
+        logger.warning('Returned early from iteration algorithm: %d', error)
+        return
     else:
         return solution_index
 
