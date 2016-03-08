@@ -2010,20 +2010,6 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].value, 29)
 
 
-class TestAirspeedAtAPFlightDirectorEngaged(unittest.TestCase):
-
-    def setUp(self):
-        self.node_class = AirspeedAtAPFlightDirectorEngaged
-
-    @unittest.SkipTest
-    def test_can_operate(self):
-        self.assertTrue(False)
-
-    @unittest.SkipTest
-    def test_derive(self):
-        self.assertTrue(False)
-
-
 class TestAirspeedAtAPGoAroundEngaged(unittest.TestCase):
     '''
     '''
