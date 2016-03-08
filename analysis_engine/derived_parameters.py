@@ -1668,9 +1668,7 @@ def select_ccf(force_capt, force_fo):
 
     def positive(array):
         array_min = np.ma.min(array)
-        if array_min <= 0:
-            array -= array_min
-        return array
+        return array - array_min if array_min <= 0 else array
 
     capt = positive(force_capt.array)
     fo = positive(force_fo.array)
