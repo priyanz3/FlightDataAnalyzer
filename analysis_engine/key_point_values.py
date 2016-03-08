@@ -452,7 +452,10 @@ class AccelerationLateralFor5SecMax(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available, frame=A('Frame')):
         # The timing interval is incompatible with the 787 data rate, hence the current restriction.
-        return not(frame.value.startswith('787'))
+        if frame and frame.value.startswith('787'):
+            return False
+        else:
+            return all_deps(cls, available)
 
     units = ut.G
 

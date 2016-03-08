@@ -1151,6 +1151,12 @@ class TestAccelerationLateralFor5SecMax(unittest.TestCase):
         opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts, [('Acceleration Lateral Offset Removed',)])
 
+    def test_can_operate_787(self):
+        self.assertFalse(
+            self.node_class.can_operate(('Acceleration Lateral Offset Removed',),
+                                        frame=A('Frame', value='787_frame'))
+        )
+
     def test_derive(self):
         x = np.linspace(0, 10, 400)
         accel_lat = P(
