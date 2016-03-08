@@ -4728,9 +4728,9 @@ class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
         for distance in NAME_VALUES_RANGES['distance']:
             kti = dist_ktis.get_first(name='%d NM From Threshold' % distance)
             if kti:
-            self.create_kpv(kti.index,
-                            value_at_index(alt.array, kti.index),
-                            replace_values={'distance':distance})
+                self.create_kpv(kti.index,
+                                value_at_index(alt.array, kti.index),
+                                replace_values={'distance':distance})
 
 
 
