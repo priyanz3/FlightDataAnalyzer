@@ -1346,10 +1346,13 @@ class Touchdown(KeyTimeInstanceNode):
     http://www.flightdatacommunity.com/when-does-the-aircraft-land/
     '''
     # List the minimum acceptable parameters here
+
     @classmethod
-    def can_operate(cls, available):
-        # List the minimum required parameters.
-        return all_of(('Altitude AAL', 'Landing'), available)
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return 'Airborne' in available
+        else:
+            return all_of(('Altitude AAL', 'Landing'), available)
 
     def derive(self, acc_norm=P('Acceleration Normal'),
                acc_long=P('Acceleration Longitudinal Offset Removed'),
