@@ -493,6 +493,9 @@ class BouncedLanding(FlightPhaseNode):
                     elif stop < start:
                         # Possible condition for helicopters
                         continue
+                    elif start == len(alt_aal.array):
+                        # Mid-flight segments.
+                        continue
                     elif start == stop:
                         stop += 1
 
