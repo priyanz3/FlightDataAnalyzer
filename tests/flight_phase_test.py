@@ -42,6 +42,7 @@ from analysis_engine.flight_phase import (
     Landing,
     LandingRoll,
     LevelFlight,
+    MaximumContinuousPower,
     Mobile,
     RejectedTakeoff,
     RotorsTurning,
@@ -2614,6 +2615,27 @@ class TestGoAround5MinRating(unittest.TestCase):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestMaximumContinuousPower(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MaximumContinuousPower
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(),
+                         [('Airborne', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating')])
+
+    def test_derive(self):
+        air = buildsection('Airborne', 25, 1000)
+        toff = buildsection('Takeoff 5 Min Rating', 15, 100)
+        ga = buildsection('Go Around 5 Min Rating', 500, 550)
+        node = self.node_class()
+        node.derive(air, toff, ga)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].slice.start, 100)
+        self.assertEqual(node[0].slice.stop, 500)
+        self.assertEqual(node[1].slice.start, 550)
+        self.assertEqual(node[1].slice.stop, 1000)
 
 
 class TestTakeoff5MinRating(unittest.TestCase):

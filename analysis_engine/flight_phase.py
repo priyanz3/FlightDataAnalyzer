@@ -2033,6 +2033,22 @@ class GoAround5MinRating(FlightPhaseNode):
                 self.create_phase(slice(startpoint, endpoint))
 
 
+class MaximumContinuousPower(FlightPhaseNode):
+    '''
+    '''
+
+    align_frequency = 1
+
+    def derive(self,
+               airborne=S('Airborne'),
+               to_ratings=S('Takeoff 5 Min Rating'),
+               ga_ratings=S('Go Around 5 Min Rating')):
+
+        ratings = to_ratings.get_slices() + ga_ratings.get_slices()
+        mcp = slices_and_not(airborne.get_slices(), ratings)
+        self.create_phases(mcp)
+
+
 ################################################################################
 
 
