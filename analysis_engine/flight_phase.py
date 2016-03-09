@@ -93,7 +93,7 @@ class Airborne(FlightPhaseNode):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
         elif ac_type and ac_type.value == 'helicopter':
-            return all_of(('Altitude Radio', 'Altitude AGL', 'Gear On Ground', 'Rotors Turning'), available)
+            return all_of(('Gear On Ground',), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
     
@@ -152,15 +152,18 @@ class Airborne(FlightPhaseNode):
         ground to be elevated.
     
         On the AS330 Puma, the Gear On Ground signal is only sampled once per frame
-        so is only used to confirm validity of the radio altimeter signal.
+        so is only used to confirm validity of the radio altimeter signal and for
+        preliminary data validation flight phase computation.
         '''
         # When was the gear in the air?
         gear_off_grounds = np.ma.clump_masked(np.ma.masked_equal(gog.array, 0))
-        # Confirm the rotors were turning at this time:
+
+        if alt_rad and alt_agl and rtr:
+            # We can do a full analysis.
+            # First, confirm that the rotors were turning at this time:
         gear_off_grounds = slices_and(gear_off_grounds, rtr.get_slices())
 
         # When did the radio altimeters indicate airborne?
-
         airs = slices_remove_small_gaps(
             np.ma.clump_unmasked(np.ma.masked_less_equal(alt_agl.array, 1.0)),
             time_limit=AIRBORNE_THRESHOLD_TIME_RW, hz=alt_agl.frequency)
@@ -187,6 +190,11 @@ class Airborne(FlightPhaseNode):
                     duration = end - begin
                     if (duration / alt_rad.hz) > AIRBORNE_THRESHOLD_TIME_RW:
                         self.create_phase(slice(begin, end))
+        else:
+            # During data validation we can select just sensible flights;
+            # short hops make parameter validation tricky!
+            self.create_phases(slices_remove_small_slices(gear_off_grounds, time_limit=300))
+
     
     def derive(self,
                ac_type=A('Aircraft Type'),
