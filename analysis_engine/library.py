@@ -3752,6 +3752,25 @@ def slices_or(*slice_lists):
     return slices
 
 
+def slices_remove_overlaps(slice_list, hz=1):
+    '''
+    removes overlapping slices from list, keeps longest slice.
+    '''
+    result = []
+    for new_item in slice_list:
+        if new_item in result:
+            continue
+        add_slice = True
+        for index, existing_item in enumerate(result):
+            if slices_overlap(new_item, existing_item):
+                add_slice = False
+                if slice_duration(new_item, hz) > slice_duration(existing_item, hz):
+                    result[index] = new_item
+        if add_slice:
+            result.append(new_item)
+    return result
+
+
 def slices_remove_small_gaps(slice_list, time_limit=10, hz=1, count=None):
     '''
     Routine to remove small gaps in a list of slices. Typically when a list
