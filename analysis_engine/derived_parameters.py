@@ -306,10 +306,7 @@ class AirspeedForFlightPhases(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
-            return any_of(('Altitude Radio', 'Altitude Radio (L)', 'Altitude Radio (R)'), available)
-        else:
-            return 'Airspeed' in available
+        return ('Altitude Radio' if ac_type and ac_type.value == 'helicopter' else 'Airspeed') in available
 
     def derive(self, airspeed=P('Airspeed'), alt_rad=P('Altitude Radio'), ac_type=A('Aircraft Type')):
         param = alt_rad if ac_type and ac_type.value == 'helicopter' else airspeed
