@@ -161,41 +161,41 @@ class Airborne(FlightPhaseNode):
         if alt_rad and alt_agl and rtr:
             # We can do a full analysis.
             # First, confirm that the rotors were turning at this time:
-        gear_off_grounds = slices_and(gear_off_grounds, rtr.get_slices())
+            gear_off_grounds = slices_and(gear_off_grounds, rtr.get_slices())
 
-        # When did the radio altimeters indicate airborne?
-        airs = slices_remove_small_gaps(
-            np.ma.clump_unmasked(np.ma.masked_less_equal(alt_agl.array, 1.0)),
-            time_limit=AIRBORNE_THRESHOLD_TIME_RW, hz=alt_agl.frequency)
-        # Both is a reliable indication of being in the air.
-        for air in airs:
-            for goff in gear_off_grounds:
-                # Providing they relate to each other :o)
-                if slices_overlap(air, goff):
-                    start_index = max(air.start, goff.start)
-                    end_index = min(air.stop, goff.stop)
+            # When did the radio altimeters indicate airborne?
+            airs = slices_remove_small_gaps(
+                np.ma.clump_unmasked(np.ma.masked_less_equal(alt_agl.array, 1.0)),
+                time_limit=AIRBORNE_THRESHOLD_TIME_RW, hz=alt_agl.frequency)
+            # Both is a reliable indication of being in the air.
+            for air in airs:
+                for goff in gear_off_grounds:
+                    # Providing they relate to each other :o)
+                    if slices_overlap(air, goff):
+                        start_index = max(air.start, goff.start)
+                        end_index = min(air.stop, goff.stop)
 
-                    better_begin = index_at_value(alt_rad.array, 1.0, _slice=slice(max(start_index-5*alt_rad.frequency, 0), start_index+5*alt_rad.frequency))
-                    if better_begin:
-                        begin = better_begin
-                    else:
-                        begin = start_index
+                        better_begin = index_at_value(alt_rad.array, 1.0, _slice=slice(max(start_index-5*alt_rad.frequency, 0), start_index+5*alt_rad.frequency))
+                        if better_begin:
+                            begin = better_begin
+                        else:
+                            begin = start_index
 
-                    better_end = index_at_value(alt_rad.array, 1.0, _slice=slice(max(end_index+5*alt_rad.frequency, 0), end_index-5*alt_rad.frequency, -1))
-                    if better_end:
-                        end = better_end
-                    else:
-                        end = end_index
+                        better_end = index_at_value(alt_rad.array, 1.0, _slice=slice(max(end_index+5*alt_rad.frequency, 0), end_index-5*alt_rad.frequency, -1))
+                        if better_end:
+                            end = better_end
+                        else:
+                            end = end_index
 
-                    duration = end - begin
-                    if (duration / alt_rad.hz) > AIRBORNE_THRESHOLD_TIME_RW:
-                        self.create_phase(slice(begin, end))
+                        duration = end - begin
+                        if (duration / alt_rad.hz) > AIRBORNE_THRESHOLD_TIME_RW:
+                            self.create_phase(slice(begin, end))
         else:
             # During data validation we can select just sensible flights;
             # short hops make parameter validation tricky!
             self.create_phases(slices_remove_small_slices(gear_off_grounds, time_limit=300))
 
-    
+
     def derive(self,
                ac_type=A('Aircraft Type'),
                # aircraft
