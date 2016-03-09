@@ -1969,9 +1969,9 @@ class TestLanding(unittest.TestCase):
     def test_landing_helicopter_basic(self):
         alt_agl = P(name='Altitude AGL', array=np.ma.array([50]*5+range(45,0,-5)+[0]*5,dtype=float))
         coll = P(name='Collective', array=np.ma.array([53]*5+range(48,3,-5)+[3]*5,dtype=float))
-        tdn=KTI(items=[KeyTimeInstance(15, 'Touchdown')])
+        airs=buildsection('Airborne', 4, 15)
         node = Landing()
-        node.derive(helicopter, None, None, None, alt_agl, coll, tdn)
+        node.derive(helicopter, None, None, None, alt_agl, coll, airs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 10)
         self.assertEqual(node[0].slice.stop, 15)

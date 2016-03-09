@@ -1589,18 +1589,19 @@ class Landing(FlightPhaseNode):
             phases = slices_or(phases, new_phase)
         self.create_phases(phases)
     
-    def _derive_helicopter(self, alt_agl, coll, tdns):
+    def _derive_helicopter(self, alt_agl, coll, airs):
         phases = []
-        for tdn in tdns:
+        for air in airs:
+            tdn = air.stop_edge
             # Scan back to find either when we descend through LANDING_HEIGHT or had peak hover height.
-            to_scan = tdn.index - alt_agl.frequency*LANDING_TRACEBACK_PERIOD
+            to_scan = tdn - alt_agl.frequency*LANDING_TRACEBACK_PERIOD
             landing_begin = index_at_value(alt_agl.array, LANDING_HEIGHT,
-                                           _slice=slice(tdn.index, to_scan , -1),
+                                           _slice=slice(tdn, to_scan , -1),
                                            endpoint='first_closing')
 
             # Scan forwards to find lowest collective shortly after touchdown.
-            to_scan = tdn.index + coll.frequency*LANDING_COLLECTIVE_PERIOD
-            landing_end = tdn.index + np.ma.argmin(coll.array[tdn.index:to_scan])
+            to_scan = tdn + coll.frequency*LANDING_COLLECTIVE_PERIOD
+            landing_end = tdn  + np.ma.argmin(coll.array[tdn:to_scan])
 
             new_phase = [slice(landing_begin, landing_end)]
             phases = slices_or(phases, new_phase)
@@ -1615,9 +1616,9 @@ class Landing(FlightPhaseNode):
                # helicopter
                alt_agl=P('Altitude AGL'),
                coll=P('Collective'),
-               tdns=S('Touchdown')):
+               airs=S('Airborne')):
         if ac_type and ac_type.value == 'helicopter':
-            self._derive_helicopter(alt_agl, coll, tdns)
+            self._derive_helicopter(alt_agl, coll, airs)
         else:
             self._derive_aircraft(head, alt_aal, fast)
 
