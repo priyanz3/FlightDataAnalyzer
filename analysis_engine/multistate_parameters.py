@@ -239,11 +239,21 @@ class APVerticalMode(MultistateDerivedParameterNode):
         if climb_mode_active:
             self.array[climb_mode_active.array == 'Activated'] = 'CLB'
         if longitudinal_mode_selected:
-            self.array[longitudinal_mode_selected.array == 'Altitude'] = 'ALT CSTR'
-            self.array[longitudinal_mode_selected.array == 'Final Descent Mode'] = 'FINAL'
-            self.array[longitudinal_mode_selected.array == 'Flare Mode'] = 'FLARE'
-            self.array[longitudinal_mode_selected.array == 'Land Track Active'] = 'LAND'
-            self.array[longitudinal_mode_selected.array == 'Vertical Speed Engaged'] = 'V/S'
+            states = longitudinal_mode_selected.state.keys()
+            if 'Climb Mode Active' in states:
+                self.array[longitudinal_mode_selected.array == 'Climb Mode Active'] = 'CLB'
+            if 'Descent Mode' in states:
+                self.array[longitudinal_mode_selected.array == 'Descent Mode'] = 'DES'
+            if 'Altitude' in states:
+                self.array[longitudinal_mode_selected.array == 'Altitude'] = 'ALT CSTR'
+            if 'Final Descent Mode' in states:
+                self.array[longitudinal_mode_selected.array == 'Final Descent Mode'] = 'FINAL'
+            if 'Flare Mode' in states:
+                self.array[longitudinal_mode_selected.array == 'Flare Mode'] = 'FLARE'
+            if 'Land Track Active' in states:
+                self.array[longitudinal_mode_selected.array == 'Land Track Active'] = 'LAND'
+            if 'Vertical Speed Engaged' in states:
+                self.array[longitudinal_mode_selected.array == 'Vertical Speed Engaged'] = 'V/S'
         if ils_glideslope_capture_active:
             self.array[ils_glideslope_capture_active.array == 'Activated'] = 'GS CAPT'
         if ils_glideslope_active:
