@@ -1003,6 +1003,13 @@ class TakeoffTurnOntoRunway(KeyTimeInstanceNode):
     onto the runway, so at worst this KTI is just the start of that phase.
     Where possible we compute the sharp point of the turn onto the runway.
     '''
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'helicopter':
+            return False
+        else:
+            return True
+
     def derive(self, head=P('Heading Continuous'),
                toffs=S('Takeoff'),
                fast=S('Fast')):
