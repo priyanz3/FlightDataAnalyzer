@@ -4052,6 +4052,20 @@ class Nr(DerivedParameterNode):
             blend_two_parameters(p1, p2)
 
 
+class Collective(DerivedParameterNode):
+    '''
+    '''
+
+    align = False
+    units = ut.PERCENT
+
+    def derive(self,
+               capt=P('Collective (1)'),
+               fo=P('Collective (2)')):
+
+        self.array, self.frequency, self.offset = blend_two_parameters(capt, fo)
+
+
 class TailRotorPedal(DerivedParameterNode):
     '''
     '''
