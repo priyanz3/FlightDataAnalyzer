@@ -9241,7 +9241,7 @@ class HeightOfBouncedLanding(KeyPointValueNode):
 # Heading
 
 
-class HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
+class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     '''
     FDS originally developed this KPV to support the UK CAA Significant Seven programme.
     "Excursions - Take off (Lateral). Heading changes on runway before rotation
@@ -9258,6 +9258,8 @@ class HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(KeyPointValueNod
     from the start of the take-off roll to 80 kts.
     2. The end of the event will be at a rotation rate of 1.5 deg/sec or, where recorded,
     the last recorded moment of nosewheel on the ground.
+
+    Previously named "HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff"
     '''
 
     @classmethod
