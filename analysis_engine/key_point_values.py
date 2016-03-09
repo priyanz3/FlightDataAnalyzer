@@ -98,6 +98,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      slices_overlap,
                                      slices_or,
                                      slices_and,
+                                     slices_remove_overlaps,
                                      slices_remove_small_slices,
                                      slices_remove_small_gaps,
                                      trim_slices,
@@ -7050,6 +7051,354 @@ class MagneticVariationAtLandingTurnOffRunway(KeyPointValueNode):
                landing_turn_off_rwy=KTI('Landing Turn Off Runway')):
 
         self.create_kpvs_at_ktis(mag_var.array, landing_turn_off_rwy)
+
+
+##############################################################################
+# Engine Transients
+
+class EngGasTempOverThresholdDuration(KeyPointValueNode):
+    '''
+    Measures the duration Gas Temp is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng Gas Temp Over %(period)s Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) Gas Temp',
+            'Eng (2) Gas Temp',
+            'Eng (3) Gas Temp',
+            'Eng (4) Gas Temp'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+        ), available)
+
+    def derive(self,
+               eng1=M('Eng (1) Gas Temp'),
+               eng2=M('Eng (2) Gas Temp'),
+               eng3=M('Eng (3) Gas Temp'),
+               eng4=M('Eng (4) Gas Temp'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('Gas Temp', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('Gas Temp', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold == None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                slices_remove_overlaps(phase_slices),
+                self.frequency, period=name)
+
+
+class EngN1OverThresholdDuration(KeyPointValueNode):
+    '''
+    Measures the duration N1 is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng N1 Over %(period)s Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) N1',
+            'Eng (2) N1',
+            'Eng (3) N1',
+            'Eng (4) N1'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+        ), available)
+
+    def derive(self,
+               eng1=M('Eng (1) N1'),
+               eng2=M('Eng (2) N1'),
+               eng3=M('Eng (3) N1'),
+               eng4=M('Eng (4) N1'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('N1', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('N1', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold == None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                slices_remove_overlaps(phase_slices),
+                self.frequency, period=name)
+
+
+class EngN2OverThresholdDuration(KeyPointValueNode):
+    '''
+    Measures the duration N2 is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng N2 Over %(period)s Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) N2',
+            'Eng (2) N2',
+            'Eng (3) N2',
+            'Eng (4) N2'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+        ), available)
+
+    def derive(self,
+               eng1=M('Eng (1) N2'),
+               eng2=M('Eng (2) N2'),
+               eng3=M('Eng (3) N2'),
+               eng4=M('Eng (4) N2'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('N2', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('N2', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold == None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                slices_remove_overlaps(phase_slices),
+                self.frequency, period=name)
+
+
+class EngNpOverThresholdDuration(KeyPointValueNode):
+    '''
+    Measures the duration propeller speed is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng Np Over %(period)s Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) Np',
+            'Eng (2) Np',
+            'Eng (3) Np',
+            'Eng (4) Np'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+        ), available)
+
+    def derive(self,
+               eng1=M('Eng (1) Np'),
+               eng2=M('Eng (2) Np'),
+               eng3=M('Eng (3) Np'),
+               eng4=M('Eng (4) Np'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('Np', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('Np', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold == None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                slices_remove_overlaps(phase_slices),
+                self.frequency, period=name)
+
+
+class EngTorqueOverThresholdDuration(KeyPointValueNode):
+    '''
+    Measures the duration Torque is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng Torque Over %(period)s Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) Torque',
+            'Eng (2) Torque',
+            'Eng (3) Torque',
+            'Eng (4) Torque'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+        ), available)
+
+    def derive(self,
+               eng1=M('Eng (1) Torque'),
+               eng2=M('Eng (2) Torque'),
+               eng3=M('Eng (3) Torque'),
+               eng4=M('Eng (4) Torque'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('Torque', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('Torque', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold == None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                slices_remove_overlaps(phase_slices),
+                self.frequency, period=name)
 
 
 ##############################################################################

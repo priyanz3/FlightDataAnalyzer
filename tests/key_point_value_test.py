@@ -236,6 +236,7 @@ from analysis_engine.key_point_values import (
     EngGasTempDuringMaximumContinuousPowerMax,
     EngGasTempDuringTakeoff5MinRatingMax,
     EngGasTempExceededEngGasTempRedlineDuration,
+    EngGasTempOverThresholdDuration,
     EngN1500To50FtMax,
     EngN1500To50FtMin,
     EngN154to72PercentWithThrustReversersDeployedDurationMax,
@@ -252,6 +253,7 @@ from analysis_engine.key_point_values import (
     EngN1ExceededN1RedlineDuration,
     EngN1For5Sec1000To500FtMin,
     EngN1For5Sec500To50FtMin,
+    EngN1OverThresholdDuration,
     EngN1WithThrustReversersDeployedMax,
     EngN1WithThrustReversersInTransitMax,
     EngN2CyclesDuringFinalApproach,
@@ -260,6 +262,7 @@ from analysis_engine.key_point_values import (
     EngN2DuringTakeoff5MinRatingMax,
     EngN2DuringTaxiMax,
     EngN2ExceededN2RedlineDuration,
+    EngN2OverThresholdDuration,
     EngN3DuringGoAround5MinRatingMax,
     EngN3DuringMaximumContinuousPowerMax,
     EngN3DuringTakeoff5MinRatingMax,
@@ -271,6 +274,7 @@ from analysis_engine.key_point_values import (
     EngNpDuringMaximumContinuousPowerMax,
     EngNpDuringTakeoff5MinRatingMax,
     EngNpDuringTaxiMax,
+    EngNpOverThresholdDuration,
     EngVibNpMax,
     EngOilPressFor60SecDuringCruiseMax,
     EngOilPressMax,
@@ -292,6 +296,7 @@ from analysis_engine.key_point_values import (
     EngTorqueDuringMaximumContinuousPowerMax,
     EngTorqueDuringTakeoff5MinRatingMax,
     EngTorqueDuringTaxiMax,
+    EngTorqueOverThresholdDuration,
     EngTorqueWhileDescendingMax,
     EngVibAMax,
     EngVibBMax,
@@ -6431,6 +6436,287 @@ class TestTakeoffRatingDuration(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 76)
         self.assertEqual(node[0].value, 64)
+
+
+class TestEngGasTempOverThresholdDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = EngGasTempOverThresholdDuration
+        self.mods = A('Modifications', [])
+        self.engine_type = A('Engine Type', 'PW124B')
+        self.engine_series = A('Engine Series', 'PW100')
+        self.engine_thresholds = {
+            'Gas Temp': {
+                'takeoff': None,
+                'mcp':     800
+            }
+        }
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_can_operate(self, lookup_table):
+        nodes = ('Eng (1) Gas Temp', 'Takeoff 5 Min Rating')
+        kwargs = {
+            'eng_series': self.engine_series,
+            'eng_type': self.engine_type,
+            'mods': self.mods,
+        }
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+        self.assertTrue(self.node_class.can_operate(nodes, **kwargs))
+        self.assertFalse(self.node_class.can_operate(('Eng (1) Gas Temp'), **kwargs))
+        # No lookup table found
+        lookup_table.get_engine_map.side_effect = KeyError("No engine threshods for 'PW100', series 'PW124B', type '[]' mods.")
+        self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive(self, lookup_table):
+
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+
+        array = np.ma.array(range(25, 875, 50) + [825] * 5 + range(825, 600, -50))
+        # use two arrays the same to ensure only one KPV created.
+        eng1 = P('Eng (1) Gas Temp', array=array)
+        eng2 = P('Eng (2) Gas Temp', array=array)
+        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
+        mcp = buildsection('Maximum Continuous Power', 5, 25)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+
+        expected = KPV(
+            'Eng Gas Temp Over Threshold Duration',
+            items=[KeyPointValue(
+                index=16.0, value=7.0,
+                name='Eng Gas Temp Over MCP Duration')]
+        )
+
+        self.assertEqual(node, expected)
+
+
+class TestEngN1OverThresholdDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = EngN1OverThresholdDuration
+        self.mods = A('Modifications', [])
+        self.engine_type = A('Engine Type', 'PW124B')
+        self.engine_series = A('Engine Series', 'PW100')
+        self.engine_thresholds = {
+            'N1': {
+                'takeoff': 101,
+                'mcp':     102
+            },
+        }
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_can_operate(self, lookup_table):
+        nodes = ('Eng (1) N1', 'Takeoff 5 Min Rating')
+        kwargs = {
+            'eng_series': self.engine_series,
+            'eng_type': self.engine_type,
+            'mods': self.mods,
+        }
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+        self.assertTrue(self.node_class.can_operate(nodes, **kwargs))
+        self.assertFalse(self.node_class.can_operate(('Eng (1) N1'), **kwargs))
+        # No lookup table found
+        lookup_table.get_engine_map.side_effect = KeyError("No engine threshods for 'PW100', series 'PW124B', type '[]' mods.")
+        self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive(self, lookup_table):
+
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+
+        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -2))
+        # use two arrays the same to ensure only one KPV created.
+        eng1 = P('Eng (1) N1', array=array)
+        eng2 = P('Eng (2) N1', array=array)
+        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
+        mcp = buildsection('Maximum Continuous Power', 5, 25)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+
+        expected = KPV(
+            'Eng N1 Over Threshold Duration',
+            items=[KeyPointValue(
+                index=13.0, value=12.0,
+                name='Eng N1 Over Takeoff Power Duration'),
+                   KeyPointValue(
+                index=14.0, value=11.0,
+                name='Eng N1 Over MCP Duration')]
+        )
+
+        self.assertEqual(node, expected)
+
+
+class TestEngN2OverThresholdDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = EngN2OverThresholdDuration
+        self.mods = A('Modifications', [])
+        self.engine_type = A('Engine Type', 'PW124B')
+        self.engine_series = A('Engine Series', 'PW100')
+        self.engine_thresholds = {
+            'N2': {
+                'takeoff': 101,
+                'mcp':     102
+            },
+        }
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_can_operate(self, lookup_table):
+        nodes = ('Eng (1) N2', 'Takeoff 5 Min Rating')
+        kwargs = {
+            'eng_series': self.engine_series,
+            'eng_type': self.engine_type,
+            'mods': self.mods,
+        }
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+        self.assertTrue(self.node_class.can_operate(nodes, **kwargs))
+        self.assertFalse(self.node_class.can_operate(('Eng (1) N2'), **kwargs))
+        # No lookup table found
+        lookup_table.get_engine_map.side_effect = KeyError("No engine threshods for 'PW100', series 'PW124B', type '[]' mods.")
+        self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive(self, lookup_table):
+
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+
+        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -2))
+        # use two arrays the same to ensure only one KPV created.
+        eng1 = P('Eng (1) N2', array=array)
+        eng2 = P('Eng (2) N2', array=array)
+        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
+        mcp = buildsection('Maximum Continuous Power', 5, 25)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+
+        expected = KPV(
+            'Eng N2 Over Threshold Duration',
+            items=[KeyPointValue(
+                index=13.0, value=12.0,
+                name='Eng N2 Over Takeoff Power Duration'),
+                   KeyPointValue(
+                index=14.0, value=11.0,
+                name='Eng N2 Over MCP Duration')]
+        )
+
+        self.assertEqual(node, expected)
+
+
+class TestEngNpOverThresholdDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = EngNpOverThresholdDuration
+        self.mods = A('Modifications', [])
+        self.engine_type = A('Engine Type', 'PW124B')
+        self.engine_series = A('Engine Series', 'PW100')
+        self.engine_thresholds = {
+            'Np': {
+                'takeoff': 101,
+                'mcp':     101
+            },
+        }
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_can_operate(self, lookup_table):
+        nodes = ('Eng (1) Np', 'Takeoff 5 Min Rating')
+        kwargs = {
+            'eng_series': self.engine_series,
+            'eng_type': self.engine_type,
+            'mods': self.mods,
+        }
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+        self.assertTrue(self.node_class.can_operate(nodes, **kwargs))
+        self.assertFalse(self.node_class.can_operate(('Eng (1) Np'), **kwargs))
+        # No lookup table found
+        lookup_table.get_engine_map.side_effect = KeyError("No engine threshods for 'PW100', series 'PW124B', type '[]' mods.")
+        self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive(self, lookup_table):
+
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+
+        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -2))
+        # use two arrays the same to ensure only one KPV created.
+        eng1 = P('Eng (1) Np', array=array)
+        eng2 = P('Eng (2) Np', array=array)
+        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
+        mcp = buildsection('Maximum Continuous Power', 5, 25)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+
+        expected = KPV(
+            'Eng Np Over Threshold Duration',
+            items=[KeyPointValue(
+                index=13.0, value=12.0,
+                name='Eng Np Over Takeoff Power Duration'),
+                   KeyPointValue(
+                index=13.0, value=12.0,
+                name='Eng Np Over MCP Duration')]
+        )
+
+        self.assertEqual(node, expected)
+
+
+class TestEngTorqueOverThresholdDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = EngTorqueOverThresholdDuration
+        self.mods = A('Modifications', [])
+        self.engine_type = A('Engine Type', 'PW124B')
+        self.engine_series = A('Engine Series', 'PW100')
+        self.engine_thresholds = {
+            'Torque': {
+                'takeoff': 95,
+                'mcp':     90
+            },
+        }
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_can_operate(self, lookup_table):
+        nodes = ('Eng (1) Torque', 'Takeoff 5 Min Rating')
+        kwargs = {
+            'eng_series': self.engine_series,
+            'eng_type': self.engine_type,
+            'mods': self.mods,
+        }
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+        self.assertTrue(self.node_class.can_operate(nodes, **kwargs))
+        self.assertFalse(self.node_class.can_operate(('Eng (1) Torque'), **kwargs))
+        # No lookup table found
+        lookup_table.get_engine_map.side_effect = KeyError("No engine threshods for 'PW100', series 'PW124B', type '[]' mods.")
+        self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
+
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive(self, lookup_table):
+
+        lookup_table.get_engine_map.return_value = self.engine_thresholds
+
+        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -2))
+        # use two arrays the same to ensure only one KPV created.
+        eng1 = P('Eng (1) Torque', array=array)
+        eng2 = P('Eng (2) Torque', array=array)
+        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
+        mcp = buildsection('Maximum Continuous Power', 5, 25)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+
+        expected = KPV(
+            'Eng Torque Over Threshold Duration',
+            items=[KeyPointValue(
+                index=10.0, value=15.0,
+                name='Eng Torque Over Takeoff Power Duration'),
+                   KeyPointValue(
+                index=8.0, value=17.0,
+                name='Eng Torque Over MCP Duration')]
+        )
+
+        self.assertEqual(node, expected)
+
+
+
+##############################################################################
 # Engine Bleed
 
 
