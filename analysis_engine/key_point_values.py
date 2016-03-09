@@ -10322,6 +10322,8 @@ class FuelJettisonDuration(KeyPointValueNode):
 
 class GroundspeedMax(KeyPointValueNode):
     '''
+    TODO: rename kpv to reflect limiting section
+    TODO: change to use takeoff roll wow and landing roll
     '''
 
     units = ut.KT
