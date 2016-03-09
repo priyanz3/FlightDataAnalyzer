@@ -345,7 +345,6 @@ from analysis_engine.key_point_values import (
     GroundspeedWithZeroAirspeedFor5SecMax,
     HeadingAtLowestAltitudeDuringApproach,
     HeadingChange,
-    HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff,
     HeadingDeviationFromRunwayAt50FtDuringLanding,
     HeadingDeviationFromRunwayAtTOGADuringTakeoff,
     HeadingDeviationFromRunwayDuringLandingRoll,
@@ -357,6 +356,7 @@ from analysis_engine.key_point_values import (
     HeadingVacatingRunway,
     HeadingVariation300To50Ft,
     HeadingVariation500To50Ft,
+    HeadingVariationAbove80KtsAirspeedDuringTakeoff,
     HeadingVariationAbove100KtsAirspeedDuringLanding,
     HeadingVariationTouchdownPlus4SecTo60KtsAirspeed,
     HeightLoss1000To2000Ft,
@@ -8720,7 +8720,7 @@ class TestElevatorDuringLandingMin(unittest.TestCase,
                     name='Elevator During Landing Min')]))
 
 
-class TestHeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, NodeTest):
+class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, NodeTest):
     nosewheel=P('Gear (N) On Ground',array=np.ma.array([1]*9+[0]*2))
     hdg = P('Heading True Continuous', np.ma.array([45]*11))
     ias = P('Airspeed', np.ma.array(range(60, 170, 10)))
@@ -8735,7 +8735,7 @@ class TestHeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(unittest.Tes
     '''
 
     def setUp(self):
-        self.node_class = HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff
+        self.node_class = HeadingVariationAbove80KtsAirspeedDuringTakeoff
         self.operational_combinations = [(
             'Heading True Continuous',
             'Airspeed',
@@ -8761,22 +8761,21 @@ class TestHeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff(unittest.Tes
         self.pch_rate = P('Pitch', np.ma.array([0]*8+[1.0, 2, 2]))
         node = self.node_class()
         node.derive(None, self.hdg, self.ias, self.q, self.toff)
-        self.assertAlmostEqual(node[0].value, 12.5, places=5)
+        self.assertAlmostEqual(node[0].value, 7.5, places=5)
 
     def test_with_transient_deviation_at_80_kts(self):
         self.hdg = P('Heading True Continuous', np.ma.array(range(35,46)))
         self.ias = P('Airspeed', np.ma.array(range(55, 165, 10)))
         node = self.node_class()
         node.derive(None, self.hdg, self.ias, self.q, self.toff)
-        self.assertAlmostEqual(node[0].value, 8.5, places=5)
-        self.assertEqual(node[0].index, 9.5)
+        self.assertAlmostEqual(node[0].value, 7.5, places=5)
+        self.assertEqual(node[0].index, 8.5)
 
     def test_nosewheel_didnt_lift(self):
         self.nosewheel.array[8:] = [1]*3
         node = self.node_class()
         node.derive(self.nosewheel, self.hdg, self.ias, self.q, self.toff)
         self.assertEqual(node[0].index, 2.0)
-
 
 
 class TestHeadingDeviationFromRunwayAtTOGADuringTakeoff(unittest.TestCase, NodeTest):
@@ -9452,7 +9451,7 @@ class TestFuelQtyWingDifferenceMax(unittest.TestCase):
 
 class TestFuelQtyWingDifference787Max(unittest.TestCase):
     def test_can_operate(self):
-        opts = FuelQtyWingDifference787Max.get_operational_combinations()
+        opts = FuelQtyWingDifference787Max.get_operational_combinations(frame=A('Frame', value='787_frame'))
         self.assertEqual(opts, [('Fuel Qty (L)', 'Fuel Qty (R)', 'Airborne')])
 
     def test_derive_basic(self):
