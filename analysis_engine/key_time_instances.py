@@ -3,6 +3,7 @@ import numpy as np
 from math import ceil, floor
 
 from analysis_engine.library import (
+    all_deps,
     all_of,
     any_of,
     coreg,
@@ -1008,7 +1009,7 @@ class TakeoffTurnOntoRunway(KeyTimeInstanceNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return all_of(('Heading Continuous', 'Takeoff', 'Fast'), available)
+            return all_deps(cls, available)
 
     def derive(self, head=P('Heading Continuous'),
                toffs=S('Takeoff'),
