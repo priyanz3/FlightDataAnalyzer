@@ -4078,6 +4078,30 @@ class SlopeAngleToLanding(DerivedParameterNode):
         self.array = np.degrees(np.arctan(slope_to_ldg.array))
 
 
+class SlopeToAimingPoint(DerivedParameterNode):
+    '''
+
+    '''
+
+    units = None
+
+    def derive(self, alt_aal=P('Altitude AAL'), dist=P('Aiming Point Range')):
+
+        self.array = alt_aal.array / (dist.array * FEET_PER_NM)
+
+
+class SlopeAngleToAimingPoint(DerivedParameterNode):
+    '''
+    This parameter calculates the slope angle in degrees.
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self, slope_to_ldg=P('Slope To Aiming Point')):
+
+        self.array = np.degrees(np.arctan(slope_to_ldg.array))
+
+
 '''
 
 TODO: Revise computation of sliding motion
