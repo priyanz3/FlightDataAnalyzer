@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.ndimage import filters
+from scipy.signal import medfilt
 
 from analysis_engine import settings
 
@@ -1940,16 +1942,72 @@ class TakeoffRotationWow(FlightPhaseNode):
 
 class Takeoff5MinRating(FlightPhaseNode):
     '''
-    For engines, the period of high power operation is normally 5 minutes from
-    the start of takeoff. Also applies in the case of a go-around.
+    For engines, the period of high power operation is normally a maximum of
+    5 minutes from the start of takeoff.
+
+    For all aeroplanes we use the Takeoff Acceleration Start to indicate the
+    start of the Takeoff 5 Minute Rating
+
+    For turbo prop aircraft we look for NP stabalising at least 5% less than
+    liftoff NP
+
+    For Jet aircraft we look for 5 minutes following Takeoff Acceleration Start.
     '''
     align_frequency = 1
 
-    def derive(self, toffs=KTI('Takeoff Acceleration Start')):
+    @classmethod
+    def can_operate(cls, available, eng_type=A('Engine Propulsion')):
+        if eng_type and eng_type.value == 'PROP':
+            return all_deps(cls, available)
+        else:
+            return 'Takeoff Acceleration Start' in available
+
+    def get_metrics(self, angle):
+        window_sizes = [2,4,8,16,32]
+        metrics = np.ma.array([1000000] * len(angle))
+        for l in window_sizes:
+            maxy = filters.maximum_filter1d(angle, l)
+            miny = filters.minimum_filter1d(angle, l)
+            m = (maxy - miny) / l
+            metrics = np.minimum(metrics, m)
+
+        metrics = medfilt(metrics,3)
+        metrics = 200.0 * metrics
+
+        return metrics
+
+    def derive(self, toffs=KTI('Takeoff Acceleration Start'),
+               lifts=KTI('Liftoff'),
+               eng_np=P('Eng (*) Np Avg'),
+               eng_type=A('Engine Propulsion')):
         '''
         '''
-        for toff in toffs:
-            self.create_phase(slice(toff.index, toff.index + 300))
+        if eng_type and eng_type.value == 'PROP':
+            filter_median_window = 11
+            enp_filt = medfilt(eng_np.array, filter_median_window)
+            enp_filt = np.ma.array(enp_filt)
+            g = self.get_metrics(enp_filt)
+            enp_filt.mask = g > 40
+            flat_slices = np.ma.clump_unmasked(enp_filt)
+            for accel_start in toffs:
+                rating_end = toff_slice_avg = None
+                toff_idx = lifts.get_next(accel_start.index).index
+                for flat in flat_slices:
+                    if is_index_within_slice(toff_idx, flat):
+                        toff_slice_avg = np.ma.average(enp_filt[flat])
+                    elif toff_slice_avg is not None:
+                        flat_avg = np.ma.average(enp_filt[flat])
+                        if abs(toff_slice_avg - flat_avg) >= 5:
+                            rating_end = flat.start
+                            break
+                    else:
+                        continue
+                if rating_end is None:
+                    rating_end = accel_start.index + (300 * self.frequency)
+                self.create_phase(slice(accel_start.index, rating_end))
+        else:
+            for toff in toffs:
+                self.create_phase(slice(toff.index, toff.index + 300))
 
 
 # TODO: Write some unit tests!

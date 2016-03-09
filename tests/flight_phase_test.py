@@ -2617,19 +2617,37 @@ class TestGoAround5MinRating(unittest.TestCase):
 
 
 class TestTakeoff5MinRating(unittest.TestCase):
-    def test_can_operate(self):
-        self.assertEqual(Takeoff5MinRating.get_operational_combinations(),
-                         [('Takeoff Acceleration Start',)])
+    def setUp(self):
+        self.node_class = Takeoff5MinRating
+        self.jet = A('Engine Propulsion', value='JET')
+        self.prop = A('Engine Propulsion', value='PROP')
 
-    def test_derive_basic(self):
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(eng_type=self.prop),
+                         [('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion')])
+        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start',), eng_type=self.jet))
+
+    def test_derive_basic_jet(self):
         toffs = KTI('Takeoff Acceleration Start',
                     items=[KeyTimeInstance(index=100)])
         node = Takeoff5MinRating()
-        node.derive(toffs)
+        node.derive(toffs, eng_type=self.jet)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 100)
         self.assertEqual(node[0].slice.stop, 400)
 
+    def test_derive_basic_prop(self):
+        toffs = KTI('Takeoff Acceleration Start',
+                    items=[KeyTimeInstance(index=20)])
+        lifts = KTI('Liftoff',
+                    items=[KeyTimeInstance(index=40)])
+        array = np.ma.array([71]*20 + [68, 65, 80, 90] + [101]*60 + range(101, 84, -4) + [86]*100)
+        eng_np = P('Eng (*) Np Avg', array=array)
+        node = Takeoff5MinRating()
+        node.derive(toffs, lifts, eng_np, eng_type=self.prop)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].slice.start, 20)
+        self.assertEqual(node[0].slice.stop, 89)
 
 class TestTakeoffRoll(unittest.TestCase):
     def test_can_operate(self):
