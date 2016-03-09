@@ -5150,6 +5150,27 @@ class RudderPreflightCheck(KeyPointValueNode):
         elif family_name=='B737 NG':
             PreflightCheck(self, firsts, accels, disp, 58.0)
 
+class FlightControlPreflightCheck(KeyPointValueNode):
+    '''
+    sum of Elevator, Aileron and Rudder Preflight Check KPVs for use in Event
+    detection
+    See NTSB recommendation A-15-34.
+    '''
+    units = ut.PERCENT
+
+    def derive(self, elevator=KPV('Elevator Preflight Check'),
+               aileron=KPV('Aileron Preflight Check'),
+               rudder=KPV('Rudder Preflight Check')):
+        first_valid = elevator or aileron or rudder
+        if first_valid:
+            elevator_value = elevator.get_first().value if elevator else 0
+            aileron_value = aileron.get_first().value if aileron else 0
+            rudder_value = rudder.get_first().value if rudder else 0
+            index = first_valid.get_first().index
+            value = elevator_value + aileron_value + rudder_value
+
+            self.create_kpv(index, value)
+
 
 ##############################################################################
 # Runway Distances at Takeoff

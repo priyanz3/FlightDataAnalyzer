@@ -316,6 +316,7 @@ from analysis_engine.key_point_values import (
     FlapWithSpeedbrakeDeployedMax,
     FlareDistance20FtToTouchdown,
     FlareDuration20FtToTouchdown,
+    FlightControlPreflightCheck,
     FuelJettisonDuration,
     FuelQtyAtLiftoff,
     FuelQtyAtTouchdown,
@@ -14411,3 +14412,31 @@ class TestAircraftEnergyWhenDescending(unittest.TestCase):
 
         self.assertEqual(aewd[0].name, 'Aircraft Energy at 10000 Ft Descending')
         self.assertEqual(aewd[1].name, 'Aircraft Energy at 5000 Ft Descending')
+
+class TestFlightControlPreflightCheck(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = FlightControlPreflightCheck
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(),
+                         [('Elevator Preflight Check', 'Aileron Preflight Check', 'Rudder Preflight Check')])
+
+    def test_derive(self):
+        ele = KPV(name='Elevator Preflight Check', items=[
+            KeyPointValue(index=7.0, value=100, name='Elevator Preflight Check'),
+        ])
+        ail = KPV(name='Aileron Preflight Check', items=[
+            KeyPointValue(index=9.0, value=103, name='Aileron Preflight Check'),
+        ])
+        rud = KPV(name='Rudder Preflight Check', items=[
+            KeyPointValue(index=14.0, value=97, name='Rudder Preflight Check'),
+        ])
+
+        node = self.node_class()
+        node.derive(ele, ail, rud)
+
+        name = 'Flight Control Preflight Check'
+        self.assertEqual(node, KPV(name=name, items=[
+            KeyPointValue(index=7.0, value=300, name=name),
+        ]))
