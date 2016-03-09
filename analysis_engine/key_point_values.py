@@ -8166,27 +8166,24 @@ class EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(KeyPoint
     def can_operate(cls, available, eng_series=A('Engine Series')):
         gas_temps = any_of(('Eng (%d) Gas Temp' % n for n in range(1, 5)), available)
         engine_series = eng_series and eng_series.value == 'CFM56-3'
-        phases = all_of(('Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded'), available)
 
-        return gas_temps and engine_series and phases
+        return gas_temps and engine_series and 'Maximum Continous Power'
 
     def derive(self,
                eng1=P('Eng (1) Gas Temp'),
                eng2=P('Eng (2) Gas Temp'),
                eng3=P('Eng (3) Gas Temp'),
                eng4=P('Eng (4) Gas Temp'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continous Power')):
 
-        mcp = to_ratings.get_slices() + ga_ratings.get_slices() + grounded.get_slices()
+        slices = mcp.get_slices()
 
         limit = 895
         for eng_num, eng in enumerate((eng1, eng2, eng3, eng4), start=1):
             if eng is None:
                 continue  # Engine is not available on this aircraft.
             egt_limit_exceeded = runs_of_ones(eng.array > limit)
-            egt_mcp = slices_and(egt_limit_exceeded, mcp)
+            egt_mcp = slices_and(egt_limit_exceeded, slices)
             if egt_mcp:
                 index = min(egt_mcp, key=operator.attrgetter('start')).start
                 value = slices_duration(egt_mcp, self.hz)

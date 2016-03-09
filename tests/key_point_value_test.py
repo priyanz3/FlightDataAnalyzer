@@ -7328,7 +7328,7 @@ class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unit
         self.node_class = EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration
 
     def test_can_operate(self):
-        nodes = ('Eng (1) Gas Temp', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')
+        nodes = ('Eng (1) Gas Temp', 'Maximum Continous Power')
         engine = A('Engine Series', value='CFM56-5A')
         self.assertFalse(self.node_class.can_operate(nodes, eng_series=engine))
         engine = A('Engine Series', value='CFM56-3')
@@ -7340,19 +7340,16 @@ class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unit
         y = np.sin(2*2*np.pi*x)+2
         egt_array = np.ma.array(y*440)
         egt = P(name='Eng (2) Gas Temp', array=egt_array)
-        grounds = buildsection('Grounded', None, 10)
-        takeoffs = buildsection('Takeoff 5 Min Rating', 10, 80)
-        ga = S('Go Around 5 Min Rating', items=[])
+        mcp = buildsection('Maximum Continous Power', 55, 80)
 
         node = self.node_class()
-        node.derive(None, egt, None, None, takeoffs, ga, grounds)
+        node.derive(None, egt, None, None, mcp)
 
-        limit = 895
-        expected = 48
+        expected = 20
 
         self.assertEqual(len(node), 1)
         self.assertAlmostEqual(node[0].value, expected, delta=1)
-        self.assertAlmostEqual(node[0].index, 1, delta=1)
+        self.assertAlmostEqual(node[0].index, 55, delta=1)
         self.assertEqual(node[0].name, 'Eng (2) Gas Temp Above Normal Max Limit During Maximum Continuous Power Duration')
 
 
