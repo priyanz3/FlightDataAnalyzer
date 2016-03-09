@@ -84,8 +84,6 @@ from analysis_engine.derived_parameters import (
     ClimbForFlightPhases,
     ControlColumn,
     ControlColumnForce,
-    ControlColumnForceCapt,
-    ControlColumnForceFO,
     ControlWheel,
     ControlWheelForce,
     CoordinatesSmoothed,
