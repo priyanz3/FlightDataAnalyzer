@@ -1008,7 +1008,7 @@ class TakeoffTurnOntoRunway(KeyTimeInstanceNode):
         if ac_type and ac_type.value == 'helicopter':
             return False
         else:
-            return True
+            return all_of(('Heading Continuous', 'Takeoff', 'Fast'), available)
 
     def derive(self, head=P('Heading Continuous'),
                toffs=S('Takeoff'),
