@@ -98,6 +98,7 @@ from analysis_engine.multistate_parameters import (
     TAWSGlideslopeCancel,
     TAWSTooLowGear,
     TCASFailure,
+    TCASRA,
     ThrustReversers,
 )
 
@@ -3334,6 +3335,38 @@ class TestTCASFailure(unittest.TestCase):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         pass
+
+
+class TestTCASRA(unittest.TestCase):
+    def setUp(self):
+        self.node_class = TCASRA
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(),
+                         [('TCAS RA (1)',),
+                          ('TCAS RA (2)',),
+                          ('TCAS RA (1)', 'TCAS RA (2)')])
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        ra_1 = M(
+            name='TCAS RA (1)',
+            array=np.ma.array((0, 0, 1, 1, 0, 0)),
+            values_mapping={0: '-', 1: 'RA'},
+        )
+        ra_2 = M(
+            name='TCAS RA (2)',
+            array=np.ma.array((0, 1, 1, 0, 1, 0)),
+            values_mapping={0: '-', 1: 'RA'},
+        )
+        node = self.node_class()
+        node.derive(ra_1, ra_2)
+        expected = M(
+            name='TCAS RA',
+            array=np.ma.array((0, 1, 1, 1, 1, 0)),
+            values_mapping={0: '-', 1: 'RA'},
+        )
+        assert_array_equal(node.array, expected.array)
 
 
 class TestSpeedControl(unittest.TestCase, NodeTest):

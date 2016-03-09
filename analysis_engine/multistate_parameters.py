@@ -3204,6 +3204,27 @@ class TCASFailure(MultistateDerivedParameterNode):
         ).any(axis=0)
 
 
+class TCASRA(MultistateDerivedParameterNode):
+    name = 'TCAS RA'
+
+    values_mapping = {
+        0: '-',
+        1: 'RA',
+    }
+
+    @classmethod
+    def can_operate(cls, available):
+        return ('TCAS RA (1)' in available) or \
+               ('TCAS RA (2)' in available)
+
+    def derive(self, tcas_1=M('TCAS RA (1)'),
+               tcas_2=M('TCAS RA (2)')):
+        self.array = vstack_params_where_state(
+            (tcas_1, 'RA'),
+            (tcas_2, 'RA'),
+        ).any(axis=0)
+
+
 class SpeedControl(MultistateDerivedParameterNode):
 
     values_mapping = {0: 'Manual', 1: 'Auto'}
