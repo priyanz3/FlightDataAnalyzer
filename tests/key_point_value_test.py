@@ -551,6 +551,7 @@ from analysis_engine.key_point_values import (
     TakeoffConfigurationSpoilerWarningDuration,
     TakeoffConfigurationStabilizerWarningDuration,
     TakeoffConfigurationWarningDuration,
+    TakeoffRatingDuration,
     TaxiInDuration,
     TaxiOutDuration,
     TerrainClearanceAbove3000FtMin,
@@ -6411,6 +6412,25 @@ class TestDistancePastGlideslopeAntennaToTouchdown(unittest.TestCase):
 
 
 ##############################################################################
+# Engine Transients
+
+class TestTakeoffRatingDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = TakeoffRatingDuration
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(),
+            [('Takeoff 5 Min Rating',)]
+        )
+
+    def test_derive(self):
+        toff = buildsection('Takeoff 5 Min Rating', 12, 76)
+        node = self.node_class()
+        node.derive(toff)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 76)
+        self.assertEqual(node[0].value, 64)
 # Engine Bleed
 
 

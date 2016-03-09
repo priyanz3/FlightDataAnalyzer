@@ -14450,68 +14450,17 @@ class AircraftEnergyWhenDescending(KeyPointValueNode):
 
 class TakeoffRatingDuration(KeyPointValueNode):
     '''
-    For engines, the period of high power operation is normally 5 minutes from
-    the start of takeoff. Also applies in the case of a go-around.
+    Duration for which takeoff power is in use.
     '''
-    align_frequency = 1
 
-    @classmethod
-    def can_operate(cls, available, eng_type=A('Engine Propulsion')):
-        if eng_type and eng_type.value == 'PROP':
-            return all_deps(cls, available)
-        else:
-            return False
-
-    def get_metrics(self, angle):
-        from scipy.signal import medfilt
-        from scipy.ndimage import filters
-        window_sizes = [2,4,8,16,32]
-        metrics = np.ma.array([1000000] * len(angle))
-        for l in window_sizes:
-            maxy = filters.maximum_filter1d(angle, l)
-            miny = filters.minimum_filter1d(angle, l)
-            m = (maxy - miny) / l
-            metrics = np.minimum(metrics, m)
-
-        metrics = medfilt(metrics,3)
-        metrics = 200.0 * metrics
-
-        return metrics
-
-    def derive(self, toffs=KTI('Takeoff Acceleration Start'),
-               lifts=KTI('Liftoff'),
-               eng_np=P('Eng (*) Np Avg'),
-               eng_type=A('Engine Propulsion')):
+    def derive(self, toffs=S('Takeoff 5 Min Rating')):
         '''
         '''
-        from scipy.signal import medfilt
-        filter_median_window = 11
-        enp_filt = medfilt(eng_np.array, filter_median_window)
-        enp_filt = np.ma.array(enp_filt)
-        g = self.get_metrics(enp_filt)
-        enp_filt.mask = g > 40
-        #enp_filt.mask[:toff_accel] = True
-        flat_slices = np.ma.clump_unmasked(enp_filt)
-        for accel_start in toffs:
-            rating_end = toff_slice_avg = None
-            toff_idx = lifts.get_next(accel_start.index).index
-            for flat in flat_slices:
-                if is_index_within_slice(toff_idx, flat):
-                    toff_slice_avg = np.ma.average(enp_filt[flat])
-                elif toff_slice_avg is not None:
-                    flat_avg = np.ma.average(enp_filt[flat])
-                    if abs(toff_slice_avg - flat_avg) >= 5:
-                        rating_end = flat.start
-                        break
-                else:
-                    continue
-            if rating_end is None:
-                rating_end = accel_start.index + (300 * self.frequency)
-            self.create_kpvs_from_slice_durations(
-                (slice(accel_start.index, rating_end),),
-                self.frequency,
-                mark='end'
-            )
+        self.create_kpvs_from_slice_durations(
+            toffs,
+            self.frequency,
+            mark='end'
+        )
 
 
 ##############################################################################
