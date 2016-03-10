@@ -1553,7 +1553,7 @@ class Landing(FlightPhaseNode):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
         elif ac_type and ac_type.value == 'helicopter':
-            return all_of(('Altitude AGL', 'Collective', 'Touchdown'), available)
+            return all_of(('Altitude AGL', 'Collective', 'Airborne'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
     
