@@ -4921,10 +4921,9 @@ class Mach(DerivedParameterNode):
     '''
     Mach derived from air data parameters for aircraft where no suitable Mach
     data is recorded.
-
-    This is computed for helicopters so that recorded TAT values can be converted into
-    SAT for air density, which is needed for Puma flight envelope events.
     '''
+
+    can_operate = aeroplane_only
 
     units = ut.MACH
 
