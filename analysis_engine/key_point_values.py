@@ -559,7 +559,7 @@ class AccelerationNormalMax(KeyPointValueNode):
 class AccelerationNormal20FtToFlareMax(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.G
@@ -731,7 +731,7 @@ class AccelerationNormalAtTouchdown(KeyPointValueNode):
 class AccelerationNormalLiftoffTo35FtMax(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.G
@@ -1267,7 +1267,7 @@ class Airspeed1000To500FtMax(KeyPointValueNode):
     '''
 
     units = ut.KT
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Airspeed']
@@ -1286,7 +1286,7 @@ class Airspeed1000To500FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_band = np.ma.masked_outside(alt_agl.array, 1000, 500)
             alt_descent_sections = valid_slices_within_array(alt_band, descending)
@@ -1352,7 +1352,7 @@ class Airspeed500To20FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_band = np.ma.masked_outside(alt_agl.array, 500, 20)
             alt_descent_sections = valid_slices_within_array(alt_band, descending)
@@ -1431,7 +1431,7 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
     '''
 
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self,
@@ -1484,7 +1484,7 @@ class AirspeedAtAPGoAroundEngaged(KeyPointValueNode):
 
     name = 'Airspeed At AP Go Around Engaged'
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, air_spd=P('Airspeed'), airs=S('Airborne'),
@@ -1504,7 +1504,7 @@ class AirspeedWhileAPHeadingEngagedMin(KeyPointValueNode):
 
     name = 'Airspeed While AP Heading Engaged Min'
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, air_spd=P('Airspeed'), airs=S('Airborne'),
@@ -1522,7 +1522,7 @@ class AirspeedWhileAPVerticalSpeedEngagedMin(KeyPointValueNode):
 
     name = 'Airspeed While AP Vertical Speed Engaged Min'
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, air_spd=P('Airspeed'), airs=S('Airborne'),
@@ -3046,7 +3046,7 @@ class AirspeedRelativeWithConfigurationDuringDescentMin(KeyPointValueNode, FlapO
     Conf settings (for all aircraft models) include:
     %(conf)s
     ''' % NAME_VALUES_CONF
-    
+
     can_operate = aeroplane_only
 
     NAME_FORMAT = 'Airspeed Relative With Configuration %(conf)s During Descent Min'
@@ -4070,7 +4070,7 @@ class AltitudeDensityMax(KeyPointValueNode):
     '''
 
     units = ut.FT
-    
+
     can_operate = helicopter_only
 
     def derive(self, alt_density=P('Altitude Density'), airborne=S('Airborne')):
@@ -4086,9 +4086,9 @@ class AltitudeRadioDuringAutorotationMin(KeyPointValueNode):
     '''
 
     units = ut.FT
-    
+
     can_operate = helicopter_only
-    
+
     def derive(self, alt_rad=P('Altitude Radio'), autorotation=S('Autorotation')):
         self.create_kpvs_within_slices(alt_rad.array, autorotation, min_value)
 
@@ -4746,7 +4746,7 @@ class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
 class CollectiveFrom10To60PercentDuration(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = helicopter_only
 
     name = 'Collective From 10 To 60% Duration'
@@ -4772,7 +4772,7 @@ class CollectiveFrom10To60PercentDuration(KeyPointValueNode):
 class CyclicDuringTaxiMax(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = helicopter_only
 
     units = ut.DEGREE
@@ -5842,7 +5842,7 @@ class HeightLossLiftoffTo35Ft(KeyPointValueNode):
     the algorithm will still work with low sample rate (or even missing)
     radio altimeters.
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.FT
@@ -5864,7 +5864,7 @@ class HeightLossLiftoffTo35Ft(KeyPointValueNode):
 class HeightLoss35To1000Ft(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.FT
@@ -5887,7 +5887,7 @@ class HeightLoss35To1000Ft(KeyPointValueNode):
 class HeightLoss1000To2000Ft(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.FT
@@ -5951,7 +5951,7 @@ class ILSGlideslopeDeviation1500To1000FtMax(KeyPointValueNode):
 
     name = 'ILS Glideslope Deviation 1500 To 1000 Ft Max'
     units = ut.DOTS
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['ILS Glideslope', 'ILS Glideslope Established']
@@ -5970,7 +5970,7 @@ class ILSGlideslopeDeviation1500To1000FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_bands = alt_agl.slices_between(1000, 1500)
             ils_bands = slices_and(alt_bands, ils_ests.get_slices())
@@ -6021,7 +6021,7 @@ class ILSGlideslopeDeviation1000To500FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_bands = alt_agl.slices_between(500, 1000)
             ils_bands = slices_and(alt_bands, ils_ests.get_slices())
@@ -6053,7 +6053,7 @@ class ILSGlideslopeDeviation500To200FtMax(KeyPointValueNode):
 
     name = 'ILS Glideslope Deviation 500 To 200 Ft Max'
     units = ut.DOTS
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['ILS Glideslope', 'ILS Glideslope Established']
@@ -6072,7 +6072,7 @@ class ILSGlideslopeDeviation500To200FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_bands = alt_agl.slices_between(200, 500)
             ils_bands = slices_and(alt_bands, ils_ests.get_slices())
@@ -6104,7 +6104,7 @@ class ILSLocalizerDeviation1500To1000FtMax(KeyPointValueNode):
 
     name = 'ILS Localizer Deviation 1500 To 1000 Ft Max'
     units = ut.DOTS
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['ILS Localizer', 'ILS Localizer Established']
@@ -6123,7 +6123,7 @@ class ILSLocalizerDeviation1500To1000FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_bands = alt_agl.slices_between(1000, 1500)
             ils_bands = slices_and(alt_bands, ils_ests.get_slices())
@@ -6174,7 +6174,7 @@ class ILSLocalizerDeviation1000To500FtMax(KeyPointValueNode):
                alt_agl=P('Altitude AGL'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
-        
+
         if ac_type and ac_type.value == 'helicopter':
             alt_bands = alt_agl.slices_between(500, 1000)
             ils_bands = slices_and(alt_bands, ils_ests.get_slices())
@@ -8944,7 +8944,7 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
     landing (passing 50ft) to the minimum throttle setting prior to
     application of reverse thrust.
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.SECOND
@@ -9770,7 +9770,7 @@ class HeadingVariation300To50Ft(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Heading Continuous']
@@ -9914,7 +9914,7 @@ class HeadingVacatingRunway(KeyPointValueNode):
 class HeadingRateWhileAirborneMax(KeyPointValueNode):
     '''
     '''
-    
+
     units = ut.DEGREE_S
 
     def derive(self, heading_rate=P('Heading Rate'), airborne=P('Airborne')):
@@ -9928,7 +9928,7 @@ class TrackVariation100To50Ft(KeyPointValueNode):
 
     name = 'Track Variation 100 To 50 Ft'
     units = ut.DEGREE_S
-    
+
     can_operate = helicopter_only
 
     def derive(self, track=P('Track Continuous'),
@@ -10167,7 +10167,7 @@ class FlareDuration20FtToTouchdown(KeyPointValueNode):
     touchdown and the landing roll, so trying to measure this 20ft to
     touchdown difference is impractical.
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.SECOND
@@ -10202,7 +10202,7 @@ class FlareDistance20FtToTouchdown(KeyPointValueNode):
     #TODO: Write a test for this function with less than one second between 20ft and touchdown, using interval arithmetic.
     #NAX_1_LN-DYC_20120104234127_22_L3UQAR___dev__sdb.001.hdf5
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.METER
@@ -10722,7 +10722,7 @@ class GroundspeedBelow15FtFor20SecMax(KeyPointValueNode):
     '''
 
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, gnd_spd=P('Groundspeed'), alt_aal=P('Altitude AAL For Flight Phases'), airborne=S('Airborne')):
@@ -10738,7 +10738,7 @@ class GroundspeedWhileAirborneWithASEOff(KeyPointValueNode):
 
     name = 'Groundspeed While Airborne With ASE Off'
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, gnd_spd=P('Groundspeed'), ase=M('ASE Engaged'), airborne=S('Airborne')):
@@ -10752,7 +10752,7 @@ class GroundspeedWhileHoverTaxiingMax(KeyPointValueNode):
 
     name = 'Groundspeed While Hover Taxiing Max'
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, gnd_spd=P('Groundspeed'), hover_taxi=S('Hover Taxi')):
@@ -10765,7 +10765,7 @@ class GroundspeedWithZeroAirspeedFor5SecMax(KeyPointValueNode):
 
     align_frequency = 2
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, wind_spd=P('Wind Speed'), wind_dir=P('Wind Direction'),
@@ -11097,7 +11097,7 @@ class Pitch1000To500FtMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Pitch']
@@ -11320,7 +11320,7 @@ class Pitch50FtToTouchdownMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Pitch', 'Touchdown']
@@ -11338,7 +11338,7 @@ class Pitch50FtToTouchdownMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                # helicopter
                alt_agl=P('Altitude AGL')):
-        
+
         self.create_kpvs_within_slices(
             pitch.array,
             (alt_aal or alt_agl).slices_to_kti(50, touchdowns),
@@ -11350,7 +11350,7 @@ class Pitch50FtToTouchdownMin(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self,
@@ -11532,7 +11532,7 @@ class PitchRate35To1000FtMax(KeyPointValueNode):
 class PitchRate35ToClimbAccelerationStartMax(KeyPointValueNode):
     '''
     '''
-    
+
     can_operate = aeroplane_only
 
     units = ut.DEGREE_S
@@ -11877,7 +11877,7 @@ class RateOfDescent1000To500FtMax(KeyPointValueNode):
     '''
 
     units = ut.FPM
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Vertical Speed']
@@ -11961,7 +11961,7 @@ class RateOfDescent50FtToTouchdownMax(KeyPointValueNode):
     '''
 
     units = ut.FPM
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Vertical Speed Inertial', 'Touchdown']
@@ -12207,7 +12207,7 @@ class Roll100To20FtMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'), descending=S('Descending')):
@@ -12227,7 +12227,7 @@ class Roll20FtToTouchdownMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Roll', 'Touchdown']
@@ -12244,7 +12244,7 @@ class Roll20FtToTouchdownMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                # helicopter
                alt_agl=P('Altitude AGL')):
-        
+
         self.create_kpvs_within_slices(
             roll.array,
             (alt_aal or alt_agl).slices_to_kti(20, touchdowns),
@@ -12275,7 +12275,7 @@ class RollAbove500FtMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
@@ -12288,7 +12288,7 @@ class RollBelow500FtMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
@@ -12301,7 +12301,7 @@ class RollOnGroundMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), grounded=S('Grounded')):
@@ -12444,7 +12444,7 @@ class RollLeftBelow6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
@@ -12468,7 +12468,7 @@ class RollLeftBelow8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
@@ -12492,7 +12492,7 @@ class RollLeftAbove6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
@@ -12516,7 +12516,7 @@ class RollLeftAbove8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
-    
+
     can_operate = helicopter_only
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
@@ -12539,15 +12539,15 @@ class RollRateMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE_S
-    
+
     can_operate = helicopter_only
 
     def derive(self, rr=P('Roll Rate'), airs=S('Airborne')):
 
         for air in airs:
-            cycles = cycle_finder(rr.array, min_step=5.0)
+            cycles = cycle_finder(rr.array[air.slice], min_step=5.0)
             for index in cycles[0][1:-1]:
-                self.create_kpv(index, rr.array[index])
+                self.create_kpv(index+air.slice.start, rr.array[index])
 
 
 ##############################################################################
@@ -12559,7 +12559,7 @@ class RotorSpeedDuringAutorotationAbove108KtsMin(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), air_spd=P('Airspeed'), autorotation=S('Autorotation')):
@@ -12573,7 +12573,7 @@ class RotorSpeedDuringAutorotationBelow108KtsMin(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), air_spd=P('Airspeed'), autorotation=S('Autorotation')):
@@ -12587,7 +12587,7 @@ class RotorSpeedDuringAutorotationMax(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), autorotation=S('Autorotation')):
@@ -12600,7 +12600,7 @@ class RotorSpeedWhileAirborneMax(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), airborne=S('Airborne'), autorotation=S('Autorotation')):
@@ -12616,7 +12616,7 @@ class RotorSpeedWhileAirborneMin(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), airborne=S('Airborne'), autorotation=S('Autorotation')):
@@ -12631,7 +12631,7 @@ class RotorSpeedWithRotorBrakeAppliedMax(KeyPointValueNode):
     '''
 
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr'), rotor_brake=P('Rotor Brake Engaged')):
@@ -12646,7 +12646,7 @@ class RotorsRunningDuration(KeyPointValueNode):
     '''
 
     units = ut.SECOND
-    
+
     can_operate = helicopter_only
 
     def derive(self, rotors=M('Rotors Running')):
@@ -14233,7 +14233,7 @@ class WindSpeedInCriticalAzimuth(KeyPointValueNode):
 
     align_frequency = 2
     units = ut.KT
-    
+
     can_operate = helicopter_only
 
     def derive(self, wind_spd=P('Wind Speed'), wind_dir=P('Wind Direction'),
@@ -14844,7 +14844,7 @@ class SATMax(KeyPointValueNode):
 
     name = 'SAT Max'
     units = ut.CELSIUS
-    
+
     can_operate = helicopter_only
 
     def derive(self, sat=P('SAT')):

@@ -5581,7 +5581,7 @@ class TestILSGlideslopeDeviation1500To1000FtMax(unittest.TestCase, ILSTest):
 
     def setUp(self):
         self.node_class = ILSGlideslopeDeviation1500To1000FtMax
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertTrue(self.node_class.can_operate((
@@ -5645,7 +5645,7 @@ class TestILSGlideslopeDeviation500To200FtMax(unittest.TestCase, ILSTest):
 
     def setUp(self):
         self.node_class = ILSGlideslopeDeviation500To200FtMax
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -5689,7 +5689,7 @@ class TestILSLocalizerDeviation1500To1000FtMax(unittest.TestCase, ILSTest):
 
     def setUp(self):
         self.node_class = ILSLocalizerDeviation1500To1000FtMax
-        
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -5729,7 +5729,7 @@ class TestILSLocalizerDeviation1000To500FtMax(unittest.TestCase, ILSTest):
             'Altitude AAL For Flight Phases',
             'ILS Localizer Established',
         )]
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -5769,7 +5769,7 @@ class TestILSLocalizerDeviation500To200FtMax(unittest.TestCase, ILSTest):
             'Altitude AAL For Flight Phases',
             'ILS Localizer Established',
         )]
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -9132,7 +9132,7 @@ class TestHeadingVariation300To50Ft(unittest.TestCase):
 
     def setUp(self):
         self.node_class = HeadingVariation300To50Ft
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertTrue(self.node_class.can_operate(['Heading Continuous', 'Altitude AAL For Flight Phases'], ac_type=aeroplane))
@@ -10691,7 +10691,7 @@ class TestPitch50FtToTouchdownMax(unittest.TestCase):
     def setUp(self):
         # XXX: This test does not explicitly test how the Touchdown dependency is used.
         self.node_class = Pitch50FtToTouchdownMax
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -11290,7 +11290,7 @@ class TestRateOfDescent1000To500FtMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = RateOfDescent1000To500FtMax
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -11412,14 +11412,14 @@ class TestRateOfDescent50FtToTouchdownMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = RateOfDescent50FtToTouchdownMax
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertTrue(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AAL For Flight Phases', 'Touchdown'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AAL For Flight Phases', 'Touchdown'), ac_type=helicopter))
         self.assertTrue(self.node_class.can_operate(('Vertical Speed Inertial', 'Touchdown', 'Altitude AGL',), ac_type=helicopter))
-    
+
     def test_derive_aeroplane(self):
         array = np.ma.concatenate((np.ma.arange(0, 50, 5), [55, 45, 54], [59]*5))
         array = np.ma.concatenate((array, array[::-1]))
@@ -11438,7 +11438,7 @@ class TestRateOfDescent50FtToTouchdownMax(unittest.TestCase):
             KeyPointValue(name='Rate Of Descent 50 Ft To Touchdown Max', index=33, value=-26),
         ])
         self.assertEqual(node, expected)
-    
+
     def test_derive_helicopter(self):
         array = np.ma.concatenate((np.ma.arange(0, 50, 5), [55, 45, 54], [59]*5))
         array = np.ma.concatenate((array, array[::-1]))
@@ -11699,7 +11699,7 @@ class TestRoll20FtToTouchdownMax(unittest.TestCase):
         self.operational_combinations = [('Roll', 'Altitude AAL For Flight Phases', 'Touchdown')]
         self.function = max_abs_value
         self.second_param_method_calls = [('slices_to_kti', (20, []), {})]
-    
+
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
@@ -12077,6 +12077,16 @@ class TestRollRateMax(unittest.TestCase):
         self.assertEqual(node[0].index, 32)
         self.assertEqual(node[1].index, 93)
         self.assertEqual(node[2].index, 157)
+
+    def test_multiple_flights(self):
+        x = np.linspace(0, 10, 200)
+        roll_rate= P('Roll Rate', np.sin(x)*20+x)
+        airborne = buildsections('Airborne', [9,60], [130,180])
+        node = self.node_class()
+        node.derive(roll_rate, airborne)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 32)
+        self.assertEqual(node[1].index, 157)
 
 
 ##############################################################################
