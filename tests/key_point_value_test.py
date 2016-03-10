@@ -12087,6 +12087,15 @@ class TestRollRateMax(unittest.TestCase):
         self.assertEqual(node[0].index, 32)
         self.assertEqual(node[1].index, 157)
 
+    def test_not_below_five(self):
+        x = np.linspace(0, 10, 200)
+        roll_rate= P('Roll Rate', np.sin(x)*6+x/4.0)
+        airborne = buildsection('Airborne', 0, 200)
+        node = self.node_class()
+        node.derive(roll_rate, airborne)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 32)
+        self.assertEqual(node[1].index, 157)
 
 ##############################################################################
 # Rotor

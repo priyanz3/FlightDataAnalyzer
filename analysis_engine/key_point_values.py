@@ -12549,7 +12549,9 @@ class RollRateMax(KeyPointValueNode):
         for air in airs:
             cycles = cycle_finder(rr.array[air.slice], min_step=5.0)
             for index in cycles[0][1:-1]:
-                self.create_kpv(index+air.slice.start, rr.array[index])
+                roll_rate = rr.array[index]
+                if abs(roll_rate) > 5.0:
+                    self.create_kpv(index+air.slice.start, roll_rate)
 
 
 ##############################################################################
