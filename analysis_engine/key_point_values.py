@@ -5429,7 +5429,10 @@ class DecelerationFromTouchdownToStopOnRunway(KeyPointValueNode):
                     runway_distance_from_end(rwy.value,
                                              lat_tdn.get_last().value,
                                              lon_tdn.get_last().value)
-                speed = value_at_index(repair_mask(gspd.array), index) * KTS_TO_MPS
+                kts = value_at_index(repair_mask(gspd.array), index)
+                if not kts:
+                    return
+                speed = kts * KTS_TO_MPS
                 mu = (speed * speed) / (2.0 * GRAVITY_METRIC * (distance_at_tdn))
                 self.create_kpv(index, mu)
 
