@@ -11500,16 +11500,15 @@ class TestRateOfDescentBelow80KtsMax(unittest.TestCase):
         )
 
         air_spd.array[0] = 0
-        name = 'Descending'
-        section = Section(name, slice(2, 60), 1.5, 59.5)
-        descending = SectionNode(name, items=[section])
-
+        descending=buildsections('Descending', [5,18],[39,57])
         node = self.node_class()
         node.derive(vrt_spd, air_spd, descending)
 
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 49)
-        self.assertAlmostEqual(node[0].value, -790, places=0)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 12)
+        self.assertAlmostEqual(node[0].value, -181, places=0)
+        self.assertEqual(node[1].index, 49)
+        self.assertAlmostEqual(node[1].value, -790, places=0)
 
     def test_derive_negative(self):
         vrt_spd = P('Vertical Speed', [1000.0]*15)

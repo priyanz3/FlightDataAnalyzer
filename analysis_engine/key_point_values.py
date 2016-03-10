@@ -12031,8 +12031,10 @@ class RateOfDescentBelow80KtsMax(KeyPointValueNode):
         for descent in descending:
             to_scan = air_spd.array[descent.slice]
             if np.ma.count(to_scan):
-                slow_bands = slices_remove_small_slices(slices_below(to_scan, 80)[1],
-                                                        time_limit=5.0, hz=air_spd.frequency)
+                slow_bands = shift_slices(
+                    slices_remove_small_slices(
+                        slices_below(to_scan, 80)[1], time_limit=5.0, hz=air_spd.frequency
+                    ), descent.slice.start)
                 self.create_kpv_from_slices(vrt_spd.array, slow_bands, min_value)
 
 
