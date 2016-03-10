@@ -57,7 +57,6 @@ from analysis_engine.derived_parameters import (
     Aileron,
     AimingPointRange,
     AircraftEnergy,
-    AirspeedForFlightPhases,
     AirspeedMinusAirspeedSelectedFor3Sec,
     AirspeedSelected,
     AirspeedSelectedForApproaches,
@@ -584,15 +583,6 @@ class TestAccelerationAlongTrack(unittest.TestCase):
             P('Drift',np.ma.ones(2)*10.0,2)])
         expected = np.ma.array([0.13321041] * 8, mask=[0, 0, 0, 0, 0,   1, 1, 1])
         ma_test.assert_masked_array_approx_equal(acc_along.array, expected)
-
-
-class TestAirspeedForFlightPhases(unittest.TestCase):
-    def test_can_operate(self):
-        node = AirspeedForFlightPhases
-        self.assertTrue(node.can_operate(('Airspeed',), ac_type=aeroplane))
-        self.assertFalse(node.can_operate(('Altitude Radio',), ac_type=aeroplane))
-        self.assertFalse(node.can_operate(('Airspeed',), ac_type=helicopter))
-        self.assertTrue(node.can_operate(('Altitude Radio',), ac_type=helicopter))
 
 
 class TestAirspeedSelectedForApproaches(unittest.TestCase):

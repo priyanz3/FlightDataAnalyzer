@@ -1274,7 +1274,7 @@ class TestCruise(unittest.TestCase):
     def test_can_operate(self):
         expected = [('Climb Cruise Descent',
                      'Top Of Climb', 'Top Of Descent',
-                     'Airspeed For Flight Phases')]
+                     'Airspeed')]
         opts = Cruise.get_operational_combinations()
         self.assertEqual(opts, expected)
 
@@ -1499,17 +1499,17 @@ class TestDescent(unittest.TestCase):
 
 class TestFast(unittest.TestCase):
     def test_can_operate(self):
-        self.assertTrue(Fast.can_operate(('Airspeed For Flight Phases',),
+        self.assertTrue(Fast.can_operate(('Airspeed',),
                                         ac_type=aeroplane))
         self.assertTrue(Fast.can_operate(('Nr',),
                                         ac_type=helicopter))
-        self.assertFalse(Fast.can_operate(('Airspeed For Flight Phases',),
+        self.assertFalse(Fast.can_operate(('Airspeed',),
                                         ac_type=helicopter))
 
     def test_fast_phase_basic(self):
         slow_and_fast_data = np.ma.array(range(60, 120, 10) + [120] * 300 + \
                                          range(120, 50, -10))
-        ias = Parameter('Airspeed For Flight Phases', slow_and_fast_data,1,0)
+        ias = Parameter('Airspeed', slow_and_fast_data,1,0)
         phase_fast = Fast()
         phase_fast.derive(ias)
         if AIRSPEED_THRESHOLD == 80:
@@ -1520,7 +1520,7 @@ class TestFast(unittest.TestCase):
 
     def test_fast_all_fast(self):
         fast_data = np.ma.array([120] * 10)
-        ias = Parameter('Airspeed For Flight Phases', fast_data, 1, 0)
+        ias = Parameter('Airspeed', fast_data, 1, 0)
         phase_fast = Fast()
         phase_fast.derive(ias)
         # Q: Should we really create no fast sections?
@@ -1529,14 +1529,14 @@ class TestFast(unittest.TestCase):
 
     def test_fast_all_slow(self):
         fast_data = np.ma.array([12] * 10)
-        ias = Parameter('Airspeed For Flight Phases', fast_data, 1, 0)
+        ias = Parameter('Airspeed', fast_data, 1, 0)
         phase_fast = Fast()
         phase_fast.derive(ias)
         self.assertEqual(phase_fast, [])
 
     def test_fast_slowing_only(self):
         fast_data = np.ma.arange(110, 60, -10)
-        ias = Parameter('Airspeed For Flight Phases', fast_data, 1, 0)
+        ias = Parameter('Airspeed', fast_data, 1, 0)
         phase_fast = Fast()
         phase_fast.derive(ias)
         expected = buildsection('Fast', 0, 4)
@@ -1544,7 +1544,7 @@ class TestFast(unittest.TestCase):
 
     def test_fast_speeding_only(self):
         fast_data = np.ma.arange(60, 120, 10)
-        ias = Parameter('Airspeed For Flight Phases', fast_data, 1, 0)
+        ias = Parameter('Airspeed', fast_data, 1, 0)
         phase_fast = Fast()
         phase_fast.derive(ias)
         expected = buildsection('Fast', 2, 6)
@@ -1576,23 +1576,20 @@ class TestFast(unittest.TestCase):
         self.assertEqual(node[1].slice.start, 10000)
         self.assertEqual(node[1].slice.stop, 14976)
 
-    #def test_fast_phase_with_masked_data(self): # These tests were removed.
-    #We now use Airspeed For Flight Phases which has a repair mask function,
-    #so this is not applicable.
 
 class TestGrounded(unittest.TestCase):
     def test_can_operate(self):
         self.assertTrue(Grounded.can_operate(('HDF Duration',), ac_type=aeroplane))
         self.assertTrue(Grounded.can_operate(('Airborne', 'HDF Duration'), ac_type=aeroplane))
-        self.assertTrue(Grounded.can_operate(('Airspeed For Flight Phases', 'HDF Duration'), ac_type=aeroplane))
-        self.assertTrue(Grounded.can_operate(('Airborne', 'Airspeed For Flight Phases', 'HDF Duration'), ac_type=aeroplane))
+        self.assertTrue(Grounded.can_operate(('Airspeed', 'HDF Duration'), ac_type=aeroplane))
+        self.assertTrue(Grounded.can_operate(('Airborne', 'Airspeed', 'HDF Duration'), ac_type=aeroplane))
         self.assertFalse(Grounded.can_operate(('HDF Duration',), ac_type=helicopter))
         self.assertTrue(Grounded.can_operate(('Airborne', 'Airspeed'), ac_type=helicopter))
 
     def test_grounded_aircraft_phase_basic(self):
         slow_and_fast_data = \
             np.ma.array(range(60, 120, 10) + [120] * 300 + range(120, 50, -10))
-        ias = Parameter('Airspeed For Flight Phases', slow_and_fast_data, 1, 0)
+        ias = Parameter('Airspeed', slow_and_fast_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', 2, 311)
         phase_grounded = Grounded()
@@ -1602,7 +1599,7 @@ class TestGrounded(unittest.TestCase):
 
     def test_grounded_aircraft_all_fast(self):
         grounded_data = np.ma.array([120] * 10)
-        ias = Parameter('Airspeed For Flight Phases', grounded_data, 1, 0)
+        ias = Parameter('Airspeed', grounded_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', None, None)
         phase_grounded = Grounded()
@@ -1612,7 +1609,7 @@ class TestGrounded(unittest.TestCase):
 
     def test_grounded_aircraft_all_slow(self):
         grounded_data = np.ma.array([12]*10)
-        ias = Parameter('Airspeed For Flight Phases', grounded_data, 1, 0)
+        ias = Parameter('Airspeed', grounded_data, 1, 0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne', None, None)
         phase_grounded = Grounded()
@@ -1622,7 +1619,7 @@ class TestGrounded(unittest.TestCase):
 
     def test_grounded_aircraft_landing_only(self):
         grounded_data = np.ma.arange(110,60,-10)
-        ias = Parameter('Airspeed For Flight Phases', grounded_data,1,0)
+        ias = Parameter('Airspeed', grounded_data,1,0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne',None,4)
         phase_grounded = Grounded()
@@ -1632,7 +1629,7 @@ class TestGrounded(unittest.TestCase):
 
     def test_grounded_aircraft_speeding_only(self):
         grounded_data = np.ma.arange(60,120,10)
-        ias = Parameter('Airspeed For Flight Phases', grounded_data,1,0)
+        ias = Parameter('Airspeed', grounded_data,1,0)
         duration = A('HDF Duration', len(ias.array)/ias.frequency)
         air = buildsection('Airborne',2,None)
         phase_grounded = Grounded()

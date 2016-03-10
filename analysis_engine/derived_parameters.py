@@ -298,23 +298,6 @@ class AccelerationSideways(DerivedParameterNode):
                       + acc_lat.array * np.ma.cos(roll_rad))
 
 
-class AirspeedForFlightPhases(DerivedParameterNode):
-    '''
-    '''
-
-    units = ut.KT
-
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ('Altitude Radio' if ac_type and ac_type.value == 'helicopter' else 'Airspeed') in available
-
-    def derive(self, airspeed=P('Airspeed'), alt_rad=P('Altitude Radio'), ac_type=A('Aircraft Type')):
-        param = alt_rad if ac_type and ac_type.value == 'helicopter' else airspeed
-        self.array = hysteresis(
-            repair_mask(param.array, repair_duration=None,
-                        raise_entirely_masked=False), HYSTERESIS_FPIAS)
-
-
 class AirspeedTrue(DerivedParameterNode):
     """
     True airspeed is computed from the recorded airspeed and pressure

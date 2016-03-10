@@ -619,7 +619,7 @@ class Cruise(FlightPhaseNode):
                ccds=S('Climb Cruise Descent'),
                tocs=KTI('Top Of Climb'),
                tods=KTI('Top Of Descent'),
-               air_spd=P('Airspeed For Flight Phases')):
+               air_spd=P('Airspeed')):
         # We may have many phases, tops of climb and tops of descent at this
         # time.
         # The problem is that they need not be in tidy order as the lists may
@@ -774,9 +774,9 @@ class Fast(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             return 'Nr' in available
         else:
-            return 'Airspeed For Flight Phases' in available
+            return 'Airspeed' in available
 
-    def derive(self, airspeed=P('Airspeed For Flight Phases'), rotor_speed=P('Nr'),
+    def derive(self, airspeed=P('Airspeed'), rotor_speed=P('Nr'),
                ac_type=A('Aircraft Type')):
         """
         Did the aircraft go fast enough to possibly become airborne?
@@ -790,11 +790,16 @@ class Fast(FlightPhaseNode):
             (airspeed.array[1:-1]-AIRSPEED_THRESHOLD)
         test_array = np.ma.masked_outside(value_passing_array, 0.0, -100.0)
         """
+
         if ac_type and ac_type.value == 'helicopter':
-            fast = np.ma.masked_less(rotor_speed.array, ROTORSPEED_THRESHOLD)
+            nr = repair_mask(rotor_speed.array, repair_duration=600,
+                             raise_entirely_masked=False)
+            fast = np.ma.masked_less(nr, ROTORSPEED_THRESHOLD)
             fast_slices = np.ma.clump_unmasked(fast)
         else:
-            fast = np.ma.masked_less(airspeed.array, AIRSPEED_THRESHOLD)
+            ias = repair_mask(airspeed.array, repair_duration=600,
+                              raise_entirely_masked=False)
+            fast = np.ma.masked_less(ias, AIRSPEED_THRESHOLD)
             fast_slices = np.ma.clump_unmasked(fast)
             fast_slices = slices_remove_small_gaps(fast_slices, time_limit=30,
                                                    hz=self.frequency)
@@ -1428,7 +1433,7 @@ class Grounded(FlightPhaseNode):
     def derive(self,
                ac_type=A('Aircraft Type'),
                # aircraft
-               speed=P('Airspeed For Flight Phases'),
+               speed=P('Airspeed'),
                hdf_duration=A('HDF Duration'),
                # helicopter
                airspeed=P('Airspeed'),
