@@ -8188,7 +8188,7 @@ class EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(KeyPoint
         gas_temps = any_of(('Eng (%d) Gas Temp' % n for n in range(1, 5)), available)
         engine_series = eng_series and eng_series.value == 'CFM56-3'
 
-        return gas_temps and engine_series and 'Maximum Continous Power'
+        return gas_temps and engine_series and ('Maximum Continous Power' in available)
 
     def derive(self,
                eng1=P('Eng (1) Gas Temp'),
