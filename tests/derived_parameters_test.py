@@ -3597,8 +3597,7 @@ class TestHeadingRate(unittest.TestCase):
 
 class TestMach(unittest.TestCase):
     def test_can_operate(self):
-        self.assertEqual(Mach.get_operational_combinations(ac_type=helicopter), [])
-        opts = Mach.get_operational_combinations(ac_type=aeroplane)
+        opts = Mach.get_operational_combinations()
         self.assertEqual(opts, [('Airspeed', 'Altitude STD Smoothed')])
 
     def test_all_cases(self):
