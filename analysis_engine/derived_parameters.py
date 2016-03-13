@@ -5332,7 +5332,11 @@ class CoordinatesStraighten(object):
         # Skip the -180 / 180 roll over point from the smoothing
         coord1_roll_overs = 1 + np.where(
             np.ma.abs(np.ma.ediff1d(coord1_s)) > 350)[0]
-        for ro in coord1_roll_overs:
+        coord2_roll_overs = 1 + np.where(
+            np.ma.abs(np.ma.ediff1d(coord2_s)) > 350)[0]
+        # We need to apply this whether Longitude is the first or second argument,
+        # as it is always used in the cost function algorithm.
+        for ro in list(coord1_roll_overs)+list(coord2_roll_overs):
             tracks = slices_split(tracks, ro)
         for track in tracks:
             # Reject any data with invariant positions, i.e. sitting on stand.
