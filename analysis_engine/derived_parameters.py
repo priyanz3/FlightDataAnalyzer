@@ -4743,7 +4743,7 @@ class CoordinatesSmoothed(object):
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
-            if approach.type == 'LANDING' and ac_type and ac_type.value == 'airplane':
+            if approach.type == 'LANDING' and ac_type and ac_type.value == 'aeroplane':
                 # This function returns the lowest non-None offset.
                 try:
                     join_idx = min(filter(bool, [ils_join_offset,
