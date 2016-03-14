@@ -7133,7 +7133,8 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
         return
     elif error:
         logger.warning('Returned early from iteration algorithm: %d', error)
-        return
+        # ...but the solution is still good, so return this...
+        return solution_index
     else:
         return solution_index
 
