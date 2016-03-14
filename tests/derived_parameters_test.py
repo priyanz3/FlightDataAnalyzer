@@ -141,6 +141,7 @@ from analysis_engine.derived_parameters import (
     GrossWeight,
     GrossWeightSmoothed,
     Groundspeed,
+    GroundspeedSigned,
     #GroundspeedAlongTrack,
     Heading,
     HeadingContinuous,
@@ -2897,6 +2898,23 @@ class TestGroundspeed(unittest.TestCase):
         assert_array_equal(node.array, expected)
         assert_array_equal(node.array.mask, expected.mask)
 
+
+class TestGroundspeedSigned(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GroundspeedSigned
+
+    def test_can_operate(self):
+        self.assertFalse(GroundspeedSigned.can_operate([], ac_type=aeroplane))
+        self.assertTrue(GroundspeedSigned.can_operate(['Groundspeed', 'Eng (*) Any Running'], ac_type=aeroplane))
+
+    def test_basic(self):
+        gspd = P('Groundspeed', np.ma.array([1.0]*30))
+        running = P('Eng (*) Any Running', np.ma.array([0]*15+[1]*15))
+        gs = GroundspeedSigned()
+        gs.derive(gspd, running)
+        assert_equal(gs.array[4], -1.0)
+        assert_equal(gs.array[24], 1.0)
 
 class TestGroundspeedAlongTrack(unittest.TestCase):
 

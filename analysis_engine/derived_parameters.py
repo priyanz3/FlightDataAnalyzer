@@ -3793,6 +3793,30 @@ class Groundspeed(DerivedParameterNode):
                 blend_two_parameters(source_A, source_B)
 
 
+class GroundspeedSigned(DerivedParameterNode):
+    '''
+    '''
+
+    units = ut.KT
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type and ac_type.value == 'aeroplane':
+            return all_of(('Groundspeed', 'Eng (*) Any Running'), available)
+
+    def derive(self,
+               gspd=P('Groundspeed'),
+               power=P('Eng (*) Any Running')):
+
+        self.array = gspd.array
+        # Ignore the pushback, when the aircraft can have a groundspeed
+        # recorded, but in effect it's negative.
+        own_power = np.ma.masked_less(power.array, 1)
+        pushbacks = slices_remove_small_slices(np.ma.clump_masked(own_power))
+        for pushback in pushbacks:
+            self.array[pushback]*=(-1.0)
+
+
 class FlapAngle(DerivedParameterNode):
     '''
     Gather the recorded flap angle parameters and convert into a single
@@ -4846,7 +4870,8 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ils_loc=P('ILS Localizer'),
                app_range=P('Approach Range'),
                hdg_true=P('Heading True Continuous'),
-               gspd=P('Groundspeed'),
+               gspd_u = P('Groundspeed'),
+               gspd_s = P('Groundspeed Signed'),
                tas=P('Airspeed True'),
                precise=A('Precise Positioning'),
                toff=S('Takeoff Roll Or Rejected Takeoff'),
@@ -4858,11 +4883,8 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ):
         precision = bool(getattr(precise, 'value', False))
 
-        if hdg_true:
-            hdg = hdg_true
-        else:
-            hdg = hdg_mag
-
+        gspd = gspd_s if gspd_s else gspd_u
+        hdg = hdg_true if hdg_true else hdg_mag
         lat_adj, lon_adj = self._adjust_track(
             lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy, tdwns,
             approaches, mobile, precision, ac_type)
@@ -4898,7 +4920,8 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ils_loc = P('ILS Localizer'),
                app_range = P('Approach Range'),
                hdg_true = P('Heading True Continuous'),
-               gspd = P('Groundspeed'),
+               gspd_u = P('Groundspeed'),
+               gspd_s = P('Groundspeed Signed'),
                tas = P('Airspeed True'),
                precise =A('Precise Positioning'),
                toff = S('Takeoff Roll Or Rejected Takeoff'),
@@ -4910,6 +4933,7 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ):
         precision = bool(getattr(precise, 'value', False))
 
+        gspd = gspd_s if gspd_s else gspd_u
         hdg = hdg_true if hdg_true else hdg_mag
         lat_adj, lon_adj = self._adjust_track(
             lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy,
