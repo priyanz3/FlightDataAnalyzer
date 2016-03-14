@@ -210,7 +210,7 @@ GROUNDSPEED_FOR_MOBILE = 2.0  # kts
 HEADING_CHANGE_TAXI_THRESHOLD = 60  # deg
 
 # Threshold for start and end of Mobile phase
-HEADING_RATE_FOR_MOBILE = 2.0  # deg/sec
+HEADING_RATE_FOR_MOBILE = 0.5  # deg/sec
 
 # Threshold for straight cruising flight
 HEADING_RATE_FOR_STRAIGHT_FLIGHT = 1.0 # deg/sec

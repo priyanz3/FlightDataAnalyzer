@@ -1506,14 +1506,16 @@ class Mobile(FlightPhaseNode):
     def derive(self,
                rot=P('Heading Rate'),
                gspd=P('Groundspeed'),
-               airs=S('Airborne')):
+               airs=S('Airborne'),
+               #power=P('Eng (*) Any Running'),
+               ):
 
         turning = np.ma.masked_less(np.ma.abs(rot.array), HEADING_RATE_FOR_MOBILE)
         movement = np.ma.flatnotmasked_edges(turning)
         start, stop = movement if movement is not None else (None, None)
 
         if gspd is not None:
-            moving = np.ma.masked_less(gspd.array, GROUNDSPEED_FOR_MOBILE)
+            moving = np.ma.masked_less(np.ma.abs(gspd.array), GROUNDSPEED_FOR_MOBILE)
             mobile = np.ma.flatnotmasked_edges(moving)
             if mobile is not None:
                 start = min(start, mobile[0]) if start else mobile[0]
@@ -1523,7 +1525,7 @@ class Mobile(FlightPhaseNode):
             start = min(start, airs[0].slice.start) if start is not None else airs[0].slice.start
             stop = max(stop, airs[-1].slice.stop) if stop else airs[-1].slice.stop
 
-        self.create_phase(slice(start, stop))
+        self.create_phase(slice(0, stop))
 
 
 class Stationary(FlightPhaseNode):

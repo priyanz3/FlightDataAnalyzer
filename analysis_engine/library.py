@@ -21,6 +21,7 @@ from flightdatautilities import aircrafttables as at
 
 from settings import (
     BUMP_HALF_WIDTH,
+    HEADING_RATE_FOR_MOBILE,
     KTS_TO_MPS,
     METRES_TO_FEET,
     REPAIR_DURATION,
@@ -2798,7 +2799,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
     # We are going to use the period from the runway to the last point where
     # the speed was over 1kn, to stop the aircraft appearing to wander about
     # on the stand.
-    spd_above_1 = np.ma.masked_less(speed, 1.0)
+    spd_above_1 = np.ma.masked_less(np.ma.abs(speed), 1.0)
     track_edges = np.ma.flatnotmasked_edges(spd_above_1)
 
     # In cases where the data starts with no useful groundspeed data, throw in the towel now.
@@ -2816,8 +2817,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
         raise NotImplementedError("Unrecognised mode '%s' in ground_track_precise" % mode)
 
     rot = np.ma.abs(rate_of_change_array(hdg[track_slice], frequency, width=8.0))
-    straights = np.ma.clump_unmasked(np.ma.masked_greater(rot, 2.0)) # 2deg/sec
-
+    straights = np.ma.clump_unmasked(np.ma.masked_greater(rot, HEADING_RATE_FOR_MOBILE))
     straight_ends = []
 
     for straight in straights:
@@ -2840,7 +2840,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
         weights = np.ma.ones(weight_length)
 
         # Adjust the speed during each leg to reduce cross track errors.
-        speed_bound = (0.5,1.5) # Restict the variation in speeds to 50%.
+        speed_bound = (0.8,1.2) # Restict the variation in speeds to 20%.
         boundaries = [speed_bound]*weight_length
 
         # Then iterate until optimised solution has been found. We use a dull
@@ -2856,17 +2856,26 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
                                                      hdg[track_slice],
                                                      frequency,
                                                      mode, 'iterate'),
-                                             approx_grad=True, epsilon=1.0E-4,
-                                             bounds=boundaries, maxfun=10)
+                                             approx_grad=True, epsilon=1.0E-3,
+                                             factr=1e14,
+                                             #bounds=boundaries,
+                                             maxfun=100)
         """
         fmin_l_bfgs_b license: This software is freely available, but we expect that all publications describing work using this software, or all commercial products using it, quote at least one of the references given below. This software is released under the BSD License.
         R. H. Byrd, P. Lu and J. Nocedal. A Limited Memory Algorithm for Bound Constrained Optimization, (1995), SIAM Journal on Scientific and Statistical Computing, 16, 5, pp. 1190-1208.
         C. Zhu, R. H. Byrd and J. Nocedal. L-BFGS-B: Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (1997), ACM Transactions on Mathematical Software, 23, 4, pp. 550 - 560.
         J.L. Morales and J. Nocedal. L-BFGS-B: Remark on Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (2011), ACM Transactions on Mathematical Software, 38, 1.
         """
-
     args = (straights, straight_ends, lat[track_slice], lon[track_slice],
             speed[track_slice], hdg[track_slice], frequency, mode, 'final_answer')
+        if weights_opt[2]['warnflag']:
+            '''
+            lat_est = lat[track_slice]
+            lon_est = lon[track_slice]
+            wt = gtp_compute_error(weights_opt[0], *args)[2]
+            '''
+            lat_est, lon_est, wt = gtp_compute_error(np.ma.ones(weight_length), *args)
+        else:
     lat_est, lon_est, wt = gtp_compute_error(weights_opt[0], *args)
 
 
@@ -7093,13 +7102,14 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
         secs = abs_d * 30.0
     else:
         # More distant ranges at higher speeds
-        secs = abs_d * 20
+        secs = abs_d * 15
     guess = copysign(secs * hz, _distance)
-    estimate = max(0, min(index_ref + guess, len(latitude)))
+    end_data = np.ma.flatnotmasked_edges(latitude)[1]-60
+    estimate = max(0, min(index_ref + guess, end_data))
 
     # By constraining the boundaries we ensure the iteration does not
     # stray outside the available array.
-    boundaries = [(0, len(latitude))]
+    boundaries = [(0, end_data)]
 
     kti = optimize.fmin_l_bfgs_b(
         distance_error, estimate,
@@ -7113,7 +7123,8 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
             index_ref,
         ),
         approx_grad=True,
-        epsilon=1.0E-3,
+        epsilon=1.0,
+        factr=1e10,
         bounds=boundaries, maxfun=100)
 
     solution_index = kti[0][0]
