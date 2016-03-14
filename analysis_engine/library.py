@@ -2868,16 +2868,15 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
         """
     args = (straights, straight_ends, lat[track_slice], lon[track_slice],
             speed[track_slice], hdg[track_slice], frequency, mode, 'final_answer')
-        if weights_opt[2]['warnflag']:
-            '''
-            lat_est = lat[track_slice]
-            lon_est = lon[track_slice]
-            wt = gtp_compute_error(weights_opt[0], *args)[2]
-            '''
-            lat_est, lon_est, wt = gtp_compute_error(np.ma.ones(weight_length), *args)
-        else:
-    lat_est, lon_est, wt = gtp_compute_error(weights_opt[0], *args)
-
+    if weights_opt[2]['warnflag']:
+        '''
+        lat_est = lat[track_slice]
+        lon_est = lon[track_slice]
+        wt = gtp_compute_error(weights_opt[0], *args)[2]
+        '''
+        lat_est, lon_est, wt = gtp_compute_error(np.ma.ones(weight_length), *args)
+    else:
+        lat_est, lon_est, wt = gtp_compute_error(weights_opt[0], *args)
 
     """
     # Outputs for debugging and inspecting operation of the optimization algorithm.
