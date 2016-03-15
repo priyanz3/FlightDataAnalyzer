@@ -1899,7 +1899,7 @@ class TestLanding(unittest.TestCase):
                                          ac_type=aeroplane, seg_type=start_stop))
         self.assertFalse(node.can_operate(('Altitude AAL For Flight Phases'),
                                           ac_type=aeroplane, seg_type=ground_only))
-        self.assertTrue(node.can_operate(('Altitude AGL', 'Collective', 'Touchdown'),
+        self.assertTrue(node.can_operate(('Altitude AGL', 'Collective', 'Airborne'),
                                          ac_type=helicopter, seg_type=start_stop))
 
     def test_landing_aircraft_basic(self):
