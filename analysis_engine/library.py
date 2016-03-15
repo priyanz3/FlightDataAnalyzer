@@ -7122,7 +7122,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
             index_ref,
         ),
         approx_grad=True,
-        epsilon=1.0,
+        epsilon=0.5,
         factr=1e10,
         bounds=boundaries, maxfun=100)
 
@@ -7135,7 +7135,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
     if solution_index == boundaries[0][0] or solution_index == boundaries[0][1]:
         logger.warning('Attempted to scan further than data permits.')
         return
-    elif _dist_err > 0.01:
+    elif _dist_err > 0.02:
         # This can happen if the flight is too short (i.e. less than 250nm if that is the distance requested)
         # It can also arise if the wrong runway has been identified, so the actual position is the closest point
         # on the approach to the correct (but unidentified) runway.
