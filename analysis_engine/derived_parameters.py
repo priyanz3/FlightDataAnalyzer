@@ -5135,7 +5135,8 @@ class VerticalSpeedInertial(DerivedParameterNode):
                az = P('Acceleration Vertical'),
                alt_std = P('Altitude STD Smoothed'),
                alt_rad = P('Altitude Radio'),
-               fast = S('Fast')):
+               fast = S('Fast'),
+               ac_type=A('Aircraft Type')):
 
         def inertial_vertical_speed(alt_std_repair, frequency, alt_rad_repair,
                                     az_repair):
@@ -5176,6 +5177,8 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 up_slope = integrate(az_washout[up], hz)
                 blend_end_error = roc[climb.stop-1] - up_slope[-1]
                 blend_slope = np.linspace(0.0, blend_end_error, climb.stop-climb.start)
+                if ac_type and ac_type.value != 'helicopter':
+                    roc[:lift_m5s] = 0.0
                 roc[lift_m5s:climb.start] = up_slope[:climb.start-lift_m5s]
                 roc[climb] = up_slope[climb.start-lift_m5s:] + blend_slope
 
@@ -5203,6 +5206,8 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 blend = roc[down.start] - down_slope[0]
                 blend_slope = np.linspace(blend, -down_slope[-1], len(down_slope))
                 roc[down] = down_slope + blend_slope
+                if ac_type and ac_type.value != 'helicopter':
+                    roc[descent.stop+5*hz:] = 0.0
 
                 '''
                 # Debug plot only.
