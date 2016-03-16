@@ -1146,7 +1146,7 @@ class FlapLeverSynthetic(MultistateDerivedParameterNode):
 
         # Repair the mask to smooth out transitions:
         nearest_neighbour_mask_repair(self.array, copy=False,
-                                      repair_gap_size=(30 * self.hz),
+                                      repair_gap_size=30 * self.hz,
                                       direction='backward')
 
 

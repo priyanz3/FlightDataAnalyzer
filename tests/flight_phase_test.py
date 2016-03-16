@@ -1902,7 +1902,7 @@ class TestLanding(unittest.TestCase):
         self.assertTrue(node.can_operate(('Altitude AGL', 'Collective', 'Airborne'),
                                          ac_type=helicopter, seg_type=start_stop))
 
-    def test_landing_aircraft_basic(self):
+    def test_landing_aeroplane_basic(self):
         head = np.ma.array([20]*8+[10,0])
         alt_aal = np.ma.array([80,40,20,5]+[0]*6)
         phase_fast = buildsection('Fast', 0, 5)
@@ -1910,11 +1910,12 @@ class TestLanding(unittest.TestCase):
         landing.derive(aeroplane,
                        P('Heading Continuous',head),
                        P('Altitude AAL For Flight Phases', alt_aal),
-                       phase_fast)
+                       phase_fast,
+                       None)
         expected = buildsection('Landing', 0.75, 9)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_aircraft_turnoff(self):
+    def test_landing_aeroplane_turnoff(self):
         head = np.ma.array([20]*15+range(20,0,-2))
         alt_aal = np.ma.array([80,40,20,5]+[0]*26)
         phase_fast = buildsection('Fast',0,5)
@@ -1922,11 +1923,12 @@ class TestLanding(unittest.TestCase):
         landing.derive(aeroplane,
                        P('Heading Continuous',head),
                        P('Altitude AAL For Flight Phases', alt_aal),
-                       phase_fast)
+                       phase_fast,
+                       None)
         expected = buildsection('Landing', 0.75, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_aircraft_turnoff_left(self):
+    def test_landing_aeroplane_turnoff_left(self):
         head = np.ma.array([20]*15+range(20,0,-2))*-1.0
         alt_aal = np.ma.array([80,40,20,5]+[0]*26)
         phase_fast = buildsection('Fast', 0, 5)
@@ -1934,11 +1936,12 @@ class TestLanding(unittest.TestCase):
         landing.derive(aeroplane,
                        P('Heading Continuous',head),
                        P('Altitude AAL For Flight Phases', alt_aal),
-                       phase_fast)
+                       phase_fast,
+                       None)
         expected = buildsection('Landing', 0.75, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
-    def test_landing_aircraft_with_multiple_fast(self):
+    def test_landing_aeroplane_with_multiple_fast(self):
         # ensure that the result is a single phase!
         head = np.ma.array([20]*15+range(20,0,-2))
         alt_aal = np.ma.array(range(140,0,-10)+[0]*26)
@@ -1948,7 +1951,8 @@ class TestLanding(unittest.TestCase):
         landing.derive(aeroplane,
                        P('Heading Continuous',head),
                        P('Altitude AAL For Flight Phases', alt_aal),
-                       phase_fast)
+                       phase_fast,
+                       None)
         self.assertEqual(len(landing), 1)
         self.assertEqual(landing[0].slice.start, 9)
         self.assertEqual(landing[0].slice.stop, 24)
@@ -1959,17 +1963,29 @@ class TestLanding(unittest.TestCase):
         landing.derive(aeroplane,
                        P('Heading Continuous',head),
                        P('Altitude AAL For Flight Phases', alt_aal),
-                       phase_fast)
+                       phase_fast,
+                       None)
         self.assertEqual(len(landing), 1)
         self.assertEqual(landing[0].slice.start, 9)
         self.assertEqual(landing[0].slice.stop, 24)
+    
+    def test_landing_aeroplane_mobile_stop(self):
+        alt_aal = load(os.path.join(test_data_path, 'Landing_alt_aal_1.nod'))
+        head = load(os.path.join(test_data_path, 'Landing_head_1.nod'))
+        mobile = buildsection('Mobile', 139, 7510)
+        fast = buildsection('Fast', 399, 7438)
+        landing = Landing()
+        landing.derive(aeroplane, head, alt_aal, fast, mobile)
+        self.assertEqual(len(landing), 1)
+        self.assertAlmostEqual(landing[0].slice.start, 7434, places=0)
+        self.assertAlmostEqual(landing[0].slice.stop, 7511, places=0)
     
     def test_landing_helicopter_basic(self):
         alt_agl = P(name='Altitude AGL', array=np.ma.array([50]*5+range(45,0,-5)+[0]*5,dtype=float))
         coll = P(name='Collective', array=np.ma.array([53]*5+range(48,3,-5)+[3]*5,dtype=float))
         airs=buildsection('Airborne', 4, 15)
         node = Landing()
-        node.derive(helicopter, None, None, None, alt_agl, coll, airs)
+        node.derive(helicopter, None, None, None, None, alt_agl, coll, airs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 10)
         self.assertEqual(node[0].slice.stop, 15)
@@ -2290,7 +2306,7 @@ class TestTaxiOut(unittest.TestCase):
         expected = buildsection('Taxi Out', 5, 7)
         self.assertEqual(tout.get_slices(), expected.get_slices())
 
-    def test_taxi_out__no_taxiout(self):
+    def test_taxi_out_empty(self):
         gnd = buildsections('Mobile', [0, 1], [3, 9])
         toff = buildsection('Takeoff', 1, 11)
         first_eng_starts = KTI(
@@ -2299,6 +2315,16 @@ class TestTaxiOut(unittest.TestCase):
         tout = TaxiOut()
         tout.derive(gnd, toff, first_eng_starts)
         self.assertEqual(len(tout), 0)
+    
+    def test_taxi_out_late_eng(self):
+        first_eng_starts = KTI('First Eng Start Before Liftoff', items=[KeyTimeInstance(557, 'First Eng Start Before Liftoff')])
+        gnd = buildsection('Mobile', 386, 3737)
+        toff = buildsection('Takeoff', 527, 582)
+        tout = TaxiOut()
+        tout.derive(gnd, toff, first_eng_starts)
+        self.assertEqual(len(tout), 1)
+        self.assertEqual(tout[0].slice.start, 387)
+        self.assertEqual(tout[0].slice.stop, 526)
 
 
 class TestTaxiIn(unittest.TestCase):
@@ -2328,6 +2354,16 @@ class TestTaxiIn(unittest.TestCase):
         self.assertEqual(len(t_in), 1)
         self.assertEqual(t_in[0].slice.start, 3438)
         self.assertEqual(t_in[0].slice.stop, 3734)
+    
+    def test_taxi_in_early_eng_stop(self):
+        gnd = buildsection('Mobile', 139, 7510)
+        landing = buildsection('Landing', 7434, 7510)
+        last_eng_stops = KTI(
+            'Last Eng Stop After Touchdown',
+            items=[KeyTimeInstance(7634, 'Last Eng Stop After Touchdown')])
+        t_in = TaxiIn()	
+        t_in.derive(gnd, landing, last_eng_stops)
+        self.assertEqual(len(t_in), 0)
 
 
 class TestTaxiing(unittest.TestCase):

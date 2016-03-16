@@ -461,7 +461,7 @@ class AccelerationLateralFor5SecMax(KeyPointValueNode):
     units = ut.G
 
     def derive(self, accel_lat=P('Acceleration Lateral Offset Removed')):
-        accel_lat_20 = second_window(accel_lat.array, accel_lat.frequency, 5)
+        accel_lat_20 = second_window(accel_lat.array, accel_lat.frequency, 5, extend_window=True)
         self.create_kpv(*max_abs_value(accel_lat_20))
 
 

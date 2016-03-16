@@ -1558,8 +1558,8 @@ class Landing(FlightPhaseNode):
             return all_of(('Altitude AGL', 'Collective', 'Airborne'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
-
-    def _derive_aircraft(self, head, alt_aal, fast):
+    
+    def _derive_aircraft(self, head, alt_aal, fast, mobile):
         phases = []
         for speedy in fast:
             # See takeoff phase for comments on how the algorithm works.
@@ -1600,8 +1600,8 @@ class Landing(FlightPhaseNode):
                                          slice(landing_run, last))
             if landing_end is None:
                 # The data ran out before the aircraft left the runway so use
-                # all we have.
-                landing_end = len(head.array)-1
+                # end of mobile or remainder of data.
+                landing_end = mobile.get_last().slice.stop if mobile else len(head.array)-1
 
             # ensure any overlap with phases are ignored (possibly due to
             # data corruption returning multiple fast segments)
@@ -1633,6 +1633,7 @@ class Landing(FlightPhaseNode):
                head=P('Heading Continuous'),
                alt_aal=P('Altitude AAL For Flight Phases'),
                fast=S('Fast'),
+               mobile=S('Mobile'),
                # helicopter
                alt_agl=P('Altitude AGL'),
                coll=P('Collective'),
@@ -1640,7 +1641,7 @@ class Landing(FlightPhaseNode):
         if ac_type and ac_type.value == 'helicopter':
             self._derive_helicopter(alt_agl, coll, airs)
         else:
-            self._derive_aircraft(head, alt_aal, fast)
+            self._derive_aircraft(head, alt_aal, fast, mobile)
 
 
 class LandingRoll(FlightPhaseNode):
@@ -1847,8 +1848,6 @@ class Takeoff(FlightPhaseNode):
             self._derive_helicopter(alt_agl, coll, lifts)
         else:
             self._derive_aircraft(head, alt_aal, fast, airs)
-
-
 
 
 class TakeoffRoll(FlightPhaseNode):
@@ -2076,11 +2075,12 @@ class TaxiIn(FlightPhaseNode):
                 # Use Last Eng Stop After Touchdown if available.
                 if last_eng_stops:
                     last_eng_stop = last_eng_stops.get_next(taxi_start)
-                    if last_eng_stop:
+                    if last_eng_stop and last_eng_stop.index > taxi_start:
                         taxi_stop = min(last_eng_stop.index,
                                         taxi_stop)
-                self.create_phase(slice(taxi_start, taxi_stop),
-                                  name="Taxi In")
+                if taxi_start != taxi_stop:
+                    self.create_phase(slice(taxi_start, taxi_stop),
+                                      name="Taxi In")
 
 
 class TaxiOut(FlightPhaseNode):
@@ -2103,11 +2103,12 @@ class TaxiOut(FlightPhaseNode):
                     taxi_stop = toff.slice.start - 1
                     if first_eng_starts:
                         first_eng_start = first_eng_starts.get_next(taxi_start)
-                        if first_eng_start:
+                        if first_eng_start and first_eng_start.index < taxi_stop:
                             taxi_start = max(first_eng_start.index,
                                              taxi_start)
-                    self.create_phase(slice(taxi_start, taxi_stop),
-                                      name="Taxi Out")
+                    if taxi_start != taxi_stop:
+                        self.create_phase(slice(taxi_start, taxi_stop),
+                                          name="Taxi Out")
 
 
 class TransitionHoverToFlight(FlightPhaseNode):
