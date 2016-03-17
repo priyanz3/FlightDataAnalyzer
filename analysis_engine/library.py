@@ -2868,7 +2868,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
         """
     args = (straights, straight_ends, lat[track_slice], lon[track_slice],
             speed[track_slice], hdg[track_slice], frequency, mode, 'final_answer')
-    if weights_opt[2]['warnflag']:
+    if len(weights_opt) > 1 and weights_opt[2]['warnflag']:
         '''
         lat_est = lat[track_slice]
         lon_est = lon[track_slice]
