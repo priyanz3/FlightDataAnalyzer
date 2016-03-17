@@ -9660,7 +9660,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                 end = index_at_value(nosewheel.array.data, 0.0, _slice=toff.slice)
             if not end: # Fallback
                 end = index_at_value(pitch_rate.array, 1.5, _slice=toff.slice)
-            if not end:
+            if not end or end < begin:
                 self.warning(
                     "No end condition identified in takeoff slice '%s'.",
                     toff.slice)
