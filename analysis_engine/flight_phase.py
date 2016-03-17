@@ -1761,7 +1761,7 @@ class Takeoff(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
-        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'STOP_ONLY'):
             return False
         elif ac_type and ac_type.value == 'helicopter':
             return all_of(('Altitude AGL', 'Collective', 'Liftoff'), available)
