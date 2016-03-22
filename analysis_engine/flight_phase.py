@@ -125,7 +125,7 @@ class Airborne(FlightPhaseNode):
 
             # Stop here if there is inadequate airborne data to process.
             if working_alt is None or np.ma.ptp(working_alt)==0.0:
-                break
+                continue
             airs = slices_remove_small_gaps(
                 np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 1.0)),
                 time_limit=40, # 10 seconds was too short for Herc which flies below 0  AAL for 30 secs.
