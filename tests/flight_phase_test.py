@@ -1980,6 +1980,18 @@ class TestLanding(unittest.TestCase):
         self.assertAlmostEqual(landing[0].slice.start, 7434, places=0)
         self.assertAlmostEqual(landing[0].slice.stop, 7511, places=0)
     
+    def test_landing_aeroplane_extended_slice(self):
+        # slice needs to be slightly extended to pick up 50 ft transition.
+        alt_aal = load(os.path.join(test_data_path, 'Landing_alt_aal_2.nod'))
+        head = load(os.path.join(test_data_path, 'Landing_head_2.nod'))
+        mobile = buildsection('Mobile', 84, 14426)
+        fast = buildsection('Fast', 310, 14315)
+        landing = Landing()
+        landing.derive(aeroplane, head, alt_aal, fast, mobile)
+        self.assertEqual(len(landing), 1)
+        self.assertAlmostEqual(landing[0].slice.start, 14315, places=0)
+        self.assertAlmostEqual(landing[0].slice.stop, 14375, places=0)
+    
     def test_landing_helicopter_basic(self):
         alt_agl = P(name='Altitude AGL', array=np.ma.array([50]*5+range(45,0,-5)+[0]*5,dtype=float))
         coll = P(name='Collective', array=np.ma.array([53]*5+range(48,3,-5)+[3]*5,dtype=float))

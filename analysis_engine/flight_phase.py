@@ -1576,7 +1576,7 @@ class Landing(FlightPhaseNode):
                 speedy.slice.stop >= len(alt_aal.array)):
                 break
 
-            landing_run = speedy.slice.stop
+            landing_run = speedy.slice.stop + 2
             datum = head.array[landing_run]
 
             first = landing_run - (300 * alt_aal.frequency)
