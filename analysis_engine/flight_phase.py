@@ -2106,7 +2106,7 @@ class TaxiOut(FlightPhaseNode):
                         if first_eng_start and first_eng_start.index < taxi_stop:
                             taxi_start = max(first_eng_start.index,
                                              taxi_start)
-                    if taxi_start != taxi_stop:
+                    if taxi_stop > taxi_start:
                         self.create_phase(slice(taxi_start, taxi_stop),
                                           name="Taxi Out")
 
