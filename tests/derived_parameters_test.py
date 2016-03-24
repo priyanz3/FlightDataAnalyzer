@@ -27,20 +27,9 @@ from analysis_engine.library import (align,
                                      np_ma_ones_like,
                                      unique_values)
 
-from analysis_engine.node import (Attribute,
-                                  A,
-                                  App,
-                                  ApproachItem,
-                                  KeyPointValue,
-                                  KPV,
-                                  KeyTimeInstance,
-                                  KTI,
-                                  load,
-                                  M,
-                                  Parameter,
-                                  P,
-                                  Section,
-                                  S)
+from analysis_engine.node import (
+    aeroplane, Attribute, A, App, ApproachItem, helicopter, KeyPointValue, KPV,
+    KeyTimeInstance, KTI, load, M, Parameter, P, Section, S)
 from analysis_engine.process_flight import process_flight
 from analysis_engine.settings import GRAVITY_IMPERIAL, METRES_TO_FEET
 
@@ -234,9 +223,6 @@ def setUpModule():
 
 
 debug = sys.gettrace() is not None
-
-aeroplane = A('Aircraft Type', 'aeroplane')
-helicopter = A('Aircraft Type', 'helicopter')
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')

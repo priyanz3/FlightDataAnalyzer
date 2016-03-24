@@ -41,7 +41,9 @@ from analysis_engine.library import (
     slices_remove_small_slices,
 )
 
-from analysis_engine.node import A, App, FlightPhaseNode, P, S, KTI, KPV, M, aeroplane_only, helicopter_only
+from analysis_engine.node import (
+    A, App, FlightPhaseNode, P, S, KTI, KPV, M,
+    aeroplane, aeroplane_only, helicopter, helicopter_only)
 
 from analysis_engine.settings import (
     AIRBORNE_THRESHOLD_TIME,
@@ -94,7 +96,7 @@ class Airborne(FlightPhaseNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
-        elif ac_type and ac_type.value == 'helicopter':
+        elif ac_type == helicopter:
             return all_of(('Gear On Ground',), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
@@ -208,7 +210,7 @@ class Airborne(FlightPhaseNode):
                alt_agl=P('Altitude AGL'),
                gog=M('Gear On Ground'),
                rtr=S('Rotors Turning')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(alt_rad, alt_agl, gog, rtr)
         else:
             self._derive_aircraft(alt_aal, fast)
@@ -253,7 +255,7 @@ class GoAroundAndClimbout(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return False
         correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
         return 'Altitude AAL For Flight Phases' in available and correct_seg_type
@@ -331,7 +333,7 @@ class EngHotelMode(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, family=A('Family'), ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'aeroplane' and all_deps(cls, available) and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
+        return ac_type == aeroplane and all_deps(cls, available) and family.value in ('ATR-42', 'ATR-72') # Not all aircraft with Np will have a 'Hotel' mode
 
 
     def derive(self, eng2_np=P('Eng (2) Np'),
@@ -364,7 +366,7 @@ class ApproachAndLanding(FlightPhaseNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
-        elif ac_type and ac_type.value == 'helicopter':
+        elif ac_type == helicopter:
             return all_of(('Approach', 'Landing'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
@@ -409,7 +411,7 @@ class ApproachAndLanding(FlightPhaseNode):
                # shared
                landings=S('Landing')):
 
-        if ac_type and ac_type.value=='helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(apps, landings)
         else:
             self._derive_aircraft(alt_aal, level_flights, landings)
@@ -429,7 +431,7 @@ class Approach(FlightPhaseNode):
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
-        elif ac_type and ac_type.value == 'helicopter':
+        elif ac_type == helicopter:
             return all_of(('Altitude AGL', 'Altitude STD'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
@@ -467,7 +469,7 @@ class Approach(FlightPhaseNode):
                # helicopter
                alt_agl=P('Altitude AGL'),
                alt_std=P('Altitude STD')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(alt_agl, alt_std)
         else:
             self._derive_aircraft(alt_aal, level_flights, landings)
@@ -738,7 +740,7 @@ class DescentLowClimb(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return False
         else:
             correct_seg_type = seg_type and seg_type.value not in ('GROUND_ONLY', 'NO_MOVEMENT')
@@ -771,7 +773,7 @@ class Fast(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return 'Nr' in available
         else:
             return 'Airspeed' in available
@@ -791,7 +793,7 @@ class Fast(FlightPhaseNode):
         test_array = np.ma.masked_outside(value_passing_array, 0.0, -100.0)
         """
 
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             nr = repair_mask(rotor_speed.array, repair_duration=600,
                              raise_entirely_masked=False)
             fast = np.ma.masked_less(nr, ROTORSPEED_THRESHOLD)
@@ -883,7 +885,7 @@ class GearRetracted(FlightPhaseNode):
 class Hover(FlightPhaseNode):
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'helicopter' and \
+        return ac_type == helicopter and \
                all_of(('Altitude AGL', 'Airborne', 'Groundspeed'), available)
 
     def derive(self, alt_agl=P('Altitude AGL'),
@@ -923,7 +925,7 @@ class Hover(FlightPhaseNode):
 class HoverTaxi(FlightPhaseNode):
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'helicopter' and \
+        return ac_type == helicopter and \
                all_of(('Altitude AGL', 'Airborne', 'Hover'), available)
 
     def derive(self, alt_agl=P('Altitude AGL'),
@@ -1401,7 +1403,7 @@ class Grounded(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return all_of(('Airborne', 'Airspeed'), available)
         else:
             return 'HDF Duration' in available
@@ -1439,7 +1441,7 @@ class Grounded(FlightPhaseNode):
                airspeed=P('Airspeed'),
                # shared
                air=S('Airborne')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(air, airspeed)
         else:
             self._derive_aircraft(speed, hdf_duration, air)
@@ -1554,7 +1556,7 @@ class Landing(FlightPhaseNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
-        elif ac_type and ac_type.value == 'helicopter':
+        elif ac_type == helicopter:
             return all_of(('Altitude AGL', 'Collective', 'Airborne'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
@@ -1638,7 +1640,7 @@ class Landing(FlightPhaseNode):
                alt_agl=P('Altitude AGL'),
                coll=P('Collective'),
                airs=S('Airborne')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(alt_agl, coll, airs)
         else:
             self._derive_aircraft(head, alt_aal, fast, mobile)
@@ -1763,7 +1765,7 @@ class Takeoff(FlightPhaseNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'STOP_ONLY'):
             return False
-        elif ac_type and ac_type.value == 'helicopter':
+        elif ac_type == helicopter:
             return all_of(('Altitude AGL', 'Collective', 'Liftoff'), available)
         else:
             return all_of(('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast', 'Airborne'), available)
@@ -1844,7 +1846,7 @@ class Takeoff(FlightPhaseNode):
                alt_agl=P('Altitude AGL'),
                coll=P('Collective'),
                lifts=S('Liftoff')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             self._derive_helicopter(alt_agl, coll, lifts)
         else:
             self._derive_aircraft(head, alt_aal, fast, airs)
@@ -2179,7 +2181,7 @@ class TurningInAir(FlightPhaseNode):
                airborne=S('Airborne'),
                ac_type=A('Aircraft Type')):
 
-        if ac_type.value=='helicopter':
+        if ac_type == helicopter:
             rate = HEADING_RATE_FOR_FLIGHT_PHASES_RW
         else:
             rate = HEADING_RATE_FOR_FLIGHT_PHASES_FW

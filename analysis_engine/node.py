@@ -2551,16 +2551,6 @@ class Attribute(object):
         }
 
 
-@classmethod
-def aeroplane_only(cls, available, ac_type=Attribute('Aircraft Type')):
-    return ac_type and ac_type.value == 'aeroplane' and all_deps(cls, available)
-
-
-@classmethod
-def helicopter_only(cls, available, ac_type=Attribute('Aircraft Type')):
-    return ac_type and ac_type.value == 'helicopter' and all_deps(cls, available)
-
-
 # The following acronyms are intended to be used as placeholder values
 # for kwargs in Node derive methods. Cannot instantiate Node subclass without
 # implementing derive.
@@ -2571,6 +2561,19 @@ P = Parameter
 S = SectionNode
 KPV = KeyPointValueNode
 KTI = KeyTimeInstanceNode
+
+
+aeroplane = A('Aircraft Type', 'aeroplane')
+helicopter = A('Aircraft Type', 'helicopter')
+
+@classmethod
+def aeroplane_only(cls, available, ac_type=A('Aircraft Type')):
+    return ac_type == aeroplane and all_deps(cls, available)
+
+
+@classmethod
+def helicopter_only(cls, available, ac_type=A('Aircraft Type')):
+    return ac_type == helicopter and all_deps(cls, available)
 
 
 # OPT: Define set for Node subclass lookups to avoid issubclass (200x speedup).

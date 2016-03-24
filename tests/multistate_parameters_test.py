@@ -15,10 +15,12 @@ from analysis_engine.library import (
     unique_values,
 )
 from analysis_engine.node import (
+    aeroplane,
     Attribute,
     A,
     App,
     #ApproachItem,
+    helicopter,
     #KeyPointValue,
     #KPV,
     #KeyTimeInstance,
@@ -602,8 +604,8 @@ class TestASEEngaged(unittest.TestCase):
         self.node_class = ASEEngaged
 
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'aeroplane')), [])
-        opts = self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'helicopter'))
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         expected = [
             ('ASE (1) Engaged',),
             ('ASE (2) Engaged',),
@@ -2345,8 +2347,8 @@ class TestRotorsRunning(unittest.TestCase):
         self.node_class = RotorsRunning
 
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'aeroplane')), [])
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=A('Aircraft Type', 'helicopter')), [('Nr',)])
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=helicopter), [('Nr',)])
     
     @unittest.SkipTest
     def test_derive(self):

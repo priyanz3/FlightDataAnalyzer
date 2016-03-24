@@ -19,7 +19,8 @@ from analysis_engine.library import align, median_value
 from analysis_engine.node import (
     A, App, ApproachItem, KPV, KTI, load, M, P, KeyPointValue,
     MultistateDerivedParameterNode,
-    KeyTimeInstance, Section, SectionNode, S
+    KeyTimeInstance, Section, SectionNode, S,
+    aeroplane, helicopter,
 )
 
 from analysis_engine.multistate_parameters import (
@@ -600,9 +601,6 @@ from analysis_engine.flight_phase import Fast, RejectedTakeoff
 from flight_phase_test import buildsection, buildsections
 
 debug = sys.gettrace() is not None
-
-aeroplane = A('Aircraft Type', 'aeroplane')
-helicopter = A('Aircraft Type', 'helicopter')
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')
@@ -5322,13 +5320,11 @@ class TestCyclicDuringTaxiMax(unittest.TestCase):
 class TestHeadingDuringTakeoff(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringTakeoff
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
 
     def test_can_operate(self):
         can_op = self.node_class.can_operate
-        self.assertTrue(can_op(('Heading Continuous', 'Transition Hover To Flight', 'Aircraft Type'), ac_type=self.heli))
-        self.assertTrue(can_op(('Heading Continuous', 'Takeoff Roll Or Rejected Takeoff'), ac_type=self.aero))
+        self.assertTrue(can_op(('Heading Continuous', 'Transition Hover To Flight', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(can_op(('Heading Continuous', 'Takeoff Roll Or Rejected Takeoff'), ac_type=aeroplane))
 
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,2,4,7,9,8,6,3]))
@@ -5352,13 +5348,11 @@ class TestHeadingDuringTakeoff(unittest.TestCase, NodeTest):
 class TestHeadingTrueDuringTakeoff(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingTrueDuringTakeoff
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
 
     def test_can_operate(self):
         can_op = self.node_class.can_operate
-        self.assertTrue(can_op(('Heading True Continuous', 'Transition Hover To Flight', 'Aircraft Type'), ac_type=self.heli))
-        self.assertTrue(can_op(('Heading True Continuous', 'Takeoff Roll Or Rejected Takeoff'), ac_type=self.aero))
+        self.assertTrue(can_op(('Heading True Continuous', 'Transition Hover To Flight', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(can_op(('Heading True Continuous', 'Takeoff Roll Or Rejected Takeoff'), ac_type=aeroplane))
 
     def test_derive_basic(self):
         head = P('Heading True Continuous',np.ma.array([0,2,4,7,9,8,6,3]))
@@ -5382,8 +5376,6 @@ class TestHeadingTrueDuringTakeoff(unittest.TestCase, NodeTest):
 class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringLanding
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
         self.operational_combinations = [
             ('Heading Continuous', 'Transition Flight To Hover'),
             ('Heading Continuous', 'Landing Roll', 'Transition Flight To Hover'),
@@ -5413,7 +5405,7 @@ class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
         touchdowns = KTI(name='Touchdown', items=[KeyTimeInstance(index=5, name='Touchdown')])
         turn_offs = KTI(name='Landing Turn Off Runway', items=[KeyTimeInstance(index=14, name='Landing Turn Off Runway')])
         kpv = self.node_class()
-        kpv.derive(head, landing, touchdowns, turn_offs, self.aero)
+        kpv.derive(head, landing, touchdowns, turn_offs, aeroplane)
         expected = [KeyPointValue(index=10, value=6.0,
                                   name='Heading During Landing')]
         self.assertEqual(kpv, expected)
@@ -5422,13 +5414,11 @@ class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
 class TestHeadingTrueDuringLanding(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingTrueDuringLanding
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
 
     def test_can_operate(self):
         can_op = self.node_class.can_operate
-        self.assertTrue(can_op(('Heading True Continuous', 'Transition Flight To Hover', 'Aircraft Type'), ac_type=self.heli))
-        self.assertTrue(can_op(('Heading True Continuous', 'Landing Roll'), ac_type=self.aero))
+        self.assertTrue(can_op(('Heading True Continuous', 'Transition Flight To Hover', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(can_op(('Heading True Continuous', 'Landing Roll'), ac_type=aeroplane))
 
     def test_derive_basic(self):
         # Duplicate of TestHeadingDuringLanding.test_derive_basic.
@@ -8493,8 +8483,6 @@ class TestLatitudeAtTouchdown(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = LatitudeAtTouchdown
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
         self.operational_combinations = [
             ('Latitude', 'Touchdown'),
             ('Touchdown', 'AFR Landing Airport'),
@@ -8523,7 +8511,7 @@ class TestLatitudeAtTouchdown(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.create_kpv = Mock()
         node.create_kpvs_at_ktis = Mock()
-        node.derive(lat, tdwns, afr_land_rwy, afr_land_apt, lat_c, self.aero)
+        node.derive(lat, tdwns, afr_land_rwy, afr_land_apt, lat_c, aeroplane)
         node.create_kpvs_at_ktis.assert_called_once_with(lat.array, tdwns)
         assert not node.create_kpv.called, 'method should not have been called'
 
@@ -8564,8 +8552,6 @@ class TestLatitudeAtLiftoff(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = LatitudeAtLiftoff
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
         self.operational_combinations = [
             ('Latitude', 'Liftoff'),
             ('Liftoff', 'AFR Takeoff Airport'),
@@ -8593,7 +8579,7 @@ class TestLatitudeAtLiftoff(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.create_kpv = Mock()
         node.create_kpvs_at_ktis = Mock()
-        node.derive(lat, liftoffs, afr_toff_rwy, afr_toff_apt, None, self.aero)
+        node.derive(lat, liftoffs, afr_toff_rwy, afr_toff_apt, None, aeroplane)
         node.create_kpvs_at_ktis.assert_called_once_with(lat.array, liftoffs)
         assert not node.create_kpv.called, 'method should not have been called'
 
@@ -8666,8 +8652,6 @@ class TestLongitudeAtTouchdown(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = LongitudeAtTouchdown
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
         self.operational_combinations = [
             ('Longitude', 'Touchdown'),
             ('Touchdown', 'AFR Landing Airport'),
@@ -8696,7 +8680,7 @@ class TestLongitudeAtTouchdown(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.create_kpv = Mock()
         node.create_kpvs_at_ktis = Mock()
-        node.derive(lon, tdwns, afr_land_rwy, afr_land_apt, lat_c, self.aero)
+        node.derive(lon, tdwns, afr_land_rwy, afr_land_apt, lat_c, aeroplane)
         node.create_kpvs_at_ktis.assert_called_once_with(lon.array, tdwns)
         assert not node.create_kpv.called, 'method should not have been called'
 
@@ -8738,8 +8722,6 @@ class TestLongitudeAtLiftoff(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = LongitudeAtLiftoff
-        self.heli = A('Aircraft Type', 'helicopter')
-        self.aero = A('Aircraft Type', 'aeroplane')
         self.operational_combinations = [
             ('Longitude', 'Liftoff'),
             ('Liftoff', 'AFR Takeoff Airport'),
@@ -8767,7 +8749,7 @@ class TestLongitudeAtLiftoff(unittest.TestCase, NodeTest):
         node = self.node_class()
         node.create_kpv = Mock()
         node.create_kpvs_at_ktis = Mock()
-        node.derive(lon, liftoffs, afr_toff_rwy, afr_toff_apt, None, self.aero)
+        node.derive(lon, liftoffs, afr_toff_rwy, afr_toff_apt, None, aeroplane)
         node.create_kpvs_at_ktis.assert_called_once_with(lon.array, liftoffs)
         assert not node.create_kpv.called, 'method should not have been called'
 

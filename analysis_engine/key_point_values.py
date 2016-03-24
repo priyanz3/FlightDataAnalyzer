@@ -37,7 +37,7 @@ from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
 
 from analysis_engine.node import (
     KeyPointValueNode, KPV, KTI, P, S, A, M, App, Section,
-    aeroplane_only, helicopter_only)
+    aeroplane, aeroplane_only, helicopter, helicopter_only)
 
 from analysis_engine.library import (ambiguous_runway,
                                      align,
@@ -5725,7 +5725,7 @@ class HeadingDuringLanding(KeyPointValueNode):
                ac_type = A('Aircraft Type'),
                land_helos=S('Transition Flight To Hover')):
 
-        if ac_type and ac_type.value == 'aeroplane':
+        if ac_type == aeroplane:
             for landing in landings:
                 # Check the slice is robust.
                 touchdown = touchdowns.get_first(within_slice=landing.slice)

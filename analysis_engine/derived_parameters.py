@@ -14,8 +14,9 @@ from flightdatautilities import aircrafttables as at, units as ut
 
 from analysis_engine.exceptions import DataFrameError
 from analysis_engine.node import (
-    A, App, DerivedParameterNode, KPV, KTI, M, P, S, aeroplane_only, helicopter_only,
-)
+    A, App, DerivedParameterNode, KPV, KTI, M, P, S,
+    aeroplane, aeroplane_only, helicopter, helicopter_only)
+
 from analysis_engine.library import (actuator_mismatch,
                                      air_track,
                                      align,
@@ -1465,7 +1466,7 @@ class CyclicForeAft(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+        return ac_type == helicopter and any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                capt=P('Cyclic Fore-Aft (1)'),
@@ -1482,7 +1483,7 @@ class CyclicLateral(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+        return ac_type == helicopter and any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                capt=P('Cyclic Lateral (1)'),
@@ -3751,7 +3752,7 @@ class Groundspeed(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return all_of(('Latitude Prepared', 'Longitude Prepared'), available)
         else:
             return any_of(('Groundspeed (1)', 'Groundspeed (2)'), available)
@@ -3765,7 +3766,7 @@ class Groundspeed(DerivedParameterNode):
                lon=P('Longitude Prepared'),
                ac_type=A('Aircraft Type')):
 
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             '''
             Calculation of Groundspeed from latitude and longitude
 
@@ -3801,7 +3802,7 @@ class GroundspeedSigned(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'aeroplane':
+        if ac_type == aeroplane:
             return all_of(('Groundspeed', 'Eng (*) Any Running'), available)
 
     def derive(self,
@@ -3963,7 +3964,7 @@ class Nr(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return ac_type and ac_type.value == 'helicopter' and any_of(cls.get_dependency_names(), available)
+        return ac_type == helicopter and any_of(cls.get_dependency_names(), available)
 
     def derive(self, p1=P('Nr (1)'), p2=P('Nr (2)')):
         self.array, self.frequency, self.offset = \
@@ -4554,7 +4555,7 @@ class CoordinatesSmoothed(object):
         except:
             toff_slice = None
 
-        if ac_type and ac_type.value != 'helicopter':
+        if ac_type != helicopter:
             if toff_slice and precise:
                 try:
                     lat_out, lon_out = self.taxi_out_track_pp(
@@ -4767,7 +4768,7 @@ class CoordinatesSmoothed(object):
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
-            if approach.type == 'LANDING' and ac_type and ac_type.value == 'aeroplane':
+            if approach.type == 'LANDING' and ac_type == aeroplane:
                 # This function returns the lowest non-None offset.
                 try:
                     join_idx = min(filter(bool, [ils_join_offset,
@@ -4975,7 +4976,7 @@ class MagneticVariation(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             # Short flight segments can result in problems with small arrays failing to interpolate. FIXME.
             return False
         else:
@@ -5177,7 +5178,7 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 up_slope = integrate(az_washout[up], hz)
                 blend_end_error = roc[climb.stop-1] - up_slope[-1]
                 blend_slope = np.linspace(0.0, blend_end_error, climb.stop-climb.start)
-                if ac_type and ac_type.value != 'helicopter':
+                if ac_type != helicopter:
                     roc[:lift_m5s] = 0.0
                 roc[lift_m5s:climb.start] = up_slope[:climb.start-lift_m5s]
                 roc[climb] = up_slope[climb.start-lift_m5s:] + blend_slope
@@ -5206,7 +5207,7 @@ class VerticalSpeedInertial(DerivedParameterNode):
                 blend = roc[down.start] - down_slope[0]
                 blend_slope = np.linspace(blend, -down_slope[-1], len(down_slope))
                 roc[down] = down_slope + blend_slope
-                if ac_type and ac_type.value != 'helicopter':
+                if ac_type != helicopter:
                     roc[descent.stop+5*hz:] = 0.0
 
                 '''

@@ -63,14 +63,12 @@ from analysis_engine.key_time_instances import BottomOfDescent, TopOfClimb, TopO
 from analysis_engine.library import integrate, np_ma_zeros_like
 from analysis_engine.node import (A, App, ApproachItem, KTI,
                                   KeyTimeInstance, KPV, KeyPointValue, M,
-                                  Parameter, P, S, Section, SectionNode, load)
+                                  Parameter, P, S, Section, SectionNode, load,
+                                  aeroplane, helicopter)
 from analysis_engine.process_flight import process_flight
 
 from analysis_engine.settings import AIRSPEED_THRESHOLD
 
-
-aeroplane = A('Aircraft Type', 'aeroplane')
-helicopter = A('Aircraft Type', 'helicopter')
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')

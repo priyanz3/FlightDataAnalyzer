@@ -1,7 +1,7 @@
 import numpy as np
 
 from analysis_engine.api_handler import get_api_handler, NotFoundError
-from analysis_engine.node import A, ApproachNode, KPV, KTI, P, S
+from analysis_engine.node import A, ApproachNode, helicopter, KPV, KTI, P, S
 from analysis_engine import settings
 
 
@@ -76,7 +76,7 @@ class ApproachInformation(ApproachNode):
     def can_operate(self, available, ac_type=A('Aircraft Type')):
         '''
         '''
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             return all(n in available for n in ['Approach And Landing',
                                                 'Altitude AGL', 'Fast'])
         else:
@@ -191,7 +191,7 @@ class ApproachInformation(ApproachNode):
         }
 
         alt = alt_aal
-        if ac_type and ac_type.value == 'helicopter':
+        if ac_type == helicopter:
             alt = alt_agl
         app_slices = app.get_slices()
 
