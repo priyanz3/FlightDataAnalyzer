@@ -4715,11 +4715,11 @@ class AltitudeAtMachMax(KeyPointValueNode):
 ########################################
 # Altitude: On Approach
 
-class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
+class HeightAtDistancesFromThreshold(KeyPointValueNode):
     '''
     '''
 
-    NAME_FORMAT = 'Altitude At %(distance)d NM From Threshold'
+    NAME_FORMAT = 'Height At %(distance)d NM From Threshold'
     NAME_VALUES = NAME_VALUES_RANGES
 
     units = ut.FT
@@ -4735,8 +4735,6 @@ class AltitudeAtDistancesFromThreshold(KeyPointValueNode):
                 self.create_kpv(kti.index,
                                 value_at_index(alt.array, kti.index),
                                 replace_values={'distance':distance})
-
-
 
 
 ##############################################################################
