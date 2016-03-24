@@ -400,7 +400,9 @@ SPOILER_DEPLOYED = 5.0 # deg
 TAKEOFF_ACCELERATION_THRESHOLD = 0.15  # g
 
 # Height in ft where Altitude AAL switches between Radio and STD sources.
-TRANSITION_ALT_RAD_TO_STD = 100
+# Changed from 100ft to 50ft to remove problems at airports with dips imediatly
+# before runway start.
+TRANSITION_ALT_RAD_TO_STD = 50
 
 # The takeoff and landing acceleration algorithm linear estimation period
 TRUCK_OR_TRAILER_INTERVAL = 3  # samples: should be odd.
