@@ -279,7 +279,7 @@ def _split_on_eng_params(slice_start_secs, slice_stop_secs,
     '''
     slice_start = slice_start_secs * split_params_frequency
     slice_stop = slice_stop_secs * split_params_frequency
-    split_params_slice = slice(slice_start, slice_stop)
+    split_params_slice = slice(np.round(slice_start, 0), np.round(slice_stop, 0))
     split_index, split_value = min_value(split_params_min,
                                          _slice=split_params_slice)
 
