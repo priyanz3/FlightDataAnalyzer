@@ -4574,16 +4574,19 @@ class CoordinatesSmoothed(object):
 
             elif toff_slice and toff_rwy and toff_rwy.value:
 
+                toff_start_lat = lat.array[toff_slice.start]
+                toff_start_lon = lon.array[toff_slice.start]
+                masked_toff = any([x is np.ma.masked for x in (toff_start_lat, toff_start_lon)])
                 start_locn_recorded = runway_snap_dict(
-                    toff_rwy.value,lat.array[toff_slice.start],
-                    lon.array[toff_slice.start])
+                    toff_rwy.value, toff_start_lat,
+                    toff_start_lon)
                 start_locn_default = toff_rwy.value['start']
                 _,distance = bearing_and_distance(start_locn_recorded['latitude'],
                                                   start_locn_recorded['longitude'],
                                                   start_locn_default['latitude'],
                                                   start_locn_default['longitude'])
 
-                if distance < 50:
+                if distance < 50 and not masked_toff:
                     # We may have a reasonable start location, so let's use that
                     start_locn = start_locn_recorded
                     initial_displacement = 0.0
