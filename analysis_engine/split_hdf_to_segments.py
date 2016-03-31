@@ -200,7 +200,10 @@ def _get_normalised_split_params(hdf):
     # If there is at least one split parameter available.
     # normalise the parameters we'll use for splitting the data
     stacked_params = vstack_params(*params)
-    normalised_params = normalise(stacked_params, scale_max=100)
+    # We normalise each in turn to the range 0-1 so they have equal weight
+    normalised_params = [normalise(i) for i in stacked_params]
+    # Using a true minimum leads to bias to a zero value. We take the average
+    # to allow each parameter equal weight, then (later) seek the minimum.
     split_params_min = np.ma.average(normalised_params, axis=0)
     return split_params_min, first_split_param.frequency
 
