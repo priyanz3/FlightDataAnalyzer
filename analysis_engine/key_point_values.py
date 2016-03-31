@@ -55,6 +55,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      find_edges,
                                      find_edges_on_state_change,
                                      first_valid_parameter,
+                                     first_valid_sample,
                                      hysteresis,
                                      index_at_value,
                                      index_of_first_start,
@@ -9623,7 +9624,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     to heading deviations up to the start of rotation. Therefore the event was revised thus:
 
     1. The heading to be based on aircraft heading which is the median aircraft heading
-    from the start of the take-off roll to 80 kts.
+    from the start of valid airspeed to 80 kts.
     2. The end of the event will be at a rotation rate of 1.5 deg/sec or, where recorded,
     the last recorded moment of nosewheel on the ground.
 
@@ -9651,9 +9652,10 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                     "'%s' did not transition through 80 kts in '%s' slice '%s'.",
                     airspeed.name, toffs.name, toff.slice)
                 continue
-            datum_heading = np.ma.median(head.array[toff.slice.start:begin])
+            first_spd_idx = first_valid_sample(airspeed.array[toff.slice.start:begin])[0] + toff.slice.start
+            datum_heading = np.ma.median(head.array[first_spd_idx:begin])
 
-            end=None
+            end = None
             if nosewheel:
                 end = index_at_value(nosewheel.array.data, 0.0, _slice=toff.slice)
             if not end: # Fallback
@@ -9682,7 +9684,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
             elif index==len(to_test)-1:
                 true_index = end
             else:
-                true_index = index + toff.slice.start
+                true_index = index + begin
 
             self.create_kpv(true_index, value)
 

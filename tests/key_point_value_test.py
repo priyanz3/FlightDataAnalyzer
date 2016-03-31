@@ -9064,6 +9064,22 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         self.assertEqual(node[0].index, 2.0)
 
 
+    def test_derive__stationary_off_centre(self):
+        '''
+        Test for when aircraft stops off centre at start of runway,
+        streightens as starting to move down runway. should be no variation
+        above 80kts.
+        '''
+        hdg = P('Heading True Continuous', np.ma.array([55]*10 + [65]*8))
+        ias = P('Airspeed', np.ma.array([0]*12 + range(60, 120, 10)))
+        ias.array = np.ma.masked_less(ias.array, 10)
+        q = P('Pitch Rate', np.ma.array([0]*15+[1, 2, 3]))
+        toff = buildsection('Takeoff', 1, 18)
+        node = self.node_class()
+        node.derive(None, hdg, ias, q, toff)
+        self.assertAlmostEqual(node[0].value, 0.0, places=5)
+
+
 class TestHeadingDeviationFromRunwayAtTOGADuringTakeoff(unittest.TestCase, NodeTest):
 
     def setUp(self):
