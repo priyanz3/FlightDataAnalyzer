@@ -9624,7 +9624,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     to heading deviations up to the start of rotation. Therefore the event was revised thus:
 
     1. The heading to be based on aircraft heading which is the median aircraft heading
-    from the start of valid airspeed to 80 kts.
+    from the start of valid airspeed above 60kts to 80 kts.
     2. The end of the event will be at a rotation rate of 1.5 deg/sec or, where recorded,
     the last recorded moment of nosewheel on the ground.
 
@@ -9652,8 +9652,9 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                     "'%s' did not transition through 80 kts in '%s' slice '%s'.",
                     airspeed.name, toffs.name, toff.slice)
                 continue
-            first_spd_idx = first_valid_sample(airspeed.array[toff.slice.start:begin])[0] + toff.slice.start
-            datum_heading = np.ma.median(head.array[first_spd_idx:begin])
+            spd = np.ma.masked_less(airspeed.array, 60)
+            first_spd_idx = first_valid_sample(spd[toff.slice.start:ceil(begin)])[0] + toff.slice.start
+            datum_heading = np.ma.median(head.array[first_spd_idx:ceil(begin)])
 
             end = None
             if nosewheel:
