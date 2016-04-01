@@ -9054,7 +9054,7 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         self.ias = P('Airspeed', np.ma.array(range(55, 165, 10)))
         node = self.node_class()
         node.derive(None, self.hdg, self.ias, self.q, self.toff)
-        self.assertAlmostEqual(node[0].value, 7.5, places=5)
+        self.assertAlmostEqual(node[0].value, 7.0, places=5)
         self.assertEqual(node[0].index, 8.5)
 
     def test_nosewheel_didnt_lift(self):
