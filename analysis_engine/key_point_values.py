@@ -7430,6 +7430,8 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
 
 class EngBleedValvesAtLiftoff(KeyPointValueNode):
     '''
+    Eng Bleed Open is "Open" for any engine bleed open, and
+    only shows "Closed" if all engine bleed valves are closed.
     '''
 
     units = None
@@ -7437,23 +7439,15 @@ class EngBleedValvesAtLiftoff(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available):
         return all_of((
-            'Eng (1) Bleed',
-            'Eng (2) Bleed',
+            'Eng Bleed Open',
             'Liftoff',
         ), available)
 
     def derive(self,
                liftoffs=KTI('Liftoff'),
-               b1=M('Eng (1) Bleed'),
-               b2=M('Eng (2) Bleed'),
-               b3=M('Eng (3) Bleed'),
-               b4=M('Eng (4) Bleed')):
+               bleed=M('Eng Bleed Open')):
 
-        bleeds = vstack_params_where_state((b1, 'Open'),
-                                           (b2, 'Open'),
-                                           (b3, 'Open'),
-                                           (b4, 'Open')).any(axis=0)
-        self.create_kpvs_at_ktis(bleeds, liftoffs)
+        self.create_kpvs_at_ktis(bleed.array, liftoffs)
 
 
 ##############################################################################

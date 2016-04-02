@@ -6715,23 +6715,14 @@ class TestEngBleedValvesAtLiftoff(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngBleedValvesAtLiftoff
-        self.operational_combinations = [
-            ('Liftoff', 'Eng (1) Bleed', 'Eng (2) Bleed'),
-            ('Liftoff', 'Eng (1) Bleed', 'Eng (2) Bleed', 'Eng (3) Bleed'),
-            ('Liftoff', 'Eng (1) Bleed', 'Eng (2) Bleed', 'Eng (4) Bleed'),
-            ('Liftoff', 'Eng (1) Bleed', 'Eng (2) Bleed', 'Eng (3) Bleed', 'Eng (4) Bleed'),
-        ]
+        self.operational_combinations = [('Liftoff', 'Eng Bleed Open'),]
 
     def test_derive(self):
         liftoff = KTI('Liftoff', items=[KeyTimeInstance(name='Liftoff', index=3)])
         values_mapping = {0: 'Closed', 1: 'Open'}
-        b1 = M('Eng (1) Bleed', array=np.ma.masked_array([0, 0, 1, 0, 0]), values_mapping=values_mapping)
-        b2 = M('Eng (2) Bleed', array=np.ma.masked_array([0, 0, 0, 1, 0]), values_mapping=values_mapping)
-        b3 = M('Eng (3) Bleed', array=np.ma.masked_array([0, 1, 0, 0, 0]), values_mapping=values_mapping)
-        b4 = M('Eng (4) Bleed', array=np.ma.masked_array([0, 1, 0, 1, 0]), values_mapping=values_mapping)
-        # Test with four engines, integer values:
+        bleed = M('Eng Bleed Open', array=np.ma.masked_array([0, 1, 1, 1, 0]), values_mapping=values_mapping)
         node = EngBleedValvesAtLiftoff()
-        node.derive(liftoff, b1, b2, b3, b4)
+        node.derive(liftoff, bleed)
         self.assertEqual(node, KPV('Eng Bleed Valves At Liftoff', items=[
             KeyPointValue(name='Eng Bleed Valves At Liftoff', index=3, value=1),
         ]))

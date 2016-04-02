@@ -679,7 +679,7 @@ class EngBleedOpen(MultistateDerivedParameterNode):
 
     units = None
 
-    name = 'Eng (*) Bleed'
+    name = 'Eng Bleed Open'
     values_mapping = {0: 'Closed', 1: 'Open'}
 
     @classmethod
