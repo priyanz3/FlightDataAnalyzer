@@ -1901,6 +1901,13 @@ class KeyPointValueNode(FormattedNameNode):
         '''
         for kti in ktis:
             value = value_at_index(array, kti.index, interpolate=interpolate)
+
+            # If the array is from a multistate parameter, convert to its integer value
+            if hasattr(array, 'values_mapping'):
+                inv_dict = {v: k for k, v in array.values_mapping.items()}
+                if value in inv_dict:
+                    value = inv_dict[value]
+
             if not suppress_zeros or value:
                 self.create_kpv(kti.index, value)
 

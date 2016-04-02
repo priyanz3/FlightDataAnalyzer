@@ -1165,6 +1165,16 @@ class TestKeyPointValueNode(unittest.TestCase):
                           KeyPointValue(index=8, value=8, name='Kpv')])
 
 
+    def test_create_kpvs_at_ktis_multistate(self):
+        knode = self.knode
+        param = M('Param', np.ma.array([0, 0, 1, 1]), values_mapping={0:'Nought', 1:'One'})
+        ktis = KTI('KTI', items=[KeyTimeInstance(i, 'a') for i in range(0,4,2)])
+        knode.create_kpvs_at_ktis(param.array, ktis)
+        self.assertEqual(list(knode),
+                         [KeyPointValue(index=0, value=0.0, name='Kpv'),
+                          KeyPointValue(index=2, value=1.0, name='Kpv')])
+
+
     def test_create_kpv_between_indexes(self):
         knode = self.knode
         param = P('Param', np.ma.arange(10)+2)
