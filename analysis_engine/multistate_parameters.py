@@ -672,6 +672,35 @@ class Eng_Oil_Press_Warning(MultistateDerivedParameterNode):
         ).any(axis=0)
 
 
+class EngBleedOpen(MultistateDerivedParameterNode):
+    '''
+    Single multistate for any engine bleed valve open.
+    '''
+
+    units = None
+
+    name = 'Eng (*) Bleed'
+    values_mapping = {0: 'Closed', 1: 'Open'}
+
+    @classmethod
+    def can_operate(cls, available):
+        return all_of((
+            'Eng (1) Bleed',
+            'Eng (2) Bleed',
+        ), available)
+
+    def derive(self,
+               b1=M('Eng (1) Bleed'),
+               b2=M('Eng (2) Bleed'),
+               b3=M('Eng (3) Bleed'),
+               b4=M('Eng (4) Bleed')):
+
+        self.array = vstack_params_where_state((b1, 'Open'),
+                                           (b2, 'Open'),
+                                           (b3, 'Open'),
+                                           (b4, 'Open')).any(axis=0)
+
+
 class EngRunning(object):
     '''
     Abstract class for inheriting by EngRunning derived parameters.
@@ -806,7 +835,7 @@ class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
     running.
     '''
     name = 'Eng (*) Any Running'
-    
+
     @classmethod
     def can_operate(cls, available):
         return 'Eng (*) N1 Max' in available or \
@@ -893,7 +922,7 @@ class Flap(MultistateDerivedParameterNode):
     units = ut.DEGREE
     # Currently uses the frequency of the Flap Angle parameter - might
     # consider upsampling to 2Hz for the Kernal sizes in the calculate_flap
-    # function 
+    # function
     ##align_frequency = 2
 
     @classmethod
@@ -943,7 +972,7 @@ class Flap(MultistateDerivedParameterNode):
             self.array = np.ma.array(flap_herc)
             self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
             return
-        
+
         self.values_mapping, self.array, self.frequency, self.offset = calculate_flap(
             'lever',
             flap,
@@ -1007,7 +1036,7 @@ class FlapIncludingTransition(MultistateDerivedParameterNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available,
                     model=A('Model'), series=A('Series'), family=A('Family')):
@@ -1023,7 +1052,7 @@ class FlapIncludingTransition(MultistateDerivedParameterNode):
             return False
 
         return True
-    
+
     def derive(self, flap_angle=P('Flap Angle'), flap=M('Flap'),
                model=A('Model'), series=A('Series'), family=A('Family')):
         self.values_mapping = at.get_flap_map(model.value, series.value, family.value)
@@ -1045,7 +1074,7 @@ class FlapExcludingTransition(MultistateDerivedParameterNode):
     '''
 
     units = ut.DEGREE
-    
+
     @classmethod
     def can_operate(cls, available,
                     model=A('Model'), series=A('Series'), family=A('Family')):
@@ -1061,7 +1090,7 @@ class FlapExcludingTransition(MultistateDerivedParameterNode):
             return False
 
         return True
-    
+
     def derive(self, flap_angle=P('Flap Angle'),
                model=A('Model'), series=A('Series'), family=A('Family')):
         self.values_mapping, self.array, self.frequency, self.offset = calculate_flap(
@@ -1099,7 +1128,7 @@ class FlapLeverSynthetic(MultistateDerivedParameterNode):
                 cls.warning("No lever angles available for '%s', '%s', '%s'.",
                             model.value, series.value, family.value)
                 return False
-        
+
         can_operate = True
 
         slat_required = any(slat is not None for slat, flap, flaperon in
@@ -1771,7 +1800,7 @@ class PilotFlying(MultistateDerivedParameterNode):
             angle_fo = repair_mask(angle_fo, repair_duration=31,
                                    extrapolate=True)
             # ignore moving average if no input from pilot at that time.
-            # AFPS declares 0.5 degrees minimum input, but due to A330/A340 
+            # AFPS declares 0.5 degrees minimum input, but due to A330/A340
             # poor resolution, allow 1.7 degrees of movement.
             angle_capt_zerod = np.ma.where(stick_capt.array < 1.7, 0.0, angle_capt)
             angle_fo_zerod = np.ma.where(stick_fo.array < 1.7, 0.0, angle_fo)
@@ -1824,7 +1853,7 @@ class RotorsRunning(MultistateDerivedParameterNode):
         0: 'Not Running',
         1: 'Running',
     }
-    
+
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr')):
@@ -2176,7 +2205,7 @@ class StallWarning(MultistateDerivedParameterNode):
             'Stall Warning (2)',
         ), available)
 
-    def derive(self, 
+    def derive(self,
                ss1=M('Stall Warning (1)'),
                ss2=M('Stall Warning (2)'),
                frame=A('Frame'),
@@ -2609,7 +2638,7 @@ class StableApproach(MultistateDerivedParameterNode):
     TODO/REVIEW:
     ============
     * Check for 300ft limit if turning onto runway late and ignore stability
-      criteria before this? Alternatively only assess criteria when heading is 
+      criteria before this? Alternatively only assess criteria when heading is
       within 50.
     * Add hysteresis (3 second gliding windows for GS / LOC etc.)
     * Engine cycling check

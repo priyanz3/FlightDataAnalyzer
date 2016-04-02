@@ -43,6 +43,7 @@ from analysis_engine.multistate_parameters import (
     Daylight,
     DualInput,
     ThrustModeSelected,
+    EngBleedOpen,
     EngRunning,
     Eng1Running,
     Eng2Running,
@@ -1143,12 +1144,66 @@ class TestEng_Oil_Press_Warning(unittest.TestCase):
         eng_1 = M('Eng (1) Oil Press Low', array=eng_1_array,
                   values_mapping=eng_values_mapping)
         eng_2_array = np.ma.array([0,1,1,0,0,0,0,1])
-        eng_2 = M('Eng (2) Oil Press Low', array=eng_1_array,
+        eng_2 = M('Eng (2) Oil Press Low', array=eng_2_array,
                   values_mapping=eng_values_mapping)
         node = Eng_Oil_Press_Warning()
         node.derive(eng_1, eng_2, None, None)
         node
 
+    def test_derive_extra(self):
+        # Not sure what "node" does in the last line, so clunky tests added.
+        eng_values_mapping = {0: 'Closed', 1: 'Open'}
+        eng_1_array = np.ma.array([1,1,0,0,1,0,1,0])
+        eng_1 = M('Eng (1) Bleed', array=eng_1_array,
+                  values_mapping=eng_values_mapping)
+        eng_2_array = np.ma.array([0,1,1,0,0,0,0,1])
+        eng_2 = M('Eng (2) Bleed', array=eng_2_array,
+                  values_mapping=eng_values_mapping)
+        node = EngBleedOpen()
+        node.derive(eng_1, eng_2, None, None)
+        self.assertEqual(node.array.raw.tolist(), [True, True, True, False, True, False, True, True])
+        self.assertEqual(node.values_mapping, eng_values_mapping)
+
+class TestEngBleedOpen(unittest.TestCase):
+    def test_can_operate(self):
+        combinations = EngBleedOpen.get_operational_combinations()
+        self.assertFalse(('Eng (1) Bleed',) in combinations)
+        self.assertFalse(('Eng (2) Bleed',) in combinations)
+        self.assertFalse(('Eng (3) Bleed',) in combinations)
+        self.assertFalse(('Eng (4) Bleed',) in combinations)
+        self.assertTrue(('Eng (1) Bleed',
+                         'Eng (2) Bleed') in combinations)
+        self.assertTrue(('Eng (1) Bleed',
+                         'Eng (2) Bleed',
+                         'Eng (3) Bleed',
+                         'Eng (4) Bleed',) in combinations)
+
+    def test_derive(self):
+        # Copy from TestEng_Oil_Press_Warning
+        eng_values_mapping = {0: 'Closed', 1: 'Open'}
+        eng_1_array = np.ma.array([1,1,0,0,1,0,1,0])
+        eng_1 = M('Eng (1) Bleed', array=eng_1_array,
+                  values_mapping=eng_values_mapping)
+        eng_2_array = np.ma.array([0,1,1,0,0,0,0,1])
+        eng_2 = M('Eng (2) Bleed', array=eng_2_array,
+                  values_mapping=eng_values_mapping)
+        node = EngBleedOpen()
+        node.derive(eng_1, eng_2, None, None)
+        node
+
+    def test_derive_extra(self):
+        # Not sure what
+        eng_values_mapping = {0: 'Closed', 1: 'Open'}
+        eng_1_array = np.ma.array([1,1,0,0,1,0,1,0])
+        eng_1 = M('Eng (1) Bleed', array=eng_1_array,
+                  values_mapping=eng_values_mapping)
+        eng_2_array = np.ma.array([0,1,1,0,0,0,0,1])
+        eng_2 = M('Eng (2) Bleed', array=eng_2_array,
+                  values_mapping=eng_values_mapping)
+        node = EngBleedOpen()
+        node.derive(eng_1, eng_2, None, None)
+        self.assertEqual(node.array.raw.tolist(), [True, True, True, False, True, False, True, True])
+        self.assertEqual(node.values_mapping, eng_values_mapping)
 
 
 class TestEngThrustModeRequired(unittest.TestCase):
@@ -2349,7 +2404,7 @@ class TestRotorsRunning(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=helicopter), [('Nr',)])
-    
+
     @unittest.SkipTest
     def test_derive(self):
         self.assertTrue(False)
