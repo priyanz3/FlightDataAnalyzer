@@ -7122,7 +7122,7 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
             index_ref,
         ),
         approx_grad=True,
-        epsilon=0.1,
+        epsilon=0.005,
         factr=1e8,
         bounds=boundaries, maxfun=100)
 
