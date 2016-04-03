@@ -7150,8 +7150,15 @@ def index_at_distance(distance, index_ref, latitude_ref, longitude_ref, latitude
 
 
 def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
-    lon_i = value_at_index(longitude, i) or 0.0
-    lat_i = value_at_index(latitude, i) or 0.0
+    try:
+        lon_i = value_at_index(longitude, i) or 0.0
+    except ValueError:
+        lon_i = 0.0
+    try:
+        lat_i = value_at_index(latitude, i) or 0.0
+    except ValueError:
+        lat_i = 0.0
+
     # The function _dist from the library provides the haversine distance in metres
     # hence the conversion factor required to convert to nautical miles.
     rad = (_dist(lat_i, lon_i, latitude_ref, longitude_ref) or 0.0) * 0.000539957
