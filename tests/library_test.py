@@ -1983,14 +1983,15 @@ class TestActuatorMismatch(unittest.TestCase):
         self.surf_array = np.ma.array(surf_list)
 
     def test_actuator_basic(self):
+        '''
+        This algorithm was simplified by moving the actuator selection code into the
+        calling KPV. Hence fewer arguments used here than listed in setUp.
+        '''
         scaling = 1 / 2.6  # 737 elevator specific at this time
         amm = actuator_mismatch(self.ap_array,
-                                self.fcc_l_array,
-                                self.fcc_r_array,
                                 self.act_l_array,
-                                self.act_r_array,
                                 self.surf_array,
-                                scaling, 1.0)
+                                1.0)
         peak_index = np.ma.argmax(amm)
         peak_value = amm[peak_index]
         self.assertGreater(peak_value, 1.0)

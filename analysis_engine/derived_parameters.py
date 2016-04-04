@@ -6960,17 +6960,10 @@ class ElevatorActuatorMismatch(DerivedParameterNode):
                right=P('Elevator (R) Actuator')):
 
         scaling = 1/2.6 # 737 elevator specific at this time
-
-        fcc_l = np.ma.where(fcc.array == 'FCC (L)', 1, 0)
-        fcc_r = np.ma.where(fcc.array == 'FCC (R)', 1, 0)
-
+        actuator = np.ma.where(fcc.array.data == 2.0, left.array, right.array) * scaling
         amm = actuator_mismatch(ap.array.raw,
-                                fcc_l,
-                                fcc_r,
-                                left.array,
-                                right.array,
+                                actuator,
                                 elevator.array,
-                                scaling,
                                 self.frequency)
 
         self.array = amm
