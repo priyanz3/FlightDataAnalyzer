@@ -881,7 +881,7 @@ class TestTouchdown(unittest.TestCase):
                                          mask = False))
         lands = buildsection('Landing', 2, 9)
         tdwn = Touchdown()
-        tdwn.derive(None, None, altitude, None, lands)
+        tdwn.derive(None, None, altitude, None, None, lands)
         expected = [KeyTimeInstance(index=7, name='Touchdown')]
         self.assertEqual(tdwn, expected)
 
@@ -901,7 +901,7 @@ class TestTouchdown(unittest.TestCase):
                                     'TestTouchdown-roc.nod'))
         lands = buildsection('Landing', 23279, 23361)
         tdwn = Touchdown()
-        tdwn.derive(None, None, alt, gog, lands)
+        tdwn.derive(None, None, alt, alt, gog, lands)
         self.assertEqual(tdwn.get_first().index, 23292.0)
 
 ##############################################################################

@@ -1358,6 +1358,7 @@ class Touchdown(KeyTimeInstanceNode):
     def derive(self, acc_norm=P('Acceleration Normal'),
                acc_long=P('Acceleration Longitudinal Offset Removed'),
                alt=P('Altitude AAL'),
+               alt_rad=P('Altitude Radio'),
                gog=M('Gear On Ground'),
                lands=S('Landing'),
                flap=P('Flap'),
@@ -1419,7 +1420,11 @@ class Touchdown(KeyTimeInstanceNode):
             # up a period to scan across for accelerometer based
             # indications...
             period_end = ceil(index_ref + dt_post * hz)
-            period_start = index_at_value(alt.array, 5, _slice=slice(period_end, max(floor(index_ref - dt_pre * hz), 0), -1))
+            period_start = max(floor(index_ref - dt_pre * hz), 0)
+            if alt_rad:
+                # only look for 5ft altitude if Radio Altitude is recorded,
+                # due to Altitude STD accuracy and ground effect.
+                period_start = index_at_value(alt.array, 5, _slice=slice(period_end, period_start, -1))
             period = slice(period_start, period_end)
 
             if acc_long:
