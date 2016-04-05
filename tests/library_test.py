@@ -3268,17 +3268,6 @@ class TestIndexAtDistance(unittest.TestCase):
             longitude, 1.0)
         self.assertIsNone(result)
 
-    def test_short_flight(self):
-        # Example flight less than 150nm.
-        array = load(os.path.join(test_data_path, 'SAS_0_OY-KFI_05_Sep_2013_dat_598748_128_S.024.001-START_AND_STOP.hdf5.nod')).array
-        #...& confirm no 150 or 250 nm outputs are generated
-
-    def test_medium_flight(self):
-        # Example flight 150-250 nm.
-        array = load(os.path.join(test_data_path, 'NAX_8_LN-NOS_20120104003919_64_L3UQAR___dev__sdb.COP.001-START_AND_STOP.hdf5.nod')).array
-        #...& confirm 150 nm outputs ['150 Nm from Departure':1938.86, '150 Nm from Arrival':1091.239] are generated, and 250 nm are not.
-        #Note: These are the right way round, as they overlap.
-
 
 class TestIndexOfFirstStart(unittest.TestCase):
     def test_index_start(self):
