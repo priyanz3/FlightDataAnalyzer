@@ -100,22 +100,20 @@ def _segment_type_and_slice(speed_array, speed_frequency,
     heading_start = start * heading_frequency
     heading_stop = stop * heading_frequency
     heading_array = heading_array[heading_start:heading_stop]
-
-    try:
-        unmasked_start, unmasked_stop = \
-            np.ma.flatnotmasked_edges(speed_array)
-    except TypeError:
-        # Raised when flatnotmasked_edges returns None because all data is
-        # masked.
-        # Either GROUND_ONLY or NO_MOVEMENT
-        slow_start = slow_stop = fast_for_long = None
-    else:
+    
+    # remove small slices to find 'consistent' valid data
+    unmasked_slices = slices_remove_small_slices(
+        np.ma.clump_unmasked(speed_array), 10, speed_frequency)
+    
+    if unmasked_slices:
         # Check speed
-        slow_start = speed_array[unmasked_start] < thresholds['speed_threshold']
-        slow_stop = speed_array[unmasked_stop] < thresholds['speed_threshold']
+        slow_start = speed_array[unmasked_slices[0].start] < thresholds['speed_threshold']
+        slow_stop = speed_array[unmasked_slices[-1].stop - 1] < thresholds['speed_threshold']
         threshold_exceedance = np.ma.sum(
             speed_array > thresholds['speed_threshold']) / speed_frequency
         fast_for_long = threshold_exceedance > thresholds['min_duration']
+    else:
+        slow_start = slow_stop = fast_for_long = None
 
     # Find out if the aircraft moved
     if aircraft_info and aircraft_info['Aircraft Type'] == 'helicopter':
