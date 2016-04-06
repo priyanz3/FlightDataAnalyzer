@@ -9627,17 +9627,21 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available):
-        return all_of(('Heading True Continuous', 'Airspeed', 'Pitch Rate', 'Takeoff'), available)
+        heading = any_of(('Heading True Continuous', 'Heading Continuous'), available)
+        return heading and all_of(('Airspeed', 'Pitch Rate', 'Takeoff'), available)
 
     units = ut.DEGREE
 
     def derive(self,
                nosewheel=P('Gear (N) On Ground'),
-               head=P('Heading True Continuous'),
+               head_true=P('Heading True Continuous'),
+               head_mag=P('Heading Continuous'),
                airspeed=P('Airspeed'),
                pitch_rate=P('Pitch Rate'),
                toffs=S('Takeoff'),
                ):
+
+        head = head_true or head_mag
 
         for toff in toffs:
             begin = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
@@ -9653,7 +9657,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
             end = None
             if nosewheel:
                 end = index_at_value(nosewheel.array.data, 0.0, _slice=toff.slice)
-            if not end: # Fallback
+            if not end or end < begin: # Fallback
                 end = index_at_value(pitch_rate.array, 1.5, _slice=toff.slice)
             if not end or end < begin:
                 self.warning(

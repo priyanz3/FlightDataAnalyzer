@@ -9023,13 +9023,13 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
 
     def test_no_deviation(self):
         node = self.node_class()
-        node.derive(self.nosewheel, self.hdg, self.ias, self.q, self.toff)
+        node.derive(self.nosewheel, self.hdg, None, self.ias, self.q, self.toff)
         self.assertAlmostEqual(node[0].value, 0.0, places=5)
 
     def test_with_deviation(self):
         self.hdg.array[8] = 40.0
         node = self.node_class()
-        node.derive(self.nosewheel, self.hdg, self.ias, self.q, self.toff)
+        node.derive(self.nosewheel, self.hdg, None, self.ias, self.q, self.toff)
         self.assertAlmostEqual(node[0].value, -5.0, places=5)
 
     def test_with_transient_deviation_at_1_5_deg_sec(self):
@@ -9037,21 +9037,21 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         # Pitch rate passes 1.5 deg as heading goes through 52.5 = +7.5 deg from datum.
         self.pch_rate = P('Pitch', np.ma.array([0]*8+[1.0, 2, 2]))
         node = self.node_class()
-        node.derive(None, self.hdg, self.ias, self.q, self.toff)
+        node.derive(None, self.hdg, None, self.ias, self.q, self.toff)
         self.assertAlmostEqual(node[0].value, 7.5, places=5)
 
     def test_with_transient_deviation_at_80_kts(self):
         self.hdg = P('Heading True Continuous', np.ma.array(range(35,46)))
         self.ias = P('Airspeed', np.ma.array(range(55, 165, 10)))
         node = self.node_class()
-        node.derive(None, self.hdg, self.ias, self.q, self.toff)
+        node.derive(None, self.hdg, None, self.ias, self.q, self.toff)
         self.assertAlmostEqual(node[0].value, 7.0, places=5)
         self.assertEqual(node[0].index, 8.5)
 
     def test_nosewheel_didnt_lift(self):
         self.nosewheel.array[8:] = [1]*3
         node = self.node_class()
-        node.derive(self.nosewheel, self.hdg, self.ias, self.q, self.toff)
+        node.derive(self.nosewheel, self.hdg, None, self.ias, self.q, self.toff)
         self.assertEqual(node[0].index, 2.0)
 
 
@@ -9067,7 +9067,7 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         q = P('Pitch Rate', np.ma.array([0]*15+[1, 2, 3]))
         toff = buildsection('Takeoff', 1, 18)
         node = self.node_class()
-        node.derive(None, hdg, ias, q, toff)
+        node.derive(None, hdg, None, ias, q, toff)
         self.assertAlmostEqual(node[0].value, 0.0, places=5)
 
 
