@@ -7085,7 +7085,7 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
     '''
 
     NAME_FORMAT = 'Eng Gas Temp Over %(period)s Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -7105,6 +7105,7 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
         ), available) and any_of((
             'Takeoff 5 Min Rating',
             'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
         ), available)
 
     def derive(self,
@@ -7114,6 +7115,7 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
                eng4=M('Eng (4) Gas Temp'),
                takeoff=S('Takeoff 5 Min Rating'),
                mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
                mods=A('Modifications')):
@@ -7125,14 +7127,15 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
 
         phase_thresholds = [
             (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
         ]
 
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None:
+            if threshold == None or phase == None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7154,7 +7157,7 @@ class EngN1OverThresholdDuration(KeyPointValueNode):
     '''
 
     NAME_FORMAT = 'Eng N1 Over %(period)s Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -7174,6 +7177,7 @@ class EngN1OverThresholdDuration(KeyPointValueNode):
         ), available) and any_of((
             'Takeoff 5 Min Rating',
             'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
         ), available)
 
     def derive(self,
@@ -7183,6 +7187,7 @@ class EngN1OverThresholdDuration(KeyPointValueNode):
                eng4=M('Eng (4) N1'),
                takeoff=S('Takeoff 5 Min Rating'),
                mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
                mods=A('Modifications')):
@@ -7194,14 +7199,15 @@ class EngN1OverThresholdDuration(KeyPointValueNode):
 
         phase_thresholds = [
             (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
         ]
 
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None:
+            if threshold == None or phase == None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7223,7 +7229,7 @@ class EngN2OverThresholdDuration(KeyPointValueNode):
     '''
 
     NAME_FORMAT = 'Eng N2 Over %(period)s Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -7243,6 +7249,7 @@ class EngN2OverThresholdDuration(KeyPointValueNode):
         ), available) and any_of((
             'Takeoff 5 Min Rating',
             'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
         ), available)
 
     def derive(self,
@@ -7252,6 +7259,7 @@ class EngN2OverThresholdDuration(KeyPointValueNode):
                eng4=M('Eng (4) N2'),
                takeoff=S('Takeoff 5 Min Rating'),
                mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
                mods=A('Modifications')):
@@ -7263,14 +7271,15 @@ class EngN2OverThresholdDuration(KeyPointValueNode):
 
         phase_thresholds = [
             (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
         ]
 
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None:
+            if threshold == None or phase == None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7292,7 +7301,7 @@ class EngNpOverThresholdDuration(KeyPointValueNode):
     '''
 
     NAME_FORMAT = 'Eng Np Over %(period)s Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -7312,6 +7321,7 @@ class EngNpOverThresholdDuration(KeyPointValueNode):
         ), available) and any_of((
             'Takeoff 5 Min Rating',
             'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
         ), available)
 
     def derive(self,
@@ -7321,6 +7331,7 @@ class EngNpOverThresholdDuration(KeyPointValueNode):
                eng4=M('Eng (4) Np'),
                takeoff=S('Takeoff 5 Min Rating'),
                mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
                mods=A('Modifications')):
@@ -7332,14 +7343,15 @@ class EngNpOverThresholdDuration(KeyPointValueNode):
 
         phase_thresholds = [
             (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
         ]
 
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None:
+            if threshold == None or phase == None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7361,7 +7373,7 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
     '''
 
     NAME_FORMAT = 'Eng Torque Over %(period)s Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP']}
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -7381,6 +7393,7 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
         ), available) and any_of((
             'Takeoff 5 Min Rating',
             'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
         ), available)
 
     def derive(self,
@@ -7390,6 +7403,7 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
                eng4=M('Eng (4) Torque'),
                takeoff=S('Takeoff 5 Min Rating'),
                mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
                mods=A('Modifications')):
@@ -7401,14 +7415,15 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
 
         phase_thresholds = [
             (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value)
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
         ]
 
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None:
+            if threshold == None or phase == None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []

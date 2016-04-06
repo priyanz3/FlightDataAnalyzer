@@ -6470,7 +6470,7 @@ class TestEngGasTempOverThresholdDuration(unittest.TestCase):
         mcp = buildsection('Maximum Continuous Power', 5, 25)
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
 
         expected = KPV(
             'Eng Gas Temp Over Threshold Duration',
@@ -6523,7 +6523,7 @@ class TestEngN1OverThresholdDuration(unittest.TestCase):
         mcp = buildsection('Maximum Continuous Power', 5, 25)
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
 
         expected = KPV(
             'Eng N1 Over Threshold Duration',
@@ -6579,7 +6579,7 @@ class TestEngN2OverThresholdDuration(unittest.TestCase):
         mcp = buildsection('Maximum Continuous Power', 5, 25)
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
 
         expected = KPV(
             'Eng N2 Over Threshold Duration',
@@ -6635,7 +6635,7 @@ class TestEngNpOverThresholdDuration(unittest.TestCase):
         mcp = buildsection('Maximum Continuous Power', 5, 25)
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
 
         expected = KPV(
             'Eng Np Over Threshold Duration',
@@ -6691,7 +6691,7 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
         mcp = buildsection('Maximum Continuous Power', 5, 25)
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, self.engine_series, self.engine_type, self.mods)
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
 
         expected = KPV(
             'Eng Torque Over Threshold Duration',
