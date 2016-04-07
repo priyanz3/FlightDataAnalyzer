@@ -226,6 +226,9 @@ from analysis_engine.key_point_values import (
     EngEPRExceedEPRRedlineDuration,
     EngEPRFor5Sec1000To500FtMin,
     EngEPRFor5Sec500To50FtMin,
+    EngEPRFor5SecDuringGoAround5MinRatingMax,
+    EngEPRFor5SecDuringMaximumContinuousPowerMax,
+    EngEPRFor5SecDuringTakeoff5MinRatingMax,
     EngFireWarningDuration,
     EngGasTempAboveNormalMaxLimitDuringTakeoffDuration,
     EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration,
@@ -237,6 +240,9 @@ from analysis_engine.key_point_values import (
     EngGasTempDuringMaximumContinuousPowerMax,
     EngGasTempDuringTakeoff5MinRatingMax,
     EngGasTempExceededEngGasTempRedlineDuration,
+    EngGasTempFor5SecDuringGoAround5MinRatingMax,
+    EngGasTempFor5SecDuringMaximumContinuousPowerMax,
+    EngGasTempFor5SecDuringTakeoff5MinRatingMax,
     EngGasTempOverThresholdDuration,
     EngN1500To50FtMax,
     EngN1500To50FtMin,
@@ -254,6 +260,9 @@ from analysis_engine.key_point_values import (
     EngN1ExceededN1RedlineDuration,
     EngN1For5Sec1000To500FtMin,
     EngN1For5Sec500To50FtMin,
+    EngN1For5SecDuringGoAround5MinRatingMax,
+    EngN1For5SecDuringMaximumContinuousPowerMax,
+    EngN1For5SecDuringTakeoff5MinRatingMax,
     EngN1OverThresholdDuration,
     EngN1WithThrustReversersDeployedMax,
     EngN1WithThrustReversersInTransitMax,
@@ -263,17 +272,26 @@ from analysis_engine.key_point_values import (
     EngN2DuringTakeoff5MinRatingMax,
     EngN2DuringTaxiMax,
     EngN2ExceededN2RedlineDuration,
+    EngN2For5SecDuringGoAround5MinRatingMax,
+    EngN2For5SecDuringMaximumContinuousPowerMax,
+    EngN2For5SecDuringTakeoff5MinRatingMax,
     EngN2OverThresholdDuration,
     EngN3DuringGoAround5MinRatingMax,
     EngN3DuringMaximumContinuousPowerMax,
     EngN3DuringTakeoff5MinRatingMax,
     EngN3DuringTaxiMax,
     EngN3ExceededN3RedlineDuration,
+    EngN3For5SecDuringGoAround5MinRatingMax,
+    EngN3For5SecDuringMaximumContinuousPowerMax,
+    EngN3For5SecDuringTakeoff5MinRatingMax,
     EngNp72To80PercentDurationMax,
     EngNpDuringClimbMin,
     EngNpDuringGoAround5MinRatingMax,
     EngNpDuringMaximumContinuousPowerMax,
     EngNpDuringTakeoff5MinRatingMax,
+    EngNpFor5SecDuringGoAround5MinRatingMax,
+    EngNpFor5SecDuringMaximumContinuousPowerMax,
+    EngNpFor5SecDuringTakeoff5MinRatingMax,
     EngNpDuringTaxiMax,
     EngNpOverThresholdDuration,
     EngVibNpMax,
@@ -290,13 +308,20 @@ from analysis_engine.key_point_values import (
     EngShutdownDuringFlightDuration,
     EngTPRAtTOGADuringTakeoffMin,
     EngTPRDuringGoAround5MinRatingMax,
+    EngTPRDuringMaximumContinuousPowerMax,
     EngTPRDuringTakeoff5MinRatingMax,
+    EngTPRFor5SecDuringGoAround5MinRatingMax,
+    EngTPRFor5SecDuringMaximumContinuousPowerMax,
+    EngTPRFor5SecDuringTakeoff5MinRatingMax,
     EngTorque500To50FtMax,
     EngTorque500To50FtMin,
     EngTorqueDuringGoAround5MinRatingMax,
     EngTorqueDuringMaximumContinuousPowerMax,
     EngTorqueDuringTakeoff5MinRatingMax,
     EngTorqueDuringTaxiMax,
+    EngTorqueFor5SecDuringGoAround5MinRatingMax,
+    EngTorqueFor5SecDuringMaximumContinuousPowerMax,
+    EngTorqueFor5SecDuringTakeoff5MinRatingMax,
     EngTorqueOverThresholdDuration,
     EngTorqueWhileDescendingMax,
     EngVibAMax,
@@ -906,6 +931,21 @@ class CreateKPVsWithinSlicesTest(NodeTest):
             self.assertEqual(mock2.method_calls, [])
             node.create_kpvs_within_slices.assert_called_once_with(
                 mock1.array, mock2, self.function)
+
+
+class CreateKPVsWithinSlicesSecondWindowTest(CreateKPVsWithinSlicesTest):
+    '''
+    '''
+    @patch('analysis_engine.key_point_values.second_window')
+    def test_derive_mocked(self, second_window):
+        # Not interested in testing functionallity of second window, this is
+        # handled in library tests. Here we just want to check it was called
+        # with the correct duration.
+        second_window.side_effect = lambda *args, **kw: args[0]
+        super(CreateKPVsWithinSlicesSecondWindowTest, self).test_derive_mocked()
+        self.assertEqual(second_window.call_count, 1)
+        # check correct duration used.
+        self.assertEqual(second_window.call_args[0][2], self.duration, msg="Incorrect duration used.")
 
 
 class CreateKPVFromSlicesTest(NodeTest):
@@ -6827,6 +6867,19 @@ class TestEngEPRDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngEPRFor5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngEPRFor5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) EPR Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngEPRDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -6839,12 +6892,38 @@ class TestEngEPRDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinS
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngEPRFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngEPRFor5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) EPR Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngEPRDuringMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngEPRDuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) EPR Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
         self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngEPRFor5SecDuringMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngEPRFor5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) EPR Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -6933,12 +7012,63 @@ class TestEngTPRDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngTPRFor5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTPRFor5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng TPR Limit Difference', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngTPRDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
         self.node_class = EngTPRDuringGoAround5MinRatingMax
         self.operational_combinations = [('Eng TPR Limit Difference', 'Go Around 5 Min Rating')]
         self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
+class TestEngTPRFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTPRFor5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng TPR Limit Difference', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
+class TestEngTPRDuringMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = EngTPRDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) TPR Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating','Grounded')]
+        self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
+class TestEngTPRFor5SecDuringMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTPRFor5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) TPR Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7166,6 +7296,19 @@ class TestEngGasTempDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWith
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngGasTempFor5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngGasTempFor5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) Gas Temp Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngGasTempDuringGoAround5MinRatingMax(unittest.TestCase):
 
     def setUp(self):
@@ -7178,11 +7321,37 @@ class TestEngGasTempDuringGoAround5MinRatingMax(unittest.TestCase):
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngGasTempFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngGasTempFor5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) Gas Temp Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngGasTempDuringMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngGasTempDuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) Gas Temp Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Airborne')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngGasTempFor5SecDuringMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngGasTempFor5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) Gas Temp Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7398,12 +7567,39 @@ class TestEngN1DuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSli
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngN1For5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN1For5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) N1 Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngN1DuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
         self.node_class = EngN1DuringGoAround5MinRatingMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Go Around 5 Min Rating')]
         self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngN1For5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN1For5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) N1 Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7415,6 +7611,19 @@ class TestEngN1MaximumContinuousPowerMax(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = EngN1DuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngN1For5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN1For5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) N1 Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7514,8 +7723,6 @@ class TestEngN1WithThrustReversersDeployedMax(unittest.TestCase, NodeTest):
         trd = EngN1WithThrustReversersDeployedMax()
         trd.get_derived((n1, tr, lands))
         self.assertAlmostEqual(trd[0].value, 66.0)
-
-
 
 
 class TestEngN1Below60PercentAfterTouchdownDuration(unittest.TestCase):
@@ -7666,6 +7873,19 @@ class TestEngN2DuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSli
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngN2For5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN2For5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) N2 Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngN2DuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -7678,11 +7898,37 @@ class TestEngN2DuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngN2For5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN2For5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) N2 Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngN2MaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngN2DuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) N2 Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngN2For5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN2For5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) N2 Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7751,6 +7997,19 @@ class TestEngN3DuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSli
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngN3For5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN3For5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) N3 Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngN3DuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -7763,11 +8022,37 @@ class TestEngN3DuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngN3For5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN3For5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) N3 Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngN3MaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngN3DuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) N3 Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngN3For5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngN3For5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) N3 Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -7825,6 +8110,19 @@ class TestEngNpDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSli
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngNpFor5SecDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngNpFor5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) Np Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngNpDuringClimbMin(unittest.TestCase, CreateKPVFromSlicesTest):
 
     def setUp(self):
@@ -7849,11 +8147,37 @@ class TestEngNpDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSl
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngNpFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngNpFor5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) Np Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngNpMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngNpDuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) Np Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngNpFor5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngNpFor5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) Np Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -8164,6 +8488,19 @@ class TestEngTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithi
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestEngFor5SecTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTorqueFor5SecDuringTakeoff5MinRatingMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
 class TestEngTorqueDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -8176,12 +8513,38 @@ class TestEngTorqueDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWith
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngTorqueFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTorqueFor5SecDuringGoAround5MinRatingMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Go Around 5 Min Rating')]
+        self.function = max_value
+        self.duration = 5
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngTorqueMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngTorqueDuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
         self.function = max_value
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngTorqueFor5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
+
+    def setUp(self):
+        self.node_class = EngTorqueFor5SecDuringMaximumContinuousPowerMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Maximum Continuous Power')]
+        self.function = max_value
+        self.duration = 5
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
