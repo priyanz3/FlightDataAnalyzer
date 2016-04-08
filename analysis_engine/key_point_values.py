@@ -7989,9 +7989,10 @@ class EngGasTempFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
                eng_egt_max=P('Eng (*) Gas Temp Max'),
                ratings=S('Takeoff 5 Min Rating')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_egt_max.array, eng_egt_max.frequency, 5),
-            ratings, max_value)
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngGasTempDuringGoAround5MinRatingMax(KeyPointValueNode):
@@ -8017,9 +8018,10 @@ class EngGasTempFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
                eng_egt_max=P('Eng (*) Gas Temp Max'),
                ratings=S('Go Around 5 Min Rating')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_egt_max.array, eng_egt_max.frequency, 5),
-            ratings, max_value)
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngGasTempDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8063,9 +8065,10 @@ class EngGasTempFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
                eng_egt_max=P('Eng (*) Gas Temp Max'),
                ratings=S('Maximum Continuous Power')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_egt_max.array, eng_egt_max.frequency, 5),
-            ratings, max_value)
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngGasTempDuringMaximumContinuousPowerForXMinMax(KeyPointValueNode):
