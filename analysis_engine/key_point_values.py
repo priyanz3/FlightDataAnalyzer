@@ -7553,6 +7553,22 @@ class EngEPRDuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_epr_max.array, ratings, max_value)
 
 
+class EngEPRFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng EPR For 5 Sec During Takeoff 5 Min Rating Max'
+    units = None
+
+    def derive(self,
+               eng_epr_max=P('Eng (*) EPR Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_epr_max.array, eng_epr_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngTPRDuringTakeoff5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -7565,6 +7581,22 @@ class EngTPRDuringTakeoff5MinRatingMax(KeyPointValueNode):
                ratings=S('Takeoff 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_tpr_limit.array, ratings, max_value)
+
+
+class EngTPRFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng TPR For 5 Sec During Takeoff 5 Min Rating Max'
+    units = None
+
+    def derive(self,
+               eng_tpr_limit=P('Eng TPR Limit Difference'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_tpr_limit.array, eng_tpr_limit.frequency, 5),
+            ratings, max_value)
 
 
 class EngEPRDuringGoAround5MinRatingMax(KeyPointValueNode):
@@ -7581,6 +7613,22 @@ class EngEPRDuringGoAround5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_epr_max.array, ratings, max_value)
 
 
+class EngEPRFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng EPR For 5 Sec During Go Around 5 Min Rating Max'
+    units = None
+
+    def derive(self,
+               eng_epr_max=P('Eng (*) EPR Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_epr_max.array, eng_epr_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngTPRDuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -7593,6 +7641,22 @@ class EngTPRDuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_tpr_limit.array, ratings, max_value)
+
+
+class EngTPRFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng TPR For 5 Sec During Go Around 5 Min Rating Max'
+    units = None
+
+    def derive(self,
+               eng_tpr_limit=P('Eng TPR Limit Difference'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_tpr_limit.array, eng_tpr_limit.frequency, 5),
+            ratings, max_value)
 
 
 class EngEPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -7612,6 +7676,22 @@ class EngEPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
         self.create_kpv_outside_slices(eng_epr_max.array, slices, max_value)
 
 
+class EngEPRFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng EPR For 5 Sec During Maximum Continuous Power Max'
+    units = None
+
+    def derive(self,
+               eng_epr_max=P('Eng (*) EPR Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_epr_max.array, eng_epr_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngTPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
     '''
     Originally coded for 787, but the event has been disabled since it lacks a
@@ -7629,6 +7709,24 @@ class EngTPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_tpr_max.array, slices, max_value)
+
+
+class EngTPRFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    Originally coded for 787, but the event has been disabled since it lacks a
+    limit.
+    '''
+
+    name = 'Eng TPR For 5 Sec During Maximum Continuous Power Max'
+    units = None
+
+    def derive(self,
+               eng_tpr_max=P('Eng (*) TPR Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_tpr_max.array, eng_tpr_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngEPR500To50FtMax(KeyPointValueNode):
@@ -7881,6 +7979,22 @@ class EngGasTempDuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_egt_max.array, ratings, max_value)
 
 
+class EngGasTempFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.CELSIUS
+
+    def derive(self,
+               eng_egt_max=P('Eng (*) Gas Temp Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
+
+
 class EngGasTempDuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -7892,6 +8006,22 @@ class EngGasTempDuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_egt_max.array, ratings, max_value)
+
+
+class EngGasTempFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.CELSIUS
+
+    def derive(self,
+               eng_egt_max=P('Eng (*) Gas Temp Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngGasTempDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -7923,6 +8053,22 @@ class EngGasTempDuringMaximumContinuousPowerMax(KeyPointValueNode):
             max_cont_rating,
             max_value,
         )
+
+
+class EngGasTempFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.CELSIUS
+
+    def derive(self,
+               eng_egt_max=P('Eng (*) Gas Temp Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        array = eng_egt_max.array
+        if eng_egt_max.frequency >= 1.0:
+            array = second_window(eng_egt_max.array, eng_egt_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngGasTempDuringMaximumContinuousPowerForXMinMax(KeyPointValueNode):
@@ -8299,6 +8445,22 @@ class EngN1DuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_n1_max.array, ratings, max_value)
 
 
+class EngN1For5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N1 For 5 Sec During Takeoff 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n1_max=P('Eng (*) N1 Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n1_max.array, eng_n1_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngN1DuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -8311,6 +8473,22 @@ class EngN1DuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_n1_max.array, ratings, max_value)
+
+
+class EngN1For5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N1 For 5 Sec During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n1_max=P('Eng (*) N1 Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n1_max.array, eng_n1_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN1DuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8328,6 +8506,22 @@ class EngN1DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_n1_max.array, slices, max_value)
+
+
+class EngN1For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N1 For 5 Sec During Maximum Continuous Power Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n1_max=P('Eng (*) N1 Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n1_max.array, eng_n1_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN1CyclesDuringFinalApproach(KeyPointValueNode):
@@ -8683,6 +8877,22 @@ class EngN2DuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_n2_max.array, ratings, max_value)
 
 
+class EngN2For5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N2 For 5 Sec During Takeoff 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n2_max=P('Eng (*) N2 Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n2_max.array, eng_n2_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngN2DuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -8695,6 +8905,22 @@ class EngN2DuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_n2_max.array, ratings, max_value)
+
+
+class EngN2For5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N2 For 5 Sec During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n2_max=P('Eng (*) N2 Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n2_max.array, eng_n2_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN2DuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8712,6 +8938,22 @@ class EngN2DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_n2_max.array, slices, max_value)
+
+
+class EngN2For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N2 For 5 Sec During Maximum Continuous Power Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n2_max=P('Eng (*) N2 Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n2_max.array, eng_n2_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN2CyclesDuringFinalApproach(KeyPointValueNode):
@@ -8794,6 +9036,22 @@ class EngN3DuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_n3_max.array, ratings, max_value)
 
 
+class EngN3For5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N3 For 5 Sec During Takeoff 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n3_max=P('Eng (*) N3 Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n3_max.array, eng_n3_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngN3DuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -8806,6 +9064,22 @@ class EngN3DuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_n3_max.array, ratings, max_value)
+
+
+class EngN3For5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N3 For 5 Sec During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n3_max=P('Eng (*) N3 Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n3_max.array, eng_n3_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN3DuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8823,6 +9097,22 @@ class EngN3DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_n3_max.array, slices, max_value)
+
+
+class EngN3For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N3 For 5 Sec During Maximum Continuous Power Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_n3_max=P('Eng (*) N3 Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_n3_max.array, eng_n3_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngN3ExceededN3RedlineDuration(KeyPointValueNode):
@@ -8900,6 +9190,22 @@ class EngNpDuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_np_max.array, ratings, max_value)
 
 
+class EngNpFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng Np For 5 Sec During Takeoff 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_np_max=P('Eng (*) Np Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_np_max.array, eng_np_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngNpDuringGoAround5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -8912,6 +9218,22 @@ class EngNpDuringGoAround5MinRatingMax(KeyPointValueNode):
                ratings=S('Go Around 5 Min Rating')):
 
         self.create_kpvs_within_slices(eng_np_max.array, ratings, max_value)
+
+
+class EngNpFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng Np For 5 Sec During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_np_max=P('Eng (*) Np Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_np_max.array, eng_np_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngNpDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8929,6 +9251,22 @@ class EngNpDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_np_max.array, slices, max_value)
+
+
+class EngNpFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng Np For 5 Sec During Maximum Continuous Power Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_np_max=P('Eng (*) Np Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_np_max.array, eng_np_max.frequency, 5),
+            ratings, max_value)
 
 
 ##############################################################################
@@ -9270,6 +9608,21 @@ class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
 
 
+class EngTorqueFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               ratings=S('Takeoff 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngTorque65KtsTo35FtMin(KeyPointValueNode):
     '''
     KPV designed in accordance with ATR72 FCOM
@@ -9307,6 +9660,22 @@ class EngTorqueDuringGoAround5MinRatingMax(KeyPointValueNode):
         self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
 
 
+class EngTorqueFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng Torque For 5 Sec During Go Around 5 Min Rating Max'
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               ratings=S('Go Around 5 Min Rating')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
+            ratings, max_value)
+
+
 class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
     '''
     '''
@@ -9321,6 +9690,21 @@ class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_trq_max.array, slices, max_value)
+
+
+class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               ratings=S('Maximum Continuous Power')):
+
+        self.create_kpvs_within_slices(
+            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
+            ratings, max_value)
 
 
 class EngTorque500To50FtMax(KeyPointValueNode):
