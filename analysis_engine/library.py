@@ -54,46 +54,6 @@ class IntegrationError(ValueError):
     pass
 
 
-def actuator_mismatch(ap, actuator, elevator, frequency):
-    '''
-    Computes the mismatch between a control surface and the driving actuator
-    during autopilot engaged phases of flight.
-
-    :param ap: autopilot engaged status, 1=engaged, 0=not engaged
-    :type ap: numpy masked array
-    :param actuator: actuator position, degrees actuator
-    :type actuator: numpy masked array
-    :param surf: control surface position, degrees surface movement
-    :type param: numpy masked array
-    :param scaling: ratio of surface movement to actuator movement
-    :type scaling: float
-    :param frequency: Frequency of parameters.
-    :type frequency: float
-
-    :returns mismatch: degrees of mismatch between actuator and surface positions
-    :type mismatch: numpy masked array.
-    '''
-    mismatch = np_ma_zeros_like(ap)
-    ap_engs = np.ma.clump_unmasked(np.ma.masked_equal(ap, 0))
-    for ap_eng in filter_slices_duration(ap_engs, 4, frequency):
-        # Allow the actuator 3 seconds to settle after engagement.
-        check = slice(ap_eng.start + (3 * frequency), ap_eng.stop)
-
-        # We compute a transient mismatch to avoid long term scaling errors.
-        mismatch[check] = first_order_washout(elevator[check] - actuator[check], 30.0,
-                                              1.0)
-
-    # Ensure error is always positive, and take moving average to smooth.
-    mismatch = moving_average(np.ma.abs(mismatch))
-    '''
-    # This plot shows how the fitted straight sections match the recorded data.
-    import matplotlib.pyplot as plt
-    plt.plot(mismatch)
-    plt.show()
-    '''
-    return mismatch
-
-
 def all_deps(cls, available):
     return all(x in available for x in cls.get_dependency_names())
 

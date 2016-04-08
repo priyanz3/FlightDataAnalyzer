@@ -17,8 +17,7 @@ from analysis_engine.node import (
     A, App, DerivedParameterNode, KPV, KTI, M, P, S,
     aeroplane, aeroplane_only, helicopter, helicopter_only)
 
-from analysis_engine.library import (actuator_mismatch,
-                                     air_track,
+from analysis_engine.library import (air_track,
                                      align,
                                      all_of,
                                      any_of,
@@ -6947,26 +6946,36 @@ class ElevatorActuatorMismatch(DerivedParameterNode):
     '''
     An incident focused attention on mismatch between the elevator actuator
     and surface. This parameter is designed to measure the mismatch which
-    should never be large, and from which we may be able to predict actuator
-    malfunctions.
+    should never be large, and from which we may be able to predict power
+    actuator malfunctions.
     '''
 
     units = ut.DEGREE
 
-    def derive(self, elevator=P('Elevator'),
-               ap=M('AP Engaged'),
-               fcc=M('FCC Local Limited Master'),
-               left=P('Elevator (L) Actuator'),
-               right=P('Elevator (R) Actuator')):
+    def derive(self, quadrant=P('Elevator Quadrant'),
+               elevator=P('Elevator'),
+               ):
 
-        scaling = 1/2.6 # 737 elevator specific at this time
-        actuator = np.ma.where(fcc.array.data == 2.0, left.array, right.array) * scaling
-        amm = actuator_mismatch(ap.array.raw,
-                                actuator,
-                                elevator.array,
-                                self.frequency)
+        difference = elevator.array - quadrant.array
+        # We compute a transient mismatch to avoid long term scaling errors.
+        mismatch = first_order_washout(difference,
+                                       30.0,
+                                       quadrant.frequency,
+                                       initial_value=difference[0])
 
-        self.array = amm
+        # Ensure error is always positive, and take moving average to smooth.
+        mismatch = moving_average(np.ma.abs(mismatch),
+                                  window=21)
+
+        '''
+        # This plot shows how the fitted straight sections match the recorded data.
+        import matplotlib.pyplot as plt
+        plt.plot(mismatch)
+        plt.plot(difference)
+        plt.show()
+        '''
+
+        self.array = mismatch
 
 
 ##############################################################################
