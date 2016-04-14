@@ -412,12 +412,19 @@ class LandingRunway(FlightAttributeNode):
                 if ils_freq:
                     kwargs.update(ils_freq=ils_freq.value)
 
+            '''
+            Original comment:
             # We only provide coordinates when looking up a landing runway if
             # the recording of latitude and longitude on the aircraft is
             # precise. Inertial recordings are too inaccurate to pinpoint the
             # correct runway and we use ILS frequencies if possible to get a
             # more exact match.
-            if precise and landing and land_lat and land_lon:
+
+            Revised comment:
+            In the absence of an ILS frequency, the recorded latitude and longitude
+            is better than nothing and reduces the chance of identifying the wrong runway.
+            '''
+            if (precise or not ils_freq_on_app) and landing and land_lat and land_lon:
                 lat = land_lat.get_last(within_slice=landing.slice)
                 lon = land_lon.get_last(within_slice=landing.slice)
                 if lat and lon:
