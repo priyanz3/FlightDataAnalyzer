@@ -6941,43 +6941,6 @@ class TrackDeviationFromRunway(DerivedParameterNode):
                 self._track_deviation(track.array, _slice, app.runway, magnetic)
 
 
-
-class ElevatorActuatorMismatch(DerivedParameterNode):
-    '''
-    An incident focused attention on mismatch between the elevator actuator
-    and surface. This parameter is designed to measure the mismatch which
-    should never be large, and from which we may be able to predict power
-    actuator malfunctions.
-    '''
-
-    units = ut.DEGREE
-
-    def derive(self, quadrant=P('Elevator Quadrant'),
-               elevator=P('Elevator'),
-               ):
-
-        difference = elevator.array - quadrant.array
-        # We compute a transient mismatch to avoid long term scaling errors.
-        mismatch = first_order_washout(difference,
-                                       30.0,
-                                       quadrant.frequency,
-                                       initial_value=difference[0])
-
-        # Ensure error is always positive, and take moving average to smooth.
-        mismatch = moving_average(np.ma.abs(mismatch),
-                                  window=21)
-
-        '''
-        # This plot shows how the fitted straight sections match the recorded data.
-        import matplotlib.pyplot as plt
-        plt.plot(mismatch)
-        plt.plot(difference)
-        plt.show()
-        '''
-
-        self.array = mismatch
-
-
 ##############################################################################
 # Velocity Speeds
 
