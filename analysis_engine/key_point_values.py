@@ -9624,9 +9624,10 @@ class EngTorqueFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
                eng_trq_max=P('Eng (*) Torque Max'),
                ratings=S('Takeoff 5 Min Rating')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
-            ratings, max_value)
+        array = eng_trq_max.array
+        if eng_trq_max.frequency >= 1.0:
+            array = second_window(eng_trq_max.array, eng_trq_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngTorque65KtsTo35FtMin(KeyPointValueNode):
@@ -9677,9 +9678,10 @@ class EngTorqueFor5SecDuringGoAround5MinRatingMax(KeyPointValueNode):
                eng_trq_max=P('Eng (*) Torque Max'),
                ratings=S('Go Around 5 Min Rating')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
-            ratings, max_value)
+        array = eng_trq_max.array
+        if eng_trq_max.frequency >= 1.0:
+            array = second_window(eng_trq_max.array, eng_trq_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -9708,9 +9710,10 @@ class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
                eng_trq_max=P('Eng (*) Torque Max'),
                ratings=S('Maximum Continuous Power')):
 
-        self.create_kpvs_within_slices(
-            second_window(eng_trq_max.array, eng_trq_max.frequency, 5),
-            ratings, max_value)
+        array = eng_trq_max.array
+        if eng_trq_max.frequency >= 1.0:
+            array = second_window(eng_trq_max.array, eng_trq_max.frequency, 5, extend_window=True)
+        self.create_kpvs_within_slices(array, ratings, max_value)
 
 
 class EngTorque500To50FtMax(KeyPointValueNode):
