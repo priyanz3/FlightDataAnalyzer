@@ -67,7 +67,8 @@ class BottomOfDescent(KeyTimeInstanceNode):
     def derive(self, ccd=S('Climb Cruise Descent')):
         for ccd_phase in ccd:
             end = ccd_phase.slice.stop
-            self.create_kti(end)
+            if end:
+                self.create_kti(end)
 
 
 # TODO: Determine an altitude peak per climb.

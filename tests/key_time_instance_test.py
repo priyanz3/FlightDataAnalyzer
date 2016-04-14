@@ -162,6 +162,13 @@ class TestBottomOfDescent(unittest.TestCase):
         expected = [KeyTimeInstance(index=2001, name='Bottom Of Descent')]
         self.assertEqual(bod, expected)
 
+    def test_bod_end_none(self):
+        ccds = buildsection('Climb Cruise Descent', 897, None)
+        bod = BottomOfDescent()
+        bod.derive(ccds)
+        expected = []
+        self.assertEqual(bod, expected)
+
 
 class TestClimbStart(unittest.TestCase):
     def test_can_operate(self):
@@ -1340,7 +1347,7 @@ class TestFlapLeverSet(unittest.TestCase, NodeTest):
     def test_derive_basic(self):
         name = self.node_class.get_name()
         node = self.node_class()
-        
+
         node.derive(self.flap_lever, None)
         self.assertEqual(node, KTI(name=name, items=[
             KeyTimeInstance(index=10.5, name='Flap 0 Set'),
@@ -1640,7 +1647,7 @@ class TestGearUpSelection(unittest.TestCase, NodeTest):
         node = GearUpSelection()
         node.derive(self.gear_up_sel, self.airborne, go_arounds)
         self.assertEqual(node, [])
-    
+
     def test_low_hz(self):
         '''
         Gear Up Selection was not being triggered due to using
