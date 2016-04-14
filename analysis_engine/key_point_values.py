@@ -1479,6 +1479,29 @@ class AirspeedMinsToTouchdown(KeyPointValueNode):
             self.create_kpv(mtt.index, air_spd.array[mtt.index], time=time)
 
 
+class AirspeedNMToThreshold(KeyPointValueNode):
+    '''
+    Airspeed at distances to Threshold
+    '''
+
+    # TODO: Review and improve this technique of building KPVs on KTIs.
+    from analysis_engine.key_time_instances import DistanceFromThreshold
+
+    NAME_FORMAT = 'Airspeed ' + DistanceFromThreshold.NAME_FORMAT
+    NAME_VALUES = DistanceFromThreshold.NAME_VALUES
+    units = ut.KT
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               dtt_kti=KTI('Distance From Threshold')):
+
+        for dtt in dtt_kti:
+            # XXX: Assumes that the number will be the first part of the name:
+            distance = int(dtt.name.split(' ')[0])
+            self.create_kpv(dtt.index, air_spd.array[dtt.index], distance=distance)
+
+
+
 class AirspeedAtAPGoAroundEngaged(KeyPointValueNode):
     '''
     '''
