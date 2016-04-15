@@ -12841,9 +12841,9 @@ class RollAtLowAltitude(KeyPointValueNode):
     def derive(self,
                roll=P('Roll'),
                alt_rad=P('Altitude Radio'),
-               dlcs=KTI('Descent Low Climb')):
+               dlcs=S('Descent Low Climb')):
 
-        ten_pc = 10.0 / 100.0
+        ten_pc = 0.1
 
         for dlc in dlcs:
             # Trim this to 600ft
