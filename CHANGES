@@ -8,6 +8,86 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.25.1
+-------
+
+ - Merge helicopter profile into main source code
+ - Replace httplib2 with requests
+ - Updates to support latest versions of networkx
+ - Engine KPV/Phases:
+   - Updated Engine 5 minute rating for Prop aircraft to look for end of takeoff
+   - New phase for MCP
+   - Added Takeoff Rating Duration(KPV)
+   - added eng * over threshold duration kpvs
+   - Added Eng param 5 sec max during rating kpvs
+ - Heading Deviation During Takeoff:
+   - reworked following experience with original algorithm and further advice from UK CAA.
+   - renamed HeadingDeviationFromRunwayAbove80KtsAirspeedDuringTakeoff -> HeadingVariationAbove80ktsAirspeedDuringTakeoff
+   - Handle nose gear not working correctly
+   - fallback to mag heading if true not available
+   - Handle the case when pitch changes before 80kts
+ - Splitting:
+   - Airborne: do not break early if no alt change
+   - Transient dips below 80kts not relevant to flight splitting, so filtered out
+   - Revision to _get_normalised_split_params as we should normalise each parameter separately
+   - ignore inconsistent airspeed
+
+ - Added:
+   - Derived: Collective
+   - Derived: Slope angle to aiming point
+   - Derived: Groundspeed Signed (for negative groundspeeds when being pushed back)
+   - Multistate: Eng Bleed Open
+   - KPV: Heights at distances on approach.
+   - KPV: Boeing 787 fuel imbalance
+   - KPV: Jetstream 41 Test for duration of propellor operation between 72% and 80% Np.
+   - KPV: ElevatorPreflightCheck
+   - KPV: AileronPreflightCheck
+   - KPV: RudderPreflightCheck
+   - KPV: FlightControlPreflightCheck
+   - Libary: slices_split
+   - Libary: slices_remove_overlaps
+ - Removed:
+   - KPV: SpeedbrakeDeployedWithConfDuration
+   - KPV: AccelerationLateral5secs - B787 frames only
+   - Libary: Moved Library.is_day() to Flight Data Utilities
+ - Improvements:
+   - Derived: Vert Spd Inertial - modified to not enforce zero rates of descent outside climbs and descents (Helicopters)
+   - KTI: Touchdown: peroid of interest start at 5ft before touchdown if Alt Rad
+   - KTI: Touchdown: touchdown point is earliest of calculated and GOG index
+   - KPV: Hdg Var Tdown +4Sec To 60Kts Airspeed - now uses Airspeed True
+   - KPV: Hdg Var Tdown +4Sec To 60Kts Airspeed - allow for different timing offset in touchdown KTI and heading array
+   - Libary: Haversine formula - adapt to support numpy arrays
+   - Multi: Speedbrake Deployed requires left and right spoiler deployed to indicate speedbrake
+   - Multi: AP Vertiacl Mode added additional long mode states
+   - Node: multistate parameters supported in create_kpvs_at_ktis
+   - Phase: airborne phase for helicopters
+   - Utils: list_parameters - Exclude AFR attrs
+ - Fixes:
+   - Attribute: DestinationAirport - fix '0000' airport code
+   - Attribute: Runway identification for aircraft with recorded latitude, longitude, ILS 
+                glideslope and ILS localizer but N|OT ILS frequency amended to use position data.
+   - Derived: removing spikes in the tailwind values at touchdown
+   - KPV: Rate of Descent Below 80 Kts revised to provide correct indexes
+   - KPV: GW Conditional @ tdown - ROD are negative values
+   - KPV: TCAS moved Preventive from TA to RA
+   - KPV: DecelerationFromTouchdownToStopOnRunway - Trap for invalid groundspeed
+   - KPV: Roll Rate Max corrected to report peaks only once
+   - KPV: Suppression of roll rates below 5deg/sec as too small to be significant (and just results in huge number of KPVs)
+   - KPV: heading var > 80kts - index as is relative to 80kts not start of takeoff
+   - KPV: heading var > 80kts - changed datum to use median from start of valid airspeed to 80kts to
+          remove invalids where aircraft stationary off centre before correcting before 80kts airspeed
+   - Multi: Combine TCAS RA 1&2 into one multistate
+   - Phase: Mobile - Support mobile from start of data
+   - Phase: Taxiing - can_operate Rejected Takeoff required
+   - Phase: TaxiOut - handle no taxi (data starts on runway)
+   - Phase: Bottom of Descent - case of None end of section handled
+   - Phase: Landing: use mobile end instead of the remainder of the array in cases where 
+            the aircraft doesn't turn off the runway before engine stop.
+   - Phase: Taxi In: fix creating invalid slice when engines start late (engine-less taxi?)
+   - Phase: Taxi Out: fix crashing invalid slice when engines stop early (engine-less taxi?)
+
+Plus various other small fixes and test improvements.
+
 v0.24.5
 -------
  - Fixes:
