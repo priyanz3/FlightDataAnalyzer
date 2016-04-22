@@ -8828,9 +8828,9 @@ class EngNp72To80PercentDurationMax(KeyPointValueNode):
     def can_operate(cls, available, ac_series=A('Series'),
                        ):
         ac_concerned = ac_series and ac_series.value == 'Jetstream 41'
-        return (('Eng (1) NP', 'Eng (2) NP'), available) and ac_concerned
+        return all_of(('Eng (1) Np', 'Eng (2) Np'), available) and ac_concerned
 
-    def derive(self, eng1_np=P('Eng (1) NP'), eng2_np=P('Eng (2) NP')):
+    def derive(self, eng1_np=P('Eng (1) Np'), eng2_np=P('Eng (2) Np')):
 
         eng_np_list = (eng1_np, eng2_np)
         for eng_num, eng_np in enumerate(eng_np_list, 1):

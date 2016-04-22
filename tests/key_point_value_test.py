@@ -8191,7 +8191,7 @@ class TestEngNp72To80PercentDurationMax(unittest.TestCase):
 
     def test_can_operate(self):
         ac_series = A(name='Series', value='Jetstream 41')
-        expected = [('Eng (1) NP', 'Eng (2) NP'),]
+        expected = [('Eng (1) Np', 'Eng (2) Np'),]
         for combination in expected:
             self.assertTrue(self.node_class().can_operate(combination, ac_series))
         ac_series.value = 'Jetstream'
@@ -8199,7 +8199,7 @@ class TestEngNp72To80PercentDurationMax(unittest.TestCase):
             self.assertFalse(self.node_class().can_operate(combination, ac_series))
 
     def test_derive(self):
-        eng_1 = P(name='Eng (1) NP', array=np.ma.array(range(70,82)))
+        eng_1 = P(name='Eng (1) Np', array=np.ma.array(range(70,82)))
         node = self.node_class()
         node.derive(eng_1, eng_1) # Intentional duplication of data
 
