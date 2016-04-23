@@ -1735,13 +1735,13 @@ class MinsToTouchdown(KeyTimeInstanceNode):
     NAME_FORMAT = "%(time)d Mins To Touchdown"
     NAME_VALUES = {'time': [5, 4, 3, 2, 1]}
 
-    def derive(self, touchdowns=KTI('Touchdown')):
-        #Q: is it sensible to create KTIs that overlap with a previous touchdown?
+    def derive(self, touchdowns=KTI('Touchdown'),
+               liftoffs=KTI('Liftoff')):
         for touchdown in touchdowns:
             for t in self.NAME_VALUES['time']:
                 index = touchdown.index - (t * 60 * self.frequency)
-                if index > 0:
-                    # May happen when data starts mid-flight.
+                # Make sure the aircraft was airborne at that time.
+                if index > liftoffs.get_previous(touchdown.index).index:
                     self.create_kti(index, time=t)
 
 
@@ -1750,12 +1750,13 @@ class SecsToTouchdown(KeyTimeInstanceNode):
     NAME_FORMAT = "%(time)d Secs To Touchdown"
     NAME_VALUES = {'time': [90, 30]}
 
-    def derive(self, touchdowns=KTI('Touchdown')):
-        #Q: is it sensible to create KTIs that overlap with a previous touchdown?
+    def derive(self, touchdowns=KTI('Touchdown'),
+               liftoffs=KTI('Liftoff')):
         for touchdown in touchdowns:
             for t in self.NAME_VALUES['time']:
                 index = touchdown.index - (t * self.frequency)
-                if index >= 0:
+                # Make sure the aircraft was airborne at that time.
+                if index > liftoffs.get_previous(touchdown.index).index:
                     self.create_kti(index, time=t)
 
 

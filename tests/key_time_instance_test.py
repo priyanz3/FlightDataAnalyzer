@@ -1761,15 +1761,16 @@ class TestLowestAltitudeDuringApproach(unittest.TestCase, NodeTest):
 
 class TestMinsToTouchdown(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('Touchdown',)]
+        expected = [('Touchdown', 'Liftoff')]
         self.assertEqual(
             expected,
             MinsToTouchdown.get_operational_combinations())
 
     def test_derive(self):
         td = [KeyTimeInstance(index=500, name='Touchdown')]
+        lo = KTI('Liftoff', items=[KeyTimeInstance(10, 'Liftoff')])
         sttd = MinsToTouchdown()
-        sttd.derive(td)
+        sttd.derive(td, lo)
         self.assertEqual(
             sttd,
             [
@@ -1781,18 +1782,26 @@ class TestMinsToTouchdown(unittest.TestCase):
             ]
         )
 
+    def test_overlap(self):
+        td = [KeyTimeInstance(index=500, name='Touchdown')]
+        lo = KTI('Liftoff', items=[KeyTimeInstance(300, 'Liftoff')])
+        sttd = MinsToTouchdown()
+        sttd.derive(td, lo)
+        self.assertEqual(len(sttd), 3)
+
 
 class TestSecsToTouchdown(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('Touchdown',)]
+        expected = [('Touchdown', 'Liftoff')]
         self.assertEqual(
             expected,
             SecsToTouchdown.get_operational_combinations())
 
     def test_derive(self):
         td = [KeyTimeInstance(index=100, name='Touchdown')]
+        lo = KTI('Liftoff', items=[KeyTimeInstance(1, 'Liftoff')])
         sttd = SecsToTouchdown()
-        sttd.derive(td)
+        sttd.derive(td, lo)
         self.assertEqual(
             sttd,
             [
@@ -1800,6 +1809,13 @@ class TestSecsToTouchdown(unittest.TestCase):
                 KeyTimeInstance(index=70, name='30 Secs To Touchdown'),
             ]
         )
+
+    def test_overlap(self):
+        td = [KeyTimeInstance(index=100, name='Touchdown')]
+        lo = KTI('Liftoff', items=[KeyTimeInstance(30, 'Liftoff')])
+        sttd = SecsToTouchdown()
+        sttd.derive(td, lo)
+        self.assertEqual(len(sttd), 1)
 
 
 class TestDistanceFromThreshold(unittest.TestCase):
