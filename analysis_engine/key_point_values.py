@@ -10057,9 +10057,10 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     '''
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
         heading = any_of(('Heading True Continuous', 'Heading Continuous'), available)
-        return heading and all_of(('Airspeed', 'Pitch Rate', 'Takeoff'), available)
+        aeroplane = A('Aircraft Type', 'aeroplane')
+        return aeroplane and heading and all_of(('Airspeed', 'Pitch Rate', 'Takeoff'), available)
 
     units = ut.DEGREE
 
@@ -10130,6 +10131,8 @@ class HeadingDeviationFromRunwayAtTOGADuringTakeoff(KeyPointValueNode):
     name = 'Heading Deviation From Runway At TOGA During Takeoff'
     units = ut.DEGREE
 
+    can_operate = aeroplane_only
+
     def derive(self,
                toga=M('Takeoff And Go Around'),
                head=P('Heading True Continuous'),
@@ -10159,6 +10162,8 @@ class HeadingDeviationFromRunwayAt50FtDuringLanding(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    can_operate = aeroplane_only
+
     def derive(self,
                head=P('Heading True Continuous'),
                landings=S('Landing'),
@@ -10181,6 +10186,8 @@ class HeadingDeviationFromRunwayDuringLandingRoll(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
+
+    can_operate = aeroplane_only
 
     def derive(self,
                head=P('Heading True Continuous'),
@@ -10255,6 +10262,8 @@ class HeadingVariationAbove100KtsAirspeedDuringLanding(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    can_operate = aeroplane_only
+
     def derive(self,
                head=P('Heading Continuous'),
                airspeed=P('Airspeed'),
@@ -10286,6 +10295,8 @@ class HeadingVariationTouchdownPlus4SecTo60KtsAirspeed(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
+
+    can_operate = aeroplane_only
 
     def derive(self,
                head=P('Heading Continuous'),
