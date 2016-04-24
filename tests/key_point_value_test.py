@@ -9438,6 +9438,7 @@ class TestHeadingDeviationFromRunwayAtTOGADuringTakeoff(unittest.TestCase, NodeT
 
     def setUp(self):
         self.node_class = HeadingDeviationFromRunwayAtTOGADuringTakeoff
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [(
             'Takeoff And Go Around',
             'Heading True Continuous',
@@ -9454,6 +9455,7 @@ class TestHeadingDeviationFromRunwayAt50FtDuringLanding(unittest.TestCase, NodeT
 
     def setUp(self):
         self.node_class = HeadingDeviationFromRunwayAt50FtDuringLanding
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [(
             'Heading True Continuous',
             'Landing',
@@ -9469,6 +9471,7 @@ class TestHeadingDeviationFromRunwayDuringLandingRoll(unittest.TestCase, NodeTes
 
     def setUp(self):
         self.node_class = HeadingDeviationFromRunwayDuringLandingRoll
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [(
             'Heading True Continuous',
             'Landing Roll',
@@ -9515,6 +9518,7 @@ class TestHeadingVariationAbove100KtsAirspeedDuringLanding(unittest.TestCase, No
 
     def setUp(self):
         self.node_class = HeadingVariationAbove100KtsAirspeedDuringLanding
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [(
             'Heading Continuous',
             'Airspeed',
@@ -9531,6 +9535,7 @@ class TestHeadingVariationTouchdownPlus4SecTo60KtsAirspeed(unittest.TestCase, No
 
     def setUp(self):
         self.node_class = HeadingVariationTouchdownPlus4SecTo60KtsAirspeed
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [('Heading Continuous', 'Airspeed True', 'Touchdown')]
 
     def test_derive(self):
