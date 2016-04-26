@@ -1536,7 +1536,6 @@ class AOA(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(('AOA (L)', 'AOA (R)'), available)
 
     def derive(self, aoa_l=P('AOA (L)'), aoa_r=P('AOA (R)'),
@@ -1586,11 +1585,7 @@ class ControlColumnCapt(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
-        return any_of((
-            'Control Column (Capt) Potentiometer',
-            'Control Column (Capt) Synchro',
-        ), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                pot=P('Control Column (Capt) Potentiometer'),
@@ -1618,11 +1613,7 @@ class ControlColumnFO(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
-        return any_of((
-            'Control Column (FO) Potentiometer',
-            'Control Column (FO) Synchro',
-        ), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                pot=P('Control Column (FO) Potentiometer'),
@@ -5644,6 +5635,49 @@ class Rudder(DerivedParameterNode):
                                       frequency=self.frequency)
 
 
+class RudderPedalCapt(DerivedParameterNode):
+    '''
+    '''
+    
+    name = 'Rudder Pedal (Capt)'
+    units = ut.DEGREE  # FIXME: Or should this be ut.PERCENT?
+    
+
+    @classmethod
+    def can_operate(cls, available):
+        return any_of((
+            'Rudder Pedal (Capt) (1)',
+            'Rudder Pedal (Capt) (2)',
+        ), available)
+
+    def derive(self, rudder_pedal_capt_1=P('Rudder Pedal (Capt) (1)'),
+               rudder_pedal_capt_2=P('Rudder Pedal (Capt) (2)')):
+
+        self.array, self.frequency, self.offset = \
+            blend_two_parameters(rudder_pedal_capt_1, rudder_pedal_capt_2)
+
+
+class RudderPedalFO(DerivedParameterNode):
+    '''
+    '''
+    
+    name = 'Rudder Pedal (FO)'
+    units = ut.DEGREE  # FIXME: Or should this be ut.PERCENT?
+
+    @classmethod
+    def can_operate(cls, available):
+        return any_of((
+            'Rudder Pedal (FO) (1)',
+            'Rudder Pedal (FO) (2)',
+        ), available)
+
+    def derive(self, rudder_pedal_fo_1=P('Rudder Pedal (FO) (1)'),
+               rudder_pedal_fo_2=P('Rudder Pedal (FO) (2)')):
+
+        self.array, self.frequency, self.offset = \
+            blend_two_parameters(rudder_pedal_fo_1, rudder_pedal_fo_2)
+
+
 class RudderPedal(DerivedParameterNode):
     '''
     '''
@@ -5654,20 +5688,20 @@ class RudderPedal(DerivedParameterNode):
     def can_operate(cls, available):
 
         return any_of((
-            'Rudder Pedal (L)',
-            'Rudder Pedal (R)',
+            'Rudder Pedal (Capt)',
+            'Rudder Pedal (FO)',
             'Rudder Pedal Potentiometer',
             'Rudder Pedal Synchro',
         ), available)
 
-    def derive(self, rudder_pedal_l=P('Rudder Pedal (L)'),
-               rudder_pedal_r=P('Rudder Pedal (R)'),
+    def derive(self, rudder_pedal_capt=P('Rudder Pedal (Capt)'),
+               rudder_pedal_fo=P('Rudder Pedal (FO)'),
                pot=P('Rudder Pedal Potentiometer'),
                synchro=P('Rudder Pedal Synchro')):
 
-        if rudder_pedal_l or rudder_pedal_r:
+        if rudder_pedal_capt or rudder_pedal_fo:
             self.array, self.frequency, self.offset = \
-                blend_two_parameters(rudder_pedal_l, rudder_pedal_r)
+                blend_two_parameters(rudder_pedal_capt, rudder_pedal_fo)
 
         synchro_samples = 0
 

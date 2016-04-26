@@ -395,12 +395,7 @@ class EngStart(KeyTimeInstanceNode):
 
     @classmethod
     def can_operate(cls, available):
-        return (
-            any_of(('Eng (%d) N1' % n for n in range(1, 5)), available) or
-            any_of(('Eng (%d) N2' % n for n in range(1, 5)), available) or
-            any_of(('Eng (%d) N3' % n for n in range(1, 5)), available) or
-            any_of(('Eng (%d) Ng' % n for n in range(1, 5)), available)
-        )
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
                eng_1_n1=P('Eng (1) N1'),
