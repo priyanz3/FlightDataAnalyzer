@@ -177,7 +177,7 @@ class DestinationAirport(FlightAttributeNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(['Destination', 'AFR Destination Airport'], available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, dest=P('Destination'),
                afr_dest=A('AFR Destination Airport')):

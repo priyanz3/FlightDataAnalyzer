@@ -285,7 +285,7 @@ class APUOn(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('APU (1) On', 'APU (2) On'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, apu_1=M('APU (1) On'), apu_2=M('APU (2) On')):
         self.array = vstack_params_where_state(
@@ -306,9 +306,7 @@ class APURunning(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('APU N1',
-                       'APU Generator AC Voltage',
-                       'APU Bleed Valve Open'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, apu_n1=P('APU N1'),
                apu_voltage=P('APU Generator AC Voltage'),
@@ -1242,8 +1240,7 @@ class FuelQty_Low(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Fuel Qty Low', 'Fuel Qty (L) Low', 'Fuel Qty (R) Low'),
-                      available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, fqty=M('Fuel Qty Low'),
                fqty1=M('Fuel Qty (L) Low'),
@@ -1644,9 +1641,7 @@ class KeyVHFCapt(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Key VHF (1) (Capt)',
-                       'Key VHF (2) (Capt)',
-                       'Key VHF (3) (Capt)'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, key_vhf_1=M('Key VHF (1) (Capt)'),
                key_vhf_2=M('Key VHF (2) (Capt)'),
@@ -1665,9 +1660,7 @@ class KeyVHFFO(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Key VHF (1) (FO)',
-                       'Key VHF (2) (FO)',
-                       'Key VHF (3) (FO)'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, key_vhf_1=M('Key VHF (1) (FO)'),
                key_vhf_2=M('Key VHF (2) (FO)'),
@@ -2124,7 +2117,7 @@ class StickPusher(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Stick Pusher (L)', 'Stick Pusher (R)'), available)
+        return any_of(cls.get_dependency_names(), available)
 
     def derive(self, spl=M('Stick Pusher (L)'),
                spr=M('Stick Pusher (R)')):
@@ -2167,8 +2160,7 @@ class StickShaker(MultistateDerivedParameterNode):
                ss2=M('Stick Shaker (2)'),
                ss3=M('Stick Shaker (3)'),
                ss4=M('Stick Shaker (4)'),
-               frame=A('Frame'),
-               ):
+               frame=A('Frame')):
 
         if frame and frame.value == 'B777':
             #Provision has been included for Boeing 777 type, but until this has been
