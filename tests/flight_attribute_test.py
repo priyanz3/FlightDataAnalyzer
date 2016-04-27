@@ -777,14 +777,14 @@ class TestLandingRunway(unittest.TestCase, NodeTest):
 
     @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
     def test_derive_afr_fallback(self, get_nearest_runway):
-        info = {'ident': '09L'}
+        info = {'identifier': '09L'}
         def runway_side_effect(apt, hdg, *args, **kwargs):
             if hdg == 90.0:
                 return info
             raise NotFoundError('No runway found.')
         get_nearest_runway.side_effect = runway_side_effect
         fdr_apt = A(name='FDR Landing Airport', value={'id': 50})
-        afr_rwy = A(name='AFR Landing Runway', value={'ident': '27R'})
+        afr_rwy = A(name='AFR Landing Runway', value={'identifier': '27R'})
         hdg_a = KPV(name='Heading During Landing', items=[
             KeyPointValue(index=1, value=360.0),
             KeyPointValue(index=2, value=270.0),
@@ -1132,7 +1132,7 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
 
     @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
     def test_derive(self, get_nearest_runway):
-        info = {'ident': '27L', 'length': 20}
+        info = {'identifier': '27L', 'length': 20}
         get_nearest_runway.return_value = info
         fdr_apt = A(name='FDR Takeoff Airport', value={'id': 25})
         afr_apt = None
@@ -1176,14 +1176,14 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
 
     @patch('analysis_engine.api_handler_analysis_engine.AnalysisEngineAPIHandlerLocal.get_nearest_runway')
     def test_derive_afr_fallback(self, get_nearest_runway):
-        info = {'ident': '09L'}
+        info = {'identifier': '09L'}
         def runway_side_effect(apt, hdg, *args, **kwargs):
             if hdg == 90.0:
                 return info
             raise NotFoundError('No runway found.')
         get_nearest_runway.side_effect = runway_side_effect
         fdr_apt = A(name='FDR Takeoff Airport', value={'id': 50})
-        afr_rwy = A(name='AFR Takeoff Runway', value={'ident': '27R'})
+        afr_rwy = A(name='AFR Takeoff Runway', value={'identifier': '27R'})
         hdg_a = KPV(name='Heading During Takeoff', items=[
             KeyPointValue(index=1, value=270.0),
             KeyPointValue(index=2, value=360.0),
