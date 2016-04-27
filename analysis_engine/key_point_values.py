@@ -52,6 +52,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      cycle_counter,
                                      cycle_finder,
                                      cycle_select,
+                                     distance_between_coordinates,
                                      find_edges,
                                      find_edges_on_state_change,
                                      first_valid_parameter,
@@ -5192,6 +5193,55 @@ class FlightControlPreflightCheck(KeyPointValueNode):
             value = elevator_value + aileron_value + rudder_value
 
             self.create_kpv(index, value)
+
+
+##############################################################################
+# Distances: Flight
+
+class GreatCircleDistance(KeyPointValueNode):
+    '''
+
+    '''
+
+    units = ut.NM
+
+    @classmethod
+    def can_operate(cls, available):
+        toff = all_of(('Latitude Smoothed At Liftoff', 'Longitude Smoothed At Liftoff'), available) \
+            or 'FDR Takeoff Airport' in available
+        ldg = all_of(('Latitude Smoothed At Touchdown', 'Longitude Smoothed At Touchdown'), available) \
+            or 'FDR Landing Airport' in available
+        return toff and ldg and 'Touchdown' in available
+
+    def derive(self,
+               lat_lift=KPV('Latitude Smoothed At Liftoff'),
+               lon_lift=KPV('Longitude Smoothed At Liftoff'),
+               toff_airport=A('FDR Takeoff Airport'),
+               lat_tdwn=KPV('Latitude Smoothed At Touchdown'),
+               lon_tdwn=KPV('Longitude Smoothed At Touchdown'),
+               ldg_airport=A('FDR Landing Airport'),
+               tdwn=KTI('Touchdown')):
+
+        toff_lat = toff_lon = ldg_lat = ldg_lon = None
+
+        if toff_airport:
+            toff_lat = toff_airport.value.get('latitude')
+            toff_lon = toff_airport.value.get('longitude')
+        if not toff_lat or not toff_lon:
+            toff_lat = lat_lift.get_first().value
+            toff_lon = lon_lift.get_first().value
+        if ldg_airport:
+            ldg_lat = ldg_airport.value.get('latitude')
+            ldg_lon = ldg_airport.value.get('longitude')
+        if not ldg_lat or not ldg_lon:
+            ldg_lat = lat_tdwn.get_last().value
+            ldg_lon = lon_tdwn.get_last().value
+
+        if tdwn:
+            value = distance_between_coordinates(toff_lat, toff_lon, ldg_lat, ldg_lon)
+            index = tdwn.get_last().index
+            if value:
+                self.create_kpv(index, value)
 
 
 ##############################################################################

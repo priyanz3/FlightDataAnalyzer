@@ -350,6 +350,7 @@ from analysis_engine.key_point_values import (
     FuelQtyWingDifferenceMax,
     FuelQtyWingDifference787Max,
     GearDownToLandingFlapConfigurationDuration,
+    GreatCircleDistance,
     GrossWeightAtLiftoff,
     GrossWeightAtTouchdown,
     GrossWeightConditionalAtTouchdown,
@@ -6342,6 +6343,76 @@ class TestDecelerationFromTouchdownToStopOnRunway(unittest.TestCase, NodeTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+##############################################################################
+# Distances: Flight
+
+
+class TestGreatCircleDistance(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GreatCircleDistance
+        self.takeoff_airport = A('FDR Takeoff Airport',
+                                 {"magnetic_variation":"W 01.0",
+                                  "code":{"icao":"EGLL","iata":"LHR"},
+                                  "elevation":83,
+                                  "name":"London Heathrow",
+                                  "longitude":-0.4613889999999927,
+                                  "location":{"city":"London","country":"United Kingdom"},
+                                  "latitude":51.47749999999999,
+                                  "id":2383})
+        self.landing_airport = A('FDR Landing Airport',
+                                 {"magnetic_variation":"13 W",
+                                  "code":{"icao":"KJFK","iata":"JFK","faa":"JFK"},
+                                  "elevation":13,
+                                  "name":"John F Kennedy Intl",
+                                  "longitude":-73.7789,
+                                  "location":{"city":"New York","country":"United States"},
+                                  "latitude":40.63979999999999,
+                                  "id":2794})
+        self.touchdown = KTI('Touchdown', items=[KeyTimeInstance(200, 'Touchdown')])
+
+    def test_can_operate(self):
+        self.assertTrue(self.node_class.can_operate(('FDR Takeoff Airport', 'FDR Landing Airport', 'Touchdown')))
+        self.assertTrue(self.node_class.can_operate(('Latitude Smoothed At Liftoff',
+                                                    'Longitude Smoothed At Liftoff',
+                                                    'Latitude Smoothed At Touchdown',
+                                                    'Longitude Smoothed At Touchdown',
+                                                    'Touchdown')))
+
+        self.assertTrue(self.node_class.can_operate(('FDR Takeoff Airport', 'FDR Landing Airport', 'Touchdown')))
+        self.assertFalse(self.node_class.can_operate(('Latitude Smoothed At Liftoff',
+                                                    'Longitude Smoothed At Liftoff',
+                                                    'Latitude Smoothed At Touchdown',
+                                                    'Longitude Smoothed At Touchdown')))
+
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(None, None, self.takeoff_airport, None, None, self.landing_airport, self.touchdown)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 200)
+        self.assertAlmostEqual(node[0].value, 2991, places=0)
+
+    def test_derive__coordinates(self):
+        lat_lift = KPV('', items=[KeyPointValue(10, 51.47749999999999, '')])
+        lon_lift = KPV('', items=[KeyPointValue(10, -0.4613889999999927, '')])
+        lat_tdwn = KPV('', items=[KeyPointValue(200, 40.63979999999999, '')])
+        lon_tdwn = KPV('', items=[KeyPointValue(200, -73.7789, '')])
+
+        node = self.node_class()
+        node.derive(lat_lift, lon_lift, None, lat_tdwn, lon_tdwn, None, self.touchdown)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 200)
+        self.assertAlmostEqual(node[0].value, 2991, places=0)
+
+    def test_derive__no_touchdonws(self):
+        node = self.node_class()
+        node.derive(None, None, self.takeoff_airport, None, None, self.landing_airport, None)
+
+        self.assertEqual(len(node), 0)
 
 
 class TestDistanceFromRunwayCentrelineAtTouchdown(unittest.TestCase):
