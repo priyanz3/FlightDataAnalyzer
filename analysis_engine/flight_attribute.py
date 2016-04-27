@@ -314,7 +314,7 @@ class LandingAirport(FlightAttributeNode):
                     self.warning(msg, lat.value, lon.value)
                     # No airport was found, so fall through and try AFR.
                 else:
-                    self.debug('Detected landing airport: %s', airport)
+                    self.info('Detected landing airport: %s from coordinates (%f, %f)', airport.get('code'), lat.value, lon.value)
                     self.set_flight_attr(airport)
                     return  # We found an airport, so finish here.
             else:
@@ -450,7 +450,7 @@ class LandingRunway(FlightAttributeNode):
                     # tuned. A good prompt for an omission in the database.
                     self.warning('Fix database? No runway but ILS was tuned.')
             else:
-                self.debug('Detected landing runway: %s', runway)
+                self.info('Detected landing runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport, heading, kwargs)
                 self.set_flight_attr(runway)
                 return  # We found a runway, so finish here.
 
@@ -539,7 +539,7 @@ class TakeoffAirport(FlightAttributeNode):
                 self.warning(msg, lat.value, lon.value)
                 # No airport was found, so fall through and try AFR.
             else:
-                self.debug('Detected takeoff airport: %s', airport)
+                self.info('Detected takeoff airport: %s from coordinates (%f, %f)', airport.get('code'), lat.value, lon.value)
                 self.set_flight_attr(airport)
                 return True  # We found an airport, so finish here.
         else:
@@ -813,7 +813,7 @@ class TakeoffRunway(FlightAttributeNode):
                 self.warning(msg, airport, heading, kwargs)
                 # No runway was found, so fall through and try AFR.
             else:
-                self.debug('Detected takeoff runway: %s', runway)
+                self.info('Detected takeoff runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport, heading, kwargs)
                 self.set_flight_attr(runway)
                 return  # We found a runway, so finish here.
 
