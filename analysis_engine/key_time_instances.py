@@ -30,6 +30,8 @@ from analysis_engine.library import (
 from analysis_engine.node import (
     A, M, P, S, KTI, KeyTimeInstanceNode, helicopter_only)
 
+from flightdatautilities import units as ut
+
 from settings import (
     CLIMB_THRESHOLD,
     HYSTERESIS_ENG_START_STOP,
@@ -1876,44 +1878,24 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromAirportMixin(object):
 
-    def calculate_fallback(self, ktis, datum_lat, datum_lon, lat, lon, distance):
+    def calculate(self, datum_lat, datum_lon, lat, lon, distance, direction='forward'):
+        assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
+
         # We can only handle single liftoffs or touchdowns at this time:
         from library import _dist
 
-        if len(ktis) != 1:
-            return
-
-        reference = ktis[0].index
-
         distances = _dist(lat.array, lon.array, [datum_lat], [datum_lon])
-        # convert meters to nautical miles
-        distances *= 0.000539957
-        index = index_at_value(distances, distance)
+        distances = ut.convert(distances, ut.METER, ut.NM)
+        if direction == 'backwards':
+            distances = distances.invert()
+            index = index_at_value(distances, distance)
+            if index:
+                index = distances.size() - index
+        else:
+            index = index_at_value(distances, distance)
+
         if index:
             self.create_kti(index, replace_values={'distance': distance})
-            return index
-
-    def calculate(self, ktis, holds, datum_lat, datum_lon, lat, lon, distance,
-                  direction='forward'):
-        # We can only handle single liftoffs or touchdowns at this time:
-        if len(ktis) != 1 or datum_lat is None or datum_lon is None:
-            return
-
-        direction = -1 if direction == 'backward' else 1
-        if holds:
-            reference = holds[0].slice.start
-        else:
-            reference = ktis[0].index
-
-        index = index_at_distance(
-            direction * distance, reference,
-            datum_lat, datum_lon,
-            lat.array, lon.array, lat.frequency)
-        if index is not None:
-            self.create_kti(index, replace_values={'distance': distance})
-            return index
-        else:
-            self.warning('Unable to determine distance from airport.')
 
 
 class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1926,25 +1908,19 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_FORMAT = '%(distance)d NM From Takeoff Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
+    align = False
+
     def derive(self,
-               lifts=KTI('Liftoff'),
-               dep=A('FDR Takeoff Airport'),
+               apt=A('FDR Takeoff Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        if not dep.value:
-            return # Empty handed; nothing we can do.
-        toff_lat = dep.value.get('latitude')
-        toff_lon = dep.value.get('longitude')
+        if not apt.value:
+            return
+        apt_lat = apt.value.get('latitude')
+        apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            ix = self.calculate(
-                lifts, None, toff_lat, toff_lon,
-                lat, lon, distance, direction='forward')
-            if not ix:
-                self.warning('Falling back to array method.')
-                ix = self.calculate_fallback(
-                    lifts, toff_lat, toff_lon,
-                    lat, lon, distance)
+            self.calculate(apt_lat, apt_lon, lat, lon, distance)
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1959,32 +1935,19 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_FORMAT = '%(distance)d NM From Landing Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
+    align = False
+
     def derive(self,
-               lifts=KTI('Liftoff'),
-               lands=KTI('Touchdown'),
-               holds=S('Holding'),
-               arr=A('FDR Landing Airport'),
+               apt=A('FDR Landing Airport'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
 
-        import time
-
-        if not arr.value:
-            return # Empty handed; nothing we can do.
-        land_lat = arr.value.get('latitude')
-        land_lon = arr.value.get('longitude')
+        if not apt.value:
+            return
+        apt_lat = apt.value.get('latitude')
+        apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            now = time.time()
-            ix = self.calculate(
-                lands, holds,
-                land_lat, land_lon,
-                lat, lon, distance, direction='backward')
-            if not ix:
-                self.warning('Falling back to array method.')
-                # Fallback method does not support backwards scanning
-                ix = self.calculate_fallback(
-                    lifts, land_lat, land_lon,
-                    lat, lon, distance)
+            self.calculate(apt_lat, apt_lon, lat, lon, distance)
 
 
 class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
@@ -1994,8 +1957,9 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
     NAME_FORMAT = '%(distance)d NM From Threshold'
     NAME_VALUES = NAME_VALUES_RANGES
 
+    align = False
+
     def derive(self,
-               lands=KTI('Touchdown'),
                rwy=A('FDR Landing Runway'),
                lat=P('Latitude Smoothed'),
                lon=P('Longitude Smoothed')):
@@ -2004,7 +1968,6 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
             return # Empty handed; nothing we can do.
         for distance in self.NAME_VALUES['distance']:
             self.calculate(
-                lands, None,
                 rwy.value['start']['latitude'],
                 rwy.value['start']['longitude'],
                 lat, lon, distance, direction='backward')
