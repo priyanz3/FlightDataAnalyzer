@@ -1908,15 +1908,14 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_FORMAT = '%(distance)d NM From Takeoff Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
-    align = False
-
     def derive(self,
-               apt=A('FDR Takeoff Airport'),
+               lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
-               lon=P('Longitude Smoothed')):
+               apt=A('FDR Takeoff Airport')):
 
         if not apt.value:
             return
+
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
@@ -1935,15 +1934,14 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_FORMAT = '%(distance)d NM From Landing Airport'
     NAME_VALUES = NAME_VALUES_DISTANCE
 
-    align = False
-
     def derive(self,
-               apt=A('FDR Landing Airport'),
+               lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
-               lon=P('Longitude Smoothed')):
+               apt=A('FDR Landing Airport')):
 
         if not apt.value:
             return
+
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
@@ -1957,15 +1955,14 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
     NAME_FORMAT = '%(distance)d NM From Threshold'
     NAME_VALUES = NAME_VALUES_RANGES
 
-    align = False
-
     def derive(self,
-               rwy=A('FDR Landing Runway'),
+               lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
-               lon=P('Longitude Smoothed')):
+               rwy=A('FDR Landing Runway')):
 
         if not rwy.value:
             return # Empty handed; nothing we can do.
+
         for distance in self.NAME_VALUES['distance']:
             self.calculate(
                 rwy.value['start']['latitude'],
