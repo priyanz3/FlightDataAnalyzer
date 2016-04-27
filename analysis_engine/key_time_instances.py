@@ -1876,7 +1876,7 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
             self.create_kti(ix)
 
 
-class DistanceFromAirportMixin(object):
+class DistanceFromLocationMixin(object):
 
     def calculate(self, datum_lat, datum_lon, lat, lon, distance, direction='forward'):
         assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
@@ -1898,7 +1898,7 @@ class DistanceFromAirportMixin(object):
             self.create_kti(index, replace_values={'distance': distance})
 
 
-class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
+class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin):
     '''
     Creates KTIs at certain distances from the departure airport.
 
@@ -1923,7 +1923,7 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
             self.calculate(apt_lat, apt_lon, lat, lon, distance)
 
 
-class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
+class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin):
     '''
     Creates KTIs at certain distances from the arrival airport.
 
@@ -1950,7 +1950,7 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromAirportMixin):
             self.calculate(apt_lat, apt_lon, lat, lon, distance)
 
 
-class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromAirportMixin):
+class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
     '''
     Creates KTIs at certain distances from the arrival threshold.
     '''
