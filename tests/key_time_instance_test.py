@@ -1822,7 +1822,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             DistanceFromThreshold.get_operational_combinations(),
-            [('FDR Landing Runway', 'Latitude Smoothed', 'Longitude Smoothed')])
+            [('Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Runway')])
 
     def test_derive(self):
         rwy = A(name='FDR Landing Runway', value={
@@ -1835,7 +1835,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
         lon = P('Longitude', np.ma.maximum(test-32,0)/(32.0*60))
         lon.array = np.ma.concatenate([lon.array, np.ma.array([0.0]*60)])
         dft = DistanceFromThreshold()
-        dft.derive(rwy, lat, lon)
+        dft.derive(lon, lat, rwy)
 
         self.assertEqual(dft[0].index, 96)
         self.assertAlmostEqual(dft[1].index, 64, places=0)
@@ -1852,7 +1852,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
         lon = P('Longitude', np.ma.maximum(test-32,0)/(64.0*60))
         lon.array = np.ma.concatenate([lon.array, np.ma.array([0.0]*60)])
         dft = DistanceFromThreshold()
-        dft.derive(rwy, lat, lon)
+        dft.derive(lon, lat, rwy)
 
         self.assertEqual(dft[0].index, 96)
         # Note shifted 1nm point as flying at half the speed
