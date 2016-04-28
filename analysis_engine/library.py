@@ -7104,9 +7104,17 @@ def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
     except ValueError:
         lat_i = 0.0
 
+    return distance_between_coordinates(lat_i, lon_i, latitude_ref, longitude_ref)
+
+
+def distance_between_coordinates(lat_start, lon_start, lat_end, lon_end):
+    '''
+    return distance in Nautical Miles between two coordinates.
+    '''
+
     # The function _dist from the library provides the haversine distance in metres
     # hence the conversion factor required to convert to nautical miles.
-    rad = (_dist(lat_i, lon_i, latitude_ref, longitude_ref) or 0.0) * 0.000539957
+    rad = (_dist(lat_start, lon_start, lat_end, lon_end) or 0.0) * 0.000539957
     return rad
 
 
