@@ -11360,7 +11360,9 @@ class PitchAtTouchdown(KeyPointValueNode):
 
 class PitchAt35FtDuringClimb(KeyPointValueNode):
     '''
+    35ft is a definition for fixed wing operation primarily
     '''
+    can_operate = aeroplane_only
 
     units = ut.DEGREE
 
@@ -11415,6 +11417,8 @@ class Pitch35ToClimbAccelerationStartMin(KeyPointValueNode):
     fallback to 1000ft (end of initial climb)
     '''
 
+    can_operate = aeroplane_only
+
     units = ut.DEGREE
 
     def derive(self,
@@ -11436,6 +11440,8 @@ class Pitch35ToClimbAccelerationStartMax(KeyPointValueNode):
     Will use Climb Acceleration Start if we can calculate it, otherwise we
     fallback to 1000ft (end of initial climb)
     '''
+
+    can_operate = aeroplane_only
 
     units = ut.DEGREE
 
