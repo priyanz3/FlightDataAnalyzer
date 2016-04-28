@@ -2170,7 +2170,7 @@ class TransitionFlightToHover(FlightPhaseNode):
                     trans_end = index_at_value(ias.array, 0.0,
                                                  _slice=slice(trans.stop, trans.stop+20*ias.frequency),
                                                  endpoint='first_closing')
-                    self.create_phase(slice(trans.start, trans_end))
+                    self.create_phase(shift_slice(slice(trans.start, trans_end), air.slice.start))
 
 
 class TurningInAir(FlightPhaseNode):
