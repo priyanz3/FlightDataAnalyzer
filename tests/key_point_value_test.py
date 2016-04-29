@@ -10825,6 +10825,7 @@ class TestPitchAt35FtDuringClimb(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = PitchAt35FtDuringClimb
         self.operational_combinations = [('Pitch', 'Altitude AAL', 'Initial Climb')]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -10884,7 +10885,7 @@ class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
         self.function = max_value
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
         self.assertEqual(opts, self.operational_combinations)
 
     def test_derive_basic(self):
@@ -10911,7 +10912,7 @@ class TestPitch35ToClimbAccelerationStartMin(unittest.TestCase):
         self.function = min_value
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
         self.assertEqual(opts, self.operational_combinations)
 
     def test_derive(self):
