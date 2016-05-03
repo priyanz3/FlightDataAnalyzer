@@ -25,6 +25,7 @@ from analysis_engine.library import (
     slice_duration,
     slices_not,
     slices_remove_small_gaps,
+    value_at_index,
 )
 
 from analysis_engine.node import (
@@ -1878,7 +1879,7 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromLocationMixin(object):
 
-    def calculate(self, datum_lat, datum_lon, lat, lon, distance, direction='forward'):
+    def calculate(self, datum_lat, datum_lon, lat, lon, distance, direction='forward', _slice=slice(None, None, None)):
         assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
 
         # We can only handle single liftoffs or touchdowns at this time:
@@ -1886,16 +1887,18 @@ class DistanceFromLocationMixin(object):
 
         distances = _dist(lat.array, lon.array, [datum_lat], [datum_lon])
         distances = ut.convert(distances, ut.METER, ut.NM)
-        if direction == 'backwards':
-            distances = distances.invert()
-            index = index_at_value(distances, distance)
-            if index:
-                index = distances.size() - index
+        if direction == 'backward':
+            back_slice = slice(_slice.stop, _slice.start, -1)
+            index = index_at_value(distances, distance, back_slice, endpoint='nearest')
         else:
-            index = index_at_value(distances, distance)
+            index = index_at_value(distances, distance, _slice)
 
         if index:
-            self.create_kti(index, replace_values={'distance': distance})
+            # Check result is valid, as it may be the nearest but not an acceptable solution.
+            error = abs(value_at_index(distances, index) - distance)
+            # Allow 1/20th of a mile to reject wrong runway cases (normally > 1/10th NM apart).
+            if error<0.05:
+                self.create_kti(index, replace_values={'distance': distance})
 
 
 class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin):
@@ -1909,6 +1912,7 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
+               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
                apt=A('FDR Takeoff Airport')):
@@ -1916,10 +1920,15 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
         if not apt.value:
             return
 
+        if len(airs)!=1:
+            return # Only going to handle simple cases for now.
+
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            self.calculate(apt_lat, apt_lon, lat, lon, distance)
+            self.calculate(apt_lat, apt_lon,
+                           lat, lon, distance,
+                           direction='forward', _slice=airs[0].slice)
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin):
@@ -1935,6 +1944,7 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
+               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
                apt=A('FDR Landing Airport')):
@@ -1942,10 +1952,15 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
         if not apt.value:
             return
 
+        if len(airs)!=1:
+            return # Only going to handle simple cases for now.
+
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            self.calculate(apt_lat, apt_lon, lat, lon, distance)
+            self.calculate(apt_lat, apt_lon,
+                           lat, lon, distance,
+                           direction='forward', _slice=airs[0].slice)
 
 
 class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
@@ -1956,6 +1971,7 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
     NAME_VALUES = NAME_VALUES_RANGES
 
     def derive(self,
+               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
                rwy=A('FDR Landing Runway')):
@@ -1963,8 +1979,11 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
         if not rwy.value:
             return # Empty handed; nothing we can do.
 
+        if len(airs)!=1:
+            return # Only going to handle simple cases for now.
+
         for distance in self.NAME_VALUES['distance']:
             self.calculate(
                 rwy.value['start']['latitude'],
                 rwy.value['start']['longitude'],
-                lat, lon, distance, direction='backward')
+                lat, lon, distance, direction='backward', _slice=airs[0].slice)

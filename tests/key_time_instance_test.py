@@ -23,6 +23,8 @@ from analysis_engine.key_time_instances import (
     ClimbAccelerationStart,
     ClimbStart,
     ClimbThrustDerateDeselected,
+    DistanceFromLandingAirport,
+    DistanceFromTakeoffAirport,
     DistanceFromThreshold,
     EngFireExtinguisher,
     EngStart,
@@ -1818,24 +1820,95 @@ class TestSecsToTouchdown(unittest.TestCase):
         self.assertEqual(len(sttd), 1)
 
 
+class TestDistanceFromTakeoffAirport(unittest.TestCase):
+    def test_can_operate(self):
+        self.assertEqual(
+            DistanceFromTakeoffAirport.get_operational_combinations(),
+            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Takeoff Airport')])
+
+    def test_derive(self):
+        apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        test = np.ma.array(range(0, 9030))
+        lat = P('Latitude', [0.0]*(len(test)))
+        lon = P('Longitude', (test-30)/(30.0*60))
+        dfta = DistanceFromTakeoffAirport()
+        dfta.derive(airs, lon, lat, apt)
+
+        self.assertEqual(len(dfta), 2)
+        self.assertAlmostEqual(dfta[0].index, 4527, places=0)
+        self.assertAlmostEqual(dfta[1].index, 7525, places=0)
+
+    def test_first_occurrance(self):
+        apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        test = np.ma.array(dist[::-1]) # Copied from landing case  :o)
+        lat = P('Latitude', [0.0]*(len(test)))
+        lon = P('Longitude', test/(30.0*60))
+        dfta = DistanceFromTakeoffAirport()
+        dfta.derive(airs, lon, lat, apt)
+        self.assertEqual(len(dfta), 1)
+        self.assertAlmostEqual(dfta[0].index, 4526, places=0)
+
+
+class TestDistanceFromLandingAirport(unittest.TestCase):
+    def test_can_operate(self):
+        self.assertEqual(
+            DistanceFromLandingAirport.get_operational_combinations(),
+            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Airport')])
+
+    def test_derive(self):
+        apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        test = np.ma.array(range(9030,-1,-1))
+        lat = P('Latitude', [0.0]*(len(test))) # On equator
+        lon = P('Longitude', (test-30)/(30.0*60))
+        dfla = DistanceFromLandingAirport()
+        dfla.derive(airs, lon, lat, apt)
+
+        self.assertEqual(len(dfla), 2)
+        self.assertAlmostEqual(dfla[0].index, 4503, places=0)
+        self.assertAlmostEqual(dfla[1].index, 1505, places=0)
+
+    def test_first_occurrance(self):
+        apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        test = np.ma.array(dist)
+        lat = P('Latitude', [0.0]*(len(test))) # On equator
+        lon = P('Longitude', test/(30.0*60))
+        dfla = DistanceFromLandingAirport()
+        dfla.derive(airs, lon, lat, apt)
+        self.assertEqual(len(dfla), 1)
+        self.assertAlmostEqual(dfla[0].index, 1503, places=0)
+
+
 class TestDistanceFromThreshold(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             DistanceFromThreshold.get_operational_combinations(),
-            [('Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Runway')])
+            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Runway')])
 
     def test_derive(self):
+        # The runway threshold is offset a little from the equator
+        # as the aircraft will never pass perfectly over the threshold.
         rwy = A(name='FDR Landing Runway', value={
-            'start': {'latitude': 0, 'longitude': 0},
-            'end': {'latitude': 0, 'longitude': -0.03},
+            'start': {'latitude': 0.0, 'longitude': 0.0001},
+            'end': {'latitude': 0.0, 'longitude': -0.03},
         })
+        airs = buildsection('Airborne', 0, 99)
         test = np.ma.array(range(128,-1,-1))
-        # 3 NM to zero in first 96 samples
-        lat = P('Latitude', [0.0]*(len(test)+60)) # On equator
-        lon = P('Longitude', np.ma.maximum(test-32,0)/(32.0*60))
-        lon.array = np.ma.concatenate([lon.array, np.ma.array([0.0]*60)])
+        # 3 NM to threshold in first 96 samples
+        lat = P('Latitude', [0.0]*(len(test))) # On equator
+        lon = P('Longitude', (test-32)/(32.0*60))
+        #lon.array = np.ma.concatenate([lon.array])
         dft = DistanceFromThreshold()
-        dft.derive(lon, lat, rwy)
+        dft.derive(airs, lon, lat, rwy)
 
         self.assertEqual(dft[0].index, 96)
         self.assertAlmostEqual(dft[1].index, 64, places=0)
@@ -1846,13 +1919,13 @@ class TestDistanceFromThreshold(unittest.TestCase):
             'start': {'latitude': 0, 'longitude': 0},
             'end': {'latitude': 0, 'longitude': -0.03},
         })
+        airs = buildsection('Airborne', 0, 99)
         test = np.ma.array(range(128,-1,-1))
-        # 3 NM to zero in first 96 samples
-        lat = P('Latitude', [0.0]*(len(test)+60)) # On equator
-        lon = P('Longitude', np.ma.maximum(test-32,0)/(64.0*60))
-        lon.array = np.ma.concatenate([lon.array, np.ma.array([0.0]*60)])
+        # 1.5 NM to zero in first 96 samples
+        lat = P('Latitude', [0.0]*len(test))# On equator
+        lon = P('Longitude', (test-32)/(64.0*60))
         dft = DistanceFromThreshold()
-        dft.derive(lon, lat, rwy)
+        dft.derive(airs, lon, lat, rwy)
 
         self.assertEqual(dft[0].index, 96)
         # Note shifted 1nm point as flying at half the speed
@@ -1860,6 +1933,24 @@ class TestDistanceFromThreshold(unittest.TestCase):
         # Array is too short to include 2nm point
         self.assertRaises(ValueError)
 
+    def test_derive_close_to_landing(self):
+        # An error in one version detected points closer to takeoff where the
+        # aircraft flew a circuit. This tests that the last points are found.
+        rwy = A(name='FDR Landing Runway', value={
+            'start': {'latitude': 0, 'longitude': 0},
+            'end': {'latitude': 0, 'longitude': -0.03},
+        })
+        airs = buildsection('Airborne', 30, 230)
+        test = np.ma.array(range(0,129)+range(128,-1,-1))
+        # 3 NM to zero in 96 samples
+        lat = P('Latitude', [0.0]*(len(test))) # On equator
+        lon = P('Longitude', (test-32)/(32.0*60))
+        dft = DistanceFromThreshold()
+        dft.derive(airs, lon, lat, rwy)
+
+        self.assertEqual(dft[0].index, 225)
+        self.assertAlmostEqual(dft[1].index, 193, places=0)
+        self.assertAlmostEqual(dft[2].index, 161, places=0)
 
 class TestAutoland(unittest.TestCase):
     def test_can_operate(self):
