@@ -1859,7 +1859,9 @@ class AirspeedSelectedAtLiftoff(KeyPointValueNode):
             start.index = max(start.index - 5 * 64 * self.hz, 0)
         phases = slices_from_ktis(starts, climb_starts)
         for phase in phases:
-            index = liftoffs.get_last(within_slice=phase).index
+            this_lift = liftoffs.get_last(within_slice=phase)
+            if this_lift:
+                index = this_lift.index
             if spd_sel.frequency >= 0.125:
                 spd_sel_liftoff = closest_unmasked_value(
                     spd_sel.array, index, start_index=phase.start,
