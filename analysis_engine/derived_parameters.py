@@ -910,6 +910,7 @@ class AltitudeAGL(DerivedParameterNode):
         # Compute the half period which we will need.
         hp = int(alt_rad.frequency*ALTITUDE_AGL_SMOOTHING)/2
         # We force the radio altitude to be zero when the gear shows 'Ground' state
+        alt_rad_repaired = repair_mask(alt_rad.array, frequency=alt_rad.frequency, repair_duration=20.0, extrapolate=True)
         alt_aal = moving_average(np.maximum(alt_rad.array, 0.0) * (1 - gog.array.data), window=hp*2+1, weightings=None)
 
         # Refine the baro estimates
