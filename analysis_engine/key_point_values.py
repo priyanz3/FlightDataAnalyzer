@@ -1329,6 +1329,109 @@ class Airspeed1000To500FtMin(KeyPointValueNode):
         )
 
 
+class Airspeed500To100FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed from 500ft above the airfield to 100ft above the
+    airfield.
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
+        alt_descent_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            air_spd.array,
+            alt_descent_sections,
+            max_value,
+            min_duration=HOVER_MIN_DURATION,
+            freq=air_spd.frequency)
+
+
+class Airspeed500To100FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed from 500ft above the airfield to 100ft above the
+    airfield.
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
+        alt_descent_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            air_spd.array,
+            alt_descent_sections,
+            min_value,
+            min_duration=HOVER_MIN_DURATION,
+            freq=air_spd.frequency)
+
+
+class Airspeed100To20FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed from 100ft above the airfield to 20ft above the
+    airfield.
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
+        alt_descent_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            air_spd.array,
+            alt_descent_sections,
+            max_value,
+            min_duration=HOVER_MIN_DURATION,
+            freq=air_spd.frequency)
+
+
+class Airspeed100To20FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed from 100ft above the airfield to 20ft above the
+    airfield.
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
+        alt_descent_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            air_spd.array,
+            alt_descent_sections,
+            min_value,
+            min_duration=HOVER_MIN_DURATION,
+            freq=air_spd.frequency)
+
+
 class Airspeed500To20FtMax(KeyPointValueNode):
     '''
     Maximum airspeed from 500ft above the airfield to 20ft above the
@@ -11018,6 +11121,26 @@ class GroundspeedAtTouchdown(KeyPointValueNode):
         self.create_kpvs_at_ktis(gnd_spd.array, touchdowns)
 
 
+class Groundspeed20FtToTouchdownMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Groundspeed'),
+               alt_agl=P('Altitude AGL'),
+               touchdowns=KTI('Touchdown')):
+
+        self.create_kpvs_within_slices(
+            air_spd.array,
+            alt_agl.slices_to_kti(20, touchdowns),
+            max_value,
+        )
+
+
 class GroundspeedVacatingRunway(KeyPointValueNode):
     '''
     '''
@@ -11763,6 +11886,54 @@ class Pitch500To50FtMin(KeyPointValueNode):
                 min_value)
 
 
+class Pitch500To100FtMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               pitch=P('Pitch'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 100, 500)
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            pitch.array,
+            alt_app_sections,
+            max_value,
+            min_duration=HOVER_MIN_DURATION, # TODO: check where this came from.
+            freq=pitch.frequency)
+
+
+class Pitch500To100FtMin(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               pitch=P('Pitch'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 100, 500)
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            pitch.array,
+            alt_app_sections,
+            min_value,
+            min_duration=HOVER_MIN_DURATION,
+            freq=pitch.frequency)
+
+
 class Pitch500To20FtMin(KeyPointValueNode):
     '''
     '''
@@ -11812,6 +11983,54 @@ class Pitch500To7FtMin(KeyPointValueNode):
             alt_aal.slices_from_to(500, 7),
             min_value,
         )
+
+
+class Pitch100To20FtMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               pitch=P('Pitch'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 20, 100)
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            pitch.array,
+            alt_app_sections,
+            max_value,
+            min_duration=HOVER_MIN_DURATION, # TODO: check where this came from.
+            freq=pitch.frequency)
+
+
+class Pitch100To20FtMin(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               pitch=P('Pitch'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending'),
+               ac_type=A('Aircraft Type')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 20, 100)
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            pitch.array,
+            alt_app_sections,
+            min_value,
+            min_duration=HOVER_MIN_DURATION, # TODO: check where this came from.
+            freq=pitch.frequency)
 
 
 class Pitch50FtToTouchdownMax(KeyPointValueNode):
@@ -11870,15 +12089,63 @@ class Pitch20FtToTouchdownMin(KeyPointValueNode):
 
     units = ut.DEGREE
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = ['Pitch']
+        if ac_type and ac_type.value == 'helicopter':
+            required.extend(['Altitude AGL', 'Touchdown'])
+        else:
+            required.extend(['Altitude AAL For Flight Phases', 'Touchdown'])
+        return all_of(required, available)
+
     def derive(self,
                pitch=P('Pitch'),
                alt_aal=P('Altitude AAL For Flight Phases'),
-               touchdowns=KTI('Touchdown')):
+               alt_agl=P('Altitude AGL'),
+               touchdowns=KTI('Touchdown'),
+               ac_type=A('Aircraft Type')):
+
+        alt = alt_aal
+        if ac_type and ac_type.value == 'helicopter':
+            alt = alt_agl
 
         self.create_kpvs_within_slices(
             pitch.array,
-            alt_aal.slices_to_kti(20, touchdowns),
+            alt.slices_to_kti(20, touchdowns),
             min_value,
+        )
+
+
+class Pitch20FtToTouchdownMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.DEGREE
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = ['Pitch']
+        if ac_type and ac_type.value == 'helicopter':
+            required.extend(['Altitude AGL', 'Touchdown'])
+        else:
+            required.extend(['Altitude AAL For Flight Phases', 'Touchdown'])
+        return all_of(required, available)
+
+    def derive(self,
+               pitch=P('Pitch'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               alt_agl=P('Altitude AGL'),
+               touchdowns=KTI('Touchdown'),
+               ac_type=A('Aircraft Type')):
+
+        alt = alt_aal
+        if ac_type and ac_type.value == 'helicopter':
+            alt = alt_agl
+
+        self.create_kpvs_within_slices(
+            pitch.array,
+            alt.slices_to_kti(20, touchdowns),
+            max_value,
         )
 
 
@@ -12408,6 +12675,58 @@ class RateOfDescent1000To500FtMax(KeyPointValueNode):
             freq=vrt_spd.frequency)
 
 
+class RateOfDescent100To20FtMax(KeyPointValueNode):
+    '''
+    Measures the most negative vertical speed (rate of descent).
+    '''
+
+    units = ut.FPM
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               vrt_spd=P('Vertical Speed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
+        # maximum RoD must be a big negative value; mask all positives
+        alt_band[vrt_spd.array > 0] = np.ma.masked
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            vrt_spd.array,
+            alt_app_sections,
+            min_value,
+            min_duration=5.0,
+            freq=vrt_spd.frequency)
+
+
+class RateOfDescent500To100FtMax(KeyPointValueNode):
+    '''
+    Measures the most negative vertical speed (rate of descent).
+    '''
+
+    units = ut.FPM
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               vrt_spd=P('Vertical Speed'),
+               alt_agl=P('Altitude AGL'),
+               descending=S('Descending')):
+
+        alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
+        # maximum RoD must be a big negative value; mask all positives
+        alt_band[vrt_spd.array > 0] = np.ma.masked
+        alt_app_sections = valid_slices_within_array(alt_band, descending)
+        self.create_kpvs_within_slices(
+            vrt_spd.array,
+            alt_app_sections,
+            min_value,
+            min_duration=5.0,
+            freq=vrt_spd.frequency)
+
+
 class RateOfDescent500To50FtMax(KeyPointValueNode):
     '''
     Measures the most negative vertical speed (rate of descent).
@@ -12444,6 +12763,36 @@ class RateOfDescent500To50FtMax(KeyPointValueNode):
             min_value,
             min_duration=5.0,
             freq=vrt_spd.frequency)
+
+
+class RateOfDescent20FtToTouchdownMax(KeyPointValueNode):
+    '''
+    Measures the most negative vertical speed (rate of descent) between 20ft
+    and touchdown.
+
+    At this altitude, Altitude AGL is sourced from Altitude Radio where one
+    is available, so this is effectively 20ft Radio to touchdown.
+
+    The ground effect compressibility makes the normal pressure altitude
+    based vertical speed meaningless, so we use the more complex inertial
+    computation to give accurate measurements within ground effect.
+    '''
+
+    units = ut.FPM
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               vrt_spd=P('Vertical Speed Inertial'),
+               touchdowns=KTI('Touchdown'),
+               alt_agl=P('Altitude AGL')):
+        # maximum RoD must be a big negative value; mask all positives
+        vrt_spd.array[vrt_spd.array > 0] = np.ma.masked
+        self.create_kpvs_within_slices(
+            vrt_spd.array,
+            alt_agl.slices_to_kti(20, touchdowns),
+            min_value,
+        )
 
 
 class RateOfDescent50FtToTouchdownMax(KeyPointValueNode):
