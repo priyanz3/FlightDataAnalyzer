@@ -1560,7 +1560,7 @@ class Landing(FlightPhaseNode):
             return all_of(('Altitude AGL', 'Collective', 'Airborne'), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
-    
+
     def _derive_aircraft(self, head, alt_aal, fast, mobile):
         phases = []
         for speedy in fast:
@@ -2166,11 +2166,11 @@ class TransitionFlightToHover(FlightPhaseNode):
                                           threshold=1.0)[1]
 
             if trans_slices:
-                for trans in trans_slices:
+                for trans in shift_slices(trans_slices, air.slice.start):
                     trans_end = index_at_value(ias.array, 0.0,
                                                  _slice=slice(trans.stop, trans.stop+20*ias.frequency),
                                                  endpoint='first_closing')
-                    self.create_phase(shift_slice(slice(trans.start, trans_end), air.slice.start))
+                    self.create_phase(slice(trans.start, trans_end+1))
 
 
 class TurningInAir(FlightPhaseNode):
