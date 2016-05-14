@@ -11,7 +11,6 @@ Introduction
    :maxdepth: 2
 
    Introduction
-   Install
    Principles
    ParameterNaming
    FlightTypes

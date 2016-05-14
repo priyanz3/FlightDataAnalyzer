@@ -67,12 +67,16 @@ from analysis_engine.key_point_values import (
     Airspeed1000To500FtMin,
     Airspeed1000To5000FtMax,
     Airspeed1000To8000FtMax,
+    Airspeed100To20FtMax,
+    Airspeed100To20FtMin,
     Airspeed3000FtToTopOfClimbMax,
     Airspeed3000FtToTopOfClimbMin,
     Airspeed3000To1000FtMax,
     Airspeed35To1000FtMax,
     Airspeed35To1000FtMin,
     Airspeed5000To3000FtMax,
+    Airspeed500To100FtMax,
+    Airspeed500To100FtMin,
     Airspeed500To20FtMax,
     Airspeed500To50FtMedian,
     Airspeed500To50FtMedianMinusAirspeedSelected,
@@ -355,6 +359,7 @@ from analysis_engine.key_point_values import (
     GrossWeightAtTouchdown,
     GrossWeightConditionalAtTouchdown,
     GrossWeightDelta60SecondsInFlightMax,
+    Groundspeed20FtToTouchdownMax,
     GroundspeedAtLiftoff,
     GroundspeedAtTOGA,
     GroundspeedAtTouchdown,
@@ -441,8 +446,11 @@ from analysis_engine.key_point_values import (
     OverspeedDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
+    Pitch100To20FtMax,
+    Pitch100To20FtMin,
     Pitch1000To500FtMax,
     Pitch1000To500FtMin,
+    Pitch20FtToTouchdownMax,
     Pitch20FtToTouchdownMin,
     Pitch35ToClimbAccelerationStartMax,
     Pitch35ToClimbAccelerationStartMin,
@@ -450,6 +458,8 @@ from analysis_engine.key_point_values import (
     Pitch35To400FtMin,
     Pitch400To1000FtMax,
     Pitch400To1000FtMin,
+    Pitch500To100FtMax,
+    Pitch500To100FtMin,
     Pitch500To20FtMin,
     Pitch500To7FtMax,
     Pitch500To7FtMin,
@@ -486,9 +496,12 @@ from analysis_engine.key_point_values import (
     RateOfClimbMax,
     RateOfDescent10000To5000FtMax,
     RateOfDescent1000To500FtMax,
+    RateOfDescent100To20FtMax,
     RateOfDescent2000To1000FtMax,
+    RateOfDescent20FtToTouchdownMax,
     RateOfDescent3000To2000FtMax,
     RateOfDescent5000To3000FtMax,
+    RateOfDescent500To100FtMax,
     RateOfDescent500To50FtMax,
     RateOfDescent50FtToTouchdownMax,
     RateOfDescentAtTouchdown,
@@ -1959,6 +1972,102 @@ class TestAirspeed1000To500FtMin(unittest.TestCase):
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestAirspeed100To20FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Airspeed100To20FtMax
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertTrue(self.node_class.can_operate, [('Airspeed', 'Altitude AGL', 'Approach And Landing')])
+
+    def test_derive_basic(self):
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+        alt_ph = P('Altitude AGL', np.ma.array(testwave))
+        final_app = buildsections('Approach And Landing', [31, 58], [95, 120])
+        kpv = self.node_class()
+        kpv.derive(spd, alt_ph, final_app)
+        self.assertEqual(len(kpv), 2)
+        self.assertEqual(kpv[0].index, 48)
+        self.assertAlmostEqual(kpv[0].value, 91, places=0)
+        self.assertEqual(kpv[1].index, 110)
+        self.assertAlmostEqual(kpv[1].value, 100, places=0)
+
+
+class TestAirspeed100To20FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Airspeed100To20FtMin
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertTrue(self.node_class.can_operate, [('Airspeed', 'Altitude AGL', 'Approach And Landing')])
+
+    def test_derive_basic(self):
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+        alt_ph = P('Altitude AGL', np.ma.array(testwave))
+        final_app = buildsections('Approach And Landing', [31, 58], [95, 120])
+        kpv = self.node_class()
+        kpv.derive(spd, alt_ph, final_app)
+        self.assertEqual(len(kpv), 2)
+        self.assertEqual(kpv[0].index, 56)
+        self.assertAlmostEqual(kpv[0].value, 22, places=0)
+        self.assertEqual(kpv[1].index, 119)
+        self.assertAlmostEqual(kpv[1].value, 21, places=0)
+
+
+class TestAirspeed500To100FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Airspeed500To100FtMax
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertTrue(self.node_class.can_operate, [('Airspeed', 'Altitude AGL', 'Final Approach')])
+
+    def test_derive_basic(self):
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+        alt_ph = P('Altitude AAL For Flight Phases', np.ma.array(testwave) * 3)
+        final_app = buildsections('Final Approach', [31, 58], [95, 120])
+        kpv = self.node_class()
+        kpv.derive(spd, alt_ph, final_app)
+        self.assertEqual(len(kpv), 2)
+        self.assertEqual(kpv[0].index, 40)
+        self.assertAlmostEqual(kpv[0].value, 165, places=0)
+        self.assertEqual(kpv[1].index, 103)
+        self.assertAlmostEqual(kpv[1].value, 164, places=0)
+
+
+class TestAirspeed500To100FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Airspeed500To100FtMin
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertTrue(self.node_class.can_operate, [('Airspeed', 'Altitude AGL', 'Final Approach')])
+
+    def test_derive_basic(self):
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+        alt_ph = P('Altitude AAL For Flight Phases', np.ma.array(testwave) * 3)
+        final_app = buildsections('Final Approach', [31, 58], [95, 120])
+        kpv = self.node_class()
+        kpv.derive(spd, alt_ph, final_app)
+        self.assertEqual(len(kpv), 2)
+        self.assertEqual(kpv[0].index, 54)
+        self.assertAlmostEqual(kpv[0].value, 37, places=0)
+        self.assertEqual(kpv[1].index, 117)
+        self.assertAlmostEqual(kpv[1].value, 35, places=0)
+
+
 class TestAirspeed500To20FtMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
@@ -2044,7 +2153,7 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(opts, [('Airspeed', 'Altitude AGL', 'Touchdown')])
 
     def test_derive(self):
-        alt = P('Altitude AAL For Flight Phases', np.ma.array((range(90, 0, -1)+[0]*10)))
+        alt = P('Altitude AGL', np.ma.array((range(90, 0, -1)+[0]*10)))
         spd = P('Airspeed', np.ma.arange(100, 0, -1))
         tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown')])
 
@@ -10697,6 +10806,28 @@ class TestGroundspeedWithZeroAirspeedFor5SecMax(unittest.TestCase):
         self.assertEqual(node[2].value, 10)
 
 
+class TestGroundspeed20FtToTouchdownMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Groundspeed20FtToTouchdownMax
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Groundspeed', 'Altitude AGL', 'Touchdown')])
+
+    def test_derive(self):
+        alt = P('Altitude AGL', np.ma.array((range(90, 0, -1)+[0]*10)))
+        spd = P('Groundspeed', np.ma.arange(100, 0, -1))
+        tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(spd, alt, tdwns)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 71)
+        self.assertEqual(node[0].value, 29)
+
+
 ##############################################################################
 # Law
 
@@ -11045,6 +11176,130 @@ class TestPitch1000To500FtMin(unittest.TestCase):
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestPitch100To20FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch100To20FtMax
+        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descending')]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
+        self.function = max_value
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending', 'Aircraft Type'), ac_type=helicopter))
+
+    def test_derive(self):
+        alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        name = 'Descending'
+        section = Section(name, slice(0, 100), 0, 100)
+        descending = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(pitch, alt, descending)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 96)
+        self.assertAlmostEqual(node[0].value, 2.607, places=3)
+
+
+class TestPitch100To20FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch100To20FtMin
+        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descending')]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
+        self.function = min_value
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending', 'Aircraft Type'), ac_type=helicopter))
+
+    def test_derive(self):
+        alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        name = 'Descending'
+        section = Section(name, slice(0, 100), 0, 100)
+        descending = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(pitch, alt, descending)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 80)
+        self.assertAlmostEqual(node[0].value, -7.874, places=3)
+
+
+class TestPitch500To100FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch500To100FtMax
+        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descending')]
+        self.can_operate_kwargs = {'ac_type': helicopter}
+        self.function = min_value
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending', 'Aircraft Type'), ac_type=helicopter))
+
+    def test_derive(self):
+        alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        name = 'Descending'
+        section = Section(name, slice(0, 100), 0, 100)
+        descending = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(pitch, alt, descending)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 49)
+        self.assertAlmostEqual(node[0].value, 4.811, places=3)
+
+
+class TestPitch500To100FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch500To100FtMin
+        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descending')]
+        self.can_operate_kwargs = {'ac_type': helicopter}
+        self.function = min_value
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending', 'Aircraft Type'), ac_type=helicopter))
+
+    def test_derive(self):
+        alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        name = 'Descending'
+        section = Section(name, slice(0, 100), 0, 100)
+        descending = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(pitch, alt, descending)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 79)
+        self.assertAlmostEqual(node[0].value, -7.917, places=3)
+
+
 class TestPitch500To50FtMax(unittest.TestCase):
 
     def setUp(self):
@@ -11133,18 +11388,101 @@ class TestPitch50FtToTouchdownMax(unittest.TestCase):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestPitch20FtToTouchdownMin(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestPitch20FtToTouchdownMax(unittest.TestCase):
 
     def setUp(self):
-        # XXX: This test does not explicitly test how the Touchdown dependency is used.
-        self.node_class = Pitch20FtToTouchdownMin
-        self.operational_combinations = [('Pitch', 'Altitude AAL For Flight Phases', 'Touchdown')]
-        self.function = min_value
-        self.second_param_method_calls = [('slices_to_kti', (20, []), {})]
+        self.node_class = Pitch20FtToTouchdownMax
 
-    @unittest.skip('Test Not Implemented')
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        heli_opts = ('Pitch', 'Altitude AGL', 'Touchdown', 'Aircraft Type')
+        aero_opts = ('Pitch', 'Altitude AAL For Flight Phases', 'Touchdown', 'Aircraft Type')
+        self.assertTrue(self.node_class.can_operate(heli_opts, ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(aero_opts, ac_type=aeroplane))
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        alt = P('Altitude AGL', np.ma.array((range(90, 0, -1)+[0]*10)))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(pitch, None, alt, tdwns, ac_type=helicopter)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 89)
+        self.assertAlmostEqual(node[0].value, -3.787, places=3)
+
+        node = self.node_class()
+        node.derive(pitch, alt, None, tdwns, ac_type=aeroplane)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 89)
+        self.assertAlmostEqual(node[0].value, -3.787, places=3)
+
+
+class TestPitch20FtToTouchdownMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch20FtToTouchdownMin
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        heli_opts = ('Pitch', 'Altitude AGL', 'Touchdown', 'Aircraft Type')
+        aero_opts = ('Pitch', 'Altitude AAL For Flight Phases', 'Touchdown', 'Aircraft Type')
+        self.assertTrue(self.node_class.can_operate(heli_opts, ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(aero_opts, ac_type=aeroplane))
+
+    def test_derive(self):
+        alt = P('Altitude AGL', np.ma.array((range(90, 0, -1)+[0]*10)))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(pitch, None, alt, tdwns, ac_type=helicopter)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 79)
+        self.assertAlmostEqual(node[0].value, -7.917, places=3)
+
+        node = self.node_class()
+        node.derive(pitch, alt, None, tdwns, ac_type=aeroplane)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 79)
+        self.assertAlmostEqual(node[0].value, -7.917, places=3)
+
+
+class TestPitch500To50FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Pitch500To50FtMin
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending'), ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descending'), ac_type=aeroplane))
+
+    def test_derive(self):
+        alt = P('Altitude AAL For Flight Phases', np.ma.arange(0, 5000, 50))
+        x = np.linspace(0, 10, 100)
+        pitch = P('Pitch', -x*np.sin(x))
+        name = 'Descending'
+        section = Section(name, slice(0, 150), 0, 150)
+        descending = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(pitch, alt, descending)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 10)
+        self.assertAlmostEqual(node[0].value, -0.855, places=3)
 
 
 class TestPitch7FtToTouchdownMin(unittest.TestCase, CreateKPVsWithinSlicesTest):
@@ -11884,6 +12222,102 @@ class TestRateOfDescent50FtToTouchdownMax(unittest.TestCase):
 
         expected = KPV('Rate Of Descent 50 Ft To Touchdown Max', items=[
             KeyPointValue(name='Rate Of Descent 50 Ft To Touchdown Max', index=33, value=-26),
+        ])
+        self.assertEqual(node, expected)
+
+
+class TestRateOfDescent500To100FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RateOfDescent500To100FtMax
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Final Approach'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Descending'), ac_type=helicopter))
+
+    def test_derive(self):
+        array = np.ma.concatenate((np.ma.arange(0, 50, 25), np.ma.arange(50, 500, 100), [550, 450, 540], [590]*5))
+        array = np.ma.concatenate((array, array[::-1]))
+        alt = P('Altitude AGL', array, frequency=0.25)
+        roc_array = np.ma.concatenate(([25]*2, [62, 81, 100, 100, 50, 47, 35, 10, 35, 12, 0, 0, 0]))
+        roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
+        vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
+        name = 'Descending'
+        section = Section(name, slice(19, 27), 19, 27)
+        descents = SectionNode(name, items=[section], frequency=0.25)
+
+        node = self.node_class()
+        node.derive(vert_spd, alt, descents)
+
+        expected = KPV('Rate Of Descent 500 To 100 Ft Max', items=[
+            KeyPointValue(index=24.0, value=-100.0, name='Rate Of Descent 500 To 100 Ft Max')
+        ])
+        self.assertEqual(node, expected)
+
+
+class TestRateOfDescent100To20FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RateOfDescent100To20FtMax
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Final Approach'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Descending'), ac_type=helicopter))
+
+    def test_derive(self):
+        array = np.ma.concatenate((np.ma.arange(0, 50, 5), np.ma.arange(50, 500, 100)))
+        array = np.ma.concatenate((array, array[::-1]))
+        alt = P('Altitude AGL', array, frequency=0.25)
+        roc_array = np.ma.concatenate(([25]*2, [62, 81, 100, 100, 50, 47, 35, 10, 35, 12, 0, 0, 0]))
+        roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
+        vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
+        name = 'Descending'
+        section = Section(name, slice(19, 27), 19, 27)
+        descents = SectionNode(name, items=[section], frequency=0.25)
+
+        node = self.node_class()
+        node.derive(vert_spd, alt, descents)
+
+        expected = KPV('Rate Of Descent 100 To 20 Ft Max', items=[
+            KeyPointValue(index=24.0, value=-100.0, name='Rate Of Descent 100 To 20 Ft Max')
+        ])
+        self.assertEqual(node, expected)
+
+
+class TestRateOfDescent20FtToTouchdownMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RateOfDescent20FtToTouchdownMax
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AGL', 'Touchdown'), ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AAL For Flight Phases', 'Touchdown'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Vertical Speed Inertial', 'Touchdown', 'Altitude AGL',), ac_type=helicopter))
+
+    def test_derive(self):
+        array = np.ma.concatenate((np.ma.arange(0, 50, 5), [55, 45, 54], [59]*5))
+        array = np.ma.concatenate((array, array[::-1]))
+        alt = P('Altitude AAL For Flight Phases', array)
+        roc_array = np.ma.concatenate(([5]*8, [6, 2, 3, 3, 1, 3, 1, 0, 0, 0]))
+        roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
+        roc_array[33] = -26
+        vert_spd = P('Vertical Speed Inertial', roc_array)
+
+        touch_down = KTI('Touchdown', items=[KeyTimeInstance(34, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(vert_spd, touch_down, alt)
+
+        expected = KPV('Rate Of Descent 20 Ft To Touchdown Max', items=[
+            KeyPointValue(name='Rate Of Descent 20 Ft To Touchdown Max', index=33, value=-26),
         ])
         self.assertEqual(node, expected)
 
