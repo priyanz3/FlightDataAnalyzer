@@ -1057,9 +1057,13 @@ class FlapIncludingTransition(MultistateDerivedParameterNode):
         if flap_angle:
             self.array = including_transition(flap_angle.array, self.values_mapping)
         else:
-            # if we do not have flap angle use flap
-            self.array = MappedArray(flap.array,
+            # if we do not have flap angle use flap, use states as values
+            # will vary between frames
+            array = MappedArray(np_ma_masked_zeros_like(flap.array),
                                  values_mapping=self.values_mapping)
+            for value, state in self.values_mapping.iteritems():
+                array[flap.array == state] = state
+            self.array = array
 
 
 class FlapExcludingTransition(MultistateDerivedParameterNode):
