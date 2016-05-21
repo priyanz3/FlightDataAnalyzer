@@ -1619,7 +1619,7 @@ class Landing(FlightPhaseNode):
             to_scan = tdn - alt_agl.frequency*LANDING_TRACEBACK_PERIOD
             landing_begin = index_at_value(alt_agl.array, LANDING_HEIGHT,
                                            _slice=slice(tdn, to_scan , -1),
-                                           endpoint='first_closing')
+                                           endpoint='closing')
 
             # Scan forwards to find lowest collective shortly after touchdown.
             to_scan = tdn + coll.frequency*LANDING_COLLECTIVE_PERIOD
