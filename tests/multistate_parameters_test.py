@@ -1440,6 +1440,29 @@ class TestFlapIncludingTransition(unittest.TestCase, NodeTest):
         ]
         self.assertEqual(node.array.raw.tolist(), expected)
 
+    @patch('analysis_engine.multistate_parameters.at')
+    def test_derive__recorded_flap(self, at):
+        at.get_flap_map.return_value = {0: '0', 10: '10', 20: '20', 39: '39'}
+        _am = A('Model', 'B737-333')
+        _as = A('Series', 'B737-300')
+        _af = A('Family', 'B737 Classic')
+        attributes = (_am, _as, _af)
+
+        flap_mapping = {8: '39', 1: '0', 2: '10', 4: '20'}
+        array = np.ma.repeat((1, 2, 4, 8), 10)
+        array.mask = np.ma.getmaskarray(array)
+        flap_array = MappedArray(array, values_mapping=flap_mapping)
+        flap = M(name='Flap', array=flap_array, frequency=2)
+        node = self.node_class()
+        node.derive(None, flap, *attributes)
+        attributes = (a.value for a in attributes)
+        at.get_flap_map.assert_called_once_with(*attributes)
+        self.assertEqual(node.values_mapping, at.get_flap_map.return_value)
+        self.assertEqual(node.units, ut.DEGREE)
+        self.assertIsInstance(node.array, MappedArray)
+        expected = np.repeat((0, 10, 20, 39), 10)
+        self.assertEqual(node.array.raw.tolist(), expected.tolist())
+
 
 class TestFlapLever(unittest.TestCase, NodeTest):
 
