@@ -5359,6 +5359,7 @@ class DistanceFromLiftoffToRunwayEnd(KeyPointValueNode):
     "Excursions - Take-Off (Longitudinal), Runway remaining at rotation"
     '''
 
+    can_operate = aeroplane_only
     units = ut.METER
 
     def derive(self,
@@ -5380,6 +5381,7 @@ class DistanceFromRotationToRunwayEnd(KeyPointValueNode):
     "Excursions - Take-Off (Longitudinal), Runway remaining at rotation"
     '''
 
+    can_operate = aeroplane_only
     units = ut.METER
 
     def derive(self,
@@ -5537,6 +5539,7 @@ class DistanceFromTouchdownToRunwayEnd(KeyPointValueNode):
     and goes will not be recorded.
     '''
 
+    can_operate = aeroplane_only
     units = ut.METER
 
     def derive(self, lat_tdn=KPV('Latitude Smoothed At Touchdown'),
@@ -5633,6 +5636,7 @@ class DistanceFromRunwayCentrelineFromTouchdownTo60KtMax(KeyPointValueNode):
     '''
     '''
 
+    can_operate = aeroplane_only
     name = 'Distance From Runway Centreline From Touchdown To 60 Kt Max'
     units = ut.METER
 
@@ -5778,6 +5782,7 @@ class DistanceOnLandingFrom60KtToRunwayEnd(KeyPointValueNode):
     '''
     '''
 
+    can_operate = aeroplane_only
     units = ut.METER
     name = 'Distance On Landing From 60 Kt To Runway End'
 
