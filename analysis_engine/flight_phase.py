@@ -398,7 +398,9 @@ class ApproachAndLanding(FlightPhaseNode):
         for new_phase in apps:
             phases = slices_or(phases, [new_phase.slice])
         for new_phase in landings:
-            phases = slices_or(phases, [new_phase.slice])
+            # The phase is extended to make sure we enclose the endpoint
+            # so that the touchdown point is included in this phase.
+            phases = slices_or(phases, [slice(new_phase.slice.start, new_phase.slice.stop+2)])
         self.create_phases(phases)
 
     def derive(self,
