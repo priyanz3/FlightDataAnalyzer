@@ -4876,15 +4876,17 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                mobile=S('Mobile'),
                ac_type = A('Aircraft Type'),
                ):
-        precision = bool(getattr(precise, 'value', False))
 
-        gspd = gspd_s if gspd_s else gspd_u
-        hdg = hdg_true if hdg_true else hdg_mag
-        lat_adj, lon_adj = self._adjust_track(
-            lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy, tdwns,
-            approaches, mobile, precision, ac_type)
-        self.array = track_linking(lat.array, lat_adj)
-
+        if ac_type=='aeroplane':
+            precision = bool(getattr(precise, 'value', False))
+            gspd = gspd_s if gspd_s else gspd_u
+            hdg = hdg_true if hdg_true else hdg_mag
+            lat_adj, lon_adj = self._adjust_track(
+                lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy, tdwns,
+                approaches, mobile, precision, ac_type)
+            self.array = track_linking(lat.array, lat_adj)
+        else:
+            self.array = lat.array
 
 class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
     """
@@ -4926,14 +4928,17 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                mobile=S('Mobile'),
                ac_type = A('Aircraft Type'),
                ):
-        precision = bool(getattr(precise, 'value', False))
 
-        gspd = gspd_s if gspd_s else gspd_u
-        hdg = hdg_true if hdg_true else hdg_mag
-        lat_adj, lon_adj = self._adjust_track(
-            lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy,
-            tdwns, approaches, mobile, precision, ac_type)
-        self.array = track_linking(lon.array, lon_adj)
+        if ac_type=='aeroplane':
+            precision = bool(getattr(precise, 'value', False))
+            gspd = gspd_s if gspd_s else gspd_u
+            hdg = hdg_true if hdg_true else hdg_mag
+            lat_adj, lon_adj = self._adjust_track(
+                lon, lat, ils_loc, app_range, hdg, gspd, tas, toff, toff_rwy,
+                tdwns, approaches, mobile, precision, ac_type)
+            self.array = track_linking(lon.array, lon_adj)
+        else:
+            self.array = lon.array
 
 
 class Mach(DerivedParameterNode):
@@ -5639,10 +5644,10 @@ class Rudder(DerivedParameterNode):
 class RudderPedalCapt(DerivedParameterNode):
     '''
     '''
-    
+
     name = 'Rudder Pedal (Capt)'
     units = ut.DEGREE  # FIXME: Or should this be ut.PERCENT?
-    
+
 
     @classmethod
     def can_operate(cls, available):
@@ -5661,7 +5666,7 @@ class RudderPedalCapt(DerivedParameterNode):
 class RudderPedalFO(DerivedParameterNode):
     '''
     '''
-    
+
     name = 'Rudder Pedal (FO)'
     units = ut.DEGREE  # FIXME: Or should this be ut.PERCENT?
 
