@@ -13300,7 +13300,10 @@ class RollLeftBelow6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    can_operate = helicopter_only
+    @classmethod
+    # This KPV is specific to the AS330 Puma helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
+        return ac_type == helicopter and ac_family.value == 'Puma'
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13324,7 +13327,10 @@ class RollLeftBelow8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    can_operate = helicopter_only
+    @classmethod
+    # This KPV is specific to the AS330 Puma helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
+        return ac_type == helicopter and ac_family.value == 'Puma'
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13348,7 +13354,10 @@ class RollLeftAbove6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    can_operate = helicopter_only
+    @classmethod
+    # This KPV is specific to the AS330 Puma helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
+        return ac_type == helicopter and ac_family.value == 'Puma'
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13372,7 +13381,10 @@ class RollLeftAbove8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    can_operate = helicopter_only
+    @classmethod
+    # This KPV is specific to the AS330 Puma helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
+        return ac_type == helicopter and ac_family.value == 'Puma'
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
