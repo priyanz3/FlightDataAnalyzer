@@ -444,7 +444,7 @@ class TestApproachAndLanding(unittest.TestCase):
         node.derive(helicopter, None, None, apps, lands)
         self.assertEqual(len(node), 1)
         self.assertEqual(node.get_slices()[0].start, 2)
-        self.assertEqual(node.get_slices()[0].stop, 8)
+        self.assertEqual(node.get_slices()[0].stop, 10) # land phase stop + 2 samples
 
 
 class TestApproach(unittest.TestCase):

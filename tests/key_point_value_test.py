@@ -6550,7 +6550,7 @@ class TestDistanceFromRunwayCentrelineAtTouchdown(unittest.TestCase):
 
 class TestDistanceFromRunwayCentrelineFromTouchdownTo60KtMax(unittest.TestCase):
     def test_can_operate(self):
-        ops = DistanceFromRunwayCentrelineFromTouchdownTo60KtMax.get_operational_combinations()
+        ops = DistanceFromRunwayCentrelineFromTouchdownTo60KtMax.get_operational_combinations(ac_type=aeroplane)
         self.assertEqual(ops, [('ILS Lateral Distance', 'Landing',
                                 'Groundspeed', 'Touchdown')])
 
@@ -12770,7 +12770,7 @@ class TestRollLeftBelow6000FtAltitudeDensityBelow60Kts(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter, family=A('Family', 'Puma'))
         self.assertEqual(opts, [('Roll', 'Altitude Density', 'Airspeed', 'Airborne')])
 
     def test_derive(self):
@@ -12809,7 +12809,7 @@ class TestRollLeftBelow8000FtAltitudeDensityAbove60Kts(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter, family=A('Family', 'Puma'))
         self.assertEqual(opts, [('Roll', 'Altitude Density', 'Airspeed', 'Airborne')])
 
     def test_derive(self):
@@ -12848,7 +12848,7 @@ class TestRollLeftAbove6000FtAltitudeDensityBelow60Kts(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter, family=A('Family', 'Puma'))
         self.assertEqual(opts, [('Roll', 'Altitude Density', 'Airspeed', 'Airborne')])
 
     def test_derive(self):
@@ -12888,7 +12888,7 @@ class TestRollLeftAbove8000FtAltitudeDensityAbove60Kts(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter, family=A('Family', 'Puma'))
         self.assertEqual(opts, [('Roll', 'Altitude Density', 'Airspeed', 'Airborne')])
 
     def test_derive(self):

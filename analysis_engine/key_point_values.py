@@ -13302,8 +13302,9 @@ class RollLeftBelow6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
 
     @classmethod
     # This KPV is specific to the AS330 Puma helicopter
-    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
-        return ac_type == helicopter and ac_family.value == 'Puma'
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), family=A('Family')):
+        is_puma = ac_type == helicopter and family and family.value == 'Puma'
+        return is_puma and all_deps(cls, available)
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13329,8 +13330,9 @@ class RollLeftBelow8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
 
     @classmethod
     # This KPV is specific to the AS330 Puma helicopter
-    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
-        return ac_type == helicopter and ac_family.value == 'Puma'
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), family=A('Family')):
+        is_puma = ac_type == helicopter and family and family.value == 'Puma'
+        return is_puma and all_deps(cls, available)
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13356,8 +13358,9 @@ class RollLeftAbove6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
 
     @classmethod
     # This KPV is specific to the AS330 Puma helicopter
-    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
-        return ac_type == helicopter and ac_family.value == 'Puma'
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), family=A('Family')):
+        is_puma = ac_type == helicopter and family and family.value == 'Puma'
+        return is_puma and all_deps(cls, available)
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
@@ -13383,8 +13386,9 @@ class RollLeftAbove8000FtAltitudeDensityAbove60Kts(KeyPointValueNode):
 
     @classmethod
     # This KPV is specific to the AS330 Puma helicopter
-    def can_operate(cls, available, ac_type=A('Aircraft Type'), ac_family=A('Family'),):
-        return ac_type == helicopter and ac_family.value == 'Puma'
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), family=A('Family')):
+        is_puma = ac_type == helicopter and family and family.value == 'Puma'
+        return is_puma and all_deps(cls, available)
 
     def derive(self, roll=P('Roll'), alt=P('Altitude Density'), airspeed=P('Airspeed'), airborne=S('Airborne')):
         # Roll left must be negative value; mask all positives
