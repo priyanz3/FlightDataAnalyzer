@@ -7645,7 +7645,7 @@ class EngBleedValvesAtLiftoff(KeyPointValueNode):
                liftoffs=KTI('Liftoff'),
                bleed=M('Eng Bleed Open')):
 
-        self.create_kpvs_at_ktis(bleed.array, liftoffs)
+        self.create_kpvs_at_ktis(bleed.array == 'Open', liftoffs)
 
 
 ##############################################################################

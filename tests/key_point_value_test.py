@@ -9829,6 +9829,27 @@ class TestFlapAtLiftoff(unittest.TestCase, NodeTest):
                 KeyPointValue(index=index, value=value, name=name),
             ]))
 
+    def test_derive__lfl_multistate(self):
+        '''
+        Test for lfl multistates which may be pulled together from multiple
+        discreats. Values will not be equall to states.
+        '''
+        flap_mapping = {8: '39', 1: '0', 2: '10', 4: '20'}
+        array = np.ma.repeat((1, 2, 4, 8), 10)
+        array.mask = np.ma.getmaskarray(array)
+        flap_array = MappedArray(array, values_mapping=flap_mapping)
+        flap = M(name='Flap', array=flap_array)
+        for index, value in (5, 0), (15, 10), (25, 20), (35, 39):
+            liftoffs = KTI(name='Liftoff', items=[
+                KeyTimeInstance(index=index, name='Liftoff'),
+            ])
+            name = self.node_class.get_name()
+            node = self.node_class()
+            node.derive(flap, liftoffs)
+            self.assertEqual(node, KPV(name=name, items=[
+                KeyPointValue(index=index, value=value, name=name),
+            ]))
+
 
 class TestFlapAtTouchdown(unittest.TestCase, NodeTest):
 
@@ -9849,6 +9870,27 @@ class TestFlapAtTouchdown(unittest.TestCase, NodeTest):
             name = self.node_class.get_name()
             node = self.node_class()
             node.derive(flap, touchdowns)
+            self.assertEqual(node, KPV(name=name, items=[
+                KeyPointValue(index=index, value=value, name=name),
+            ]))
+
+    def test_derive__lfl_multistate(self):
+        '''
+        Test for lfl multistates which may be pulled together from multiple
+        discreats. Values will not be equall to states.
+        '''
+        flap_mapping = {8: '39', 1: '0', 2: '10', 4: '20'}
+        array = np.ma.repeat((1, 2, 4, 8), 10)
+        array.mask = np.ma.getmaskarray(array)
+        flap_array = MappedArray(array, values_mapping=flap_mapping)
+        flap = M(name='Flap', array=flap_array)
+        for index, value in (5, 0), (15, 10), (25, 20), (35, 39):
+            liftoffs = KTI(name='Touchdown', items=[
+                KeyTimeInstance(index=index, name='Touchdown'),
+            ])
+            name = self.node_class.get_name()
+            node = self.node_class()
+            node.derive(flap, liftoffs)
             self.assertEqual(node, KPV(name=name, items=[
                 KeyPointValue(index=index, value=value, name=name),
             ]))

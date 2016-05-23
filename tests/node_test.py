@@ -1166,13 +1166,19 @@ class TestKeyPointValueNode(unittest.TestCase):
 
 
     def test_create_kpvs_at_ktis_multistate(self):
+        '''
+        Currently cannot create kpv directly from multistate as values mappings
+        change between frames. Instead create kpv from checking state of parameter.
+
+        e.g. for EngBleedValvesAtLiftoff
+
+        self.create_kpvs_at_ktis(bleed.array == 'Open', liftoffs) # 1 for Open, 0 for Not Open
+
+        '''
         knode = self.knode
         param = M('Param', np.ma.array([0, 0, 1, 1]), values_mapping={0:'Nought', 1:'One'})
         ktis = KTI('KTI', items=[KeyTimeInstance(i, 'a') for i in range(0,4,2)])
-        knode.create_kpvs_at_ktis(param.array, ktis)
-        self.assertEqual(list(knode),
-                         [KeyPointValue(index=0, value=0.0, name='Kpv'),
-                          KeyPointValue(index=2, value=1.0, name='Kpv')])
+        self.assertRaises(ValueError, knode.create_kpvs_at_ktis, param.array, ktis)
 
 
     def test_create_kpv_between_indexes(self):
