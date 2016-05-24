@@ -5236,47 +5236,103 @@ def PreflightCheck(self, firsts, accels, disp, full_disp):
         travel = np.ma.ptp(disp.array[first.index:acc.index])
         self.create_kpv(acc.index, (travel/full_disp)*100.0)
 
+
 class ElevatorPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
+
     units = ut.PERCENT
-    def derive(self, disp=P('Elevator'), family=A('Family'),
+
+    @classmethod
+    def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
+
+        if not all_of(('Elevator', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family'), available):
+            return False
+
+        try:
+            at.get_elevator_range(model.value, series.value, family.value)
+        except KeyError:
+            cls.warning("No Elevator range available for '%s', '%s', '%s'.",
+                        model.value, series.value, family.value)
+            return False
+
+        return True
+
+    def derive(self, disp=P('Elevator'),
                firsts=KTI('First Eng Start Before Liftoff'),
-               accels=KTI('Takeoff Acceleration Start')):
-        family_name = family.value if family else None
-        if family_name=='G-IV':
-            PreflightCheck(self, firsts, accels, disp, 37.0)
-        elif family_name=='B737 NG':
-            PreflightCheck(self, firsts, accels, disp, 43.0)
+               accels=KTI('Takeoff Acceleration Start'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
+
+        disp_range = at.get_elevator_range(model.value, series.value, family.value)
+        full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
+
+        PreflightCheck(self, firsts, accels, disp, full_disp)
+
 
 class AileronPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
     units = ut.PERCENT
-    def derive(self, disp=P('Aileron'), family=A('Family'),
+
+    @classmethod
+    def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
+
+        if not all_of(('Aileron', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family'), available):
+            return False
+
+        try:
+            at.get_aileron_range(model.value, series.value, family.value)
+        except KeyError:
+            cls.warning("No Aileron range available for '%s', '%s', '%s'.",
+                        model.value, series.value, family.value)
+            return False
+
+        return True
+
+    def derive(self, disp=P('Aileron'),
                firsts=KTI('First Eng Start Before Liftoff'),
-               accels=KTI('Takeoff Acceleration Start')):
-        family_name = family.value if family else None
-        if family_name=='G-IV':
-            PreflightCheck(self, firsts, accels, disp, 20.0)
-        elif family_name=='B737 NG':
-            PreflightCheck(self, firsts, accels, disp, 36.5)
+               accels=KTI('Takeoff Acceleration Start'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
+
+        disp_range = at.get_aileron_range(model.value, series.value, family.value)
+        full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
+
+        PreflightCheck(self, firsts, accels, disp, full_disp)
+
 
 class RudderPreflightCheck(KeyPointValueNode):
     """
     See NTSB recommendation A-15-34.
     """
     units = ut.PERCENT
-    def derive(self, disp=P('Rudder'), family=A('Family'),
+
+    @classmethod
+    def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
+
+        if not all_of(('Rudder', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family'), available):
+            return False
+
+        try:
+            at.get_rudder_range(model.value, series.value, family.value)
+        except KeyError:
+            cls.warning("No Rudder range available for '%s', '%s', '%s'.",
+                        model.value, series.value, family.value)
+            return False
+
+        return True
+
+    def derive(self, disp=P('Rudder'),
                firsts=KTI('First Eng Start Before Liftoff'),
-               accels=KTI('Takeoff Acceleration Start')):
-        family_name = family.value if family else None
-        if family_name=='G-IV':
-            PreflightCheck(self, firsts, accels, disp, 44.0)
-        elif family_name=='B737 NG':
-            PreflightCheck(self, firsts, accels, disp, 58.0)
+               accels=KTI('Takeoff Acceleration Start'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
+
+        disp_range = at.get_rudder_range(model.value, series.value, family.value)
+        full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
+
+        PreflightCheck(self, firsts, accels, disp, full_disp)
+
 
 class FlightControlPreflightCheck(KeyPointValueNode):
     '''
