@@ -1057,5 +1057,43 @@ class Version(FlightAttributeNode):
         self.set_flight_attr(__version__)
 
 
+# Engine serial numbers
+
+class Eng1ESN(FlightAttributeNode):
+    name = 'Eng (1) Serial Number'
+
+    def derive(self, num=P('Eng (1) ESN')):
+        value = most_common_value(num.array, threshold=0.5)
+        if value is not None:
+            self.set_flight_attr(value)
+
+
+class Eng2ESN(FlightAttributeNode):
+    name = 'Eng (2) Serial Number'
+
+    def derive(self, num=P('Eng (2) ESN')):
+        value = most_common_value(num.array, threshold=0.5)
+        if value is not None:
+            self.set_flight_attr(value)
+
+
+class Eng3ESN(FlightAttributeNode):
+    name = 'Eng (3) Serial Number'
+
+    def derive(self, num=P('Eng (3) ESN')):
+        value = most_common_value(num.array, threshold=0.5)
+        if value is not None:
+            self.set_flight_attr(value)
+
+
+class Eng4ESN(FlightAttributeNode):
+    name = 'Eng (4) Serial Number'
+
+    def derive(self, num=P('Eng (4) ESN')):
+        value = most_common_value(num.array, threshold=0.5)
+        if value is not None:
+            self.set_flight_attr(value)
+
+
 ##############################################################################
 # vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
