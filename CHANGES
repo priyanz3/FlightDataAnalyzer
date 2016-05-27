@@ -8,6 +8,51 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.26.1
+-------
+
+ - Rudder Pedal Naming convention changes
+ - Aircraft speciffic Node can_operate updated to exclude Helicopter
+
+ - Added:
+   - Attribute: Eng (*) Serial Number
+   - KPV: Great Circle Distance
+   - KPV: Pitch 500-100 Max
+   - KPV: Pitch 500-100 Min
+   - KPV: Pitch 100-20 Max
+   - KPV: Pitch 100-20 Min
+   - KPV: Pitch 20-Tdwn Max
+   - KPV: Pitch 20-Tdwn Min
+   - KPV: Airspeed 500-100 Max
+   - KPV: Airspeed 500-100 Min
+   - KPV: Airspeed 100-20 Max
+   - KPV: Airspeed 100-20 Min
+   - KPV: Airspeed 20-Tdwn Max
+   - KPV: Groundspeed 20-Tdwn Max
+   - KPV: RoD 500-100 Max
+   - KPV: RoD 100-20 Max
+   - KPV: RoD 20-Tdwn Max
+
+ - Improvements:
+   - Attribute: Improved logging detail
+   - Derived:  Helicopter flight path smoothing now does not use runway approach characteristics at all
+   - KPV: Preflight Checks use model info lookup
+   - KTI: DistanceFromLocationMixin: Avoid interpolation issues during alignment
+   - KTI: DistanceFromLocationMixin: Optimisations
+   - KTI: x to touchdown: Fixes for short helicpoter hops
+   - Phase: ApproachAndLanding: Handle touchdown and collective down immediately
+   - Splitting:  Alternative option for helicopters with separate (L) & (R) Gear On Ground signals
+   - Utils: open_node_container: support dash in nodes
+
+ - Fixes:
+   - Derived: AltitudeAGL: Altimeter Radio mask repair stage added
+   - Phase: Landing: Helicopter approach correction
+   - KPV: AirspeedSelectedAtLiftoff: Trap for liftoff outside adjusted phase
+   - KTI: Transition Flight to Hover: Corrected index
+   - Multistate: Flap Inc Trans: Maintain states not values
+
+
+
 v0.25.2
 -------
 
