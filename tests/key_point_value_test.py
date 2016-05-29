@@ -6902,7 +6902,7 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate(nodes, **kwargs))
 
     @patch('analysis_engine.key_point_values.at')
-    def test_derive(self, lookup_table):
+    def test_derive_1(self, lookup_table):
 
         lookup_table.get_engine_map.return_value = self.engine_thresholds
 
@@ -6927,6 +6927,37 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
         )
 
         self.assertEqual(node, expected)
+    
+    @patch('analysis_engine.key_point_values.at')
+    def test_derive_2(self, lookup_table):
+        
+        lookup_table.get_engine_map.return_value = {'Torque': {'mcp': 90, 'takeoff': 92}}
+        
+        eng1 = P('Eng (1) Torque', array=load_compressed(
+            os.path.join(test_data_path, 'EngTorqueOverThresholdDuration_eng_1_torque.npz')))
+        eng2 = P('Eng (2) Torque', array=load_compressed(
+            os.path.join(test_data_path, 'EngTorqueOverThresholdDuration_eng_2_torque.npz')))
+        takeoff = buildsection('Takeoff 5 Min Rating', 526.8325733573796, 607.84375)
+        mcp = buildsection('Maximum Continuous Power', 607.8325733573796, 5360.8325733573793)
+
+        node = self.node_class()
+        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
+        
+        expected = [KeyPointValue(*a) for a in [
+            (538, 44.0, 'Eng Torque Over Takeoff Power Duration'),
+            (609, 3.0, 'Eng Torque Over MCP Duration'),
+            (631, 184.0, 'Eng Torque Over MCP Duration'),
+            (820, 72.0, 'Eng Torque Over MCP Duration'),
+            (962, 4.0, 'Eng Torque Over MCP Duration'),
+            (1021, 11.0, 'Eng Torque Over MCP Duration'),
+            (1037, 10.0, 'Eng Torque Over MCP Duration'),
+            (1149, 15.0, 'Eng Torque Over MCP Duration'),
+            (1642, 190.0, 'Eng Torque Over MCP Duration'),
+            (1836, 441.0, 'Eng Torque Over MCP Duration'),
+            (2286, 222.0, 'Eng Torque Over MCP Duration'),
+            (2565, 1813.0, 'Eng Torque Over MCP Duration')]]
+
+        self.assertEqual(list(node), expected)
 
 
 
