@@ -6027,8 +6027,18 @@ class TestSlicesRemoveSmallGaps(unittest.TestCase):
     def test_slice_none_within_slices(self):
         slicelist = [slice(1, None), slice(4,6), slice(None, 8)]
         newlist = slices_remove_small_gaps(slicelist)
-        self.assertEqual(len(newlist), 3)
-
+        self.assertEqual(newlist, [slice(None, None, None)])
+    
+    def test_unsorted_slices(self):
+        slicelist = [slice(*s) for s in (
+            (2565, 4378), (1911, 2277), (1642, 1817), (631, 796), (820, 892), (2420, 2489),
+            (1846, 1910), (2317, 2363), (2364, 2401), (2490, 2508), (2402, 2419), (798, 815),
+            (1818, 1832), (2303, 2316), (2290, 2302), (1149, 1160), (1021, 1032), (1037, 1047),
+            (1836, 1841), (962, 966), (609, 612), (1161, 1164), (2286, 2289), (1842, 1845))]
+        newlist = slices_remove_small_gaps(slicelist, 4)
+        self.assertEqual(newlist, [slice(*s) for s in (
+            (609, 612), (631, 815), (820, 892), (962, 966), (1021, 1032), (1037, 1047),
+            (1149, 1164), (1642, 1832), (1836, 2277), (2286, 2508), (2565, 4378))])
 
 
 class TestSlicesRemoveSmallSlices(unittest.TestCase):
