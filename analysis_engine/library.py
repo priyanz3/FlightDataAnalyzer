@@ -3705,22 +3705,14 @@ def slices_or(*slice_lists):
     return slices
 
 
-def slices_remove_overlaps(slice_list, hz=1):
+def slices_remove_overlaps(slices):
     '''
     removes overlapping slices from list, keeps longest slice.
     '''
     result = []
-    for new_item in slice_list:
-        if new_item in result:
-            continue
-        add_slice = True
-        for index, existing_item in enumerate(result):
-            if slices_overlap(new_item, existing_item):
-                add_slice = False
-                if slice_duration(new_item, hz) > slice_duration(existing_item, hz):
-                    result[index] = new_item
-        if add_slice:
-            result.append(new_item)
+    for s in sorted(slices, key=lambda s: slice_duration(s, 1), reverse=True):
+        if not any(slices_overlap(s, r) for r in result):
+            result.append(s)
     return result
 
 
