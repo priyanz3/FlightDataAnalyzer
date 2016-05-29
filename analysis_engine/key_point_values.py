@@ -7662,7 +7662,7 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None or phase == None:
+            if threshold is None or phase is None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7671,11 +7671,14 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
                 # create slices where eng above thresold
                 threshold_slices += slices_above(eng.array, threshold)[1]
             # Only interested in exceedances within period.
+            # Brief exceedances and gaps are removed to reduce KPV count.
             phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            phase_slices = slices_remove_small_slices(phase_slices, 2, eng1.hz)
+            phase_slices = slices_remove_overlaps(phase_slices)
+            phase_slices = slices_remove_small_gaps(phase_slices, 3, eng1.hz)
             # Remove overlapping slices keeping longer
             self.create_kpvs_from_slice_durations(
-                slices_remove_overlaps(phase_slices),
-                self.frequency, period=name)
+                phase_slices, self.frequency, period=name)
 
 
 ##############################################################################
