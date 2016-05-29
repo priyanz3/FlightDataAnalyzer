@@ -11,6 +11,7 @@ from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
 from math import atan2, ceil, copysign, cos, floor, log, radians, sin, sqrt
+from operator import attrgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -3735,12 +3736,13 @@ def slices_remove_small_gaps(slice_list, time_limit=10, hz=1, count=None):
 
     :returns: slice list.
     '''
-    if count is not None:
-        sample_limit = count
-    else:
-        sample_limit = time_limit * hz
     if slice_list is None or len(slice_list) < 2:
         return slice_list
+    elif any(s.start is None for s in slice_list) and any(s.stop is None for s in slice_list):
+        return [slice(None, None, slice_list[0].step)]
+    
+    sample_limit = count if count is not None else time_limit * hz
+    slice_list = sorted(slice_list, key=attrgetter('start'))
     new_list = [slice_list[0]]
     for each_slice in slice_list[1:]:
         if each_slice.start and new_list[-1].stop  and \
