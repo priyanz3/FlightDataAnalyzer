@@ -5950,27 +5950,33 @@ class TestSlicesOverlay(unittest.TestCase):
 
 class TestSlicesRemoveOverlaps(unittest.TestCase):
     def test_basic__duplicate_slices(self):
-        slicelist = [slice(3, 8), slice(3, 8), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(3, 8), slice(3, 8), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(3, 8), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__first_slice_longer(self):
-        slicelist = [slice(1, 5), slice(3, 8), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 8), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(3, 8), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__second_slice_longer(self):
-        slicelist = [slice(1, 5), slice(3, 7), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 7), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(1, 5), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__longest_slice_overlapping_two(self):
-        slicelist = [slice(1, 5), slice(3, 7), slice(2, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 7), slice(2, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(2, 22)]
+        self.assertEqual(expected, newlist)
+    
+    def test_complex(self):
+        slices = [slice(*s) for s in ((538, 570), (571, 582), (605, 606), (539, 540), (541, 544), (545, 546), (547, 558), (559, 561), (562, 563), (564, 582))]
+        newlist = slices_remove_overlaps(slices)
+        expected = [slice(538, 570), slice(571, 582), slice(605, 606)]
         self.assertEqual(expected, newlist)
 
 
