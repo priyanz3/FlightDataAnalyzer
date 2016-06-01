@@ -907,7 +907,7 @@ class TestAlign(unittest.TestCase):
         slave = P('slave', np.ma.arange(15), frequency=5.0, offset=0.0)
         result = align(slave, master)
         assert_array_equal(result, [0, 5, 10])
-
+    
     def test_align_5hz_reverse(self):
         master = P('master', np.ma.arange(15.0), frequency=5.0, offset=0.0)
         slave = P('slave', array=[1,2,3], frequency=1.0, offset=0.0)
@@ -928,6 +928,20 @@ class TestAlign(unittest.TestCase):
         result = align(slave, master)
         expected = (master.array/10.0)+2.0
         expected[21:]=np.ma.masked
+        assert_array_almost_equal(result, expected)
+    
+    def test_align_15hz(self):
+        master = P('master', array=[1,2,3], frequency=1.0, offset=0.0)
+        slave = P('slave', np.ma.arange(45), frequency=15.0, offset=0.0)
+        result = align(slave, master)
+        assert_array_equal(result, [0, 15, 30])
+    
+    def test_align_15hz_reverse(self):
+        master = P('master', np.ma.arange(30), frequency=15.0, offset=0.0)
+        slave = P('slave', [2,3], frequency=1.0, offset=0.0)
+        result = align(slave, master)
+        expected = (master.array/15.0) + 2.0
+        result[15:] = np.ma.masked
         assert_array_almost_equal(result, expected)
 
     def test_align_20hz(self):
@@ -965,6 +979,37 @@ class TestAlign(unittest.TestCase):
         self.assertEqual(result.dtype, int)
         np.testing.assert_array_equal(result.data, [1,3,3,4,4,5,5,6,0,0])
         np.testing.assert_array_equal(result.mask, [0,0,0,0,0,0,0,0,1,1])
+    
+    def test_align_multi_state_10_15(self):
+        first = P(frequency=15, offset=0.0,
+                  array=np.ma.array([11,12,13,14,15,16,17,18,19,20,21,22,23,24,25], dtype=float))
+        second = M(frequency=10, offset=0.0,
+                   array=np.ma.array([1,3,4,5,6,7,8,9,10,11], dtype=int))
+
+        result = align(second, first)
+        # check dtype is int
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [1,3,3,4,5,5,6,7,7,8,9,9,10,11,0])
+        np.testing.assert_array_equal(result.mask, [0] * 14 + [1])
+    
+    def test_align_multi_state_15_25(self):
+        first = P(frequency=25, offset=0.0, array=np.ma.arange(25, dtype=int))
+        second = M(frequency=15, offset=0.0,
+                   array=np.ma.array([1,3,4,5,6,7,8,9,10,11,12,13,14,15,16], dtype=int))
+        
+        result = align(second, first)
+        # check dtype is int
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [1,3,3,4,4,5,6,6,7,7,8,9,9,10,10,11,12,12,13,13,14,15,15,16,0])
+        np.testing.assert_array_equal(result.mask, [0] * 24  + [1])
+    
+    def test_align_multi_state_25_15(self):
+        first = P(frequency=15, offset=0.0, array=np.ma.arange(15, dtype=np.int))
+        second = M(frequency=25, offset=0.0, array=np.ma.arange(25, dtype=np.int))
+        result = align(second, first)
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [0,2,3,5,7,8,10,12,13,15,17,18,20,22,23])
+        np.testing.assert_array_equal(result.mask, [0] * 15)
 
 
 class TestAmbiguousRunway(unittest.TestCase):
