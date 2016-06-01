@@ -220,13 +220,6 @@ def is_power2_fraction(number):
     return is_power2(number)
 
 
-def is_5_10_20(number):
-    """
-    Check for extension to include ARINC 647A frequency ratios.
-    """
-    return number in [5, 10, 20]
-
-
 def align(slave, master, interpolate=True):
     """
     This function takes two parameters which will have been sampled at
@@ -326,15 +319,15 @@ def align_args(slave_array, slave_frequency, slave_offset, master_frequency, mas
         ws /= slowest
 
     # Check the values are in ranges we have tested
-    assert is_power2(wm) or is_5_10_20(wm), \
+    assert is_power2(wm) or not wm % 5, \
            "master @ %sHz; wm=%s" % (master_frequency, wm)
-    assert is_power2(ws) or is_5_10_20(ws), \
+    assert is_power2(ws) or not ws % 5, \
            "slave @ %sHz; ws=%s" % (slave_frequency, ws)
 
     # Trap 5, 10 or 20Hz parameters that have non-zero offsets (this case is not currently covered)
-    if is_5_10_20(wm) and master_offset:
+    if master_offset and not wm % 5:
         raise ValueError('Align: Master offset non-zero at sample rate %sHz' % master_frequency)
-    if is_5_10_20(ws) and slave_offset:
+    if slave_offset and not ws % 5:
         raise ValueError('Align: Slave offset non-zero at sample rate %sHz' % slave_frequency)
 
     # Compute the sample rate ratio:
@@ -4759,7 +4752,7 @@ def moving_average(array, window=9, weightings=None):
 
     averaged = np.convolve(stretched_data.data, weightings, 'valid')
     result = np.ma.array(data=averaged,
-                         mask=np.ma.getmaskarray(array))
+                         mask=np.ma.getmaskarray(array).copy())
     return result
 
 
