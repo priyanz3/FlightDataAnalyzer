@@ -4877,7 +4877,7 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ac_type = A('Aircraft Type'),
                ):
 
-        if ac_type=='aeroplane':
+        if ac_type == aeroplane:
             precision = bool(getattr(precise, 'value', False))
             gspd = gspd_s if gspd_s else gspd_u
             hdg = hdg_true if hdg_true else hdg_mag
@@ -4929,7 +4929,7 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
                ac_type = A('Aircraft Type'),
                ):
 
-        if ac_type=='aeroplane':
+        if ac_type == aeroplane:
             precision = bool(getattr(precise, 'value', False))
             gspd = gspd_s if gspd_s else gspd_u
             hdg = hdg_true if hdg_true else hdg_mag
