@@ -14,6 +14,7 @@ from analysis_engine import hooks, settings
 from analysis_engine.datastructures import Segment
 from analysis_engine.node import P
 from analysis_engine.library import (align,
+                                     blend_parameters,
                                      calculate_timebase,
                                      hash_array,
                                      min_value,
@@ -590,7 +591,12 @@ def _get_speed_parameter(hdf, aircraft_info):
     thresholds = {}
     if aircraft_info.get('Engine Propulsion', None) == 'ROTOR':
 
-        parameter = hdf['Nr (1)']  # FIXME: merge Nr 1&2
+        try:
+            # Preferred source of rotor speed data
+            parameter = hdf['Nr']
+        except:
+            # Alternative if dual sources available
+            parameter = blend_parameters(hdf['Nr (1)'], hdf['Nr (2)'])
         thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
         thresholds['min_duration'] = settings.ROTORSPEED_THRESHOLD_TIME
         # Very short dips in rotor speed before recording stops.
