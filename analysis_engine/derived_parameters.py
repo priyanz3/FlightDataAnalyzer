@@ -6461,20 +6461,28 @@ class ApproachRange(DerivedParameterNode):
     The array is masked where no data has been computed, and provides
     measurements in metres from the reference point where the aircraft is on
     an approach.
+
+    A simpler function is provided for helicopter operations as they may
+    not - in fact normally do not - have a runway to land on.
     '''
 
     units = ut.METER
 
     @classmethod
-    def can_operate(cls, available):
-        return all_of((
-                    'Airspeed True',
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return (ac_type == helicopter and \
+                all_of(('Altitude AAL',
+                        'Latitude Smoothed',
+                        'Longitude Smoothed',
+                        'Touchdown'), available)) or \
+               (ac_type == aeroplane and \
+                all_of(('Airspeed True',
                     'Altitude AAL',
-                    'Approach Information'), available) \
-                       and any_of(('Heading True Continuous',
+                        'Approach Information'), available) and \
+                any_of(('Heading True Continuous',
                                    'Track True Continuous',
                                    'Track Continuous',
-                                   'Heading Continuous'), available)
+                        'Heading Continuous'), available))
 
     def derive(self, gspd=P('Groundspeed'),
                glide=P('ILS Glideslope'),
@@ -6485,9 +6493,14 @@ class ApproachRange(DerivedParameterNode):
                tas=P('Airspeed True'),
                alt_aal=P('Altitude AAL'),
                approaches=App('Approach Information'),
+               lat=P('Latitude Smoothed'),
+               lon=P('Longitude Smoothed'),
+               tdwns=KTI('Touchdown'),
+               ac_type=A('Aircraft Type'),
                ):
         app_range = np_ma_masked_zeros_like(alt_aal.array)
 
+        if ac_type==aeroplane:
         for approach in approaches:
             # We are going to reference the approach to a runway touchdown
             # point. Without that it's pretty meaningless, so give up now.
@@ -6643,6 +6656,25 @@ class ApproachRange(DerivedParameterNode):
             app_range[this_app_slice] += extend - (offset or 0)
 
         self.array = app_range
+
+        else:
+            '''
+            Helicopter compuation does not rely on runways!
+            '''
+            stop_delay = 10 # To make sure the helicopter has stopped moving
+
+            for tdwn in tdwns:
+                end = tdwn.index
+                endpoint = {'latitude': lat.array[end], 'longitude': lon.array[end]}
+                try:
+                    begin = tdwns.get_previous(end).index+stop_delay
+                except:
+                    begin = 0
+                this_leg = slice(begin, end+stop_delay)
+                _, app_range[this_leg] = bearings_and_distances(lat.array[this_leg],
+                                                                lon.array[this_leg],
+                                                                endpoint)
+            self.array = app_range
 
 
 ##############################################################################
