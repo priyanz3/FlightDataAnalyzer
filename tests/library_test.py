@@ -907,7 +907,7 @@ class TestAlign(unittest.TestCase):
         slave = P('slave', np.ma.arange(15), frequency=5.0, offset=0.0)
         result = align(slave, master)
         assert_array_equal(result, [0, 5, 10])
-
+    
     def test_align_5hz_reverse(self):
         master = P('master', np.ma.arange(15.0), frequency=5.0, offset=0.0)
         slave = P('slave', array=[1,2,3], frequency=1.0, offset=0.0)
@@ -928,6 +928,20 @@ class TestAlign(unittest.TestCase):
         result = align(slave, master)
         expected = (master.array/10.0)+2.0
         expected[21:]=np.ma.masked
+        assert_array_almost_equal(result, expected)
+    
+    def test_align_15hz(self):
+        master = P('master', array=[1,2,3], frequency=1.0, offset=0.0)
+        slave = P('slave', np.ma.arange(45), frequency=15.0, offset=0.0)
+        result = align(slave, master)
+        assert_array_equal(result, [0, 15, 30])
+    
+    def test_align_15hz_reverse(self):
+        master = P('master', np.ma.arange(30), frequency=15.0, offset=0.0)
+        slave = P('slave', [2,3], frequency=1.0, offset=0.0)
+        result = align(slave, master)
+        expected = (master.array/15.0) + 2.0
+        result[15:] = np.ma.masked
         assert_array_almost_equal(result, expected)
 
     def test_align_20hz(self):
@@ -965,6 +979,37 @@ class TestAlign(unittest.TestCase):
         self.assertEqual(result.dtype, int)
         np.testing.assert_array_equal(result.data, [1,3,3,4,4,5,5,6,0,0])
         np.testing.assert_array_equal(result.mask, [0,0,0,0,0,0,0,0,1,1])
+    
+    def test_align_multi_state_10_15(self):
+        first = P(frequency=15, offset=0.0,
+                  array=np.ma.array([11,12,13,14,15,16,17,18,19,20,21,22,23,24,25], dtype=float))
+        second = M(frequency=10, offset=0.0,
+                   array=np.ma.array([1,3,4,5,6,7,8,9,10,11], dtype=int))
+
+        result = align(second, first)
+        # check dtype is int
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [1,3,3,4,5,5,6,7,7,8,9,9,10,11,0])
+        np.testing.assert_array_equal(result.mask, [0] * 14 + [1])
+    
+    def test_align_multi_state_15_25(self):
+        first = P(frequency=25, offset=0.0, array=np.ma.arange(25, dtype=int))
+        second = M(frequency=15, offset=0.0,
+                   array=np.ma.array([1,3,4,5,6,7,8,9,10,11,12,13,14,15,16], dtype=int))
+        
+        result = align(second, first)
+        # check dtype is int
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [1,3,3,4,4,5,6,6,7,7,8,9,9,10,10,11,12,12,13,13,14,15,15,16,0])
+        np.testing.assert_array_equal(result.mask, [0] * 24  + [1])
+    
+    def test_align_multi_state_25_15(self):
+        first = P(frequency=15, offset=0.0, array=np.ma.arange(15, dtype=np.int))
+        second = M(frequency=25, offset=0.0, array=np.ma.arange(25, dtype=np.int))
+        result = align(second, first)
+        self.assertEqual(result.dtype, int)
+        np.testing.assert_array_equal(result.data, [0,2,3,5,7,8,10,12,13,15,17,18,20,22,23])
+        np.testing.assert_array_equal(result.mask, [0] * 15)
 
 
 class TestAmbiguousRunway(unittest.TestCase):
@@ -5950,27 +5995,33 @@ class TestSlicesOverlay(unittest.TestCase):
 
 class TestSlicesRemoveOverlaps(unittest.TestCase):
     def test_basic__duplicate_slices(self):
-        slicelist = [slice(3, 8), slice(3, 8), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(3, 8), slice(3, 8), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(3, 8), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__first_slice_longer(self):
-        slicelist = [slice(1, 5), slice(3, 8), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 8), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(3, 8), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__second_slice_longer(self):
-        slicelist = [slice(1, 5), slice(3, 7), slice(20, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 7), slice(20, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(1, 5), slice(20, 22)]
         self.assertEqual(expected, newlist)
 
     def test_basic__longest_slice_overlapping_two(self):
-        slicelist = [slice(1, 5), slice(3, 7), slice(2, 22)]
-        newlist = slices_remove_overlaps(slicelist)
+        slices = [slice(1, 5), slice(3, 7), slice(2, 22)]
+        newlist = slices_remove_overlaps(slices)
         expected = [slice(2, 22)]
+        self.assertEqual(expected, newlist)
+    
+    def test_complex(self):
+        slices = [slice(*s) for s in ((538, 570), (571, 582), (605, 606), (539, 540), (541, 544), (545, 546), (547, 558), (559, 561), (562, 563), (564, 582))]
+        newlist = slices_remove_overlaps(slices)
+        expected = [slice(538, 570), slice(571, 582), slice(605, 606)]
         self.assertEqual(expected, newlist)
 
 
@@ -6021,8 +6072,18 @@ class TestSlicesRemoveSmallGaps(unittest.TestCase):
     def test_slice_none_within_slices(self):
         slicelist = [slice(1, None), slice(4,6), slice(None, 8)]
         newlist = slices_remove_small_gaps(slicelist)
-        self.assertEqual(len(newlist), 3)
-
+        self.assertEqual(newlist, [slice(None, None, None)])
+    
+    def test_unsorted_slices(self):
+        slicelist = [slice(*s) for s in (
+            (2565, 4378), (1911, 2277), (1642, 1817), (631, 796), (820, 892), (2420, 2489),
+            (1846, 1910), (2317, 2363), (2364, 2401), (2490, 2508), (2402, 2419), (798, 815),
+            (1818, 1832), (2303, 2316), (2290, 2302), (1149, 1160), (1021, 1032), (1037, 1047),
+            (1836, 1841), (962, 966), (609, 612), (1161, 1164), (2286, 2289), (1842, 1845))]
+        newlist = slices_remove_small_gaps(slicelist, 4)
+        self.assertEqual(newlist, [slice(*s) for s in (
+            (609, 612), (631, 815), (820, 892), (962, 966), (1021, 1032), (1037, 1047),
+            (1149, 1164), (1642, 1832), (1836, 2277), (2286, 2508), (2565, 4378))])
 
 
 class TestSlicesRemoveSmallSlices(unittest.TestCase):

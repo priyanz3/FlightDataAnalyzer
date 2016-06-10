@@ -11,6 +11,7 @@ from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
 from math import atan2, ceil, copysign, cos, floor, log, radians, sin, sqrt
+from operator import attrgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -219,13 +220,6 @@ def is_power2_fraction(number):
     return is_power2(number)
 
 
-def is_5_10_20(number):
-    """
-    Check for extension to include ARINC 647A frequency ratios.
-    """
-    return number in [5, 10, 20]
-
-
 def align(slave, master, interpolate=True):
     """
     This function takes two parameters which will have been sampled at
@@ -325,15 +319,15 @@ def align_args(slave_array, slave_frequency, slave_offset, master_frequency, mas
         ws /= slowest
 
     # Check the values are in ranges we have tested
-    assert is_power2(wm) or is_5_10_20(wm), \
+    assert is_power2(wm) or not wm % 5, \
            "master @ %sHz; wm=%s" % (master_frequency, wm)
-    assert is_power2(ws) or is_5_10_20(ws), \
+    assert is_power2(ws) or not ws % 5, \
            "slave @ %sHz; ws=%s" % (slave_frequency, ws)
 
     # Trap 5, 10 or 20Hz parameters that have non-zero offsets (this case is not currently covered)
-    if is_5_10_20(wm) and master_offset:
+    if master_offset and not wm % 5:
         raise ValueError('Align: Master offset non-zero at sample rate %sHz' % master_frequency)
-    if is_5_10_20(ws) and slave_offset:
+    if slave_offset and not ws % 5:
         raise ValueError('Align: Slave offset non-zero at sample rate %sHz' % slave_frequency)
 
     # Compute the sample rate ratio:
@@ -3705,22 +3699,14 @@ def slices_or(*slice_lists):
     return slices
 
 
-def slices_remove_overlaps(slice_list, hz=1):
+def slices_remove_overlaps(slices):
     '''
     removes overlapping slices from list, keeps longest slice.
     '''
     result = []
-    for new_item in slice_list:
-        if new_item in result:
-            continue
-        add_slice = True
-        for index, existing_item in enumerate(result):
-            if slices_overlap(new_item, existing_item):
-                add_slice = False
-                if slice_duration(new_item, hz) > slice_duration(existing_item, hz):
-                    result[index] = new_item
-        if add_slice:
-            result.append(new_item)
+    for s in sorted(slices, key=lambda s: slice_duration(s, 1), reverse=True):
+        if not any(slices_overlap(s, r) for r in result):
+            result.append(s)
     return result
 
 
@@ -3743,12 +3729,13 @@ def slices_remove_small_gaps(slice_list, time_limit=10, hz=1, count=None):
 
     :returns: slice list.
     '''
-    if count is not None:
-        sample_limit = count
-    else:
-        sample_limit = time_limit * hz
     if slice_list is None or len(slice_list) < 2:
         return slice_list
+    elif any(s.start is None for s in slice_list) and any(s.stop is None for s in slice_list):
+        return [slice(None, None, slice_list[0].step)]
+    
+    sample_limit = count if count is not None else time_limit * hz
+    slice_list = sorted(slice_list, key=attrgetter('start'))
     new_list = [slice_list[0]]
     for each_slice in slice_list[1:]:
         if each_slice.start and new_list[-1].stop  and \
@@ -4765,7 +4752,7 @@ def moving_average(array, window=9, weightings=None):
 
     averaged = np.convolve(stretched_data.data, weightings, 'valid')
     result = np.ma.array(data=averaged,
-                         mask=np.ma.getmaskarray(array))
+                         mask=np.ma.getmaskarray(array).copy())
     return result
 
 

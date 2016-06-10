@@ -8,6 +8,25 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+
+v0.26.3
+-------
+
+ - Improvements:
+   - Alignment supports frequencies which are multiples of 5.
+   - EngTorqueOverThreshold will create fewer Key Point Values for Torque parameters fluctuating over a threshold.
+ - Fixes:
+   - Fix for slices_remove_small_gaps when input slice list is unordered.
+   - Fix for slices_remove_overlaps when input slices are very fragmented.
+
+
+v0.26.2
+-------
+
+ - Fixes:
+   - Derived: Lat/Lon smoothed: Fixed Aircraft type identification.
+
+
 v0.26.1
 -------
 
