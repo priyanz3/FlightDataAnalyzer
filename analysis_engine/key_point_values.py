@@ -13990,6 +13990,39 @@ class Tailwind100FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class TailwindDuringTakeoffMax(KeyPointValueNode):
+    '''
+    Requested KPV to measure tailwind from first valid sample of Airspeed True to lift off.
+    '''
+
+    can_operate = aeroplane_only
+
+    units = ut.DEGREE
+
+    def derive(self,
+               tailwind=P('Tailwind'),
+               airspeed=P('Airspeed True'),
+               liftoffs=KTI('Liftoff'),
+               toffs=S('Takeoff'),
+               ):
+
+        for toff in toffs:
+            begin = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
+            if not begin:
+                self.warning(
+                    "'%s' did not transition through 80 kts in '%s' slice '%s'.",
+                    airspeed.name, toffs.name, toff.slice)
+                continue
+            spd = np.ma.masked_less(airspeed.array, 60)
+            first_spd_idx = first_valid_sample(spd[toff.slice.start:ceil(begin)])[0] + toff.slice.start
+
+            liftoff = liftoffs.get_first(within_slice=toff.slice)
+
+            self.create_kpvs_within_slices(tailwind.array,
+                                           (slice(first_spd_idx, liftoff.index),),
+                                           max_value)
+
+
 ##############################################################################
 # Warnings: Master Caution/Warning
 
