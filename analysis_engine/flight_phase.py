@@ -2074,8 +2074,9 @@ class TaxiIn(FlightPhaseNode):
             return
         for gnd in gnds:
             if slices_overlap(gnd.slice, land.slice):
-                taxi_start = land.slice.stop
-                taxi_stop = gnd.slice.stop
+                # Mobile may or may not stop before Landing for helicopters.
+                taxi_start = min(gnd.slice.stop, land.slice.stop)
+                taxi_stop = max(gnd.slice.stop, land.slice.stop)
                 # Use Last Eng Stop After Touchdown if available.
                 if last_eng_stops:
                     last_eng_stop = last_eng_stops.get_next(taxi_start)
