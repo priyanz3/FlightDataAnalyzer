@@ -1756,21 +1756,24 @@ class DistanceToLanding(DerivedParameterNode):
     '''
     Ground distance to cover before touchdown.
 
-    Note: This parameter gets closer to zero approaching the final touchdown,
-    but then increases as the aircraft decelerates on the runway.
+    Note: This parameter gets closer to zero approaching each touchdown,
+    but then increases as the aircraft decelerates on the runway after the
+    final touchdown.
+
+    This does not reflect go-arounds at the present time.
     '''
 
     units = ut.NM
 
-    # Q: Is this distance to final landing, or distance to each approach
-    # destination (i.e. resets once reaches point of go-around)
-
     def derive(self, dist=P('Distance Travelled'), tdwns=KTI('Touchdown')):
+        self.array = np.zeros_like(dist.array)
         if tdwns:
-            dist_flown_at_tdwn = dist.array[tdwns.get_last().index]
-            self.array = np.ma.abs(dist_flown_at_tdwn - dist.array)
+            last_tdwn = 0
+            for this_tdwn in [t.index for t in tdwns.get_ordered_by_index()]:
+                self.array[last_tdwn:this_tdwn] = np.ma.abs(dist.array[last_tdwn:this_tdwn] - dist.array[this_tdwn])
+                last_tdwn = this_tdwn
+            self.array[last_tdwn:] = np.ma.abs(dist.array[last_tdwn:] - dist.array[this_tdwn])
         else:
-            self.array = np.zeros_like(dist.array)
             self.array.mask = True
 
 

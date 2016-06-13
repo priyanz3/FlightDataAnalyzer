@@ -1966,13 +1966,21 @@ class TestDistanceToLanding(unittest.TestCase):
 
     def test_derive(self):
         distance_travelled = P('Distance Travelled', array=np.ma.arange(0, 100))
-        tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown'),
+        tdwns = KTI('Touchdown', items=[KeyTimeInstance(70, 'Touchdown'),
                                         KeyTimeInstance(95, 'Touchdown')])
 
-        expected_result = np.ma.concatenate((np.ma.arange(95, 0, -1),np.ma.arange(0, 5, 1)))
+        expected_result = np.ma.concatenate((np.ma.arange(70, 0, -1),np.ma.arange(25, 0, -1),np.ma.arange(0, 5, 1)))
         dtl = DistanceToLanding()
         dtl.derive(distance_travelled, tdwns)
         assert_array_equal(dtl.array, expected_result)
+
+    def test_no_touchdown(self):
+        distance_travelled = P('Distance Travelled', array=np.ma.arange(0, 10))
+        tdwns = []
+        dtl = DistanceToLanding()
+        dtl.derive(distance_travelled, tdwns)
+        expected_result = np.ma.array(data=[0.0]*10, mask=[1]*10)
+        ma_test.assert_masked_array_equal(dtl.array, expected_result)
 
 
 class TestDistanceFlown(unittest.TestCase):
