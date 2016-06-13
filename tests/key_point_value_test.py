@@ -593,6 +593,7 @@ from analysis_engine.key_point_values import (
     TailClearanceDuringApproachMin,
     TailClearanceDuringLandingMin,
     TailClearanceDuringTakeoffMin,
+    TailwindDuringTakeoffMax,
     Tailwind100FtToTouchdownMax,
     TailwindLiftoffTo100FtMax,
     TakeoffConfigurationFlapWarningDuration,
@@ -13619,6 +13620,34 @@ class TestTailwind100FtToTouchdownMax(unittest.TestCase, NodeTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestTailwindDuringTakeoffMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = TailwindDuringTakeoffMax
+
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
+        self.assertEqual(opts, [('Tailwind', 'Airspeed True', 'Liftoff', 'Takeoff')])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [])
+
+    def test_derive(self,):
+        x = np.linspace(0, 10, 200)
+        tailwind = P('Tailwind', x*np.sin(x)*3)
+        ias = P('Airspeed', np.ma.concatenate(([0]*125, np.ma.arange(10,160,2))))
+        ias.array[:126] = np.ma.masked
+        toff = buildsection('Takeoff', 50, 185)
+        liftoff=KTI('Liftoff', items=[KeyTimeInstance(175, 'Liftoff')])
+
+        node = self.node_class()
+        node.derive(tailwind, ias, liftoff, toff)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 159)
+        self.assertAlmostEqual(node[0].value, 23.75, places=2)
 
 
 class TestFuelQtyLowWarningDuration(unittest.TestCase):
