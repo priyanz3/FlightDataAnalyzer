@@ -646,7 +646,7 @@ class Cruise(FlightPhaseNode):
 
             # Some flights just don't cruise. This can cause headaches later
             # on, so we always cruise for at least one second !
-            if end <= begin:
+            if end < begin + 1:
                 end = begin + 1
 
             self.create_phase(slice(begin,end))
