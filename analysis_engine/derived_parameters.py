@@ -4856,7 +4856,8 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
             'Airspeed True',
             'Precise Positioning',
             'FDR Takeoff Runway',
-            'Mobile'), available) \
+            'Approach Range',  # required for Imprecise non ILS approaches
+            'Mobile',), available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
@@ -4908,7 +4909,8 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
             'Airspeed True',
             'Precise Positioning',
             'FDR Takeoff Runway',
-            'Mobile'), available) \
+            'Approach Range',  # required for Imprecise non ILS approaches
+            'Mobile',), available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
