@@ -8,6 +8,13 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+
+v0.26.5
+-------
+ - Fixes:
+   - Alternative sources of rotor speed information catered for in get_speed_parameter.
+
+
 v0.26.4
 ------
  - Fixes:
