@@ -9,6 +9,13 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.26.4
+------
+ - Fixes:
+    - flight_phases.Cruise: handle very brief cruise
+    - TaxiIn: allow Mobile or Landing to stop first
+
+
 v0.26.3
 -------
 
