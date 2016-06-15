@@ -4857,7 +4857,7 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
             'Precise Positioning',
             'FDR Takeoff Runway',
             'Mobile']
-        if precise and precise.value == False:
+        if bool(getattr(precise, 'value', False)) is False:
             required.append('Approach Range')  # required for Imprecise non ILS approaches
         return all_of(required, available) \
                and any_of(('Heading True Continuous',
@@ -4912,7 +4912,7 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
             'Precise Positioning',
             'FDR Takeoff Runway',
             'Mobile']
-        if precise and precise.value == False:
+        if bool(getattr(precise, 'value', False)) is False:
             required.append('Approach Range')  # required for Imprecise non ILS approaches
         return all_of(required, available) \
                and any_of(('Heading True Continuous',
