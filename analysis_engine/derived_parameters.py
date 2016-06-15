@@ -4849,15 +4849,17 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
 
     # List the minimum acceptable parameters here
     @classmethod
-    def can_operate(cls, available):
-        return all_of((
+    def can_operate(cls, available, precise=A('Precise Positioning')):
+        required = [
             'Latitude Prepared',
             'Longitude Prepared',
             'Airspeed True',
             'Precise Positioning',
             'FDR Takeoff Runway',
-            'Approach Range',  # required for Imprecise non ILS approaches
-            'Mobile',), available) \
+            'Mobile']
+        if precise and precise.value == False:
+            required.append('Approach Range')  # required for Imprecise non ILS approaches
+        return all_of(required, available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
@@ -4902,15 +4904,17 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
     ##align_offset = 0.0
 
     @classmethod
-    def can_operate(cls, available):
-        return all_of((
+    def can_operate(cls, available, precise=A('Precise Positioning')):
+        required = [
             'Latitude Prepared',
             'Longitude Prepared',
             'Airspeed True',
             'Precise Positioning',
             'FDR Takeoff Runway',
-            'Approach Range',  # required for Imprecise non ILS approaches
-            'Mobile',), available) \
+            'Mobile']
+        if precise and precise.value == False:
+            required.append('Approach Range')  # required for Imprecise non ILS approaches
+        return all_of(required, available) \
                and any_of(('Heading True Continuous',
                            'Heading Continuous'), available)
 
