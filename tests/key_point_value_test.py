@@ -13649,6 +13649,23 @@ class TestTailwindDuringTakeoffMax(unittest.TestCase):
         self.assertEqual(node[0].index, 159)
         self.assertAlmostEqual(node[0].value, 23.75, places=2)
 
+    def test_derive__masked_below_100(self,):
+        x = np.linspace(0, 10, 200)
+        tailwind = P('Tailwind', x*np.sin(x)*3)
+        spd_array = np.ma.concatenate(([0]*125, np.ma.arange(10,160,2)))
+        spd_array = np.ma.masked_less_equal(spd_array, 100)
+        ias = P('Airspeed', spd_array)
+        
+        toff = buildsection('Takeoff', 50, 185)
+        liftoff=KTI('Liftoff', items=[KeyTimeInstance(175, 'Liftoff')])
+
+        node = self.node_class()
+        node.derive(tailwind, ias, liftoff, toff)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 171)
+        self.assertAlmostEqual(node[0].value, 19.05, places=2)
+
 
 class TestFuelQtyLowWarningDuration(unittest.TestCase):
     def test_can_operate(self):
