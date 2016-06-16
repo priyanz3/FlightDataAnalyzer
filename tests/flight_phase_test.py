@@ -2000,6 +2000,21 @@ class TestLanding(unittest.TestCase):
         self.assertEqual(node[0].slice.start, 10)
         self.assertEqual(node[0].slice.stop, 15)
 
+    def test_derive__aeroplane_short_goaround(self):
+        # reflective of real jetstream goaround
+
+        alt_aal = np.ma.concatenate((np.arange(10000, 0, -25), np.arange(0, 1500, 25), np.arange(1500, 0, -25),[0]*80))  # len 600
+        head = np.ma.array([-50]*570+range(-50,0,5)+[0]*20)
+        phase_fast = buildsection('Fast', 0, 550)
+        landing = Landing()
+        landing.derive(aeroplane,
+                       P('Heading Continuous',head),
+                       P('Altitude AAL For Flight Phases', alt_aal),
+                       phase_fast,
+                       None)
+        expected = buildsection('Landing', 518, 579)
+        self.assertEqual(landing.get_slices(), expected.get_slices())
+
 
 class TestLandingRoll(unittest.TestCase):
     def test_can_operate(self):

@@ -1586,7 +1586,7 @@ class Landing(FlightPhaseNode):
             first = landing_run - (300 * alt_aal.frequency)
             landing_begin = index_at_value(alt_aal.array,
                                            LANDING_THRESHOLD_HEIGHT,
-                                           slice(first, landing_run))
+                                           slice(landing_run, first-1, -1))
             if landing_begin is None:
                 # we are not able to detect a landing threshold height,
                 # therefore invalid section
