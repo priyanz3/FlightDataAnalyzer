@@ -596,7 +596,9 @@ def _get_speed_parameter(hdf, aircraft_info):
             parameter = hdf['Nr']
         except:
             # Alternative if dual sources available
-            parameter = blend_parameters(hdf['Nr (1)'], hdf['Nr (2)'])
+            parameter = blend_parameters((hdf['Nr (1)'], hdf['Nr (2)']))
+            parameter = P(name='Nr', array=parameter, data_type=parameter.dtype)
+            
         thresholds['speed_threshold'] = settings.ROTORSPEED_THRESHOLD
         thresholds['min_duration'] = settings.ROTORSPEED_THRESHOLD_TIME
         # Very short dips in rotor speed before recording stops.
