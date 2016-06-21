@@ -13992,7 +13992,7 @@ class Tailwind100FtToTouchdownMax(KeyPointValueNode):
 
 class TailwindDuringTakeoffMax(KeyPointValueNode):
     '''
-    Requested KPV to measure tailwind from first valid sample of Airspeed True to lift off.
+    Requested KPV to measure tailwind from first valid sample of Airspeed to lift off.
     '''
 
     can_operate = aeroplane_only
@@ -14001,7 +14001,7 @@ class TailwindDuringTakeoffMax(KeyPointValueNode):
 
     def derive(self,
                tailwind=P('Tailwind'),
-               airspeed=P('Airspeed True'),
+               airspeed=P('Airspeed'),
                liftoffs=KTI('Liftoff'),
                toffs=S('Takeoff'),
                ):
