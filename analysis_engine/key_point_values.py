@@ -10292,8 +10292,6 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                toffs=S('Takeoff'),
                ):
 
-        head = head_true or head_mag
-
         for toff in toffs:
             begin = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
             if not begin:
@@ -10303,6 +10301,14 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                 continue
             spd = np.ma.masked_less(airspeed.array, 60)
             first_spd_idx = first_valid_sample(spd[toff.slice.start:ceil(begin)])[0] + toff.slice.start
+            # Pick first heading parameter with valid data in phase.
+            head = first_valid_parameter(head_true, head_mag, phases=(slice(first_spd_idx, ceil(begin)),))
+            if head is None:
+                # We have no valid heading to use.
+                self.warning(
+                    "No valid heading data identified in takeoff slice '%s'.",
+                    toff.slice)
+                continue
             datum_heading = np.ma.median(head.array[first_spd_idx:ceil(begin)])
 
             end = None
