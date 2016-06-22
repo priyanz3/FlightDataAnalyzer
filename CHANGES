@@ -8,6 +8,30 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.27.1
+-------
+
+ - Add:
+   - KPV: Tailwind During Takeoff Max
+ - Improvement:
+   - Derived: Approach Range now accommodates helicopter operations
+   - SplitSegment: Helicopter
+      - Alternative sources of rotor speed information catered for in get_speed_parameter
+      - blend_parameters takes a list of params
+      - result is masked array not parameter object
+   - Library: align: allow frequency multiple of five
+   - Utils: open_node_container: support [%] in names
+ - Fix:
+   - Derived: lat/lon smoothed
+      - Attributes nonzero look at attributes value
+      - Lat/Lon smoothed can operate Approach Range is required for Imprecise non ILS approaches
+   - KTI: Distance To Touchdown now resets after each touchdown
+   - Library: slices_remove_small_gaps: fix unordered
+   - Library: slices_remove_overlaps: fix complex slices
+   - Phase: Landing following short go-around
+   - Phase: Cruise: handle very brief cruise
+   - Phase: TaxiIn: allow Mobile or Landing to stop first
+
 
 v0.26.5
 -------
