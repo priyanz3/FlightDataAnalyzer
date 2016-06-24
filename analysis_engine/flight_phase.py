@@ -812,7 +812,9 @@ class Fast(FlightPhaseNode):
 
 
 class FinalApproach(FlightPhaseNode):
-    def derive(self, alt_aal=P('Altitude AAL For Flight Phases')):
+    def derive(self, alt_aal=P('Altitude AAL For Flight Phases'),
+               airs=S('Airborne')):
+        # Airborne dependancy added as we should not be approaching if never airborne
         self.create_phases(alt_aal.slices_from_to(1000, 50))
 
 
@@ -1505,7 +1507,7 @@ class Mobile(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available):
-        return all_of(('Heading Rate', 'Airborne'), available)
+        return 'Heading Rate' in available
 
     def derive(self,
                rot=P('Heading Rate'),
