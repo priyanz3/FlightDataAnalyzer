@@ -12981,6 +12981,8 @@ class RateOfDescentBelow30KtsWithPowerOnMax(KeyPointValueNode):
 
     units = ut.FPM
 
+    can_operate = helicopter_only
+
     def derive(self, vrt_spd=P('Vertical Speed Inertial'), air_spd=P('Airspeed'), descending=S('Descending'),
                power=P('Eng (*) Torque Avg')):
         speed_bands = slices_and(descending.get_slices(),
