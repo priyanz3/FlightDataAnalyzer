@@ -4849,7 +4849,9 @@ class LatitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
 
     # List the minimum acceptable parameters here
     @classmethod
-    def can_operate(cls, available, precise=A('Precise Positioning')):
+    def can_operate(cls, available, precise=A('Precise Positioning'), ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return 'Longitude Prepared' in available
         required = [
             'Latitude Prepared',
             'Longitude Prepared',
@@ -4904,7 +4906,9 @@ class LongitudeSmoothed(DerivedParameterNode, CoordinatesSmoothed):
     ##align_offset = 0.0
 
     @classmethod
-    def can_operate(cls, available, precise=A('Precise Positioning')):
+    def can_operate(cls, available, precise=A('Precise Positioning'), ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return 'Longitude Prepared' in available
         required = [
             'Latitude Prepared',
             'Longitude Prepared',
