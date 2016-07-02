@@ -12496,8 +12496,10 @@ class TestRateOfDescentBelow30KtsWithPowerOnMax(unittest.TestCase):
         self.node_class = RateOfDescentBelow30KtsWithPowerOnMax
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Vertical Speed', 'Airspeed', 'Descending', 'Eng (*) Torque Avg')])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Vertical Speed Inertial', 'Airspeed', 'Descending', 'Eng (*) Torque Avg')])
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
+        self.assertEqual(opts, [])
 
     def test_derive(self,):
         x = np.linspace(0, 10, 62)

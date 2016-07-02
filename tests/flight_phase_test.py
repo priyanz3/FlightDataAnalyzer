@@ -1638,7 +1638,7 @@ class TestGrounded(unittest.TestCase):
 
 class TestFinalApproach(unittest.TestCase):
     def test_can_operate(self):
-        expected = [('Altitude AAL For Flight Phases',)]
+        expected = [('Altitude AAL For Flight Phases', 'Airborne')]
         opts = FinalApproach.get_operational_combinations()
         self.assertEqual(opts, expected)
 
@@ -2031,7 +2031,7 @@ class TestMobile(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = Mobile
-        self.operational_combinations = [('Heading Rate', 'Airborne'), ('Heading Rate', 'Groundspeed', 'Airborne')]
+        self.operational_combinations = [('Heading Rate',), ('Heading Rate', 'Groundspeed'), ('Heading Rate', 'Airborne'), ('Heading Rate', 'Groundspeed', 'Airborne')]
 
     def test_gspd(self):
         rot = np.ma.array([0, 0, 0, 0, 0, 0, 0])
