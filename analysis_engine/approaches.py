@@ -132,7 +132,7 @@ class ApproachInformation(ApproachNode):
 
             # R1. If we have airport and heading, look for the nearest runway:
             if appr_ils_freq:
-                kwargs['ils_freq'] = appr_ils_freq
+                kwargs['ilsfreq'] = appr_ils_freq
 
                 # We already have latitude and longitude in kwargs from looking up
                 # the airport. If the measurments are not precise, remove them.
@@ -146,7 +146,7 @@ class ApproachInformation(ApproachNode):
                 msg = 'No runway found for airport #%d @ %03.1f deg with %s.'
                 self.warning(msg, airport['id'], lowest_hdg, kwargs)
                 # No runway was found, so fall through and try AFR.
-                if 'ils_freq' in kwargs:
+                if 'ilsfreq' in kwargs:
                     # This is a trap for airports where the ILS data is not
                     # available, but the aircraft approached with the ILS
                     # tuned. A good prompt for an omission in the database.
