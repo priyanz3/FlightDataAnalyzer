@@ -125,7 +125,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
             'aircraft': aircraft.strip().lower(),
         }
-        return self.request(url)['aircraft']
+        return self.request(url)
 
     def get_analyser_profiles(self, aircraft):
         '''
@@ -141,7 +141,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
             'aircraft': aircraft.strip().lower(),
         }
-        return self.request(url)['analyser_profiles']
+        return self.request(url)
 
     def get_data_exports(self, aircraft):
         '''
@@ -157,7 +157,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
             'aircraft': aircraft.strip().lower(),
         }
-        return self.request(url)['data_exports']
+        return self.request(url)
 
     def get_airport(self, code):
         '''
@@ -173,7 +173,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
             'code': str(code).strip().lower(),
         }
-        return self.request(url)['airport']
+        return self.request(url)
 
     def get_nearest_airport(self, latitude, longitude):
         '''
@@ -191,7 +191,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
         }
         params = {'ll': '%f,%f' % (latitude, longitude)}
-        return self.request(url, params=params)['airport']
+        return self.request(url, params=params)
 
 
 class FileHandler(MethodInterface, api.FileHandler):

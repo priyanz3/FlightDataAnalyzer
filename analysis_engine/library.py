@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
+##############################################################################
 import itertools
 import logging
 import pytz
@@ -5,7 +8,7 @@ import numpy as np
 import math
 
 from collections import defaultdict, OrderedDict, namedtuple
-from copy import copy
+from copy import copy, deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
@@ -7830,7 +7833,10 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
     '''
 
     def _filter_heading(r, h):
-        rh = r['magnetic_heading']
+        rh = r.get('magnetic_heading')
+        if not rh:
+            logger.warning('No heading information available for runway #%d.', r['id'])
+            return
         h1 = heading - RUNWAY_HEADING_TOLERANCE
         h2 = heading + RUNWAY_HEADING_TOLERANCE
         q1 = h1 + 360 <= rh <= 360 or 0 <= rh <= h if h1 < 0 else h1 <= rh <= h
@@ -7838,10 +7844,13 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
         return q1 or q2
 
     def _filter_ilsfreq(r, f):
-        rf = r['localizer']['frequency']
+        rf = r.get('localizer').get('frequency')
         f0 = ilsfreq - RUNWAY_ILSFREQ_TOLERANCE
         f1 = ilsfreq + RUNWAY_ILSFREQ_TOLERANCE
         return f0 <= rf <= f1
+
+    if not airport:
+        return None
 
     try:
         runways = airport['runways']
@@ -7850,7 +7859,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
         return None
 
     # 1. Attempt to identify the runway by magnetic heading:
-    assert 0 <= heading <= 360, 'Heading must be between 0 and 360 degrees.'
+    assert 0 <= heading <= 360, u'Heading must be between 0° and 360° degrees.'
     runways = [runway for runway in runways if _filter_heading(runway, heading)]
     if len(runways) == 0:
         logger.warning('No runways found at airport #%d for heading %03.1f degrees.', airport['id'], heading)
@@ -7865,12 +7874,12 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
         assert ilsfreq // 100 % 10 % 2, 'Localiser frequency must have odd 100 kHz digit.'
         x = [runway for runway in runways if _filter_ilsfreq(runway, ilsfreq)]
         if len(x) == 1:
-            # XXX logger.info("Runway '%s' selected: Identified by ILS.", x[0]['ident'])
+            logger.info("Runway '%s' selected: Identified by ILS.", x[0]['identifier'])
             return x[0]
         elif len(x) == 0:
-            # XXX logger.warning("ILS '%s' frequency provided, no matching runway found at '%s'.", ilsfreq, airport['id'])
+            logger.warning("ILS '%s' frequency provided, no matching runway found at '%s'.", ilsfreq, airport['id'])
         else:
-            # XXX logger.warning("ILS '%s' frequency provided, multiple matching runways found at '%s'.", ilsfreq, airport['id'])
+            logger.warning("ILS '%s' frequency provided, multiple matching runways found at '%s'.", ilsfreq, airport['id'])
 
     # 3. If hint provided (i.e. not precise positioning) try narrowing down the
     #    runway by heading - if more than one runway within 10 degrees, likely
@@ -7881,21 +7890,21 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
         for limit in (20, 10):
             x = [runway for runway in runways if abs(float(runway['magnetic_heading']) - heading) < limit]
             if len(x) == 1:
-                # XXX logger.info("Runway '%s' selected: Only runway within %d degrees of provided heading.", x[0].ident, limit)
+                logger.info("Runway '%s' selected: Only runway within %d degrees of provided heading.", x[0]['identifier'], limit)
                 return x[0]
 
     # 4. Attempt to identify by nearest runway (if precise positioning):
     if latitude is not None and longitude is not None:
         assert -90 <= latitude <= 90, 'Latitude must be between -90 and 90 degrees.'
         assert -180 < longitude <= 180, 'Longitude must be between -180 and 180 degrees.'
-        p3y, p3x = longitude, latitude
+        p3y, p3x = latitude, longitude
         distance = float('inf')
         runway = None
         for r in runways:
             p1x = r['start']['longitude']
             p1y = r['start']['latitude']
             p2x = r['end']['longitude']
-            p2y = r['end']['latitiude']
+            p2y = r['end']['latitude']
             args = (p1y, p1x, p2y, p2x, p3y, p3x)
             if not any(args):
                 continue
@@ -7904,11 +7913,10 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
                 distance = abs_dxt
                 runway = r
         if runway:
-            logger.info("Runway '%s' selected: Closest to provided coordinates.", runway.ident)
+            logger.info("Runway '%s' selected: Closest to provided coordinates.", runway['identifier'])
             return runway
 
     # 4. Fall back to not identifying which parallel runway:
-    runways = sorted(map(lambda r: r.to_dict(), runways), key=itemgetter('id'))
     idents = map(lambda runway: runway['identifier'], runways)
 
     # Check that the runway identifiers don't conflict, otherwise guess:
@@ -7933,6 +7941,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
     # Order the runway objects by the selected ordering:
     runway = sorted(runways, key=lambda x: order.find(x['identifier'][-1]))[0]
 
+    runway = deepcopy(runway)
     runway['identifier'] = runway['identifier'].rstrip('CLRST') + '*'  # FIXME: Copy to avoid modifying!
 
     if not runway.get('end'):

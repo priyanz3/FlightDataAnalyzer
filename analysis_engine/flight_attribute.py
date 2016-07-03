@@ -316,7 +316,9 @@ class LandingAirport(FlightAttributeNode):
                     self.warning(msg, lat.value, lon.value)
                     # No airport was found, so fall through and try AFR.
                 else:
-                    self.info('Detected landing airport: %s from coordinates (%f, %f)', airport.get('code'), lat.value, lon.value)
+                    codes = airport.get('code', {})
+                    code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
+                    self.info('Detected landing airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)
                     self.set_flight_attr(airport)
                     return  # We found an airport, so finish here.
             else:
@@ -378,9 +380,12 @@ class LandingRunway(FlightAttributeNode):
         precise = bool(getattr(precision, 'value', False))
 
         try:
-            airport = int(land_fdr_apt.value['id'])
-        except (AttributeError, KeyError, TypeError, ValueError):
+            airport = land_fdr_apt.value  # FIXME
+        except AttributeError:
             self.warning('Invalid airport... Fallback to AFR Landing Runway.')
+            fallback = True
+
+        if airport is None:
             fallback = True
 
         try:
@@ -450,7 +455,7 @@ class LandingRunway(FlightAttributeNode):
                     # tuned. A good prompt for an omission in the database.
                     self.warning('Fix database? No runway but ILS was tuned.')
             else:
-                self.info('Detected landing runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport, heading, kwargs)
+                self.info('Detected landing runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport['id'], heading, kwargs)
                 self.set_flight_attr(runway)
                 return  # We found a runway, so finish here.
 
@@ -539,7 +544,9 @@ class TakeoffAirport(FlightAttributeNode):
                 self.warning(msg, lat.value, lon.value)
                 # No airport was found, so fall through and try AFR.
             else:
-                self.info('Detected takeoff airport: %s from coordinates (%f, %f)', airport.get('code'), lat.value, lon.value)
+                codes = airport.get('code', {})
+                code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
+                self.info('Detected takeoff airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)
                 self.set_flight_attr(airport)
                 return True  # We found an airport, so finish here.
         else:
@@ -773,6 +780,9 @@ class TakeoffRunway(FlightAttributeNode):
             self.warning('Invalid airport... Fallback to AFR Takeoff Runway.')
             fallback = True
 
+        if airport is None:
+            fallback = True
+
         try:
             heading = toff_hdg.get_first().value
             if heading is None:
@@ -811,7 +821,7 @@ class TakeoffRunway(FlightAttributeNode):
                 self.warning(msg, airport['id'], heading, kwargs)
                 # No runway was found, so fall through and try AFR.
             else:
-                self.info('Detected takeoff runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport, heading, kwargs)
+                self.info('Detected takeoff runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport['id'], heading, kwargs)
                 self.set_flight_attr(runway)
                 return  # We found a runway, so finish here.
 

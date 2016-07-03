@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+# vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
+##############################################################################
+
+'''
+'''
+
+##############################################################################
+# Imports
 import csv
 import mock
 import numpy as np
@@ -7459,6 +7468,434 @@ class TestLookupTable(unittest.TestCase):
         at.get_vspeed_map.assert_called_once_with(*self.values)
         self.assertEqual(log.call_count, 1)
         self.assertEqual(table, None)
+
+class TestNearestRunway(unittest.TestCase):
+
+    '''
+    Tests for Nearest Runway
+    '''
+    from .airports import airports
+    _airports = airports
+    _expected = {
+        '001': {
+            'id': 10816,
+            'identifier': u'27*',
+            'magnetic_heading': 272.0,
+            'start': {
+                'elevation': 78,
+                'latitude': 51.47767519999998,
+                'longitude': -0.43326099999999224
+            },
+            'end': {
+                'elevation': 78,
+                'latitude': 51.47748872593225,
+                'longitude': -0.48499105282286614
+            },
+            'glideslope': {
+                'angle': 3.0,
+                'elevation': 78,
+                'latitude': 51.47883099999999,
+                'longitude': -0.4382060000000034,
+                'threshold_distance': 1124
+            },
+            'localizer': {
+                'beam_width': 4.5,
+                'elevation': 78,
+                'frequency': 110300.00,
+                'heading': 271,
+                'is_offset': False,
+                'latitude': 51.477467,
+                'longitude': -0.49373899999999565,
+            },
+            'strip': {'id': 5408, 'length': 12799, 'surface': u'ASP', 'width': 164},
+        },
+        '002': {
+            'id': 10814,
+            'identifier': u'27L',
+            'magnetic_heading': Decimal('272.0'),
+            'start': {
+                'elevation': 77,
+                'latitude': 51.46495199999997,
+                'longitude': -0.4340779999999912
+            },
+            'end': {
+                'elevation': 75,
+                'latitude': 51.464765624976685,
+                'longitude': -0.4822469198065629
+            },
+            'glideslope': {
+                'angle': 3.0,
+                'elevation': 77,
+                'latitude': 51.46376501247372,
+                'longitude': -0.43896011904906,
+                'threshold_distance': 1072
+            },
+            'localizer': {
+                'beam_width': 4.5,
+                'elevation': 75,
+                'frequency': Decimal('109500.00'),
+                'heading': 271,
+                'is_offset': False,
+                'latitude': 51.46476099999998,
+                'longitude': -0.49111899999999203
+            },
+            'strip': {'id': 5407, 'length': 12001, 'surface': u'ASP', 'width': 164}
+        },
+        '003': {
+            'id': 5,
+            'identifier': u'18',
+            'magnetic_heading': 182.0,
+            'start': {
+                'latitude': 41.997416999999999,
+                'longitude': -87.900406000000004,
+            },
+            'end': {
+                'latitude': 41.982785999999997,
+                'longitude': -87.900400000000005,
+            },
+            'strip': {
+                'id': 3,
+                'length': 5332,
+                'surface': u'ASP',
+                'width': 150,
+            },
+        },
+        '004': {
+            'id': 13411,
+            'identifier': u'13*',
+            'magnetic_heading': Decimal('137.2'),
+            'start': {
+                'latitude': 41.788069, 
+                'elevation': 620, 
+                'longitude': -87.758803
+            },
+            'end': {
+                'latitude': 41.780772,
+                'elevation': 620,
+                'longitude': -87.748553
+            },
+            'strip': {
+                'width': 60,
+                'length': 3859,
+                'id': 6706,
+                'surface': u'CON'
+            },
+            'localizer': {
+                'elevation': 620,
+                'is_offset': False
+            },
+            'glideslope': {'elevation': 620}
+        },
+        '005': {
+            'id': 6,
+            'identifier': u'36',
+            'magnetic_heading': 2.0,
+            'start': {
+                'latitude': 41.982785999999997,
+                'longitude': -87.900400000000005,
+            },
+            'end': {
+                'latitude': 41.997416999999999,
+                'longitude': -87.900406000000004,
+            },
+            'strip': {
+                'id': 3,
+                'length': 5332,
+                'surface': u'ASP',
+                'width': 150,
+            },
+        },
+        '006': u'Magnetic heading is required to determine runway.',
+        '007': u'Heading must be numeric.',
+        '008': u'Heading must be between 0° and 360°: \'%s\'.',
+        '009': u'Expected comma-separated latitude and longitude in decimal degrees.',
+        '010': u'Latitude must be specified in decimal degrees.',
+        '011': u'Longitude must be specified in decimal degrees.',
+        '012': u'Latitude must be between -90° and 90°: \'%s\'.',
+        '013': u'Longitude must be between -180° and 180°: \'%s\'.',
+        '014': u'No runway found at airport for the magnetic heading [%s]',
+        '015': u'ILS frequency must be numeric.',
+        '016': u'Localizer ILS frequency is out-of-range.',
+        '017': {
+            'end': {
+                'elevation': 119,
+                'latitude': 43.30633764082481,
+                'longitude': -2.9249050434919237
+            },
+            'glideslope': {
+                'angle': 3.4,
+                'elevation': 120,
+                'latitude': 43.29787499999998,
+                'longitude': -2.9050420000000097,
+                'threshold_distance': 902
+            },
+            'id': 9916,
+            'identifier': u'30',
+            'localizer': {
+                'beam_width': 4.5,
+                'elevation': 119,
+                'frequency': Decimal('110300.00'),
+                'heading': 300,
+                'is_offset': False,
+                'latitude': 43.30729199999997,
+                'longitude': -2.927516999999999
+            },
+            'magnetic_heading': Decimal('298.0'),
+            'start': {
+                'elevation': 120,
+                'latitude': 43.29770864269298,
+                'longitude': -2.901346028469935
+            },
+            'strip': {'id': 4958, 'length': 8530, 'surface': u'ASP', 'width': 148},
+        },
+        '018': {
+            'id': 11172,
+            'identifier': u'20',
+            'magnetic_heading': Decimal('201.0'),
+            'start': {'elevation': 44,
+                      'latitude': 50.95712713152393,
+                      'longitude': -1.352988127649349
+                      },
+            'end': {'elevation': 31,
+                    'latitude': 50.94360437892113,
+                    'longitude': -1.3605209484101468
+                    },
+            'glideslope': {'angle': 3.1,
+                           'elevation': 44,
+                           'frequency': Decimal('110750.00'),
+                           'latitude': 50.955138726435244,
+                           'longitude': -1.355741592590264,
+                           'threshold_distance': 918
+                           },
+            'localizer': {'beam_width': 4.5,
+                          'elevation': 31,
+                          'frequency': Decimal('110750.00'),
+                          'heading': 201,
+                          'is_offset': False,
+                          'latitude': 50.942072718495965,
+                          'longitude': -1.3613830932541067
+                          },
+            'strip': {'id': 5586, 'length': 5653, 'surface': u'ASP', 'width': 120}},
+    }
+
+    def test_find_nearest_with_valid_heading(self):
+        '''
+        Test finding nearest runway with valid magnetic heading.
+        '''
+        # TODO: switch for airport with single runway
+        runway = nearest_runway(self._airports['001'], 270.5)
+        self.assertEqual(runway, self._expected['001'])
+
+    def test_find_nearest_with_invalid_heading(self):
+        '''
+        Test finding nearest runway with invalid magnetic heading.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['008'],
+                                callableObj=nearest_runway, args=[self._airports['001'], 'ABC'])
+
+    def test_find_nearest_with_positive_overflow_heading(self):
+        '''
+        Test finding nearest runway with positive overflowed magnetic heading.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['008'],
+                                callableObj=nearest_runway, args=[self._airports['001'], 361])
+
+    def test_find_nearest_with_negative_overflow_heading(self):
+        '''
+        Test finding nearest runway with negative overflowed magnetic heading.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['008'],
+                                callableObj=nearest_runway, args=[self._airports['001'], -1])
+
+    def test_find_nearest_without_heading(self):
+        '''
+        Test finding nearest runway without a magnetic heading.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['006'],
+                                callableObj=nearest_runway, args=[self._airports['001'], None])
+
+    def test_find_nearest_with_valid_coordinates(self):
+        '''
+        Test finding nearest runway with valid coordinates.
+        '''
+        runway = nearest_runway(self._airports['001'], 270.5, latitude=51.464927, longitude=-0.440458)
+        self.assertEqual(runway, self._expected['002'])
+
+    def test_find_nearest_with_invalid_latitude(self):
+        '''
+        Test finding nearest runway with invalid latitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['010'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':'A', 'longitude':0})
+
+    def test_find_nearest_with_positive_overflow_latitude(self):
+        '''
+        Test finding nearest runway with positive overflowed latitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['012'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':100, 'longitude':0})
+
+    def test_find_nearest_with_negative_overflow_latitude(self):
+        '''
+        Test finding nearest runway with negative overflowed latitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['012'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':-100, 'longitude':0})
+
+    def test_find_nearest_with_invalid_longitude(self):
+        '''
+        Test finding nearest runway with invalid longitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['011'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':0, 'longitude':'A'})
+
+    def test_find_nearest_with_positive_overflow_longitude(self):
+        '''
+        Test finding nearest runway with positive overflowed longitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['013'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':0, 'longitude':200})
+
+    def test_find_nearest_with_negative_overflow_longitude(self):
+        '''
+        Test finding nearest runway with negative overflowed longitude.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['013'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':0, 'longitude':-200})
+
+    def test_find_nearest_with_one_coordinate(self):
+        '''
+        Test finding nearest runway with one coordinate.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['009'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'latitude':0})
+
+    def test_find_nearest_with_unknown_heading(self):
+        '''
+        Test finding nearest runway with unknown magnetic heading.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['014'] % 180.0,
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 180.0],
+                                kwargs={'latitude':0})
+
+    def test_find_nearest_with_valid_ilsfreq_1(self):
+        '''
+        Test finding nearest runway with valid localizer frequency.
+        '''
+        runway = nearest_runway(self._airports['001'], 270.5, ilsfreq=109.5)
+        self.assertEqual(runway, self._expected['002'])
+
+    def test_find_nearest_with_valid_ilsfreq_2(self):
+        '''
+        Test finding nearest runway with valid localizer frequency.
+        '''
+        runway = nearest_runway(self._airports['001'], 270.5, ilsfreq=109.51)
+        self.assertEqual(runway, self._expected['002'])
+
+    def test_find_nearest_with_invalid_ilsfreq(self):
+        '''
+        Test finding nearest runway with invalid localizer frequency.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['015'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'ilsfrq':'ABC'})
+
+    def test_find_nearest_with_out_of_range_ilsfreq_1(self):
+        '''
+        Test finding nearest runway with out-of-range localizer frequency.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['016'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'ilsfrq':105000})
+
+    def test_find_nearest_with_out_of_range_ilsfreq_2(self):
+        '''
+        Test finding nearest runway with out-of-range localizer frequency.
+        '''
+        self.assertRaisesRegexp(Exception,
+                                self._expected['016'],
+                                callableObj=nearest_runway,
+                                args=[self._airports['001'], 270.5],
+                                kwargs={'ilsfrq':115000})
+
+    def test_find_nearest_with_unknown_ilsfreq(self):
+        '''
+        Test finding nearest runway with unknown localizer frequency.
+        '''
+        runway = nearest_runway(self._airports['001'], 270.5, ilsfreq=108.95)
+        self.assertEqual(runway, self._expected['001'])
+
+    def test_find_nearest_with_unknown_ilsfreq_fallback_coordinates(self):
+        '''
+        Test finding nearest runway with unknown localizer frequency.
+        '''
+        runway = nearest_runway(self._airports['001'], 270.5, latitude=51.464927, longitude=-0.440458, ilsfreq=108.95)
+        self.assertEqual(runway, self._expected['002'])
+
+    def test_find_nearest_with_single_runway(self):
+        '''
+        Test finding nearest runway when only a single runway on heading.
+        '''
+        runway = nearest_runway(self._airports['005'], 200.5)
+        self.assertEqual(runway, self._expected['018'])
+
+    def test_find_nearest_with_triple_runway(self):
+        '''
+        Test finding nearest runway when only a single runway on heading.
+        '''
+        runway = nearest_runway(self._airports['003'], 130.5, hint='landing')
+        self.assertEqual(runway, self._expected['004'])
+
+    def test_find_nearest_with_heading_wrap_around(self):
+        '''
+        Test finding nearest runway when heading must wrap from 360° --> 0°.
+        '''
+        runway = nearest_runway(self._airports['002'], 359.5)
+        self.assertEqual(runway, self._expected['005'])
+
+    def test_find_nearest_with_runway_conflict_error(self):
+        '''
+        Test finding nearest runway when idents conflict because too similar.
+
+        Note: This used to raise an error. Now we just attempt to choose the
+              runway that has the closest heading to the one provided. If we
+              guess wrongly, the achieved flight record will just have to be
+              updated and we will have to reprocess the flight.
+        '''
+        #  TODO: test case to fit description
+        runway = nearest_runway(self._airports['004'], 301.640625, hint='landing')
+        self.assertEqual(runway, self._expected['017'])
 
 
 if __name__ == '__main__':
