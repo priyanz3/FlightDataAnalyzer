@@ -417,7 +417,7 @@ class LandingRunway(FlightAttributeNode):
                     ils_app_slice = landing.slice
                 ils_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
                 if ils_freq:
-                    kwargs.update(ils_freq=ils_freq.value)
+                    kwargs.update(ilsfreq=ils_freq.value)
 
             '''
             Original comment:

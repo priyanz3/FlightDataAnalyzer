@@ -759,21 +759,21 @@ class TestLandingRunway(unittest.TestCase, NodeTest):
                    ils_freq_on_app)
         rwy.set_flight_attr.assert_called_once_with(info)
         rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ils_freq=330150, hint='landing')
+        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ilsfreq=330150, hint='landing')
         nearest_runway.reset_mock()
         # Test for aircraft where positioning is not precise:
         precise.value = True
         rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise, approaches, ils_freq_on_app)
         rwy.set_flight_attr.assert_called_with(info)
         rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=6.0, longitude=9.0, ils_freq=330150)
+        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=6.0, longitude=9.0, ilsfreq=330150)
         nearest_runway.reset_mock()
         # Test for aircraft where positioning is not precise:
         precise.value = False
         rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise, approaches, ils_freq_on_app)
         rwy.set_flight_attr.assert_called_with(info)
         rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ils_freq=330150, hint='landing')
+        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ilsfreq=330150, hint='landing')
         nearest_runway.reset_mock()
 
     @patch('analysis_engine.flight_attribute.nearest_runway')
