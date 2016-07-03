@@ -7,7 +7,6 @@ from mock import Mock, call, patch
 
 from analysis_engine import __version__, settings
 from analysis_engine.library import align
-from analysis_engine.api_handler import NotFoundError
 from analysis_engine.node import (
     A, KPV, KTI, P, S,
     load,
@@ -39,6 +38,8 @@ from analysis_engine.flight_attribute import (
     TakeoffRunway,
     Version,
 )
+
+from flightdatautilities import api
 
 from flight_phase_test import buildsection
 
@@ -501,7 +502,7 @@ class TestLandingAirport(unittest.TestCase, NodeTest):
         '''
         Attribute is not set when airport is not found.
         '''
-        get_nearest_airport.side_effect = NotFoundError('Not Found.')
+        get_nearest_airport.side_effect = api.NotFoundError('Not Found.')
         lat = KPV(name='Latitude At Touchdown', items=[
             KeyPointValue(index=12, value=0.5),
             KeyPointValue(index=32, value=0.9),
@@ -781,7 +782,7 @@ class TestLandingRunway(unittest.TestCase, NodeTest):
         def runway_side_effect(apt, hdg, *args, **kwargs):
             if hdg == 90.0:
                 return info
-            raise NotFoundError('No runway found.')
+            raise api.NotFoundError('No runway found.')
         get_nearest_runway.side_effect = runway_side_effect
         fdr_apt = A(name='FDR Landing Airport', value={'id': 50})
         afr_rwy = A(name='AFR Landing Runway', value={'identifier': '27R'})
@@ -898,7 +899,7 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
         '''
         Attribute is not set when airport is not found.
         '''
-        get_nearest_airport.side_effect = NotFoundError('Not Found.')
+        get_nearest_airport.side_effect = api.NotFoundError('Not Found.')
         lat = KPV(name='Latitude At Liftoff', items=[
             KeyPointValue(index=12, value=4.0),
             KeyPointValue(index=32, value=6.0),
@@ -1180,7 +1181,7 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
         def runway_side_effect(apt, hdg, *args, **kwargs):
             if hdg == 90.0:
                 return info
-            raise NotFoundError('No runway found.')
+            raise api.NotFoundError('No runway found.')
         get_nearest_runway.side_effect = runway_side_effect
         fdr_apt = A(name='FDR Takeoff Airport', value={'id': 50})
         afr_rwy = A(name='AFR Takeoff Runway', value={'identifier': '27R'})
