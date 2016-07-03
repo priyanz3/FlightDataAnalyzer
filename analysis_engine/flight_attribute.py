@@ -384,9 +384,9 @@ class LandingRunway(FlightAttributeNode):
         except AttributeError:
             self.warning('Invalid airport... Fallback to AFR Landing Runway.')
             fallback = True
-
-        if airport is None:
-            fallback = True
+        else:
+            if airport is None:
+                fallback = True
 
         try:
             heading = land_hdg.get_last().value
@@ -415,9 +415,9 @@ class LandingRunway(FlightAttributeNode):
                     ils_app_slice = slice(landing.start_edge, landing.slice.stop)
                 else:
                     ils_app_slice = landing.slice
-                lis_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
-                if lis_freq:
-                    kwargs.update(lis_freq=lis_freq.value)
+                ils_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
+                if ils_freq:
+                    kwargs.update(ils_freq=ils_freq.value)
 
             '''
             Original comment:
@@ -779,9 +779,9 @@ class TakeoffRunway(FlightAttributeNode):
         except AttributeError:
             self.warning('Invalid airport... Fallback to AFR Takeoff Runway.')
             fallback = True
-
-        if airport is None:
-            fallback = True
+        else:
+            if airport is None:
+                fallback = True
 
         try:
             heading = toff_hdg.get_first().value
