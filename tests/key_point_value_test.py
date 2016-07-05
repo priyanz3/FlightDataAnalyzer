@@ -6527,6 +6527,12 @@ class TestGreatCircleDistance(unittest.TestCase):
 
         self.assertEqual(len(node), 0)
 
+    def test_derive__no_coordinates(self):
+        node = self.node_class()
+        node.derive(None, None, None, None, None, None, None)
+
+        self.assertEqual(len(node), 0)
+
 
 class TestDistanceFromRunwayCentrelineAtTouchdown(unittest.TestCase):
     def test_can_operate(self):
