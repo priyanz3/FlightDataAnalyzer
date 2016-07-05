@@ -14021,7 +14021,7 @@ class TailwindDuringTakeoffMax(KeyPointValueNode):
 
     def derive(self,
                tailwind=P('Tailwind'),
-               airspeed=P('Airspeed'),
+               airspeed=P('Airspeed True'),
                liftoffs=KTI('Liftoff'),
                toffs=S('Takeoff'),
                ):

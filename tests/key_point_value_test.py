@@ -13638,7 +13638,7 @@ class TestTailwindDuringTakeoffMax(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
-        self.assertEqual(opts, [('Tailwind', 'Airspeed', 'Liftoff', 'Takeoff')])
+        self.assertEqual(opts, [('Tailwind', 'Airspeed True', 'Liftoff', 'Takeoff')])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(opts, [])
 
