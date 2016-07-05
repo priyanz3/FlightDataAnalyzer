@@ -2472,9 +2472,6 @@ class TestFindEdgesOnStateChange(unittest.TestCase):
         self.assertEqual(gear_down_indexes, [3.5, 6.5, 11.5, 19.5, 25.5])
 
 
-
-
-
 class TestFindTocTod(unittest.TestCase):
     def test_find_tod_with_smoothed_data(self):
         # sample data from Hercules during a low level circuit

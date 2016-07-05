@@ -6527,6 +6527,12 @@ class TestGreatCircleDistance(unittest.TestCase):
 
         self.assertEqual(len(node), 0)
 
+    def test_derive__no_coordinates(self):
+        node = self.node_class()
+        node.derive(None, None, None, None, None, None, None)
+
+        self.assertEqual(len(node), 0)
+
 
 class TestDistanceFromRunwayCentrelineAtTouchdown(unittest.TestCase):
     def test_can_operate(self):
@@ -13632,7 +13638,7 @@ class TestTailwindDuringTakeoffMax(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
-        self.assertEqual(opts, [('Tailwind', 'Airspeed', 'Liftoff', 'Takeoff')])
+        self.assertEqual(opts, [('Tailwind', 'Airspeed True', 'Liftoff', 'Takeoff')])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(opts, [])
 
@@ -15456,7 +15462,7 @@ class TestAileronPreflightCheck(unittest.TestCase):
         node.derive(aileron, firsts, accels, self.model, self.series, self.family)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 375)
+        self.assertEqual(node[0].index, 318)
         self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
@@ -15497,7 +15503,7 @@ class TestElevatorPreflightCheck(unittest.TestCase):
         node.derive(elevator, firsts, accels, self.model, self.series, self.family)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 375)
+        self.assertEqual(node[0].index, 318)
         self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
@@ -15538,7 +15544,7 @@ class TestRudderPreflightCheck(unittest.TestCase):
         node.derive(rudder, firsts, accels, self.model, self.series, self.family)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 375)
+        self.assertEqual(node[0].index, 318)
         self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 

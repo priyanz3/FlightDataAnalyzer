@@ -1942,8 +1942,7 @@ def find_edges_on_state_change(state, array, change='entering', phase=None, min_
         # between the two conditions as this is the most probable time that
         # the change took place.
         offset = _slice.start - 0.5
-        state_periods = np.ma.clump_unmasked(
-            np.ma.masked_not_equal(array[_slice], array.state[state]))
+        state_periods = runs_of_ones(array[_slice] == state)
         # ignore small periods where slice is in state, then remove small
         # gaps where slices are not in state
         # we are taking 1 away from min_samples here as

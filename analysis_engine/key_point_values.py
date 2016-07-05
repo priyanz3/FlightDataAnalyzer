@@ -5234,7 +5234,9 @@ def PreflightCheck(self, firsts, accels, disp, full_disp):
     for first in firsts:
         acc=accels.get_next(first.index)
         travel = np.ma.ptp(disp.array[first.index:acc.index])
-        self.create_kpv(acc.index, (travel/full_disp)*100.0)
+        # Mark the point where this control displacement was greatest.
+        index = np.ma.argmax(disp.array[first.index:acc.index])+first.index
+        self.create_kpv(index, (travel/full_disp)*100.0)
 
 
 class ElevatorPreflightCheck(KeyPointValueNode):
@@ -5383,20 +5385,30 @@ class GreatCircleDistance(KeyPointValueNode):
                ldg_airport=A('FDR Landing Airport'),
                tdwn=KTI('Touchdown')):
 
+        if not tdwn:
+            # no point continueing
+            return
+
         toff_lat = toff_lon = ldg_lat = ldg_lon = None
 
-        if toff_airport:
+        if toff_airport and toff_airport.value:
             toff_lat = toff_airport.value.get('latitude')
             toff_lon = toff_airport.value.get('longitude')
-        if not toff_lat or not toff_lon:
+        if lat_lift and lon_lift and (not toff_lat or not toff_lon):
             toff_lat = lat_lift.get_first().value
             toff_lon = lon_lift.get_first().value
-        if ldg_airport:
+        if not toff_lat or not toff_lon:
+            # we have no takeoff coordinates so exit
+            return
+        if ldg_airport and ldg_airport.value:
             ldg_lat = ldg_airport.value.get('latitude')
             ldg_lon = ldg_airport.value.get('longitude')
-        if not ldg_lat or not ldg_lon:
+        if lat_tdwn and lon_tdwn and (not ldg_lat or not ldg_lon):
             ldg_lat = lat_tdwn.get_last().value
             ldg_lon = lon_tdwn.get_last().value
+        if not ldg_lat or not ldg_lon:
+            # we have no landingcoordinates so exit
+            return
 
         if tdwn:
             value = distance_between_coordinates(toff_lat, toff_lon, ldg_lat, ldg_lon)
@@ -14009,7 +14021,7 @@ class TailwindDuringTakeoffMax(KeyPointValueNode):
 
     def derive(self,
                tailwind=P('Tailwind'),
-               airspeed=P('Airspeed'),
+               airspeed=P('Airspeed True'),
                liftoffs=KTI('Liftoff'),
                toffs=S('Takeoff'),
                ):
