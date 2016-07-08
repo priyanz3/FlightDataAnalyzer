@@ -229,11 +229,11 @@ class Autorotation(FlightPhaseNode):
 
     can_operate = helicopter_only
 
-    def derive(self, max_np=P('Eng (*) Np Max'),
+    def derive(self, max_n2=P('Eng (*) N2 Max'),
                nr=P('Nr'), descs=S('Descending')):
         for desc in descs:
             # Look for split in shaft speeds.
-            delta = nr.array[desc.slice] - max_np.array[desc.slice]
+            delta = nr.array[desc.slice] - max_n2.array[desc.slice]
             split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
             split_ends = np.ma.clump_unmasked(split)
             if split_ends:

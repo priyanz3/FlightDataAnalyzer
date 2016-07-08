@@ -419,13 +419,15 @@ class EngStart(KeyTimeInstanceNode):
                eng_1_ng=P('Eng (1) Ng'),
                eng_2_ng=P('Eng (2) Ng'),
                eng_3_ng=P('Eng (3) Ng'),
-               eng_4_ng=P('Eng (4) Ng')):
+               eng_4_ng=P('Eng (4) Ng'),
+               
+               ac_type=A('Aircraft Type')):
 
         if eng_1_n3 or eng_2_n3:
             # This aircraft has 3-spool engines
             eng_nx_list = (eng_1_n3, eng_2_n3, eng_3_n3, eng_4_n3)
             limit = CORE_START_SPEED
-        elif eng_1_n2 or eng_2_n2:
+        elif eng_1_n2 or eng_2_n2 and ac_type != helicoper:
             # The engines are 2-spool engines
             eng_nx_list = (eng_1_n2, eng_2_n2, eng_3_n2, eng_4_n2)
             limit = CORE_START_SPEED
@@ -547,7 +549,7 @@ class EngStop(KeyTimeInstanceNode):
             limit = CORE_STOP_SPEED
         elif eng_1_n2 or eng_2_n2:
             # The engines are 2-spool engines
-            eng_nx_list = (eng_1_n2, eng_2_n2, eng_3_n2, eng_4_n2)
+            eng_nx_list = (eng_1_n2, eng_2_n2, eng_3_n2, eng_4_n2) and ac_type != helicoper
             limit = CORE_STOP_SPEED
         elif eng_1_ng or eng_2_ng:
             # The engines have gas generator second stages

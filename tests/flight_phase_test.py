@@ -516,9 +516,9 @@ class TestAutorotation(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Eng (*) Np Max', 'Nr', 'Descending'),
+        self.assertTrue(self.node_class.can_operate(('Eng (*) N2 Max', 'Nr', 'Descending'),
                                                     ac_type=helicopter))
-        self.assertFalse(self.node_class.can_operate(('Eng (*) Np Max', 'Nr', 'Descending'),
+        self.assertFalse(self.node_class.can_operate(('Eng (*) N2 Max', 'Nr', 'Descending'),
                                                      ac_type=aeroplane))
 
     @unittest.SkipTest

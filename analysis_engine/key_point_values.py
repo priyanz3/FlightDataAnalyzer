@@ -8378,20 +8378,27 @@ class EngGasTempDuringEngStartMax(KeyPointValueNode):
     '''
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
         egt = any_of(['Eng (1) Gas Temp',
                       'Eng (2) Gas Temp',
                       'Eng (3) Gas Temp',
                       'Eng (4) Gas Temp'], available)
-        n3 = any_of(('Eng (1) Gas Temp',
-                     'Eng (2) Gas Temp',
-                     'Eng (3) Gas Temp',
-                     'Eng (4) Gas Temp'), available)
-        n2 = any_of(('Eng (1) N3',
+        n3 = any_of(('Eng (1) N3',
                      'Eng (2) N3',
                      'Eng (3) N3',
                      'Eng (4) N3'), available)
-        return egt and (n3 or n2)
+        n2 = any_of(('Eng (1) N2',
+                     'Eng (2) N2',
+                     'Eng (3) N2',
+                     'Eng (4) N2'), available)
+        n2 = any_of(('Eng (1) N1',
+                     'Eng (2) N1',
+                     'Eng (3) N1',
+                     'Eng (4) N1'), available)
+        if ac_type == helicopter:
+            return egt and n1
+        else:
+            return egt and (n3 or n2)
 
     units = ut.CELSIUS
 
@@ -8408,13 +8415,21 @@ class EngGasTempDuringEngStartMax(KeyPointValueNode):
                eng_2_n2=P('Eng (2) N2'),
                eng_3_n2=P('Eng (3) N2'),
                eng_4_n2=P('Eng (4) N2'),
-               eng_starts=KTI('Eng Start')):
+               eng_1_n1=P('Eng (1) N1'),
+               eng_2_n1=P('Eng (2) N1'),
+               eng_3_n1=P('Eng (3) N1'),
+               eng_4_n1=P('Eng (4) N1'),
+               eng_starts=KTI('Eng Start'),
+               ac_type=A('Aircraft Type')):
 
         eng_egts = (eng_1_egt, eng_2_egt, eng_3_egt, eng_4_egt)
         eng_powers = (eng_1_n3 or eng_1_n2,
                       eng_2_n3 or eng_2_n2,
                       eng_3_n3 or eng_3_n2,
                       eng_4_n3 or eng_4_n2)
+
+        if ac_type == helicopter:
+            eng_powers = (eng_1_n1, eng_2_n1, eng_3_n1, eng_4_n1)
 
         eng_groups = enumerate(zip(eng_egts, eng_powers), start=1)
 

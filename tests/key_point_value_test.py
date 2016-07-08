@@ -7607,7 +7607,7 @@ class TestEngGasTempDuringEngStartMax(unittest.TestCase, NodeTest):
         eng_2_n3 = load(os.path.join(test_data_path, 'eng_start_eng_2_n3.nod'))
         node = EngGasTempDuringEngStartMax()
         node.derive(eng_1_egt, eng_2_egt, None, None, eng_1_n3, eng_2_n3, None,
-                    None, None, None, None, None, eng_starts)
+                    None, None, None, None, None, None, None, None, None, eng_starts)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 174)
         self.assertEqual(node[0].value, 303)
