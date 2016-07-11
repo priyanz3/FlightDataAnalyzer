@@ -202,7 +202,10 @@ from analysis_engine.key_point_values import (
     ControlColumnForceMax,
     ControlColumnStiffness,
     ControlWheelForceMax,
+    CyclicAftDuringTaxiMax,
     CyclicDuringTaxiMax,
+    CyclicForeDuringTaxiMax,
+    CyclicLateralDuringTaxiMax,
     DecelerationFromTouchdownToStopOnRunway,
     DelayedBrakingAfterTouchdown,
     DirectLawDuration,
@@ -218,6 +221,7 @@ from analysis_engine.key_point_values import (
     ElevatorDuringLandingMin,
     ElevatorPreflightCheck,
     EngBleedValvesAtLiftoff,
+    EngChipDetectorWarningDuration,
     EngEPR500To50FtMax,
     EngEPR500To50FtMin,
     EngEPRAtTOGADuringTakeoffMax,
@@ -275,6 +279,7 @@ from analysis_engine.key_point_values import (
     EngN2CyclesDuringFinalApproach,
     EngN2DuringGoAround5MinRatingMax,
     EngN2DuringMaximumContinuousPowerMax,
+    EngN2DuringMaximumContinuousPowerMin,
     EngN2DuringTakeoff5MinRatingMax,
     EngN2DuringTaxiMax,
     EngN2ExceededN2RedlineDuration,
@@ -355,6 +360,7 @@ from analysis_engine.key_point_values import (
     FuelQtyLowWarningDuration,
     FuelQtyWingDifferenceMax,
     FuelQtyWingDifference787Max,
+    GearboxChipDetectorWarningDuration,
     GearDownToLandingFlapConfigurationDuration,
     GreatCircleDistance,
     GrossWeightAtLiftoff,
@@ -536,6 +542,7 @@ from analysis_engine.key_point_values import (
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
+    RotorSpeedDuringMaximumContinuousPowerMin,
     RotorSpeedWhileAirborneMax,
     RotorSpeedWhileAirborneMin,
     RotorSpeedWithRotorBrakeAppliedMax,
@@ -546,6 +553,7 @@ from analysis_engine.key_point_values import (
     RudderPreflightCheck,
     RudderReversalAbove50Ft,
     SATMax,
+    SATMin,
     SingleEngineDuringTaxiInDuration,
     SingleEngineDuringTaxiOutDuration,
     SmokeWarningDuration,
@@ -5467,6 +5475,132 @@ class TestCyclicDuringTaxiMax(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, 4.814, places=3)
 
 
+class TestCyclicLateralDuringTaxiMax(unittest.TestCase):
+
+    x = np.linspace(0, 10, 200)
+    cyclic = P(
+        name='Cyclic Lateral',
+        array=np.ma.abs(x*np.sin(x)),
+    )
+    name = 'Taxiing'
+    section = Section(name, slice(0, 150), 0, 150)
+    taxi = SectionNode(name, items=[section])
+
+    def setUp(self):
+        self.node_class = CyclicLateralDuringTaxiMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Cyclic Lateral', 'Taxiing', 'Rotors Turning')])
+
+    def test_derive(self):
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, self.taxi)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 149)
+        self.assertAlmostEqual(node[0].value, 6.990, places=3)
+
+    def test_not_stationary(self):
+
+        name = 'Rotors Turning'
+        section = Section(name, slice(0, 135), 0, 135)
+        rtr = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, rtr)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 98)
+        self.assertAlmostEqual(node[0].value, 4.814, places=3)
+
+
+class TestCyclicAftDuringTaxiMax(unittest.TestCase):
+
+    x = np.linspace(0, 10, 200)
+    cyclic = P(
+        name='Cyclic Fore-Aft',
+        array=np.ma.abs(x*np.sin(x)),
+    )
+    name = 'Taxiing'
+    section = Section(name, slice(0, 150), 0, 150)
+    taxi = SectionNode(name, items=[section])
+
+    def setUp(self):
+        self.node_class = CyclicAftDuringTaxiMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Cyclic Fore-Aft', 'Taxiing', 'Rotors Turning')])
+
+    def test_derive(self):
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, self.taxi)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 149)
+        self.assertAlmostEqual(node[0].value, 6.990, places=3)
+
+    def test_not_stationary(self):
+
+        name = 'Rotors Turning'
+        section = Section(name, slice(0, 135), 0, 135)
+        rtr = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, rtr)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 98)
+        self.assertAlmostEqual(node[0].value, 4.814, places=3)
+
+
+class TestCyclicForeDuringTaxiMax(unittest.TestCase):
+
+    x = np.linspace(0, 10, 200)
+    cyclic = P(
+        name='Cyclic Fore-Aft',
+        array=-np.ma.abs(x*np.sin(x)),
+    )
+    name = 'Taxiing'
+    section = Section(name, slice(0, 150), 0, 150)
+    taxi = SectionNode(name, items=[section])
+
+    def setUp(self):
+        self.node_class = CyclicForeDuringTaxiMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Cyclic Fore-Aft', 'Taxiing', 'Rotors Turning')])
+
+    def test_derive(self):
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, self.taxi)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 149)
+        self.assertAlmostEqual(node[0].value, -6.990, places=3)
+
+    def test_not_stationary(self):
+
+        name = 'Rotors Turning'
+        section = Section(name, slice(0, 135), 0, 135)
+        rtr = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(self.cyclic, self.taxi, rtr)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 98)
+        self.assertAlmostEqual(node[0].value, -4.814, places=3)
+
+
 ##############################################################################
 # Heading
 
@@ -8143,6 +8277,18 @@ class TestEngN2MaximumContinuousPowerMax(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
+class TestEngN2MaximumContinuousPowerMin(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = EngN2DuringMaximumContinuousPowerMin
+        self.operational_combinations = [('Eng (*) N2 Min', 'Takeoff 5 Min Rating', 'Go Around 5 Min Rating', 'Grounded')]
+        self.can_operate_kwargs = {'ac_type': helicopter}
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
 class TestEngN2For5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
 
     def setUp(self):
@@ -8935,6 +9081,76 @@ class TestEngVibNpMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test Not Implemented')
+
+
+##############################################################################
+# Engine: Warnings
+
+# Chip Detection
+
+class TestEngChipDetectorWarningDuration(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = EngChipDetectorWarningDuration
+        self.values_mapping = {0: '-', 1: 'Chip Detected'}
+        self.operational_combinations = [
+            ('Eng (1) Chip Detector', 'Eng (*) Any Running'),
+            ('Eng (2) Chip Detector', 'Eng (*) Any Running'),
+            ('Eng (1) Chip Detector (1)', 'Eng (*) Any Running'),
+            ('Eng (1) Chip Detector (1)', 'Eng (2) Chip Detector (1)', 'Eng (1) Chip Detector (2)', 'Eng (2) Chip Detector (2)', 'Eng (*) Any Running'),
+        ]
+
+    def test_derive_basic(self):
+        array = np.ma.array([0] * 7 + [1] * 3 + [0] * 6)
+        eng_1_chip = M('Eng (1) Chip Detector', array, values_mapping=self.values_mapping)
+        eng_2_chip = M('Eng (2) Chip Detector', np.roll(array, 2), values_mapping=self.values_mapping)
+        eng_2_chip.array[0] = 'Chip Detected'
+        eng_1_chip_1 = M('Eng (1) Chip Detector (1)', np.roll(array, 4), values_mapping=self.values_mapping)
+
+        running = M('Eng (*) Any Running', np.ma.zeros(16), values_mapping={0: 'Not Running', 1: 'Running'})
+        running.array[3:13] = 'Running'
+        running.array.mask = np.ma.getmaskarray(running.array)
+
+        name = self.node_class.get_name()
+        expected = KPV(name=name, items=[
+            KeyPointValue(name=name, index=7, value=6),
+        ])
+        node = self.node_class()
+        node.derive(eng_1_chip, eng_2_chip, eng_1_chip_1, None, None, None, running)
+        self.assertEqual(node, expected)
+
+
+class TestGearboxChipDetectorWarningDuration(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GearboxChipDetectorWarningDuration
+        self.values_mapping = {0: '-', 1: 'Chip Detected'}
+        self.operational_combinations = [
+            ('EGB (1) Chip Detector', 'Eng (*) Any Running'),
+            ('MGB Chip Detector', 'Eng (*) Any Running'),
+            ('CGB Chip Detector', 'Eng (*) Any Running'),
+            ('IGB Chip Detector', 'IGB Chip Detector', 'Eng (*) Any Running'),
+        ]
+
+    def test_derive_basic(self):
+        array = np.ma.array([0] * 7 + [1] * 3 + [0] * 6)
+        egb_1_chip = M('EGB (1) Chip Detector', array, values_mapping=self.values_mapping)
+        mgb_chip = M('MGB Chip Detector', np.roll(array, 2), values_mapping=self.values_mapping)
+        mgb_chip.array[0] = 'Chip Detected'
+        cgb_chip = M('CGB Chip Detector', np.roll(array, 4), values_mapping=self.values_mapping)
+
+        running = M('Eng (*) Any Running', np.ma.zeros(16), values_mapping={0: 'Not Running', 1: 'Running'})
+        running.array[3:13] = 'Running'
+        running.array.mask = np.ma.getmaskarray(running.array)
+
+        name = self.node_class.get_name()
+        expected = KPV(name=name, items=[
+            KeyPointValue(name=name, index=7, value=6),
+        ])
+        node = self.node_class()
+        node.derive(egb_1_chip, None, mgb_chip, None, None, None, None, None, None, None, cgb_chip, None, running)
+        self.assertEqual(node, expected)
+
 
 
 ##############################################################################
@@ -13261,6 +13477,42 @@ class TestRotorsRunningDuration(unittest.TestCase):
         self.assertEqual(node[0].value, 7)
 
 
+class TestRotorSpeedDuringMaximumContinuousPowerMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeedDuringMaximumContinuousPowerMin
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Nr', 'Maximum Continuous Power', 'Autorotation')])
+
+    def test_derive(self):
+        x = np.linspace(0, 10, 200)
+        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
+        name = 'Maximum Continuous Power'
+        section = Section(name, slice(115, 152), 115, 152)
+        mcp = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(rotor, mcp)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 115)
+        self.assertAlmostEqual(node[0].value, 99.517, places=3)
+
+    def test_excluding_autorotation(self):
+        x = np.linspace(0, 10, 200)
+        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
+        mcp = buildsection('Maximum Continuous Power', 30, 155)
+        auto = buildsection('Autorotation', 72, 114)
+        node = self.node_class()
+        node.derive(rotor, mcp, auto)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 114)
+        self.assertAlmostEqual(node[0].value, 99.473, places=3)
+
 ##############################################################################
 # Rudder
 
@@ -13578,6 +13830,24 @@ class TestSATMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 10)
         self.assertEqual(node[0].value, 10)
+
+
+class TestSATMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = SATMin
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('SAT',)])
+
+    def test_derive(self,):
+        sat = P('SAT', np.ma.arange(0, 11))
+        node = self.node_class()
+        node.derive(sat)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 0)
+        self.assertEqual(node[0].value, 0)
 
 
 ##############################################################################

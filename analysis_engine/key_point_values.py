@@ -4911,6 +4911,50 @@ class CyclicDuringTaxiMax(KeyPointValueNode):
                                        max_value)
 
 
+class CyclicLateralDuringTaxiMax(KeyPointValueNode):
+    '''
+    '''
+
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, cyclic=P('Cyclic Lateral'), taxi=S('Taxiing'), rtr=S('Rotors Turning')):
+        self.create_kpvs_within_slices(cyclic.array, slices_and(taxi.get_slices(),
+                                                                rtr.get_slices()),
+                                       max_abs_value)
+
+
+class CyclicAftDuringTaxiMax(KeyPointValueNode):
+    '''
+    '''
+
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, cyclic=P('Cyclic Fore-Aft'), taxi=S('Taxiing'), rtr=S('Rotors Turning')):
+        np.ma.masked_greater_equal(cyclic.array, 0)
+        self.create_kpvs_within_slices(cyclic.array, slices_and(taxi.get_slices(),
+                                                                rtr.get_slices()),
+                                       max_value)
+
+
+class CyclicForeDuringTaxiMax(KeyPointValueNode):
+    '''
+    '''
+
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, cyclic=P('Cyclic Fore-Aft'), taxi=S('Taxiing'), rtr=S('Rotors Turning')):
+        np.ma.masked_less_equal(cyclic.array, 0)
+        self.create_kpvs_within_slices(cyclic.array, slices_and(taxi.get_slices(),
+                                                                rtr.get_slices()),
+                                       min_value)
+
+
 ########################################
 # Stable Approach analysis
 
@@ -8391,7 +8435,7 @@ class EngGasTempDuringEngStartMax(KeyPointValueNode):
                      'Eng (2) N2',
                      'Eng (3) N2',
                      'Eng (4) N2'), available)
-        n2 = any_of(('Eng (1) N1',
+        n1 = any_of(('Eng (1) N1',
                      'Eng (2) N1',
                      'Eng (3) N1',
                      'Eng (4) N1'), available)
@@ -9213,6 +9257,25 @@ class EngN2DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
         slices = to_ratings + ga_ratings + grounded
         self.create_kpv_outside_slices(eng_n2_max.array, slices, max_value)
+
+
+class EngN2DuringMaximumContinuousPowerMin(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'Eng N2 During Maximum Continuous Power Min'
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_n2_max=P('Eng (*) N2 Min'),
+               to_ratings=S('Takeoff 5 Min Rating'),
+               ga_ratings=S('Go Around 5 Min Rating'),
+               grounded=S('Grounded')):
+
+        slices = to_ratings + ga_ratings + grounded
+        self.create_kpv_outside_slices(eng_n2_max.array, slices, min_value)
 
 
 class EngN2For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -10148,6 +10211,110 @@ class EngVibNpMax(KeyPointValueNode):
                airborne=S('Airborne')):
 
         self.create_kpvs_within_slices(eng_vib_np.array, airborne, max_value)
+
+
+##############################################################################
+# Engine: Warnings
+
+# Chip Detection
+
+class EngChipDetectorWarningDuration(KeyPointValueNode):
+    '''
+    Duration that any of the Engine Chip Detector Warnings are active.
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available):
+        chips = any_of(('Eng (1) Chip Detector',
+                        'Eng (2) Chip Detector',
+                        'Eng (1) Chip Detector (1)',
+                        'Eng (2) Chip Detector (1)',
+                        'Eng (1) Chip Detector (2)',
+                        'Eng (2) Chip Detector (2)'), available)
+        return chips and 'Eng (*) Any Running' in available
+
+    def derive(self,
+               eng_1_chip=M('Eng (1) Chip Detector'),
+               eng_2_chip=M('Eng (2) Chip Detector'),
+               eng_1_chip_1=M('Eng (1) Chip Detector (1)'),
+               eng_2_chip_1=M('Eng (2) Chip Detector (1)'),
+               eng_1_chip_2=M('Eng (1) Chip Detector (2)'),
+               eng_2_chip_2=M('Eng (2) Chip Detector (2)'),
+               any_run=M('Eng (*) Any Running')):
+        state = 'Chip Detected'
+        combined = vstack_params_where_state(
+            (eng_1_chip, state),
+            (eng_2_chip, state),
+            (eng_1_chip_1, state),
+            (eng_2_chip_1, state),
+            (eng_1_chip_2, state),
+            (eng_2_chip_2, state),
+        ).any(axis=0)
+
+        running = any_run.array == 'Running'
+        comb_run = combined & running
+        self.create_kpvs_from_slice_durations(runs_of_ones(comb_run), self.hz)
+
+
+class GearboxChipDetectorWarningDuration(KeyPointValueNode):
+    '''
+    Duration that any Gearbox Chip Detector Warning is active.
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available):
+        chips = any_of(('EGB (1) Chip Detector',
+                        'EGB (2) Chip Detector',
+                        'MGB Chip Detector',
+                        'MGB Front Chip Detector',
+                        'MGB Sump Chip Detector',
+                        'MGB Epicyclic Chip Detector',
+                        'MGB (Fore) Chip Detector',
+                        'MGB (Aft) Chip Detector',
+                        'IGB Chip Detector',
+                        'TGB Chip Detector',
+                        'CGB Chip Detector',
+                        'Rotor Shaft Chip Detector'), available)
+        return chips and 'Eng (*) Any Running' in available
+
+    def derive(self,
+               eng_1_chip=M('EGB (1) Chip Detector'),
+               eng_2_chip=M('EGB (2) Chip Detector'),
+               mgb_chip=M('MGB Chip Detector'),
+               mgb_front_chip=M('MGB Front Chip Detector'),
+               mgb_sump_chip=M('MGB Sump Chip Detector'),
+               mgb_epicyclic_chip=M('MGB Epicyclic Chip Detector'),
+               mgb_fore_chip=M('MGB (Fore) Chip Detector'),
+               mgb_aft_chip=M('MGB (Aft) Chip Detector'),
+               igb_chip=M('IGB Chip Detector'),
+               tgb_chip=M('TGB Chip Detector'),
+               cgb_chip=M('CGB Chip Detector'),
+               rotor_shaft_chip=M('Rotor Shaft Chip Detector'), # not gearbox but only found on Chinook
+               any_run=M('Eng (*) Any Running')):
+
+        state = 'Chip Detected'
+        combined = vstack_params_where_state(
+            (eng_1_chip, state),
+            (eng_2_chip, state),
+            (mgb_chip, state),
+            (mgb_front_chip, state),
+            (mgb_sump_chip, state),
+            (mgb_epicyclic_chip, state),
+            (mgb_fore_chip, state),
+            (mgb_aft_chip, state),
+            (igb_chip, state),
+            (tgb_chip, state),
+            (cgb_chip, state),
+            (rotor_shaft_chip, state),
+        ).any(axis=0)
+
+        running = any_run.array == 'Running'
+        comb_run = combined & running
+        self.create_kpvs_from_slice_durations(runs_of_ones(comb_run), self.hz)
 
 
 ##############################################################################
@@ -13623,6 +13790,23 @@ class RotorsRunningDuration(KeyPointValueNode):
             self.create_kpv(running[-1].stop, value)
 
 
+class RotorSpeedDuringMaximumContinuousPowerMin(KeyPointValueNode):
+    '''
+    TODO: check exclude autorotation?
+    This excludes autorotation, so is minimum rotor speed with power applied.
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, nr=P('Nr'), mcp=S('Maximum Continuous Power'), autorotation=S('Autorotation')):
+        self.create_kpv_from_slices(nr.array,
+                                    slices_and_not(mcp.get_slices(),
+                                                   autorotation.get_slices()),
+                                    min_value)
+
+
 ##############################################################################
 # Rudder
 
@@ -15843,3 +16027,16 @@ class SATMax(KeyPointValueNode):
 
     def derive(self, sat=P('SAT')):
         self.create_kpv(*max_value(sat.array))
+
+
+class SATMin(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'SAT Min'
+    units = ut.CELSIUS
+
+    can_operate = helicopter_only
+
+    def derive(self, sat=P('SAT')):
+        self.create_kpv(*min_value(sat.array))

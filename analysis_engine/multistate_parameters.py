@@ -16,6 +16,7 @@ from analysis_engine.node import (
     M,
     P,
     S,
+    helicopter,
     helicopter_only,
 )
 from analysis_engine.library import (
@@ -719,7 +720,7 @@ class EngRunning(object):
                'Eng (%d) Np' % cls.engnum in available or \
                'Eng (%d) Fuel Flow' % cls.engnum in available
 
-    def determine_running(self, eng_n1, eng_n2, eng_np, fuel_flow):
+    def determine_running(self, eng_n1, eng_n2, eng_np, fuel_flow, ac_type):
         '''
         TODO: Include Fuel cut-off switch if recorded?
         TODO: Confirm that all engines were recording for the N2 Min / Fuel Flow
@@ -729,7 +730,7 @@ class EngRunning(object):
         if eng_np:
             # If it's got propellors, this overrides core engine measurements.
             return np.ma.where(eng_np.array > MIN_FAN_RUNNING, 'Running', 'Not Running')
-        elif eng_n2 or fuel_flow:
+        elif eng_n2 or fuel_flow and ac_type != helicopter:
             # Ideally have N2 and Fuel Flow with both available,
             # otherwise use just one source
             n2_running = eng_n2.array > MIN_CORE_RUNNING if eng_n2 \
@@ -755,8 +756,9 @@ class Eng1Running(EngRunning, MultistateDerivedParameterNode):
                eng_n1=P('Eng (1) N1'),
                eng_n2=P('Eng (1) N2'),
                eng_np=P('Eng (1) Np'),
-               fuel_flow=P('Eng (1) Fuel Flow')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (1) Fuel Flow'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class Eng2Running(EngRunning, MultistateDerivedParameterNode):
@@ -770,8 +772,9 @@ class Eng2Running(EngRunning, MultistateDerivedParameterNode):
                eng_n1=P('Eng (2) N1'),
                eng_n2=P('Eng (2) N2'),
                eng_np=P('Eng (2) Np'),
-               fuel_flow=P('Eng (2) Fuel Flow')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (2) Fuel Flow'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class Eng3Running(EngRunning, MultistateDerivedParameterNode):
@@ -785,8 +788,9 @@ class Eng3Running(EngRunning, MultistateDerivedParameterNode):
                eng_n1=P('Eng (3) N1'),
                eng_n2=P('Eng (3) N2'),
                eng_np=P('Eng (3) Np'),
-               fuel_flow=P('Eng (3) Fuel Flow')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (3) Fuel Flow'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class Eng4Running(EngRunning, MultistateDerivedParameterNode):
@@ -800,8 +804,9 @@ class Eng4Running(EngRunning, MultistateDerivedParameterNode):
                eng_n1=P('Eng (4) N1'),
                eng_n2=P('Eng (4) N2'),
                eng_np=P('Eng (4) Np'),
-               fuel_flow=P('Eng (4) Fuel Flow')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (4) Fuel Flow'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class Eng_AllRunning(MultistateDerivedParameterNode, EngRunning):
@@ -811,18 +816,22 @@ class Eng_AllRunning(MultistateDerivedParameterNode, EngRunning):
     name = 'Eng (*) All Running'
 
     @classmethod
-    def can_operate(cls, available):
-        return 'Eng (*) N1 Min' in available or \
-               'Eng (*) N2 Min' in available or \
-               'Eng (*) Np Min' in available or \
-               'Eng (*) Fuel Flow Min' in available
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return 'Eng (*) N1 Min' in available
+        else:
+            return 'Eng (*) N1 Min' in available or \
+                   'Eng (*) N2 Min' in available or \
+                   'Eng (*) Np Min' in available or \
+                   'Eng (*) Fuel Flow Min' in available
 
     def derive(self,
                eng_n1=P('Eng (*) N1 Min'),
                eng_n2=P('Eng (*) N2 Min'),
                eng_np=P('Eng (*) Np Min'),
-               fuel_flow=P('Eng (*) Fuel Flow Min')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (*) Fuel Flow Min'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
@@ -835,18 +844,22 @@ class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
     name = 'Eng (*) Any Running'
 
     @classmethod
-    def can_operate(cls, available):
-        return 'Eng (*) N1 Max' in available or \
-               'Eng (*) N2 Max' in available or \
-               'Eng (*) Np Max' in available or \
-               'Eng (*) Fuel Flow Max' in available
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return 'Eng (*) N1 Max' in available
+        else:
+            return 'Eng (*) N1 Max' in available or \
+                   'Eng (*) N2 Max' in available or \
+                   'Eng (*) Np Max' in available or \
+                   'Eng (*) Fuel Flow Max' in available
 
     def derive(self,
                eng_n1=P('Eng (*) N1 Max'),
                eng_n2=P('Eng (*) N2 Max'),
                eng_np=P('Eng (*) Np Max'),
-               fuel_flow=P('Eng (*) Fuel Flow Max')):
-        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow)
+               fuel_flow=P('Eng (*) Fuel Flow Max'),
+               ac_type=A('Aircraft Type')):
+        self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
 
 class ThrustModeSelected(MultistateDerivedParameterNode):
