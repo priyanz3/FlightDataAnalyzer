@@ -2068,11 +2068,19 @@ class MaximumContinuousPower(FlightPhaseNode):
 
     align_frequency = 1
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return all_of(('Airborne', 'Takeoff 5 Min Rating'), available)
+        else:
+            return all_deps(cls, available)
+
     def derive(self,
                airborne=S('Airborne'),
                to_ratings=S('Takeoff 5 Min Rating'),
                ga_ratings=S('Go Around 5 Min Rating')):
 
+        ga_slices = ga_ratings.get_slices() if ga_ratings else []
         ratings = to_ratings.get_slices() + ga_ratings.get_slices()
         mcp = slices_and_not(airborne.get_slices(), ratings)
         self.create_phases(mcp)
