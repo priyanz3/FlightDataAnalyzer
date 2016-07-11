@@ -2712,9 +2712,9 @@ class TestTakeoff5MinRating(unittest.TestCase):
         self.prop = A('Engine Propulsion', value='PROP')
 
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(eng_type=self.prop),
-                         [('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion', 'Aircraft Type')])
+        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion'), eng_type=self.prop))
         self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start',), eng_type=self.jet))
+        self.assertTrue(self.node_class.can_operate(('Liftoff', 'HDF Duration'), ac_type=helicopter))
 
     def test_derive_basic_jet(self):
         toffs = KTI('Takeoff Acceleration Start',
@@ -2744,13 +2744,14 @@ class TestTakeoff5MinRating(unittest.TestCase):
                            KeyTimeInstance(index=340),
                            KeyTimeInstance(index=630),
                            KeyTimeInstance(index=980)])
+        duration = A('HDF Duration', value=1200)
         node = Takeoff5MinRating()
-        node.derive(None, lifts, None, ac_type=helicopter)
+        node.derive(None, lifts, None, duration, ac_type=helicopter)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].slice.start, 50)
         self.assertEqual(node[0].slice.stop, 930)
         self.assertEqual(node[1].slice.start, 980)
-        self.assertEqual(node[1].slice.stop, 1280)
+        self.assertEqual(node[1].slice.stop, 1200)
 
 class TestTakeoffRoll(unittest.TestCase):
     def test_can_operate(self):

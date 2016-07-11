@@ -1970,9 +1970,9 @@ class Takeoff5MinRating(FlightPhaseNode):
     @classmethod
     def can_operate(cls, available, eng_type=A('Engine Propulsion'), ac_type=A('Aircraft Type')):
         if eng_type and eng_type.value == 'PROP':
-            return all_deps(cls, available)
+            return all_of(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion'), available)
         elif ac_type == helicopter:
-            return 'Liftoff' in available
+            return all_of(('Liftoff', 'HDF Duration'), available)
         else:
             return 'Takeoff Acceleration Start' in available
 
@@ -1993,6 +1993,7 @@ class Takeoff5MinRating(FlightPhaseNode):
     def derive(self, toffs=KTI('Takeoff Acceleration Start'),
                lifts=KTI('Liftoff'),
                eng_np=P('Eng (*) Np Avg'),
+               duration=A('HDF Duration'),
                eng_type=A('Engine Propulsion'),
                ac_type=A('Aircraft Type')):
         '''
@@ -2022,6 +2023,7 @@ class Takeoff5MinRating(FlightPhaseNode):
                     rating_end = accel_start.index + (five_minutes)
                 self.create_phase(slice(accel_start.index, rating_end))
         elif ac_type == helicopter:
+            max_idx = duration.value * self.frequency
             start_idx = end_idx = 0
             for lift in lifts:
                 start_idx = start_idx or lift.index
@@ -2030,7 +2032,7 @@ class Takeoff5MinRating(FlightPhaseNode):
                 if next_lift and next_lift.index < end_idx:
                     end_idx = next_lift.index + five_minutes
                     continue
-                self.create_phase(slice(start_idx, end_idx))
+                self.create_phase(slice(start_idx, min(end_idx, max_idx)))
                 start_idx = 0
         else:
             for toff in toffs:
