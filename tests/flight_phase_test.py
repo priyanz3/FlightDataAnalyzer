@@ -2713,7 +2713,7 @@ class TestTakeoff5MinRating(unittest.TestCase):
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(eng_type=self.prop),
-                         [('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion')])
+                         [('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion', 'Aircraft Type')])
         self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start',), eng_type=self.jet))
 
     def test_derive_basic_jet(self):
