@@ -2738,6 +2738,20 @@ class TestTakeoff5MinRating(unittest.TestCase):
         self.assertEqual(node[0].slice.start, 20)
         self.assertEqual(node[0].slice.stop, 89)
 
+    def test_derive_basic_helicopter(self):
+        lifts = KTI('Liftoff',
+                    items=[KeyTimeInstance(index=50),
+                           KeyTimeInstance(index=340),
+                           KeyTimeInstance(index=630),
+                           KeyTimeInstance(index=980)])
+        node = Takeoff5MinRating()
+        node.derive(None, lifts, None, ac_type=helicopter)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].slice.start, 50)
+        self.assertEqual(node[0].slice.stop, 930)
+        self.assertEqual(node[1].slice.start, 980)
+        self.assertEqual(node[1].slice.stop, 1280)
+
 class TestTakeoffRoll(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(TakeoffRoll.get_operational_combinations(),

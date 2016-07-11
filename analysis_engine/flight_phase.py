@@ -1968,9 +1968,11 @@ class Takeoff5MinRating(FlightPhaseNode):
     align_frequency = 1
 
     @classmethod
-    def can_operate(cls, available, eng_type=A('Engine Propulsion')):
+    def can_operate(cls, available, eng_type=A('Engine Propulsion'), ac_type=A('Aircraft Type')):
         if eng_type and eng_type.value == 'PROP':
             return all_deps(cls, available)
+        elif ac_type == helicopter:
+            return 'Liftoff' in available
         else:
             return 'Takeoff Acceleration Start' in available
 
@@ -1991,9 +1993,11 @@ class Takeoff5MinRating(FlightPhaseNode):
     def derive(self, toffs=KTI('Takeoff Acceleration Start'),
                lifts=KTI('Liftoff'),
                eng_np=P('Eng (*) Np Avg'),
-               eng_type=A('Engine Propulsion')):
+               eng_type=A('Engine Propulsion'),
+               ac_type=A('Aircraft Type')):
         '''
         '''
+        five_minutes = 300 * self.frequency
         if eng_type and eng_type.value == 'PROP':
             filter_median_window = 11
             enp_filt = medfilt(eng_np.array, filter_median_window)
@@ -2015,11 +2019,22 @@ class Takeoff5MinRating(FlightPhaseNode):
                     else:
                         continue
                 if rating_end is None:
-                    rating_end = accel_start.index + (300 * self.frequency)
+                    rating_end = accel_start.index + (five_minutes)
                 self.create_phase(slice(accel_start.index, rating_end))
+        elif ac_type == helicopter:
+            start_idx = end_idx = 0
+            for lift in lifts:
+                start_idx = start_idx or lift.index
+                end_idx = lift.index + five_minutes
+                next_lift = lifts.get_next(lift.index)
+                if next_lift and next_lift.index < end_idx:
+                    end_idx = next_lift.index + five_minutes
+                    continue
+                self.create_phase(slice(start_idx, end_idx))
+                start_idx = 0
         else:
             for toff in toffs:
-                self.create_phase(slice(toff.index, toff.index + 300))
+                self.create_phase(slice(toff.index, toff.index + five_minutes))
 
 
 # TODO: Write some unit tests!
