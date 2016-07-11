@@ -1135,7 +1135,7 @@ class TestEngStop(unittest.TestCase):
             None, None, None, None,
             eng1, eng2, None, None,
             None, None, None, None,
-            None, None, None, None,
+            None, None, None, None, None
         ])
         self.assertEqual(len(es), 2)
         self.assertEqual(es[0].name, 'Eng (1) Stop')
