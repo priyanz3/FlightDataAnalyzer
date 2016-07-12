@@ -2081,7 +2081,7 @@ class MaximumContinuousPower(FlightPhaseNode):
                ga_ratings=S('Go Around 5 Min Rating')):
 
         ga_slices = ga_ratings.get_slices() if ga_ratings else []
-        ratings = to_ratings.get_slices() + ga_ratings.get_slices()
+        ratings = to_ratings.get_slices() + ga_slices
         mcp = slices_and_not(airborne.get_slices(), ratings)
         self.create_phases(mcp)
 
