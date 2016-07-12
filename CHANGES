@@ -8,6 +8,24 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+
+v0.28.1
+-------
+
+ - Improvements for handling helicopter specific code
+
+Fix:
+ - GreatCircleDistance: handle no coordinates
+ - Rejected Takeoff fixes:
+   - Airborne not required for mobile
+   - Final Approach needs to be able to have been airborne
+
+Improvement:
+ - Tailwind at takeoff reverted to airspeed true
+ - API refactoring
+ - Touchdown: increase height check for gear on ground
+
+
 v0.27.1
 -------
 
@@ -171,7 +189,7 @@ v0.25.1
    - Utils: list_parameters - Exclude AFR attrs
  - Fixes:
    - Attribute: DestinationAirport - fix '0000' airport code
-   - Attribute: Runway identification for aircraft with recorded latitude, longitude, ILS 
+   - Attribute: Runway identification for aircraft with recorded latitude, longitude, ILS
                 glideslope and ILS localizer but N|OT ILS frequency amended to use position data.
    - Derived: removing spikes in the tailwind values at touchdown
    - KPV: Rate of Descent Below 80 Kts revised to provide correct indexes
@@ -188,7 +206,7 @@ v0.25.1
    - Phase: Taxiing - can_operate Rejected Takeoff required
    - Phase: TaxiOut - handle no taxi (data starts on runway)
    - Phase: Bottom of Descent - case of None end of section handled
-   - Phase: Landing: use mobile end instead of the remainder of the array in cases where 
+   - Phase: Landing: use mobile end instead of the remainder of the array in cases where
             the aircraft doesn't turn off the runway before engine stop.
    - Phase: Taxi In: fix creating invalid slice when engines start late (engine-less taxi?)
    - Phase: Taxi Out: fix crashing invalid slice when engines stop early (engine-less taxi?)
@@ -285,7 +303,7 @@ v0.22.1
    - Reduced period of level flight allowed during level bust
  - Fixes:
    - find_toc_tod: handle masked data at mid point of descent/climb
-   
+
 
 v0.21.8
 -------
@@ -653,7 +671,7 @@ V0.13.3
    - Rate of Descent below 10,000 ft (CAA KPV) amended to provide single value per flight.
    - Fixed frequency issue with gear up also changed to using Gear Up Selected to improve accuracy at gear extention.
    - Stick Shaker KPVs not created for segments less than one second.
-   - Engine Start and Stop now work with Eng (*) Ng where available. 
+   - Engine Start and Stop now work with Eng (*) Ng where available.
  - Fixes
    - Fixes to Gear parameters to correct Gear Retracting and prevent Gear Retracting
      and Gear Retracted phases overlapping
@@ -692,7 +710,7 @@ Flight Data Converter has been made timezone aware
    - Speedbrake Selected: Globals can process with eiter speedbrake or handle
    - ILS Localizer/Glideslope: added extra sources
    - V2 related nodes: Better handling of different frequencies encountered
-   - Takeoff acceleration threshold increased to 0.15g to avoid enthusiastic 
+   - Takeoff acceleration threshold increased to 0.15g to avoid enthusiastic
        taxiing being identified as a takeoff start.
    - Moving Average function reworked to operate better with masked data.
    - Airspeed relative now includes V2 comparison during takeoff phase.
@@ -738,7 +756,7 @@ V0.12.4
  - Improvement: Speedbrake Selected - Check if Speedbrake Armed is available for Airbuses
  - Improvement: ClimbAccelerationStart multiple
    - AAL first dep for freq
-   - Manually aligns parameters 
+   - Manually aligns parameters
    - Fixed last freq divide
    - Support for analog spd_sel
    - Fix for low hz parameters
@@ -915,7 +933,7 @@ v0.6.1
 ------
  - Thrust Asymmetry now supports EPR asymmetry as a percentage value.
  - Split Segments splits the average of the normalised engine params (and Groundspeed)
-   rather than the minimum of any of the individual params to fix early splits on 
+   rather than the minimum of any of the individual params to fix early splits on
    single engine taxi in.
 
 
@@ -925,10 +943,10 @@ v0.5.2
  - TAWS Windshear detects climb as well as approach
  - Alpha floor only detect while Airborne
  - AP Engaged / Disengaged widened phase to Fast rather than Airborne
- - Takeoff and Landing Pilot identification fix for Pilot Flying parameter 
+ - Takeoff and Landing Pilot identification fix for Pilot Flying parameter
    (currently on Airbus with sidesticks)
  - air_track for fitting lat/long smoothed tracks improved for long distances
- - Approach Range improved for Visual Approaches (no valid Glideslope) for 
+ - Approach Range improved for Visual Approaches (no valid Glideslope) for
    approaches to airports with ILS installed
  - RTO ensures liftoff occurs within 30secs of potential RTO
  - Force Lat/Long to 1Hz for those with lower sample rates
@@ -940,23 +958,23 @@ v0.5.1
 Improvements:
  - Units all use constants defined in FlightDataUtilities repository
  - Headwind improvement to use Airspeed as first dependency to increase hz
- - Pilot Flying (currently for Airbus Sidestick) added for Flight Attributes 
+ - Pilot Flying (currently for Airbus Sidestick) added for Flight Attributes
    Takeoff Pilot and Landing Pilot.
  - Split Segments fix for DFC splits where incorrect engine split index was used
  - Gear Extending/Retracting use Gear Selected rather than Red Warnings directly
  - air_track accounts for airspeed calibration errors on really bad aircraft
- - Takeoff and Landing Roll work when no Pitch parameter available (yes, some 
+ - Takeoff and Landing Roll work when no Pitch parameter available (yes, some
    really bad aircraft!)
- - Groundspeed established from Longitudinal Acceleration within Groundspeed 
+ - Groundspeed established from Longitudinal Acceleration within Groundspeed
    During RTO Max
  - TAWS Alert can_operate method fix
- - Invalidate "Year" parameter before calculate timebase so we use the 
+ - Invalidate "Year" parameter before calculate timebase so we use the
    fallback_dt.year in its place.
  - create_kpvs_within_slices fix to rounding of start and stop edges
  - Improved smoothing of Heading and Altitude for Hercules aircraft
  - bearings_and_distances library routine improved for earth curvature
  - Multiple Go Around KPV improvements
- 
+
 Nodes added:
  - "Master Caution" merges multiple signals
  - "Pitch Above 1000 Ft Min" and "Pitch Above 1000 Ft Max"
@@ -964,18 +982,18 @@ Nodes added:
 Nodes removed:
  - Removed "Altitude STD At Lifoff" and "Altitude STD At Touchdown" KPVs
  - Removed "Configuration At Landing" KPV as we rely upon "Flap At Touchdown"
- 
- 
+
+
 v0.4.1
 ------
  - A319, A320, A321 support - Flap Lever (Synthetic), Configuration and Speedbrake
- 
+
 Improvements:
  - climb flight phase added to Height Loss KPVs
  - AOA works from just one signal rather than relying on both (A) and (B)
  - Nodes support setting of aliases "hz" and "sample_rate" in place of frequency
  - Overflow correction fix 0.0 now does nothing rather than mask
- - TCAS RA uses recorded TCAS RA parameter (on Airbus) in preference to 
+ - TCAS RA uses recorded TCAS RA parameter (on Airbus) in preference to
    TCAS Combined Control (on Boeings)
  - Altitude correction for CRJ Alitiude Radio
  - Improve overflow correction for Altitude Radio
@@ -985,7 +1003,7 @@ Improvements:
  - process_flight supports stripping of hdf5 derived parameters for reprocessing
  - _value library now returns states (assumes order by that of raw value)
  - Master Warning inhibited when engines not running
- - ILS Established works better with low sample rate data and makes sure the 
+ - ILS Established works better with low sample rate data and makes sure the
    aircraft path converges onto the beam and does not just pass through.
  - Flight Phase "Bottom Of Descent" revised to be more robust
  - Gross Weight at Liftoff and touchdown - catch repair errors where no valid data
@@ -994,19 +1012,19 @@ Improvements:
 v0.3.2
 ------
 
- - Fix to thrust_reversers_working indexing (including refactor of 
+ - Fix to thrust_reversers_working indexing (including refactor of
    clump_multistate)
 
 
 v0.3.1
 ------
  - Flap Angle supports more than two signals, including (C) and (MCP) channels
- - Improvements to Top Of Climb (find_toc_tod) and Bottom of Descent (uses just 
+ - Improvements to Top Of Climb (find_toc_tod) and Bottom of Descent (uses just
    ClimbCruiseDescent) make climbs and descents more robust.
- - ILS Frequency only reports valid frequency if both (1) and (2) channels are 
+ - ILS Frequency only reports valid frequency if both (1) and (2) channels are
    recording same frequency.
  - Airspeed with Flap 0 and Slat something.
- - Support for Slat included in Flap Lever (Synthetic) to ensure slat only 
+ - Support for Slat included in Flap Lever (Synthetic) to ensure slat only
    transitions are included.
 
 
@@ -1030,7 +1048,7 @@ v0.2.1
   - Improves speed
   - Corrects truncation of adjacent peaks
 
-  
+
 v0.1.1
 ------
 
