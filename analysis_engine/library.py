@@ -7869,16 +7869,21 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
     # 2. Attempt to identify the runway by localizer frequency:
     if ilsfreq is not None:
         ilsfreq = int(ilsfreq * 1000)  # Convert from MHz to kHz
-        assert 108100 <= ilsfreq <= 111950, 'Localizer frequency is out-of-range.'
-        assert ilsfreq // 100 % 10 % 2, 'Localiser frequency must have odd 100 kHz digit.'
-        x = [runway for runway in runways if _filter_ilsfreq(runway, ilsfreq)]
-        if len(x) == 1:
-            logger.info("Runway '%s' selected: Identified by ILS.", x[0]['identifier'])
-            return x[0]
-        elif len(x) == 0:
-            logger.warning("ILS '%s' frequency provided, no matching runway found at '%s'.", ilsfreq, airport['id'])
+        if not (108100 <= ilsfreq <= 111950):
+            ilsfreq = None
+            logger.warning("Localizer frequency '%s' is out-of-range.", ilsfreq)
+        elif not (ilsfreq // 100 % 10 % 2):
+            ilsfreq = None
+            logger.warning("Localiser frequency '%s' must have odd 100 kHz digit.", ilsfreq)
         else:
-            logger.warning("ILS '%s' frequency provided, multiple matching runways found at '%s'.", ilsfreq, airport['id'])
+            x = [runway for runway in runways if _filter_ilsfreq(runway, ilsfreq)]
+            if len(x) == 1:
+                logger.info("Runway '%s' selected: Identified by ILS.", x[0]['identifier'])
+                return x[0]
+            elif len(x) == 0:
+                logger.warning("ILS '%s' frequency provided, no matching runway found at '%s'.", ilsfreq, airport['id'])
+            else:
+                logger.warning("ILS '%s' frequency provided, multiple matching runways found at '%s'.", ilsfreq, airport['id'])
 
     # 3. If hint provided (i.e. not precise positioning) try narrowing down the
     #    runway by heading - if more than one runway within 10 degrees, likely
