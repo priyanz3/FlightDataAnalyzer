@@ -706,8 +706,10 @@ class TestIANFinalApproachCourseEstablished(unittest.TestCase):
         aal_array = load_compressed(os.path.join(test_data_path, 'ian_established-alt_aal.npz'))
         self.alt_aal = Parameter('Altitude AAL For Flight Phases', aal_array)
         values_mapping = {0: 'No Source', 1: 'FMC', 5: 'LOC/FMC', 6: 'GLS', 7: 'ILS'}
-        self.app_src_capt = M('Displayed App Source (Capt)', np_ma_zeros_like(aal_array), values_mapping=values_mapping)
-        self.app_src_fo = M('Displayed App Source (FO)', np_ma_zeros_like(aal_array), values_mapping=values_mapping)
+        self.app_src_capt = Parameter('Displayed App Source (Capt)',
+                                      MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
+        self.app_src_fo = Parameter('Displayed App Source (FO)',
+                                    MappedArray(np_ma_zeros_like(aal_array), values_mapping=values_mapping))
 
     def test_derive__basic(self):
         self.app_src_capt.array[slice(28710, 30480)] = 'FMC'
@@ -718,7 +720,6 @@ class TestIANFinalApproachCourseEstablished(unittest.TestCase):
         node.derive(self.ian_app_corse,
                     self.alt_aal,
                     apps,
-                    None,
                     self.app_src_capt,
                     self.app_src_fo)
         self.assertEqual(len(node), 1)
@@ -734,7 +735,6 @@ class TestIANFinalApproachCourseEstablished(unittest.TestCase):
         node.derive(self.ian_app_corse,
                     self.alt_aal,
                     apps,
-                    None,
                     self.app_src_capt,
                     self.app_src_fo)
         self.assertEqual(len(node), 0)
@@ -746,7 +746,6 @@ class TestIANFinalApproachCourseEstablished(unittest.TestCase):
         node.derive(self.ian_app_corse,
                     self.alt_aal,
                     apps,
-                    None,
                     self.app_src_capt,
                     self.app_src_fo)
         self.assertEqual(len(node), 0)
