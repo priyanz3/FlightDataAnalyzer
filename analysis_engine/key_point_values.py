@@ -14227,13 +14227,16 @@ class TailwindDuringTakeoffMax(KeyPointValueNode):
 
         for toff in toffs:
             spd = np.ma.masked_less(airspeed.array, 60)
-            first_spd_idx = first_valid_sample(spd[toff.slice])[0] + toff.slice.start
+            first_spd_idx = first_valid_sample(spd[toff.slice])[0]
+            if first_spd_idx:
+                first_spd_idx = first_spd_idx + toff.slice.start
+                liftoff = liftoffs.get_first(within_slice=toff.slice)
 
-            liftoff = liftoffs.get_first(within_slice=toff.slice)
-
-            self.create_kpvs_within_slices(tailwind.array,
-                                           (slice(first_spd_idx, liftoff.index),),
-                                           max_value)
+                self.create_kpvs_within_slices(tailwind.array,
+                                               (slice(first_spd_idx, liftoff.index),),
+                                               max_value)
+            else:
+                self.warning('No Valid Airspeed True in takeof phase?')
 
 
 ##############################################################################
