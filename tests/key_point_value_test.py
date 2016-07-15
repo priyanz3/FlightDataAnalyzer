@@ -5664,26 +5664,18 @@ class TestHeadingTrueDuringTakeoff(unittest.TestCase, NodeTest):
 class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringLanding
+        self.can_operate_kwargs = {'ac_type':aeroplane}
         self.operational_combinations = [
-            ('Heading Continuous', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Touchdown', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Turn Off Runway', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Landing Turn Off Runway', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Touchdown', 'Landing Turn Off Runway', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Touchdown', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Turn Off Runway', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway', 'Aircraft Type'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Landing Turn Off Runway', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Touchdown', 'Landing Turn Off Runway', 'Aircraft Type', 'Transition Flight To Hover'),
-            ('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway', 'Aircraft Type', 'Transition Flight To Hover')
+            ('Touchdown', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
+            ('Touchdown', 'Landing Roll', 'Aircraft Type', 'Landing Turn Off Runway', 'Heading Continuous'),
+            ('Touchdown', 'Transition Flight To Hover', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
+            ('Aircraft Type', 'Heading Continuous', 'Transition Flight To Hover', 'Touchdown', 'Landing Roll', 'Landing Turn Off Runway'),
         ]
+
+    def test_can_operate__helicopter(self):
+        can_operate = self.node_class.can_operate
+        self.assertTrue(can_operate(('Heading Continuous', 'Transition Flight To Hover'), ac_type=helicopter))
+        self.assertFalse(can_operate(self.operational_combinations[0], ac_type=helicopter))
 
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,1,2,3,4,5,6,7,8,9,10,-1,-1,
