@@ -6006,10 +6006,11 @@ class HeadingDuringLanding(KeyPointValueNode):
     units = ut.DEGREE
 
     @classmethod
-    def can_operate(cls, available):
-        fixed_wing = all_of(('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway'), available)
-        rotary_wing = all_of(('Heading Continuous', 'Transition Flight To Hover'), available)
-        return fixed_wing or rotary_wing
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return all_of(('Heading Continuous', 'Transition Flight To Hover'), available)
+        else:
+            return all_of(('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway'), available)
 
     def derive(self,
                hdg=P('Heading Continuous'),
