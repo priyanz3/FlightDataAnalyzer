@@ -635,8 +635,35 @@ class EnterHold(KeyTimeInstanceNode):
         for hold in holds:
             self.create_kti(hold.slice.start)
 
+
 class ExitHold(KeyTimeInstanceNode):
     def derive(self, holds=S('Holding')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+class EnterTransitionFlightToHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Flight To Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.start)
+
+class ExitTransitionFlightToHover(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Flight To Hover')):
+        for hold in holds:
+            self.create_kti(hold.slice.stop)
+
+
+class ExitTransitionHoverToFlight(KeyTimeInstanceNode):
+
+    can_operate = helicopter_only
+
+    def derive(self, holds=S('Transition Hover To Flight')):
         for hold in holds:
             self.create_kti(hold.slice.stop)
 
