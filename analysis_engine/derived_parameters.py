@@ -3746,10 +3746,9 @@ class Groundspeed(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type == helicopter:
-            return all_of(('Latitude Prepared', 'Longitude Prepared'), available)
-        else:
-            return any_of(('Groundspeed (1)', 'Groundspeed (2)'), available)
+        gspd_sources = any_of(('Groundspeed (1)', 'Groundspeed (2)'), available)
+        lat_lon = all_of(('Latitude Prepared', 'Longitude Prepared'), available)
+        return gspd_sources or (lat_lon and ac_type == helicopter)
 
     def derive(self,
                # aeroplane
@@ -3760,7 +3759,10 @@ class Groundspeed(DerivedParameterNode):
                lon=P('Longitude Prepared'),
                ac_type=A('Aircraft Type')):
 
-        if ac_type == helicopter:
+        if source_A or source_B:
+            self.array, self.frequency, self.offset = \
+                blend_two_parameters(source_A, source_B)
+        elif ac_type == helicopter:
             '''
             Calculation of Groundspeed from latitude and longitude
 
@@ -3783,9 +3785,6 @@ class Groundspeed(DerivedParameterNode):
                 self.array = np_ma_zeros_like(lat.array)
             self.frequency = lat.frequency
             self.offset = (lat.offset + lon.offset) / 2.0
-        else:
-            self.array, self.frequency, self.offset = \
-                blend_two_parameters(source_A, source_B)
 
 
 class GroundspeedSigned(DerivedParameterNode):

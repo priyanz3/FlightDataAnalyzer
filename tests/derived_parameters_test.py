@@ -2821,7 +2821,7 @@ class TestGroundspeed(unittest.TestCase):
         self.assertTrue(Groundspeed.can_operate(['Groundspeed (2)'], ac_type=aeroplane))
         self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)', 'Groundspeed (2)'], ac_type=aeroplane))
         self.assertFalse(Groundspeed.can_operate([], ac_type=helicopter))
-        self.assertFalse(Groundspeed.can_operate(['Groundspeed (1)', 'Groundspeed (2)'], ac_type=helicopter))
+        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)', 'Groundspeed (2)'], ac_type=helicopter))
         self.assertFalse(Groundspeed.can_operate(['Latitude Prepared'], ac_type=helicopter))
         self.assertFalse(Groundspeed.can_operate(['Longitude Prepared'], ac_type=helicopter))
         self.assertTrue(Groundspeed.can_operate(['Latitude Prepared', 'Longitude Prepared'], ac_type=helicopter))
