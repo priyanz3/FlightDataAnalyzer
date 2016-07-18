@@ -7971,12 +7971,9 @@ class EngEPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_epr_max=P('Eng (*) EPR Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_epr_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_epr_max.array, mcp, max_value)
 
 
 class EngEPRFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8007,12 +8004,9 @@ class EngTPRDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_tpr_max=P('Eng (*) TPR Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_tpr_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_tpr_max.array, mcp, max_value)
 
 
 class EngTPRFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8341,23 +8335,9 @@ class EngGasTempDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_egt_max=P('Eng (*) Gas Temp Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               airborne=S('Airborne')):
+               mcp=S('Maximum Continuous Power')):
 
-        if not airborne:
-            return
-        high_power_ratings = to_ratings.get_slices() + ga_ratings.get_slices()
-        max_cont_rating = slices_not(
-            high_power_ratings,
-            begin_at=min(air.slice.start for air in airborne),
-            end_at=max(air.slice.stop for air in airborne),
-        )
-        self.create_kpvs_within_slices(
-            eng_egt_max.array,
-            max_cont_rating,
-            max_value,
-        )
+        self.create_kpvs_within_slices(eng_egt_max.array, mcp, max_value)
 
 
 class EngGasTempFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -8820,12 +8800,9 @@ class EngN1DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_n1_max=P('Eng (*) N1 Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_n1_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_n1_max.array, mcp, max_value)
 
 
 class EngN1For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -9252,12 +9229,9 @@ class EngN2DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_n2_max=P('Eng (*) N2 Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_n2_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_n2_max.array, mcp, max_value)
 
 
 class EngN2DuringMaximumContinuousPowerMin(KeyPointValueNode):
@@ -9270,13 +9244,10 @@ class EngN2DuringMaximumContinuousPowerMin(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self,
-               eng_n2_max=P('Eng (*) N2 Min'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               eng_n2_min=P('Eng (*) N2 Min'),
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_n2_max.array, slices, min_value)
+        self.create_kpvs_within_slices(eng_n2_min.array, mcp, min_value)
 
 
 class EngN2For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -9430,12 +9401,9 @@ class EngN3DuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_n3_max=P('Eng (*) N3 Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_n3_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_n3_max.array, mcp, max_value)
 
 
 class EngN3For5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -9584,12 +9552,9 @@ class EngNpDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_np_max=P('Eng (*) Np Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_np_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_np_max.array, mcp, max_value)
 
 
 class EngNpFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
@@ -10025,12 +9990,9 @@ class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
-               to_ratings=S('Takeoff 5 Min Rating'),
-               ga_ratings=S('Go Around 5 Min Rating'),
-               grounded=S('Grounded')):
+               mcp=S('Maximum Continuous Power')):
 
-        slices = to_ratings + ga_ratings + grounded
-        self.create_kpv_outside_slices(eng_trq_max.array, slices, max_value)
+        self.create_kpvs_within_slices(eng_trq_max.array, mcp, max_value)
 
 
 class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
