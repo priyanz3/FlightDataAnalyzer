@@ -6,7 +6,7 @@ import unittest
 from flightdatautilities.array_operations import load_compressed
 
 from analysis_engine.node import (
-    A, KeyTimeInstance, KTI, load, Parameter, P, Section, S, M)
+    A, aeroplane, helicopter, KeyTimeInstance, KTI, load, Parameter, P, Section, S, M,)
 
 from analysis_engine.key_time_instances import (
     AltitudePeak,
@@ -88,10 +88,18 @@ test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 class NodeTest(object):
 
     def test_can_operate(self):
-        self.assertEqual(
-            self.node_class.get_operational_combinations(),
-            self.operational_combinations,
-        )
+        if not hasattr(self, 'node_class'):
+            return
+        kwargs = getattr(self, 'can_operate_kwargs', {})
+        if getattr(self, 'check_operational_combination_length_only', False):
+            self.assertEqual(
+                len(self.node_class.get_operational_combinations(**kwargs)),
+                self.operational_combination_length,
+            )
+        else:
+            combinations = map(set, self.node_class.get_operational_combinations(**kwargs))
+            for combination in map(set, self.operational_combinations):
+                self.assertIn(combination, combinations)
 
 
 ##############################################################################
@@ -1628,6 +1636,7 @@ class TestGearUpSelection(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GearUpSelection
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [('Gear Up Selected', 'Airborne', 'Go Around And Climbout')]
         self.gear_up_sel = M(
             name='Gear Up Selected',
@@ -1635,6 +1644,10 @@ class TestGearUpSelection(unittest.TestCase, NodeTest):
             values_mapping={0: 'Down', 1: 'Up'},
         )
         self.airborne = buildsection('Airborne', 0, 7)
+
+    def can_operate_helicopter(self):
+        operational_combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(operational_combinations, [('Gear Up Selected', 'Airborne')])
 
     def test_normal_operation(self):
         go_arounds = buildsection('Go Around And Climbout', 6, 7)

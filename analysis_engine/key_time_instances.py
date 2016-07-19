@@ -22,6 +22,7 @@ from analysis_engine.library import (
     repair_mask,
     runs_of_ones,
     slices_and,
+    slices_and_not,
     slice_duration,
     slices_not,
     slices_remove_small_gaps,
@@ -965,6 +966,13 @@ class GearUpSelection(KeyTimeInstanceNode):
     Instants at which gear up was selected while airborne excluding go-arounds.
     '''
 
+    @classmethod
+    def can_operate(cls, available, ac_type=('Aircraft Type')):
+        if ac_type != helicopter:
+            return all_deps(cls, available)
+        else:
+            return all_of(('Gear Up Selected', 'Airborne'), available)
+
     def derive(self,
                gear_up_sel=M('Gear Up Selected'),
                airborne=S('Airborne'),
@@ -972,13 +980,10 @@ class GearUpSelection(KeyTimeInstanceNode):
 
         if not airborne:
             return
-        air_not_ga = slices_and(
-            airborne.get_slices(), slices_not(
-                go_arounds.get_slices(),
-                begin_at=airborne.get_first().start_edge,
-                end_at=airborne.get_last().stop_edge,
-            )
-        )
+
+        ga = go_arounds.get_slices() if go_arounds else []
+
+        air_not_ga = slices_and_not(airborne.get_slices(), ga)
         self.create_ktis_on_state_change('Up', gear_up_sel.array,
                                          change='entering', phase=air_not_ga)
 
