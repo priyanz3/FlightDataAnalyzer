@@ -1925,13 +1925,21 @@ class LastEngFuelFlowStop(KeyTimeInstanceNode):
 
 class DistanceFromLocationMixin(object):
 
-    def calculate(self, datum_lat, datum_lon, lat, lon, distance, direction='forward', _slice=slice(None, None, None)):
+    def calculate(
+            self, datum_lat, datum_lon, lat, lon, distance, direction='forward',
+            repair_mask_duration=None, _slice=slice(None, None, None)):
         assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
 
         # We can only handle single liftoffs or touchdowns at this time:
         from library import _dist
 
-        distances = _dist(lat.array, lon.array, [datum_lat], [datum_lon])
+        lat_array = lat.array
+        lon_array = lon.array
+        if repair_mask:
+            lat_array = repair_mask(lat_array, repair_duration=repair_mask_duration)
+            lon_array = repair_mask(lon_array, repair_duration=repair_mask_duration)
+
+        distances = _dist(lat_array, lon_array, [datum_lat], [datum_lon])
         distances = ut.convert(distances, ut.METER, ut.NM)
         if direction == 'backward':
             back_slice = slice(_slice.stop, _slice.start, -1)
@@ -1972,9 +1980,10 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            self.calculate(apt_lat, apt_lon,
-                           lat, lon, distance,
-                           direction='forward', _slice=airs[0].slice)
+            self.calculate(
+                apt_lat, apt_lon, lat, lon, distance,
+                direction='forward', repair_mask_duration=60,
+                _slice=airs[0].slice)
 
 
 class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin):
@@ -2004,9 +2013,10 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
         apt_lat = apt.value.get('latitude')
         apt_lon = apt.value.get('longitude')
         for distance in self.NAME_VALUES['distance']:
-            self.calculate(apt_lat, apt_lon,
-                           lat, lon, distance,
-                           direction='forward', _slice=airs[0].slice)
+            self.calculate(
+                apt_lat, apt_lon, lat, lon, distance,
+                direction='forward', repair_mask_duration=60,
+                _slice=airs[0].slice)
 
 
 class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
