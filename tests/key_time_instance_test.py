@@ -1862,7 +1862,7 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             DistanceFromTakeoffAirport.get_operational_combinations(),
-            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Takeoff Airport')])
+            [('Longitude Smoothed', 'Latitude Smoothed', 'Airborne', 'FDR Takeoff Airport')])
 
     def test_derive(self):
         apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
@@ -1872,7 +1872,7 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
         lat = P('Latitude', [0.0]*(len(test)))
         lon = P('Longitude', (test-30)/(30.0*60))
         dfta = DistanceFromTakeoffAirport()
-        dfta.derive(airs, lon, lat, apt)
+        dfta.derive(lon, lat, airs, apt)
 
         self.assertEqual(len(dfta), 2)
         self.assertAlmostEqual(dfta[0].index, 4527, places=0)
@@ -1887,7 +1887,7 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
         lat = P('Latitude', [0.0]*(len(test)))
         lon = P('Longitude', test/(30.0*60))
         dfta = DistanceFromTakeoffAirport()
-        dfta.derive(airs, lon, lat, apt)
+        dfta.derive(lon, lat, airs, apt)
         self.assertEqual(len(dfta), 1)
         self.assertAlmostEqual(dfta[0].index, 4526, places=0)
 
@@ -1896,7 +1896,7 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             DistanceFromLandingAirport.get_operational_combinations(),
-            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Airport')])
+            [('Longitude Smoothed', 'Latitude Smoothed', 'Airborne', 'FDR Landing Airport')])
 
     def test_derive(self):
         apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
@@ -1906,7 +1906,7 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', (test-30)/(30.0*60))
         dfla = DistanceFromLandingAirport()
-        dfla.derive(airs, lon, lat, apt)
+        dfla.derive(lon, lat, airs, apt)
 
         self.assertEqual(len(dfla), 2)
         self.assertAlmostEqual(dfla[0].index, 4503, places=0)
@@ -1921,7 +1921,7 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', test/(30.0*60))
         dfla = DistanceFromLandingAirport()
-        dfla.derive(airs, lon, lat, apt)
+        dfla.derive(lon, lat, airs, apt)
         self.assertEqual(len(dfla), 1)
         self.assertAlmostEqual(dfla[0].index, 1503, places=0)
 
@@ -1930,7 +1930,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             DistanceFromThreshold.get_operational_combinations(),
-            [('Airborne', 'Longitude Smoothed', 'Latitude Smoothed', 'FDR Landing Runway')])
+            [('Longitude Smoothed', 'Latitude Smoothed', 'Airborne', 'FDR Landing Runway')])
 
     def test_derive(self):
         # The runway threshold is offset a little from the equator
@@ -1946,7 +1946,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
         lon = P('Longitude', (test-32)/(32.0*60))
         #lon.array = np.ma.concatenate([lon.array])
         dft = DistanceFromThreshold()
-        dft.derive(airs, lon, lat, rwy)
+        dft.derive(lon, lat, airs, rwy)
 
         self.assertEqual(dft[0].index, 96)
         self.assertAlmostEqual(dft[1].index, 64, places=0)
@@ -1963,7 +1963,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
         lat = P('Latitude', [0.0]*len(test))# On equator
         lon = P('Longitude', (test-32)/(64.0*60))
         dft = DistanceFromThreshold()
-        dft.derive(airs, lon, lat, rwy)
+        dft.derive(lon, lat, airs, rwy)
 
         self.assertEqual(dft[0].index, 96)
         # Note shifted 1nm point as flying at half the speed
@@ -1984,7 +1984,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', (test-32)/(32.0*60))
         dft = DistanceFromThreshold()
-        dft.derive(airs, lon, lat, rwy)
+        dft.derive(lon, lat, airs, rwy)
 
         self.assertEqual(dft[0].index, 225)
         self.assertAlmostEqual(dft[1].index, 193, places=0)

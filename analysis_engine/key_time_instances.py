@@ -1958,9 +1958,9 @@ class DistanceFromTakeoffAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
-               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
+               airs=S('Airborne'),
                apt=A('FDR Takeoff Airport')):
 
         if not apt.value:
@@ -1990,9 +1990,9 @@ class DistanceFromLandingAirport(KeyTimeInstanceNode, DistanceFromLocationMixin)
     NAME_VALUES = NAME_VALUES_DISTANCE
 
     def derive(self,
-               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
+               airs=S('Airborne'),
                apt=A('FDR Landing Airport')):
 
         if not apt.value:
@@ -2017,9 +2017,9 @@ class DistanceFromThreshold(KeyTimeInstanceNode, DistanceFromLocationMixin):
     NAME_VALUES = NAME_VALUES_RANGES
 
     def derive(self,
-               airs=S('Airborne'),
                lon=P('Longitude Smoothed'),
                lat=P('Latitude Smoothed'),
+               airs=S('Airborne'),
                rwy=A('FDR Landing Runway')):
 
         if not rwy.value:
