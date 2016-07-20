@@ -1323,7 +1323,7 @@ class TestCruise(unittest.TestCase):
         test_phase = Cruise()
         test_phase.derive(ccd, toc, tod, air_spd)
         #===========================================================
-        self.assertEqual(test_phase[0].slice, slice(0,5))
+        self.assertEqual(test_phase[0].slice, slice(None,5))
         self.assertEqual(len(toc), 0)
         self.assertEqual(len(tod), 1)
 
@@ -1344,7 +1344,7 @@ class TestCruise(unittest.TestCase):
         test_phase.derive(ccd, toc, tod, air_spd)
         #===========================================================
         expected = Cruise()
-        expected.create_section(slice(6, 10), 'Cruise')
+        expected.create_section(slice(6, None), 'Cruise')
         self.assertEqual(test_phase, expected)
         self.assertEqual(len(toc), 1)
         self.assertEqual(len(tod), 0)

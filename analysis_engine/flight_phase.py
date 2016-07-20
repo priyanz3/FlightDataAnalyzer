@@ -630,7 +630,8 @@ class Cruise(FlightPhaseNode):
         # not be of equal lengths.
 
         # ensure traveling greater than 50 kts in cruise
-        scope = slices_and(slices_above(air_spd.array, 50)[1], ccds.get_slices())
+        # scope = slices_and(slices_above(air_spd.array, 50)[1], ccds.get_slices())
+        scope = ccds.get_slices()
         for ccd in scope:
             toc = tocs.get_first(within_slice=ccd)
             if toc:
@@ -646,7 +647,7 @@ class Cruise(FlightPhaseNode):
 
             # Some flights just don't cruise. This can cause headaches later
             # on, so we always cruise for at least one second !
-            if end < begin + 1:
+            if None not in(end, begin) and end < begin + 1:
                 end = begin + 1
 
             self.create_phase(slice(begin,end))
