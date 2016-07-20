@@ -1342,7 +1342,7 @@ class Airspeed500To100FtMax(KeyPointValueNode):
     def derive(self,
                air_spd=P('Airspeed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending')):
+               descending=S('Descent')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
         alt_descent_sections = valid_slices_within_array(alt_band, descending)
@@ -1367,7 +1367,7 @@ class Airspeed500To100FtMin(KeyPointValueNode):
     def derive(self,
                air_spd=P('Airspeed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
@@ -1393,7 +1393,7 @@ class Airspeed100To20FtMax(KeyPointValueNode):
     def derive(self,
                air_spd=P('Airspeed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
@@ -1419,7 +1419,7 @@ class Airspeed100To20FtMin(KeyPointValueNode):
     def derive(self,
                air_spd=P('Airspeed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
@@ -1444,7 +1444,7 @@ class Airspeed500To20FtMax(KeyPointValueNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Airspeed']
         if ac_type and ac_type.value == 'helicopter':
-            required.extend(['Altitude AGL', 'Descending'])
+            required.extend(['Altitude AGL', 'Descent'])
         else:
             required.append('Altitude AAL For Flight Phases')
         return all_of(required, available)
@@ -1455,7 +1455,7 @@ class Airspeed500To20FtMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                # helicopter
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         if ac_type and ac_type.value == 'helicopter':
@@ -11994,7 +11994,7 @@ class Pitch1000To500FtMin(KeyPointValueNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Pitch']
         if ac_type and ac_type.value == 'helicopter':
-            required.extend(['Altitude AGL', 'Descending'])
+            required.extend(['Altitude AGL', 'Descent'])
         else:
             required.extend(['Altitude AAL For Flight Phases', 'Final Approach'])
         return all_of(required, available)
@@ -12006,7 +12006,7 @@ class Pitch1000To500FtMin(KeyPointValueNode):
                fin_app=S('Final Approach'),
                # helicopter
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         if ac_type and ac_type.value == 'helicopter':
@@ -12124,7 +12124,7 @@ class Pitch500To100FtMax(KeyPointValueNode):
     def derive(self,
                pitch=P('Pitch'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 500)
@@ -12133,7 +12133,7 @@ class Pitch500To100FtMax(KeyPointValueNode):
             pitch.array,
             alt_app_sections,
             max_value,
-            min_duration=HOVER_MIN_DURATION, # TODO: check where this came from.
+            min_duration=HOVER_MIN_DURATION,
             freq=pitch.frequency)
 
 
@@ -12148,7 +12148,7 @@ class Pitch500To100FtMin(KeyPointValueNode):
     def derive(self,
                pitch=P('Pitch'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 500)
@@ -12223,7 +12223,7 @@ class Pitch100To20FtMax(KeyPointValueNode):
     def derive(self,
                pitch=P('Pitch'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 20, 100)
@@ -12247,7 +12247,7 @@ class Pitch100To20FtMin(KeyPointValueNode):
     def derive(self,
                pitch=P('Pitch'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending'),
+               descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 20, 100)
@@ -12875,7 +12875,7 @@ class RateOfDescent1000To500FtMax(KeyPointValueNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Vertical Speed']
         if ac_type and ac_type.value == 'helicopter':
-            required.extend(['Altitude AGL', 'Descending'])
+            required.extend(['Altitude AGL', 'Descent'])
         else:
             required.extend(['Altitude AAL For Flight Phases', 'Final Approach'])
         return all_of(required, available)
@@ -12888,7 +12888,7 @@ class RateOfDescent1000To500FtMax(KeyPointValueNode):
                fin_app=S('Final Approach'),
                # helicopter
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending')):
+               descending=S('Descent')):
 
         alt_band = np.ma.masked_outside((alt_aal or alt_agl).array, 1000, 500)
         # maximum RoD must be a big negative value; mask all positives
@@ -12914,7 +12914,7 @@ class RateOfDescent100To20FtMax(KeyPointValueNode):
     def derive(self,
                vrt_spd=P('Vertical Speed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending')):
+               descending=S('Descent')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
         # maximum RoD must be a big negative value; mask all positives
@@ -12940,7 +12940,7 @@ class RateOfDescent500To100FtMax(KeyPointValueNode):
     def derive(self,
                vrt_spd=P('Vertical Speed'),
                alt_agl=P('Altitude AGL'),
-               descending=S('Descending')):
+               descending=S('Descent')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
         # maximum RoD must be a big negative value; mask all positives
@@ -13289,7 +13289,7 @@ class Roll100To20FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'), descending=S('Descending')):
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'), descending=S('Descent')):
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
         alt_app_sections = valid_slices_within_array(alt_band, descending)
         self.create_kpvs_within_slices(
