@@ -1892,6 +1892,22 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
         self.assertAlmostEqual(dfta[0].index, 4526, places=0)
 
 
+    def test_masked(self):
+        apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        test = np.ma.array(dist[::-1]) # Copied from landing case  :o)
+        lat = P('Latitude', [0.0]*(len(test)))
+        lat.array[4520:4530] = np.ma.masked
+        lon = P('Longitude', test/(30.0*60))
+        lat.array[4500:4530] = np.ma.masked
+        dfta = DistanceFromTakeoffAirport()
+        dfta.derive(lon, lat, airs, apt)
+        self.assertEqual(len(dfta), 1)
+        self.assertAlmostEqual(dfta[0].index, 4526, places=0)
+
+
 class TestDistanceFromLandingAirport(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
@@ -1920,6 +1936,23 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
         test = np.ma.array(dist)
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', test/(30.0*60))
+        dfla = DistanceFromLandingAirport()
+        dfla.derive(lon, lat, airs, apt)
+        self.assertEqual(len(dfla), 1)
+        self.assertAlmostEqual(dfla[0].index, 1503, places=0)
+
+
+    def test_masked(self):
+        apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
+        airs = buildsection('Airborne', 0, 9000)
+        # 300 NM at 30 sec per NM
+        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        test = np.ma.array(dist)
+        lat = P('Latitude', [0.0]*(len(test))) # On equator
+        # mask a few samples
+        lat.array[1500:1510] = np.ma.masked
+        lon = P('Longitude', test/(30.0*60))
+        lon.array[1490:1505] = np.ma.masked
         dfla = DistanceFromLandingAirport()
         dfla.derive(lon, lat, airs, apt)
         self.assertEqual(len(dfla), 1)
