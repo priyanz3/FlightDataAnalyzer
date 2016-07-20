@@ -519,7 +519,7 @@ class EngStop(KeyTimeInstanceNode):
 
     @classmethod
     def can_operate(cls, available):
-        return (
+        return 'Eng Start' in available and (
             any_of(('Eng (%d) N1' % n for n in range(1, 5)), available) or
             any_of(('Eng (%d) N2' % n for n in range(1, 5)), available)
         )
@@ -544,6 +544,8 @@ class EngStop(KeyTimeInstanceNode):
                eng_2_ng=P('Eng (2) Ng'),
                eng_3_ng=P('Eng (3) Ng'),
                eng_4_ng=P('Eng (4) Ng'),
+
+               eng_start=KTI('Eng Start'),
 
                ac_type=A('Aircraft Type')):
 
@@ -587,6 +589,13 @@ class EngStop(KeyTimeInstanceNode):
                 stopped = True
                 self.create_kti(below_slice.start,
                                 replace_values={'number': number})
+
+            first_eng_start = eng_start.get_first(name='Eng (%d) Start'%number)
+            last_eng_stop = self.get_last(name='Eng (%d) Stop'%number)
+
+            if first_eng_start and last_eng_stop and last_eng_stop.index < first_eng_start.index:
+                stopped = False
+
             if not stopped:
                 i, v = last_valid_sample(eng_nx.array)
                 if i is not None and v >= limit:
@@ -594,7 +603,7 @@ class EngStop(KeyTimeInstanceNode):
                         'Eng (%d) Stop: `%s` spin down not detected, '
                         'set at the last valid data sample.' % (number,
                                                               eng_nx.name))
-                    self.create_kti(i - 1, replace_values={'number': number})
+                    self.create_kti(i, replace_values={'number': number})
 
 
 class LastEngStopAfterTouchdown(KeyTimeInstanceNode):

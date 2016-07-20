@@ -1124,12 +1124,12 @@ class TestEngStop(unittest.TestCase):
 
     def test_can_operate(self):
         combinations = EngStop.get_operational_combinations()
-        self.assertTrue(('Eng (1) N2',) in combinations)
-        self.assertTrue(('Eng (2) N2',) in combinations)
-        self.assertTrue(('Eng (3) N2',) in combinations)
-        self.assertTrue(('Eng (4) N2',) in combinations)
+        self.assertTrue(('Eng (1) N2', 'Eng Start') in combinations)
+        self.assertTrue(('Eng (2) N2', 'Eng Start') in combinations)
+        self.assertTrue(('Eng (3) N2', 'Eng Start') in combinations)
+        self.assertTrue(('Eng (4) N2', 'Eng Start') in combinations)
         self.assertTrue(('Eng (1) N2', 'Eng (2) N2',
-                         'Eng (3) N2', 'Eng (4) N2') in combinations)
+                         'Eng (3) N2', 'Eng (4) N2', 'Eng Start') in combinations)
 
     def test_basic(self):
         eng1 = Parameter(
@@ -1138,16 +1138,19 @@ class TestEngStop(unittest.TestCase):
             frequency=1 / 64.0)
         eng2 = Parameter(
             'Eng (2) N2', np.ma.array([60, 40, 20, 0]), frequency=1 / 64.0)
+        eng_start = EngStart(name='Eng Start', items=[
+            KeyTimeInstance(2, 'Engine (1) Start'),
+        ])
         es = EngStop()
         es.get_derived([
             None, None, None, None,
             eng1, eng2, None, None,
             None, None, None, None,
-            None, None, None, None, None
+            None, None, None, None, eng_start, None
         ])
         self.assertEqual(len(es), 2)
         self.assertEqual(es[0].name, 'Eng (1) Stop')
-        self.assertEqual(es[0].index, 5)
+        self.assertEqual(es[0].index, 6)
         self.assertEqual(es[1].name, 'Eng (2) Stop')
         self.assertEqual(es[1].index, 2)
 
@@ -1155,13 +1158,35 @@ class TestEngStop(unittest.TestCase):
         eng_1_n3 = load(os.path.join(test_data_path, 'eng_start_eng_1_n3.nod'))
         eng_2_n3 = load(os.path.join(test_data_path, 'eng_start_eng_2_n3.nod'))
         node = EngStop()
+        eng_start = EngStart(name='Eng Start')
         node.derive(
             None, None, None, None,
             None, None, None, None,
             eng_1_n3, eng_2_n3, None, None,
-            None, None, None, None,
+            None, None, None, None, eng_start, None,
         )
         self.assertEqual(len(node), 2)
+
+    def test_basic__running_at_end_of_data(self):
+        eng1 = Parameter(
+            'Eng (1) N2', np.ma.array(
+                data=range(60, 0, -10) + [0]*5 + range(0, 90, 10) + [99, 99]),
+            frequency=1 / 64.0)
+        eng_start = EngStart(name='Eng Start', items=[
+            KeyTimeInstance(14.5*64, 'Eng (1) Start'),
+        ])
+        es = EngStop()
+        es.get_derived([
+            None, None, None, None,
+            eng1, None, None, None,
+            None, None, None, None,
+            None, None, None, None, eng_start, None
+        ])
+        self.assertEqual(len(es), 2)
+        self.assertEqual(es[0].name, 'Eng (1) Stop')
+        self.assertEqual(es[0].index, 3)
+        self.assertEqual(es[1].name, 'Eng (1) Stop')
+        self.assertEqual(es[1].index, 21)
 
 
 class TestLastEngStopAfterTouchdown(unittest.TestCase):
