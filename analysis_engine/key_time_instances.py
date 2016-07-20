@@ -967,7 +967,7 @@ class GearUpSelection(KeyTimeInstanceNode):
     '''
 
     @classmethod
-    def can_operate(cls, available, ac_type=('Aircraft Type')):
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
         if ac_type != helicopter:
             return all_deps(cls, available)
         else:
