@@ -4825,6 +4825,41 @@ class AltitudeAtFirstAPEngagedAfterLiftoff(KeyPointValueNode):
             index = change_indexes[0]
             self.create_kpv(index, value_at_index(alt_aal.array, index))
 
+
+class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
+    '''
+    Autothrottle Use
+    ================
+    Autothrottle use is recommended during takeoff and climb in either automatic or
+    manual flight. During all other phases of flight, autothrottle use is recommended
+    only when the autopilot is engaged in CMD.
+
+    FCTM B737NG - AFDS guidelines 1.35
+    '''
+
+    name = 'AT Engaged AP Disengaged Outside Climb Duration'
+
+    @classmethod
+    def can_operate(cls, available, ac_family=A('Family')):
+        if ac_family and ac_family.value in ('B737-NG', 'B747', 'B757', 'B767'):
+            return all_deps(cls, available)
+        else:
+            return False
+
+    def derive(self,
+               at_engaged=M('AT Engaged'),
+               ap_engaged=M('AP Engaged'),
+               climbing=S('Climbing'),
+               airborne=S('Airborne')):
+        condition = vstack_params_where_state(
+            (at_engaged, 'Engaged'),
+            (ap_engaged, '-'),
+        ).all(axis=0)
+        not_climbing = slices_and_not(airborne.get_slices(), climbing.get_slices())
+        phases = slices_and(runs_of_ones(condition), not_climbing)
+        self.create_kpvs_from_slice_durations(phases, self.frequency)
+
+
 ########################################
 # Altitude: Mach
 
