@@ -1660,13 +1660,13 @@ class LandingTurnOffRunway(KeyTimeInstanceNode):
                     np.ma.abs(head_landing - head_landing[0]), 15.0)
 
                 if peak_bend:
-                    landing_turn = start_search + peak_bend
-                else:
                     if fifteen_deg and fifteen_deg < peak_bend:
-                        landing_turn = start_search + landing_turn
+                        landing_turn = start_search + fifteen_deg
                     else:
-                        # No turn, so just use end of landing run.
-                        landing_turn = landing.slice.stop
+                        landing_turn = start_search + peak_bend
+                else:
+                    # No turn, so just use end of landing run.
+                    landing_turn = landing.slice.stop
 
                 self.create_kti(landing_turn)
 
