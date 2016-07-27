@@ -295,7 +295,7 @@ from analysis_engine.key_point_values import (
     EngN3For5SecDuringGoAround5MinRatingMax,
     EngN3For5SecDuringMaximumContinuousPowerMax,
     EngN3For5SecDuringTakeoff5MinRatingMax,
-    EngNp72To80PercentDurationMax,
+    EngNp82To90PercentDurationMax,
     EngNpDuringClimbMin,
     EngNpDuringGoAround5MinRatingMax,
     EngNpDuringMaximumContinuousPowerMax,
@@ -8517,10 +8517,10 @@ class TestEngNpFor5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWit
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestEngNp72To80PercentDurationMax(unittest.TestCase):
+class TestEngNp82To90PercentDurationMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = EngNp72To80PercentDurationMax
+        self.node_class = EngNp82To90PercentDurationMax
 
     def test_can_operate(self):
         ac_series = A(name='Series', value='Jetstream 41')
@@ -8532,17 +8532,17 @@ class TestEngNp72To80PercentDurationMax(unittest.TestCase):
             self.assertFalse(self.node_class().can_operate(combination, ac_series))
 
     def test_derive(self):
-        eng_1 = P(name='Eng (1) Np', array=np.ma.array(range(70,82)))
+        eng_1 = P(name='Eng (1) Np', array=np.ma.array(range(80,92)))
         node = self.node_class()
         node.derive(eng_1, eng_1) # Intentional duplication of data
 
         self.assertEqual(len(node), 2)
-        self.assertEqual(node[0].name, 'Eng (1) Np 72 To 80 Percent Duration Max')
-        self.assertEqual(node[0].index, 3)
-        self.assertEqual(node[0].value, 7)
-        self.assertEqual(node[1].name, 'Eng (2) Np 72 To 80 Percent Duration Max')
-        self.assertEqual(node[1].index, 3)
-        self.assertEqual(node[1].value, 7)
+        self.assertEqual(node[0].name, 'Eng (1) Np 82 To 90 Percent Duration Max')
+        self.assertEqual(node[0].index, 2)
+        self.assertEqual(node[0].value, 9)
+        self.assertEqual(node[1].name, 'Eng (2) Np 82 To 90 Percent Duration Max')
+        self.assertEqual(node[1].index, 2)
+        self.assertEqual(node[1].value, 9)
 
 ##############################################################################
 # Engine Throttles

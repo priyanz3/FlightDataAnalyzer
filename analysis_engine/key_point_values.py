@@ -9081,13 +9081,13 @@ class EngN154to72PercentWithThrustReversersDeployedDurationMax(KeyPointValueNode
                                                       number=eng_num)
 
 
-class EngNp72To80PercentDurationMax(KeyPointValueNode):
+class EngNp82To90PercentDurationMax(KeyPointValueNode):
     '''
     Specifically for the Jetstrean 41, where propellor blade fatigue can
     be exacurbated in this speed band.
     '''
 
-    NAME_FORMAT = 'Eng (%(number)d) Np 72 To 80 Percent Duration Max'
+    NAME_FORMAT = 'Eng (%(number)d) Np 82 To 90 Percent Duration Max'
     NAME_VALUES = NAME_VALUES_ENGINE
 
     units = ut.SECOND
@@ -9104,8 +9104,7 @@ class EngNp72To80PercentDurationMax(KeyPointValueNode):
         for eng_num, eng_np in enumerate(eng_np_list, 1):
             if not eng_np:
                 continue
-            # 0.5% tolerance included as 72.0% is the normal ground running prop speed.
-            np_range = np.ma.masked_outside(eng_np.array, 72.5, 79.5)
+            np_range = np.ma.masked_outside(eng_np.array, 82, 90)
             max_slice = max_continuous_unmasked(np_range)
             if max_slice:
                 self.create_kpvs_from_slice_durations((max_slice,),
