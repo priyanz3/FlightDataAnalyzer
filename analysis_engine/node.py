@@ -195,7 +195,7 @@ class Node(object):
     align_offset = None  # Force offset of Node by overriding
     data_type = None  # Q: What should the default be? Q: Should this dictate the numpy dtype saved to the HDF file or should it be inferred from the array?
 
-    def __init__(self, name='', frequency=1, offset=0, **kwargs):
+    def __init__(self, name='', frequency=1.0, offset=0.0, **kwargs):
         """
         Abstract Node. frequency and offset arguments are populated from the
         first available dependency parameter object.
@@ -612,8 +612,8 @@ class DerivedParameterNode(Node):
     data_type = 'Derived'
     lfl = False
 
-    def __init__(self, name='', array=np.ma.array([], dtype=float), frequency=1, offset=0,
-                 data_type=None, *args, **kwargs):
+    def __init__(self, name='', array=np.ma.array([], dtype=float),
+                 frequency=1.0, offset=0.0, data_type=None, *args, **kwargs):
 
         # Set the array on the derive parameter first. Some subclasses of this
         # class will handle appropriate type conversion of the provided array
@@ -627,10 +627,8 @@ class DerivedParameterNode(Node):
         if data_type:
             self.data_type = data_type
 
-        super(DerivedParameterNode, self).__init__(name=name,
-                                                   frequency=frequency,
-                                                   offset=offset,
-                                                   *args, **kwargs)
+        super(DerivedParameterNode, self).__init__(
+            name=name, frequency=frequency, offset=offset, *args, **kwargs)
 
     def at(self, secs):
         """
@@ -834,8 +832,8 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
     data_type = 'Derived Multistate'
     node_type_abbr = 'Multistate'
 
-    def __init__(self, name='', array=np.ma.array([], dtype=int), frequency=1, offset=0,
-                 data_type=None, values_mapping={}, *args, **kwargs):
+    def __init__(self, name='', array=np.ma.array([], dtype=int), frequency=1.0,
+                 offset=0.0, data_type=None, values_mapping={}, *args, **kwargs):
 
         #Q: if no values_mapping set to None?
         if values_mapping:
