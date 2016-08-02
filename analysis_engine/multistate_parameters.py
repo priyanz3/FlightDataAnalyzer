@@ -2362,7 +2362,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             return any_of(('Speedbrake', 'Speedbrake Handle'), available)
         elif family and family.value in ('CRJ 100/200', 'B777'):
             return 'Speedbrake Handle' in x
-        elif family and family.value in ('A318', 'A319', 'A320', 'A321'):
+        elif family and family.value in ('A318', 'A319', 'A320', 'A321', 'MD-11'):
             return 'Speedbrake' in x and 'Speedbrake Armed' in x
         elif family and family.value in ('A330', 'A340', 'A380'):
             return ('Speedbrake Deployed' in x or
@@ -2395,12 +2395,14 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
         return array
 
     @staticmethod
-    def a320_speedbrake(armed, spdbrk):
+    def derive_from_armed_and_speedbrake(armed, spdbrk, threshold=1.0):
         '''
-        Speedbrake operation for A320 family.
+        Speedbrake operation from speedbrake armed and speedbrake, defaults
+        to 1.0 which applies to A320 families of aircraft.
         '''
-        array = np.ma.where(spdbrk.array > 1.0,
-                            'Deployed/Cmd Up', armed.array)
+        armed = np.ma.where(armed.array == 'Armed', 'Armed/Cmd Dn', 'Stowed')
+        array = np.ma.where(spdbrk.array > threshold,
+                            'Deployed/Cmd Up',armed)
         return array
 
     @staticmethod
@@ -2557,8 +2559,9 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             self.array = self.derive_from_handle(handle.array, deployed=10)
 
         elif family_name in ('A318', 'A319', 'A320', 'A321'):
-            self.array = self.a320_speedbrake(armed, spdbrk)
-
+            self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk)
+        elif family_name == 'MD-11':
+            self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk, threshold=10.0)
         elif family_name in ('A330', 'A340', 'A380'):
             self.array = np.ma.where((handle.array < -1.0),
                          'Armed/Cmd Dn', 'Stowed')

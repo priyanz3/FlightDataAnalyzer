@@ -6327,6 +6327,13 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (R) (4)'),
                 available
             ) or
+            family_name == 'MD-11' and all_of((
+                'Spoiler (L) (3)',
+                'Spoiler (L) (5)',
+                'Spoiler (R) (3)',
+                'Spoiler (R) (5)'),
+                available
+            ) or
             family_name in ['ERJ-170/175', 'ERJ-190/195'] and all_of((
                 'Spoiler (L) (3)',
                 'Spoiler (L) (4)',
@@ -6393,6 +6400,13 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L)', *blend_two_parameters(spoiler_l3, spoiler_l4))
             spoiler_R = DerivedParameterNode(
                 'Spoiler (R)', *blend_two_parameters(spoiler_r3, spoiler_r4))
+            self.merge_spoiler(spoiler_L, spoiler_R)
+        elif family_name == 'MD-11':
+            # First blend inboard and outboard, then merge
+            spoiler_L = DerivedParameterNode(
+                'Spoiler (L)', *blend_two_parameters(spoiler_l3, spoiler_l5))
+            spoiler_R = DerivedParameterNode(
+                'Spoiler (R)', *blend_two_parameters(spoiler_r3, spoiler_r5))
             self.merge_spoiler(spoiler_L, spoiler_R)
 
         elif family_name in ['ERJ-170/175', 'ERJ-190/195']:
