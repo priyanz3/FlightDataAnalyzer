@@ -2856,6 +2856,24 @@ class TestSpeedbrakeSelected(unittest.TestCase):
         self.assertEqual(list(res),
                         ['Stowed']*3 + ['Armed/Cmd Dn']*7 + ['Deployed/Cmd Up']*20 + ['Armed/Cmd Dn']*5 + ['Deployed/Cmd Up']*5)
 
+    def test_derive_from_armed_and_speedbrake(self):
+        self.maxDiff = None
+        spd_sel = SpeedbrakeSelected()
+        spdbrk = P(array=np.ma.array([0]*10 + [1.3]*20 + [0.2]*10))
+        armed = M(array=np.ma.array(
+                [0]*5 + [1]*5 + [0]*30), values_mapping={1:'Armed'})
+        # A320 test
+        res = spd_sel.derive_from_armed_and_speedbrake(armed, spdbrk)
+        self.assertEqual(list(res),
+                        ['Stowed']*5 + ['Armed/Cmd Dn']*5 + ['Deployed/Cmd Up']*20 + ['Stowed']*10)
+
+        # MD-11 test
+        spdbrk.array = spdbrk.array * 11
+        res = spd_sel.derive_from_armed_and_speedbrake(armed, spdbrk, threshold=10)
+        self.assertEqual(list(res),
+                        ['Stowed']*5 + ['Armed/Cmd Dn']*5 + ['Deployed/Cmd Up']*20 + ['Stowed']*10)
+        
+
     def test_b787_speedbrake(self):
         handle = load(os.path.join(
             test_data_path, 'SpeedBrakeSelected_SpeedbrakeHandle.nod'))
