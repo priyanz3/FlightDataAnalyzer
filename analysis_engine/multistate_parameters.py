@@ -1434,12 +1434,22 @@ class GearOnGround(MultistateDerivedParameterNode):
     }
 
     @classmethod
-    def can_operate(cls, available):
-        return any_of(cls.get_dependency_names(), available)
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        gog_available = any_of(('Gear (L) On Ground', 'Gear (R) On Ground'), available)
+        if gog_available:
+            return True
+        elif ac_type == helicopter:
+            return all_of(('Vertical Speed', 'Eng (*) Torque Avg'), available)
+        else:
+            return False
 
     def derive(self,
                gl=M('Gear (L) On Ground'),
-               gr=M('Gear (R) On Ground')):
+               gr=M('Gear (R) On Ground'),
+               # derived for helicopter
+               vert_spd=P('Vertical Speed'),
+               torque=P('Eng (*) Torque Avg'),
+               ac_type=A('Aircraft Type')):
 
         # Note that this is not needed on the following frames which record
         # this parameter directly: 737-4, 737-i
@@ -1460,13 +1470,20 @@ class GearOnGround(MultistateDerivedParameterNode):
                 # merge_two_parameters creates the best combination possible.
                 self.array, self.frequency, self.offset = merge_two_parameters(gl, gr)
                 return
-        if gl:
-            gear = gl
+        elif gl or gr:
+            gear = gl or gr
+            self.array = gear.array
+            self.frequency = gear.frequency
+            self.offset = gear.offset
+        elif ac_type == helicopter:
+            # Introducted for S76 and Bell 212 which do not have Gear On Ground available
+            self.array = np.ma.logical_and(np.ma.where(abs(vert_spd.array) < 100.0, True, False),
+                                           np.ma.where(torque.array < 30.0, True, False))
+            self.frequency = torque.frequency
+            self.offset = torque.offset
         else:
-            gear = gr
-        self.array = gear.array
-        self.frequency = gear.frequency
-        self.offset = gear.offset
+            # should not get here if can_operate is correct
+            raise NotImplementedError()
 
 
 class GearDownSelected(MultistateDerivedParameterNode):

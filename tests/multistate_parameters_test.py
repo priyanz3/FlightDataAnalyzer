@@ -2012,13 +2012,28 @@ class TestGearUpSelected(unittest.TestCase):
 
 
 class TestGearOnGround(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GearOnGround
+
     def test_can_operate(self):
-        opts = GearOnGround.get_operational_combinations()
-        self.assertEqual(opts, [
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
+        expected =[
             ('Gear (L) On Ground',),
             ('Gear (R) On Ground',),
             ('Gear (L) On Ground', 'Gear (R) On Ground'),
-            ])
+            ]
+        helicopter_expected = ('Vertical Speed', 'Eng (*) Torque Avg')
+        for combination in expected:
+            self.assertTrue(combination in opts)
+        # check helicopter combination is not option for aeroplane
+        self.assertFalse(helicopter_expected in opts)
+
+        # check all combinations available to heicopter.
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        for combination in expected:
+            self.assertTrue(combination in opts)
+        self.assertTrue(helicopter_expected in opts)
 
     def test_gear_on_ground_basic(self):
         p_left = M(array=np.ma.array(data=[0,0,1,1]),
