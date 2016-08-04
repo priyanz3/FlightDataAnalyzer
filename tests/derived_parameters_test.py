@@ -1129,7 +1129,7 @@ class TestAltitudeAGL(unittest.TestCase):
         alt_baro = P(name='Altitude STD', array=np.ma.array((1.0-np.cos(np.array(range(100))*3.14/50))*4000 + 1000))
         gog = M(name='Gear On Ground', array=np.ma.array([1]*5+[0]*90+[1]*5), values_mapping={0:'Air', 1:'Ground'})
         alt_aal = AltitudeAGL()
-        alt_aal.derive(alt_rad, alt_baro, gog)
+        alt_aal.derive(alt_rad, None, alt_baro, gog)
         self.assertLess(abs(np.max(alt_aal.array)-8000), 300)
 
     def test_negative(self):
@@ -1137,7 +1137,7 @@ class TestAltitudeAGL(unittest.TestCase):
         alt_baro = P(name='Altitude STD', array=np.ma.array([0]*5))
         gog = M(name='Gear On Ground', array=np.ma.array([0]*5), values_mapping={0:'Air', 1:'Ground'})
         alt_aal = AltitudeAGL()
-        alt_aal.derive(alt_rad, alt_baro, gog)
+        alt_aal.derive(alt_rad, None, alt_baro, gog)
         expected = [0, 0, 0, 0, 0]
         assert_array_equal(alt_aal.array, expected)
 
@@ -1146,7 +1146,7 @@ class TestAltitudeAGL(unittest.TestCase):
         alt_baro = P(name='Altitude STD', array=np.ma.array([0]*5))
         gog = M(name='Gear On Ground', array=np.ma.array([1]*5), values_mapping={0:'Air', 1:'Ground'})
         alt_aal = AltitudeAGL()
-        alt_aal.derive(alt_rad, alt_baro, gog)
+        alt_aal.derive(alt_rad, None, alt_baro, gog)
         expected = [0, 0, 0, 0, 0]
         assert_array_equal(alt_aal.array, expected)
 

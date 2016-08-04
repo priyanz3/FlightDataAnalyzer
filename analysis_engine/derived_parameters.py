@@ -899,11 +899,23 @@ class AltitudeAGL(DerivedParameterNode):
     name = 'Altitude AGL'
     units = ut.FT
 
-    can_operate = helicopter_only
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        if ac_type == helicopter:
+            return all_of(('Altitude Radio', 'Altitude STD Smoothed', 'Gear On Ground'), available) or \
+                   ('Altitude Radio' not in available and 'Altitude AAL' in available)
+        else:
+            return False
 
     def derive(self, alt_rad=P('Altitude Radio'),
+               alt_aal=P('Altitude AAL'),
                alt_baro=P('Altitude STD Smoothed'),
                gog=M('Gear On Ground')):
+
+        # If we have no Altitude Radio we will have to fall back to Altitude AAL
+        if not alt_rad:
+            self.array = alt_aal.array
+            return
 
         # When was the helicopter on the ground?
         gear_on_grounds = np.ma.clump_masked(np.ma.masked_equal(gog.array, 1))
@@ -911,39 +923,39 @@ class AltitudeAGL(DerivedParameterNode):
         hp = int(alt_rad.frequency*ALTITUDE_AGL_SMOOTHING)/2
         # We force the radio altitude to be zero when the gear shows 'Ground' state
         alt_rad_repaired = repair_mask(alt_rad.array, frequency=alt_rad.frequency, repair_duration=20.0, extrapolate=True)
-        alt_aal = moving_average(np.maximum(alt_rad.array, 0.0) * (1 - gog.array.data), window=hp*2+1, weightings=None)
+        alt_agl = moving_average(np.maximum(alt_rad.array, 0.0) * (1 - gog.array.data), window=hp*2+1, weightings=None)
 
         # Refine the baro estimates
-        length = len(alt_aal)-1
-        baro_sections = np.ma.clump_masked(np.ma.masked_greater(alt_aal, ALTITUDE_AGL_TRANS_ALT))
+        length = len(alt_agl)-1
+        baro_sections = np.ma.clump_masked(np.ma.masked_greater(alt_agl, ALTITUDE_AGL_TRANS_ALT))
         for baro_section in baro_sections:
             begin = max(baro_section.start - 1, 0)
             end = min(baro_section.stop + 1, length)
-            start_diff = alt_baro.array[begin] - alt_aal[begin]
-            stop_diff = alt_baro.array[end] - alt_aal[end]
+            start_diff = alt_baro.array[begin] - alt_agl[begin]
+            stop_diff = alt_baro.array[end] - alt_agl[end]
             if start_diff is not np.ma.masked and stop_diff is not np.ma.masked:
                 diff = np.linspace(start_diff, stop_diff, end-begin-2)
-                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1]-diff
+                alt_agl[begin+1:end-1] = alt_baro.array[begin+1:end-1]-diff
             elif start_diff is not np.ma.masked:
-                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1] - start_diff
+                alt_agl[begin+1:end-1] = alt_baro.array[begin+1:end-1] - start_diff
             elif stop_diff is not np.ma.masked:
-                alt_aal[begin+1:end-1] = alt_baro.array[begin+1:end-1] - stop_diff
+                alt_agl[begin+1:end-1] = alt_baro.array[begin+1:end-1] - stop_diff
             else:
                 pass
-        low_sections = np.ma.clump_unmasked(np.ma.masked_greater(alt_aal, 5))
+        low_sections = np.ma.clump_unmasked(np.ma.masked_greater(alt_agl, 5))
         for both in slices_and(low_sections, gear_on_grounds):
-            alt_aal[both] = 0.0
+            alt_agl[both] = 0.0
 
         '''
-        # Quick visual check of the altitude aal.
+        # Quick visual check of the altitude agl.
         import matplotlib.pyplot as plt
         plt.plot(alt_baro.array, 'y-')
         plt.plot(alt_rad.array, 'r-')
-        plt.plot(alt_aal, 'b-')
+        plt.plot(alt_agl, 'b-')
         plt.show()
         '''
 
-        self.array = alt_aal
+        self.array = alt_agl
 
 
 class AltitudeDensity(DerivedParameterNode):
