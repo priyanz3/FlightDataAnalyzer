@@ -1132,86 +1132,70 @@ class TestEng1OEI(unittest.TestCase):
 
     def setUp(self):
         self.node_class = Eng1OEI
+        n2_data = [0.0]*3 + [100.0]*11 + [98.0]*3 + [100.0]*20 + [0.0]*3
+        self.n2 = P(name='Eng (2) N2', array=np.ma.array(n2_data))
+
+        nr_data = [0.0]*5 + [100.0]*30 + [0.0]*5
+        self.nr = P(name='Nr', array=np.ma.array(nr_data))
+
+        expected_data = [0]*14 + [1]*3 + [0]*23
+        self.expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
+                                        values_mapping=self.node_class.values_mapping)
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (2) Torque', 'Eng (*) Any Running')]
+        expected = [('Eng (2) N2', 'Nr')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
-        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
-        torq = P(name='Eng (2) Torque', array=np.ma.array(data))
-        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
-                       values_mapping=Eng_AnyRunning.values_mapping)
-
         node = self.node_class()
-        node.derive(torq, any_running)
+        node.derive(self.n2, self.nr)
 
-        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
-        expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
-                       values_mapping=self.node_class.values_mapping)
-        np.testing.assert_array_equal(node.array, expected.array)
+        np.testing.assert_array_equal(node.array, self.expected.array)
 
     def test_derive_mask(self):
-        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
-        torq = P(name='Eng (2) Torque', array=np.ma.array(data))
-        torq.array.mask = np.ma.getmaskarray(torq.array)
-        torq.array.mask[5] = True
-        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
-                       values_mapping=Eng_AnyRunning.values_mapping)
+        self.n2.array.mask = np.ma.getmaskarray(self.n2.array)
+        self.n2.array.mask[20:25] = True
 
         node = self.node_class()
-        node.derive(torq, any_running)
+        node.derive(self.n2, self.nr)
 
-        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
-        expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
-                       values_mapping=self.node_class.values_mapping)
-        expected.array.mask = np.ma.getmaskarray(expected.array)
-        expected.array.mask[5] = True
-        np.testing.assert_array_equal(node.array, expected.array)
+        np.testing.assert_array_equal(node.array, self.expected.array)
 
 
 class TestEng2OEI(unittest.TestCase):
 
     def setUp(self):
         self.node_class = Eng2OEI
+        n2_data = [0.0]*3 + [100.0]*11 + [98.0]*3 + [100.0]*20 + [0.0]*3
+        self.n2 = P(name='Eng (1) N2', array=np.ma.array(n2_data))
+
+        nr_data = [0.0]*5 + [100.0]*30 + [0.0]*5
+        self.nr = P(name='Nr', array=np.ma.array(nr_data))
+
+        expected_data = [0]*14 + [1]*3 + [0]*23
+        self.expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
+                                        values_mapping=self.node_class.values_mapping)
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (1) Torque', 'Eng (*) Any Running')]
+        expected = [('Eng (1) N2', 'Nr')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
-        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
-        torq = P(name='Eng (1) Torque', array=np.ma.array(data))
-        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
-                       values_mapping=Eng_AnyRunning.values_mapping)
-
         node = self.node_class()
-        node.derive(torq, any_running)
+        node.derive(self.n2, self.nr)
 
-        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
-        expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
-                       values_mapping=self.node_class.values_mapping)
-        np.testing.assert_array_equal(node.array, expected.array)
+        np.testing.assert_array_equal(node.array, self.expected.array)
 
     def test_derive_mask(self):
-        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
-        torq = P(name='Eng (1) Torque', array=np.ma.array(data))
-        torq.array.mask = np.ma.getmaskarray(torq.array)
-        torq.array.mask[5] = True
-        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
-                       values_mapping=Eng_AnyRunning.values_mapping)
+        self.n2.array.mask = np.ma.getmaskarray(self.n2.array)
+        self.n2.array.mask[20:25] = True
 
         node = self.node_class()
-        node.derive(torq, any_running)
+        node.derive(self.n2, self.nr)
 
-        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
-        expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
-                       values_mapping=self.node_class.values_mapping)
-        expected.array.mask = np.ma.getmaskarray(expected.array)
-        expected.array.mask[5] = True
-        np.testing.assert_array_equal(node.array, expected.array)
+        np.testing.assert_array_equal(node.array, self.expected.array)
 
 
 class TestEng_OEI(unittest.TestCase):

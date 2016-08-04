@@ -48,6 +48,7 @@ from analysis_engine.library import (
     vstack_params_where_state,
 )
 from settings import (
+    AUTOROTATION_SPLIT,
     MIN_CORE_RUNNING,
     MIN_FAN_RUNNING,
     MIN_FUEL_FLOW_RUNNING,
@@ -865,7 +866,8 @@ class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
 
 class Eng1OEI(MultistateDerivedParameterNode):
     '''
-    Eng 1 in OEI mode, Engine 1 is running Engine 2 has torque < 5%
+    Look for at least 1% difference between Eng 2 N2 speed and the rotor speed to indicate
+    Eng 1 can use OEI limits.
 
     OEI: One Engine Inoperable
     '''
@@ -880,20 +882,18 @@ class Eng1OEI(MultistateDerivedParameterNode):
     can_operate = helicopter_only
 
     def derive(self,
-               eng_2_torq=P('Eng (2) Torque'),
-               eng_any_running=M('Eng (*) Any Running')):
+               eng_2_n2=P('Eng (2) N2'),
+               nr=P('Nr')):
 
-        eng_2_inop = eng_2_torq.array < 5.0
-        any_running = eng_any_running.array == 'Running'
-
-        data = eng_2_inop.data & any_running.data
-        mask = eng_2_torq.array.mask & eng_any_running.array.mask
-        self.array = np.ma.where(np.ma.array(data, mask=mask), 'Active', '-')
+        delta = nr.array - eng_2_n2.array
+        split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
+        self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 
 class Eng2OEI(MultistateDerivedParameterNode):
     '''
-    Eng 2 in OEI mode, Engine 2 is running Engine 1 has torque < 5%
+    Look for at least 1% difference between Eng 1 N2 speed and the rotor speed to indicate
+    Eng 1 can use OEI limits.
 
     OEI: One Engine Inoperable
     '''
@@ -908,15 +908,12 @@ class Eng2OEI(MultistateDerivedParameterNode):
     can_operate = helicopter_only
 
     def derive(self,
-               eng_1_torq=P('Eng (1) Torque'),
-               eng_any_running=M('Eng (*) Any Running'),):
+               eng_1_n2=P('Eng (1) N2'),
+               nr=P('Nr')):
 
-        eng_1_inop = eng_1_torq.array < 5.0
-        any_running = eng_any_running.array == 'Running'
-
-        data = eng_1_inop.data & any_running.data
-        mask = eng_1_torq.array.mask & eng_any_running.array.mask
-        self.array = np.ma.where(np.ma.array(data, mask=mask), 'Active', '-')
+        delta = nr.array - eng_1_n2.array
+        split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
+        self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 
 class Eng_OEI(MultistateDerivedParameterNode):
