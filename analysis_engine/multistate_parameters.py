@@ -861,6 +861,111 @@ class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
                ac_type=A('Aircraft Type')):
         self.array = self.determine_running(eng_n1, eng_n2, eng_np, fuel_flow, ac_type)
 
+# Helicopters
+
+class Eng1OEI(MultistateDerivedParameterNode):
+    '''
+    Eng 1 in OEI mode, Engine 1 is running Engine 2 has torque < 5%
+
+    OEI: One Engine Inoperable
+    '''
+
+    name = 'Eng (1) OEI'
+
+    values_mapping = {
+        0: '-',
+        1: 'Active',
+    }
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_2_torq=P('Eng (2) Torque'),
+               eng_any_running=M('Eng (*) Any Running')):
+
+        eng_2_inop = eng_2_torq.array < 5.0
+        any_running = eng_any_running.array == 'Running'
+
+        data = eng_2_inop.data & any_running.data
+        mask = eng_2_torq.array.mask & eng_any_running.array.mask
+        self.array = np.ma.where(np.ma.array(data, mask=mask), 'Active', '-')
+
+
+class Eng2OEI(MultistateDerivedParameterNode):
+    '''
+    Eng 2 in OEI mode, Engine 2 is running Engine 1 has torque < 5%
+
+    OEI: One Engine Inoperable
+    '''
+
+    name = 'Eng (2) OEI'
+
+    values_mapping = {
+        0: '-',
+        1: 'Active',
+    }
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_1_torq=P('Eng (1) Torque'),
+               eng_any_running=M('Eng (*) Any Running'),):
+
+        eng_1_inop = eng_1_torq.array < 5.0
+        any_running = eng_any_running.array == 'Running'
+
+        data = eng_1_inop.data & any_running.data
+        mask = eng_1_torq.array.mask & eng_any_running.array.mask
+        self.array = np.ma.where(np.ma.array(data, mask=mask), 'Active', '-')
+
+
+class Eng_OEI(MultistateDerivedParameterNode):
+    '''
+    Any Engine is running either engine is OEI
+
+    OEI: One Engine Inoperable
+    '''
+
+    name = 'Eng (*) OEI'
+
+    values_mapping = {
+        0: '-',
+        1: 'OEI',
+    }
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_1_oei=M('Eng (1) OEI'),
+               eng_2_oei=M('Eng (2) OEI'),):
+
+        self.array = vstack_params_where_state((eng_1_oei, 'Active'),
+                                               (eng_2_oei, 'Active')).any(axis=0)
+
+
+class Eng_AEO(MultistateDerivedParameterNode):
+    '''
+    Any Engine is running neither is OEI
+
+    OEI: One Engine Inoperable
+    AEO: All Engines Operable
+    '''
+
+    name = 'Eng (*) AEO'
+
+    values_mapping = {
+        0: '-',
+        1: 'AEO',
+    }
+
+    can_operate = helicopter_only
+
+    def derive(self, 
+               any_running=M('Eng (*) Any Running'),
+               eng_oei=M('Eng (*) OEI')):
+        aeo = np.ma.logical_not(eng_oei.array == 'OEI')
+        self.array = np.ma.logical_and(any_running.array == 'Running', aeo)
+
 
 class ThrustModeSelected(MultistateDerivedParameterNode):
     '''

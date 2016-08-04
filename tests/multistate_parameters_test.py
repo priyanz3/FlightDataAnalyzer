@@ -45,10 +45,13 @@ from analysis_engine.multistate_parameters import (
     ThrustModeSelected,
     EngBleedOpen,
     EngRunning,
+    Eng1OEI,
+    Eng2OEI,
     Eng1Running,
     Eng2Running,
     Eng3Running,
     Eng4Running,
+    Eng_AEO,
     Eng_AllRunning,
     Eng_AnyRunning,
     Eng_1_Fire,
@@ -56,6 +59,7 @@ from analysis_engine.multistate_parameters import (
     Eng_3_Fire,
     Eng_4_Fire,
     Eng_Fire,
+    Eng_OEI,
     Eng_Oil_Press_Warning,
     EventMarker,
     Flap,
@@ -1124,6 +1128,144 @@ class TestEng_AnyRunning(unittest.TestCase, NodeTest):
         self.assertEqual(node.array.raw.tolist(), expected)
 
 
+class TestEng1OEI(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Eng1OEI
+
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
+        expected = [('Eng (2) Torque', 'Eng (*) Any Running')]
+        self.assertEqual(combinations, expected)
+
+    def test_derive(self):
+        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
+        torq = P(name='Eng (2) Torque', array=np.ma.array(data))
+        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
+                       values_mapping=Eng_AnyRunning.values_mapping)
+
+        node = self.node_class()
+        node.derive(torq, any_running)
+
+        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
+        expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        np.testing.assert_array_equal(node.array, expected.array)
+
+    def test_derive_mask(self):
+        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
+        torq = P(name='Eng (2) Torque', array=np.ma.array(data))
+        torq.array.mask = np.ma.getmaskarray(torq.array)
+        torq.array.mask[5] = True
+        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
+                       values_mapping=Eng_AnyRunning.values_mapping)
+
+        node = self.node_class()
+        node.derive(torq, any_running)
+
+        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
+        expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        expected.array.mask = np.ma.getmaskarray(expected.array)
+        expected.array.mask[5] = True
+        np.testing.assert_array_equal(node.array, expected.array)
+
+
+class TestEng2OEI(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Eng2OEI
+
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
+        expected = [('Eng (1) Torque', 'Eng (*) Any Running')]
+        self.assertEqual(combinations, expected)
+
+    def test_derive(self):
+        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
+        torq = P(name='Eng (1) Torque', array=np.ma.array(data))
+        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
+                       values_mapping=Eng_AnyRunning.values_mapping)
+
+        node = self.node_class()
+        node.derive(torq, any_running)
+
+        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
+        expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        np.testing.assert_array_equal(node.array, expected.array)
+
+    def test_derive_mask(self):
+        data = [0]*10 + [100]*5 + [0]*10 + [100]*3 + [0]*2
+        torq = P(name='Eng (1) Torque', array=np.ma.array(data))
+        torq.array.mask = np.ma.getmaskarray(torq.array)
+        torq.array.mask[5] = True
+        any_running = M(name='Eng (*) Any Running', array=np.ma.array([0, 0] + [1]*26 + [0, 0], dtype=int),
+                       values_mapping=Eng_AnyRunning.values_mapping)
+
+        node = self.node_class()
+        node.derive(torq, any_running)
+
+        expected_data = [0]*2 + [1]*8 + [0]*5 + [1]*10 + [0]*5
+        expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        expected.array.mask = np.ma.getmaskarray(expected.array)
+        expected.array.mask[5] = True
+        np.testing.assert_array_equal(node.array, expected.array)
+
+
+class TestEng_OEI(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Eng_OEI
+
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
+        expected = [('Eng (1) OEI', 'Eng (2) OEI')]
+        self.assertEqual(combinations, expected)
+
+    def test_derive(self):
+        data = [0]*10 + [1]*5 + [0]*25
+        eng_1 = M(name='Eng (1) OEI', array=np.ma.array(data, dtype=int),
+                       values_mapping=Eng1OEI.values_mapping)
+        eng_2 = M(name='Eng (2) OEI', array=np.ma.array(np.roll(data, 10), dtype=int),
+                       values_mapping=Eng1OEI.values_mapping)
+
+        node = self.node_class()
+        node.derive(eng_1, eng_2)
+
+        expected_data = [0]*10 + [1]*5 + [0]*5 + [1]*5 + [0]*15
+        expected = self.node_class(name='Eng (*) OEI', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        np.testing.assert_array_equal(node.array, expected.array)
+
+
+class TestEng_AEO(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Eng_AEO
+
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
+        expected = [('Eng (*) Any Running', 'Eng (*) OEI')]
+        self.assertEqual(combinations, expected)
+
+    def test_derive(self):
+        run_data = [0]*5 + [1]*30 + [0]*5
+        oei_data = [0]*13 + [1]*3 + [0]*24
+        oei = M(name='Eng (*) OEI', array=np.ma.array(oei_data), values_mapping=Eng_OEI.values_mapping)
+        any_running = M(name='Eng (*) Any Running', array=np.ma.array(run_data),
+                       values_mapping=Eng_AnyRunning.values_mapping)
+
+        node = self.node_class()
+        node.derive(any_running, oei)
+
+        expected_data = [0]*5 + [1]*8 + [0]*3 + [1]*19 + [0]*5
+        expected = self.node_class(name='Eng (*) AEO', array=np.ma.array(expected_data, dtype=int),
+                       values_mapping=self.node_class.values_mapping)
+        np.testing.assert_array_equal(node.array, expected.array)
+
+
 class TestEng_Oil_Press_Warning(unittest.TestCase):
     def test_can_operate(self):
         combinations = Eng_Oil_Press_Warning.get_operational_combinations()
@@ -1163,6 +1305,7 @@ class TestEng_Oil_Press_Warning(unittest.TestCase):
         node.derive(eng_1, eng_2, None, None)
         self.assertEqual(node.array.raw.tolist(), [True, True, True, False, True, False, True, True])
         self.assertEqual(node.values_mapping, eng_values_mapping)
+
 
 class TestEngBleedOpen(unittest.TestCase):
     def test_can_operate(self):
