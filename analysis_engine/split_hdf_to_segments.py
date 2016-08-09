@@ -118,17 +118,19 @@ def _segment_type_and_slice(speed_array, speed_frequency,
 
     # Find out if the aircraft moved
     if aircraft_info and aircraft_info['Aircraft Type'] == 'helicopter':
-        try:
-            gog = hdf['Gear On Ground']
-        except:
-            gog = hdf['Gear (R) On Ground']
-        gog_start = start * gog.frequency
-        gog_stop = stop * gog.frequency
-        temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
-        gog_test = np.ma.masked_less(temp, 1.0)
-        # We have seeen 12-second spurious gog='Air' signals during rotor rundown. Hence increased limit.
-        did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test),
-                                              time_limit=30, hz=gog.frequency)
+        # if any gear params use them
+        gog = next(iter([hdf.get(name) for name in ('Gear On Ground', 'Gear (R) On Ground', 'Gear (L) On Ground')]))
+        if gog:
+            gog_start = start * gog.frequency
+            gog_stop = stop * gog.frequency
+            temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
+            gog_test = np.ma.masked_less(temp, 1.0)
+            # We have seeen 12-second spurious gog='Air' signals during rotor rundown. Hence increased limit.
+            did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test),
+                                                  time_limit=30, hz=gog.frequency)
+        else:
+            hdiff = np.ma.abs(np.ma.diff(heading_array)).sum()
+            did_move = hdiff > settings.HEADING_CHANGE_TAXI_THRESHOLD
     else:
         # Check Heading change for fixed wing.
         if eng_arrays is not None:
