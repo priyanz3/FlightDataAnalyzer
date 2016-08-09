@@ -544,6 +544,7 @@ from analysis_engine.key_point_values import (
     RollLiftoffTo20FtMax,
     RollOnGroundMax,
     RollRateMax,
+    RollWithAP1AndAP2DisengagedMax,
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
@@ -13063,6 +13064,38 @@ class TestRollBelow300FtMax(unittest.TestCase):
         self.assertEqual(node[0].index, 6)
         self.assertAlmostEqual(node[0].value, -0.345, places=3)
 
+
+class TestRollWithAP1AndAP2DisengagedMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RollWithAP1AndAP2DisengagedMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Roll', 'AP 1 Engaged', 'AP 2 Engaged')])
+
+    def test_derive(self):
+        ap1 = M('AP 1 Engaged',
+                array=np.ma.array([0]*5 + [1]*10 + [0]*50 + [1]*30 + [0]*5),
+                values_mapping={0: '-', 1: 'Engaged'})
+        ap2 = M('AP 2 Engaged',
+                array=np.ma.array([0]*5 + [1]*30 + [0]*65),
+                values_mapping={0: '-', 1: 'Engaged'})
+        x = np.linspace(0, 10, 100)
+        roll = P('Roll', -x*np.sin(x))
+
+        node = self.node_class()
+        node.derive(roll, ap1, ap2)
+
+        self.assertEqual(len(node), 3)
+        self.assertEqual(node[0].index, 4)
+        self.assertAlmostEqual(node[0].value, -0.1588, places=3)
+        self.assertEqual(node[1].index, 49)
+        self.assertAlmostEqual(node[1].value, 4.8110, places=3)
+        self.assertEqual(node[2].index, 99)
+        self.assertAlmostEqual(node[2].value, 5.4402, places=3)
 
 class TestRollAbove500FtMax(unittest.TestCase):
 

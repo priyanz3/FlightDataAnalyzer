@@ -13437,6 +13437,23 @@ class RollBelow300FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
 
 
+class RollWithAP1AndAP2DisengagedMax(KeyPointValueNode):
+    '''
+    Maximum roll whilst AP1 and AP2 are disengaged.
+    '''
+    units = ut.DEGREE
+    name = 'Roll With AP1 And AP2 Disengaged Max'
+    can_operate = helicopter_only
+    
+    def derive(self, roll=P('Roll'), ap1=M('AP 1 Engaged'),
+               ap2=M('AP 2 Engaged')):
+        ap = vstack_params_where_state((ap1,'Engaged'),
+                                       (ap2,'Engaged')).any(axis=0)
+
+        ap_slices = np.ma.clump_unmasked(np.ma.masked_equal(ap, 1))
+        self.create_kpvs_within_slices(roll.array, ap_slices, max_abs_value)
+
+
 class RollAbove500FtMax(KeyPointValueNode):
     '''
     '''
