@@ -783,9 +783,7 @@ def main():
     }
     res = process_flight(
         segment_info, args.tail_number, aircraft_info=aircraft_info,
-        requested=args.requested, required=args.required,
-        additional_modules=['flightdataprofiles.fcp.kpvs'],
-        initial=initial,
+        requested=args.requested, required=args.required, initial=initial,
     )
     # Flatten results.
     res = {k: list(itertools.chain.from_iterable(v.itervalues()))
