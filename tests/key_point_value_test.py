@@ -528,9 +528,11 @@ from analysis_engine.key_point_values import (
     Roll100To20FtMax,
     Roll300To20FtMax,
     Roll400To1000FtMax,
+    RollAbove300FtMax,
     RollAbove500FtMax,
     RollAbove1000FtMax,
     RollAtLowAltitude,
+    RollBelow300FtMax,
     RollBelow500FtMax,
     RollCyclesDuringFinalApproach,
     RollCyclesDuringInitialClimb,
@@ -11296,7 +11298,8 @@ class TestPitchAbove1000FtMax(unittest.TestCase):
 class TestPitchBelow1000FtMax(unittest.TestCase):
     
     def test_can_operate(self):
-        opts = PitchBelow1000FtMax.get_operational_combinations(ac_type=helicopter)
+        opts = PitchBelow1000FtMax.get_operational_combinations(
+            ac_type=helicopter)
         self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
     
     def test_derive(self):
@@ -11312,7 +11315,8 @@ class TestPitchBelow1000FtMax(unittest.TestCase):
 class TestPitchBelow1000FtMin(unittest.TestCase):
     
     def test_can_operate(self):
-        opts = PitchBelow1000FtMin.get_operational_combinations(ac_type=helicopter)
+        opts = PitchBelow1000FtMin.get_operational_combinations(
+            ac_type=helicopter)
         self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
     
     def test_derive(self):
@@ -13010,6 +13014,54 @@ class TestRoll100To20FtMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 80)
         self.assertAlmostEqual(node[0].value, -7.874, places=3)
+
+
+class TestRollAbove300FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RollAbove300FtMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+
+    def test_derive(self):
+        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        x = np.linspace(0, 10, 100)
+        roll = P('Roll', -x*np.sin(x))
+
+        node = self.node_class()
+        node.derive(roll, alt)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 79)
+        self.assertAlmostEqual(node[0].value, -7.917, places=3)
+
+
+class TestRollBelow300FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RollBelow300FtMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+
+    def test_derive(self):
+        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        x = np.linspace(0, 10, 100)
+        roll = P('Roll', -x*np.sin(x))
+
+        node = self.node_class()
+        node.derive(roll, alt)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 6)
+        self.assertAlmostEqual(node[0].value, -0.345, places=3)
 
 
 class TestRollAbove500FtMax(unittest.TestCase):

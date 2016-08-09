@@ -13409,6 +13409,34 @@ class Roll500FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class RollAbove300FtMax(KeyPointValueNode):
+    '''
+    Maximum Roll above 300ft AGL in flight (helicopter_only).
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
+        _, height_bands = slices_above(alt_agl.array, 300)
+        self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
+
+
+class RollBelow300FtMax(KeyPointValueNode):
+    '''
+    Maximum Roll below 300ft AGL in flight (helicopter_only).
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
+        _, height_bands = slices_below(alt_agl.array, 300)
+        self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
+
+
 class RollAbove500FtMax(KeyPointValueNode):
     '''
     '''
