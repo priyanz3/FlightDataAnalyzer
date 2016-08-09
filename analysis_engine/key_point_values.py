@@ -11834,6 +11834,32 @@ class PitchAbove1000FtMax(KeyPointValueNode):
                                        alt.slices_above(1000), max_value)
 
 
+class PitchBelow1000FtMax(KeyPointValueNode):
+    '''
+    Maximum Pitch below 1000ft AGL in flight (helicopter_only).
+    '''    
+    can_operate = helicopter_only
+    
+    units = ut.DEGREE
+    
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude AGL')):
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_below(1000), max_value)
+
+
+class PitchBelow1000FtMin(KeyPointValueNode):
+    '''
+    Minimum Pitch below 1000ft AGL in flight (helicopter_only).
+    '''    
+    can_operate = helicopter_only
+    
+    units = ut.DEGREE
+    
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude AGL')):
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_below(1000), min_value)
+
+
 class PitchTakeoffMax(KeyPointValueNode):
     '''
     '''

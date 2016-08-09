@@ -478,6 +478,8 @@ from analysis_engine.key_point_values import (
     Pitch7FtToTouchdownMax,
     PitchAbove1000FtMin,
     PitchAbove1000FtMax,
+    PitchBelow1000FtMax,
+    PitchBelow1000FtMin,
     PitchAfterFlapRetractionMax,
     PitchAt35FtDuringClimb,
     PitchAtLiftoff,
@@ -11291,7 +11293,38 @@ class TestPitchAbove1000FtMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 14)
 
+class TestPitchBelow1000FtMax(unittest.TestCase):
+    
+    def test_can_operate(self):
+        opts = PitchBelow1000FtMax.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
+    
+    def test_derive(self):
+        pitch = P('Pitch', array=[10, 10, 11, 12, 13, 8, 14, 6, 20])
+        agl = P('Altitude AGL',
+                array=[100, 200, 700, 1010, 4000, 1200, 1100, 900, 800])
+        node = PitchBelow1000FtMax()
+        node.derive(pitch, agl)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].value, 11)
+        self.assertEqual(node[1].value, 20)
 
+class TestPitchBelow1000FtMin(unittest.TestCase):
+    
+    def test_can_operate(self):
+        opts = PitchBelow1000FtMin.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
+    
+    def test_derive(self):
+        pitch = P('Pitch', array=[10, 10, 11, 12, 13, 8, 14, 6, 20])
+        agl = P('Altitude AGL',
+                array=[100, 200, 700, 1010, 4000, 1200, 1100, 900, 800])
+        node = PitchBelow1000FtMin()
+        node.derive(pitch, agl)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].value, 10)
+        self.assertEqual(node[1].value, 6)
+        
 class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
 
     def setUp(self):
