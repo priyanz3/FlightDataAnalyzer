@@ -1,5 +1,6 @@
 G-FDSL:
   Engine Series: PW4000-94
+  Engine Type: 	PW4462
   Manufacturer: Boeing
   Family: B737 Classic
   Series: B737-300
@@ -7,3 +8,4 @@ G-FDSL:
   Frame: 737-5
   Frame Qualifier: Altitude_Radio_EFIS
   Precise Positioning: false
+  Modifications: []
