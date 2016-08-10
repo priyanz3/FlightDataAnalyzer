@@ -3485,6 +3485,34 @@ class AirspeedDuringLevelFlightMax(KeyPointValueNode):
 
 
 ##############################################################################
+# Airspeed Autorotation
+class AirspeedWhileAutorotationMax(KeyPointValueNode):
+    '''
+    Maximum airspeed during autorotation (helicopter only)
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, airspeed=P('Airspeed'), phase=S('Autorotation')):
+        self.create_kpvs_within_slices(airspeed.array, phase, max_value)
+
+
+class AirspeedWhileAutorotationMin(KeyPointValueNode):
+    '''
+    Minimum airspeed during autorotation (helicopter only)
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, airspeed=P('Airspeed'), phase=S('Autorotation')):
+        self.create_kpvs_within_slices(airspeed.array, phase, min_value)
+
+
+##############################################################################
 # Alpha Floor
 
 

@@ -102,6 +102,8 @@ from analysis_engine.key_point_values import (
     AirspeedDuringCruiseMax,
     AirspeedDuringCruiseMin,
     AirspeedDuringLevelFlightMax,
+    AirspeedWhileAutorotationMax,
+    AirspeedWhileAutorotationMin,
     AirspeedDuringRejectedTakeoffMax,
     AirspeedGustsDuringFinalApproach,
     AirspeedMax,
@@ -3887,6 +3889,66 @@ class TestAirspeedDuringLevelFlightMax(unittest.TestCase, NodeTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestAirspeedWhileAutorotationMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AirspeedWhileAutorotationMax
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Airspeed', 'Autorotation')])
+
+    def test_derive(self):
+        name = 'Autorotation'
+        section = Section(name, slice(70, 100), 70, 100)
+        autorotation = SectionNode(name, items=[section])
+
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+
+        node = self.node_class()
+        node.derive(spd, autorotation)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 94)
+        self.assertAlmostEqual(node[0].value, 200, places=0)
+
+
+class TestAirspeedWhileAutorotationMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AirspeedWhileAutorotationMin
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Airspeed', 'Autorotation')])
+
+    def test_derive(self):
+        name = 'Autorotation'
+        section = Section(name, slice(70, 100), 70, 100)
+        autorotation = SectionNode(name, items=[section])
+
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        spd = P('Airspeed', np.ma.array(testwave))
+
+        node = self.node_class()
+        node.derive(spd, autorotation)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 70)
+        self.assertAlmostEqual(node[0].value, 25, places=0)
 
 
 class TestAirspeedWithSpeedbrakeDeployedMax(unittest.TestCase, NodeTest):
