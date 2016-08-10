@@ -519,7 +519,11 @@ class ClimbCruiseDescent(FlightPhaseNode):
     def derive(self, alt_std=P('Altitude STD Smoothed'),
                airs=S('Airborne')):
         for air in airs:
-            alts = repair_mask(alt_std.array[air.slice], repair_duration=None)
+            try:
+                alts = repair_mask(alt_std.array[air.slice], repair_duration=None)
+            except:
+                # Short segments may be wholly masked. We ignore these.
+                continue
             # We squash the altitude signal above 10,000ft so that changes of
             # altitude to create a new flight phase have to be 10 times
             # greater; 500ft changes below 10,000ft are significant, while

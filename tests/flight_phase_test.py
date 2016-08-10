@@ -221,7 +221,7 @@ class TestAirborne(unittest.TestCase):
         air = Airborne()
         air.derive(aeroplane, alt_aal, fast)
         self.assertEqual(len(air), 0)
-    
+
     def test_airborne_helicopter_basic(self):
         gog=M(name='Gear On Ground', array=np.ma.array([0]*3+[1]*5+[0]*30+[1]*5, dtype=int), frequency=1, offset=0, values_mapping={1:'Ground', 0:'Air'})
         agl = P(name= 'Altitude AGL', array=np.ma.array([2.0]*4+[0.0]*3+[20.0]*30+[0.0]*6,dtype=float))
@@ -231,7 +231,7 @@ class TestAirborne(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 3.5)
         self.assertEqual(node[0].slice.stop, 36.95)
-    
+
     def test_airborne_helicopter_short(self):
         gog=M(name='Gear On Ground', array=np.ma.array([0]*3+[1]*5+[0]*10+[1]*5, dtype=int), frequency=1, offset=0, values_mapping={1:'Ground', 0:'Air'})
         agl = P(name= 'Altitude AGL', array=np.ma.array([2.0, 0.0, 0.0]+[0.0]*4+[20.0]*10+[0.0]*6,dtype=float))
@@ -436,7 +436,7 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_lands[0].stop, 9980, places=0)
         self.assertAlmostEqual(app_lands[1].start, 29173, places=0)
         self.assertAlmostEqual(app_lands[1].stop, 29726, places=0)
-    
+
     def test_approach_and_landing_helicopter(self):
         apps = buildsection('Approach', 2, 5)
         lands = buildsection('Landing', 4, 7)
@@ -1202,7 +1202,21 @@ class TestClimbCruiseDescent(unittest.TestCase):
         camel.derive(Parameter('Altitude STD Smoothed',
                                np.ma.array(testwave)), air)
         self.assertEqual(len(camel), 3)
-    
+
+    def test_climb_cruise_descent_masked(self):
+        # This test will find out if we can separate the two humps on this camel
+        camel = ClimbCruiseDescent()
+        # Needs to get above 15000ft and below 10000ft to create this phase.
+        testwave = np.ma.cos(np.arange(0, 3.14 * 6, 0.1)) * (-3000) + 12500
+        testwave[63:125] = np.ma.masked
+        # import matplotlib.pyplot as plt
+        # plt.plot(testwave)
+        # plt.show()
+        air = buildsection('Airborne',0,186)
+        camel.derive(Parameter('Altitude STD Smoothed',
+                               np.ma.array(testwave)), air)
+        self.assertEqual(len(camel), 2)
+
     def test_climb_cruise_descent_repair_mask(self):
         # If the Altitude STD mask isn't repaired, a spurious cycle is reported
         # by cycle_finder which results in an infinite loop.
@@ -1967,7 +1981,7 @@ class TestLanding(unittest.TestCase):
         self.assertEqual(len(landing), 1)
         self.assertEqual(landing[0].slice.start, 9)
         self.assertEqual(landing[0].slice.stop, 24)
-    
+
     def test_landing_aeroplane_mobile_stop(self):
         alt_aal = load(os.path.join(test_data_path, 'Landing_alt_aal_1.nod'))
         head = load(os.path.join(test_data_path, 'Landing_head_1.nod'))
@@ -1978,7 +1992,7 @@ class TestLanding(unittest.TestCase):
         self.assertEqual(len(landing), 1)
         self.assertAlmostEqual(landing[0].slice.start, 7434, places=0)
         self.assertAlmostEqual(landing[0].slice.stop, 7511, places=0)
-    
+
     def test_landing_aeroplane_extended_slice(self):
         # slice needs to be slightly extended to pick up 50 ft transition.
         alt_aal = load(os.path.join(test_data_path, 'Landing_alt_aal_2.nod'))
@@ -1990,7 +2004,7 @@ class TestLanding(unittest.TestCase):
         self.assertEqual(len(landing), 1)
         self.assertAlmostEqual(landing[0].slice.start, 14315, places=0)
         self.assertAlmostEqual(landing[0].slice.stop, 14375, places=0)
-    
+
     def test_landing_helicopter_basic(self):
         alt_agl = P(name='Altitude AGL', array=np.ma.array([50]*5+range(45,0,-5)+[0]*5,dtype=float))
         coll = P(name='Collective', array=np.ma.array([53]*5+range(48,3,-5)+[3]*5,dtype=float))
@@ -2245,7 +2259,7 @@ class TestRejectedTakeoff(unittest.TestCase):
 class TestRotorsTurning(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorsTurning
-    
+
     def test_can_operate(self):
         self.assertTrue(self.node_class.can_operate(('Rotors Running'),
                                                     ac_type=helicopter))
@@ -2341,7 +2355,7 @@ class TestTaxiOut(unittest.TestCase):
         tout = TaxiOut()
         tout.derive(gnd, toff, first_eng_starts)
         self.assertEqual(len(tout), 0)
-    
+
     def test_taxi_out_late_eng(self):
         first_eng_starts = KTI('First Eng Start Before Liftoff', items=[KeyTimeInstance(557, 'First Eng Start Before Liftoff')])
         gnd = buildsection('Mobile', 386, 3737)
@@ -2351,7 +2365,7 @@ class TestTaxiOut(unittest.TestCase):
         self.assertEqual(len(tout), 1)
         self.assertEqual(tout[0].slice.start, 387)
         self.assertEqual(tout[0].slice.stop, 526)
-    
+
     def test_taxi_out_empty(self):
         gnd = buildsection('Mobile', 4816, 6681)
         toff = buildsection('Takeoff', 4611, 4926)
@@ -2388,14 +2402,14 @@ class TestTaxiIn(unittest.TestCase):
         self.assertEqual(len(t_in), 1)
         self.assertEqual(t_in[0].slice.start, 3438)
         self.assertEqual(t_in[0].slice.stop, 3734)
-    
+
     def test_taxi_in_early_eng_stop(self):
         gnd = buildsection('Mobile', 139, 7510)
         landing = buildsection('Landing', 7434, 7510)
         last_eng_stops = KTI(
             'Last Eng Stop After Touchdown',
             items=[KeyTimeInstance(7634, 'Last Eng Stop After Touchdown')])
-        t_in = TaxiIn()	
+        t_in = TaxiIn()
         t_in.derive(gnd, landing, last_eng_stops)
         self.assertEqual(len(t_in), 0)
 
