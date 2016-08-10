@@ -543,6 +543,8 @@ class AccelerationLongitudinalWhileAirborneMax(KeyPointValueNode):
     Get abs max longitudinal G while in flight.
     '''
 
+    can_operate = helicopter_only
+
     units = ut.G
 
     def derive(self,

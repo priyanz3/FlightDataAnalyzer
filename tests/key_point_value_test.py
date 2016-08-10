@@ -1291,7 +1291,8 @@ class TestAccelerationLongitudinalDuringLandingMin(unittest.TestCase, CreateKPVF
         self.assertTrue(False, msg='Test Not Implemented')
 
 
-class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase, NodeTest):
+class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase,
+                                                   NodeTest):
 
     def setUp(self):
         self.node_class = AccelerationLongitudinalWhileAirborneMax
@@ -1299,9 +1300,16 @@ class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase, NodeTest):
             ('Acceleration Longitudinal Offset Removed', 'Airborne')
         ]
 
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, self.operational_combinations)
+
     def test_derive(self):
         array = -0.1 + np.ma.sin(np.arange(0, 3.14*2, 0.04))
-        accel_long = P(name='Acceleration Longitudinal Offset Removed', array=array)
+        accel_long = P(name='Acceleration Longitudinal Offset Removed',
+                       array=array)
         airborne = buildsection('Airborne', 5, 150)
         node = self.node_class()
         node.derive(accel_long, airborne)
