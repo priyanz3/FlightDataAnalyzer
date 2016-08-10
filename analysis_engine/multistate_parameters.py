@@ -1986,7 +1986,7 @@ class RotorsRunning(MultistateDerivedParameterNode):
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr')):
-        self.array = np.ma.where(nr.array > ROTORS_TURNING, 'Running', 'Not Running')
+        self.array = np.ma.where(repair_mask(nr.array) > ROTORS_TURNING, 'Running', 'Not Running')
 
 
 class Slat(MultistateDerivedParameterNode):
