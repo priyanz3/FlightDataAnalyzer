@@ -1986,7 +1986,7 @@ class RotorsRunning(MultistateDerivedParameterNode):
     can_operate = helicopter_only
 
     def derive(self, nr=P('Nr')):
-        self.array = np.ma.where(nr.array > ROTORS_TURNING, 'Running', 'Not Running')
+        self.array = np.ma.where(repair_mask(nr.array) > ROTORS_TURNING, 'Running', 'Not Running')
 
 
 class Slat(MultistateDerivedParameterNode):
@@ -2672,7 +2672,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
         elif family_name == 'B787':
             self.array = self.b787_speedbrake(handle)
 
-        elif family_name == 'A300' and not spdbrk:
+        elif family_name in ('A300', 'A310') and not spdbrk:
             # Have only seen Speedbrake Handle ,not Speedbrake parameter so
             # far for A300
             self.array = self.derive_from_handle(handle.array, deployed=10)
