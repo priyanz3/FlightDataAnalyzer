@@ -45,6 +45,7 @@ from analysis_engine.key_point_values import (
     AccelerationLateralWhileAirborneMax,
     AccelerationLateralWhileTaxiingStraightMax,
     AccelerationLateralWhileTaxiingTurnMax,
+    AccelerationLongitudinalWhileAirborneMax,
     AccelerationLongitudinalDuringLandingMin,
     AccelerationLongitudinalDuringTakeoffMax,
     AccelerationLongitudinalOffset,
@@ -1289,6 +1290,25 @@ class TestAccelerationLongitudinalDuringLandingMin(unittest.TestCase, CreateKPVF
     def test_derive(self):
         self.assertTrue(False, msg='Test Not Implemented')
 
+
+class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AccelerationLongitudinalWhileAirborneMax
+        self.operational_combinations = [
+            ('Acceleration Longitudinal Offset Removed', 'Airborne')
+        ]
+
+    def test_derive(self):
+        array = -0.1 + np.ma.sin(np.arange(0, 3.14*2, 0.04))
+        accel_long = P(name='Acceleration Longitudinal Offset Removed', array=array)
+        airborne = buildsection('Airborne', 5, 150)
+        node = self.node_class()
+        node.derive(accel_long, airborne)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 118)
+        self.assertAlmostEqual(node[0].value, -1.1, places=1)
+        
 
 ########################################
 # Acceleration: Normal

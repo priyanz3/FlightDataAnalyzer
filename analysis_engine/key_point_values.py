@@ -538,6 +538,23 @@ class AccelerationLongitudinalDuringLandingMin(KeyPointValueNode):
         self.create_kpv_from_slices(acc_lon.array, landing, min_value)
 
 
+class AccelerationLongitudinalWhileAirborneMax(KeyPointValueNode):
+    '''
+    Get abs max longitudinal G while in flight.
+    '''
+
+    units = ut.G
+
+    def derive(self,
+               acc_long=P('Acceleration Longitudinal Offset Removed'),
+               airborne=S('Airborne')):
+
+        self.create_kpv_from_slices(
+            acc_long.array,
+            airborne,
+            max_abs_value,
+        )
+
 ########################################
 # Acceleration: Normal
 
