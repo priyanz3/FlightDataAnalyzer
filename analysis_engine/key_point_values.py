@@ -1570,6 +1570,20 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class AirspeedAbove500FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed above 500ft (helicopter only)
+    '''
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, air_spd= P('Airspeed'), alt_agl=P('Altitude AGL')):
+        self.create_kpvs_within_slices(air_spd.array,
+                                       alt_agl.slices_above(500), min_value)
+
+
 class AirspeedAtTouchdown(KeyPointValueNode):
     '''
     Airspeed measurement at the point of Touchdown.

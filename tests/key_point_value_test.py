@@ -87,6 +87,7 @@ from analysis_engine.key_point_values import (
     Airspeed8000To10000FtMax,
     Airspeed8000To5000FtMax,
     Airspeed20FtToTouchdownMax,
+    AirspeedAbove500FtMin,
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
@@ -2213,6 +2214,30 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].index, 71)
         self.assertEqual(node[0].value, 29)
 
+
+class TestAirspeedAbove500FtMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AirspeedAbove500FtMin
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Airspeed', 'Altitude AGL')])
+
+    def test_derive(self):
+        alt = P('Altitude AGL', np.ma.array(np.linspace(200, 1000, 20)))
+        spd = P('Airspeed', np.ma.array(np.linspace(90, 100, 20)))
+
+        node = self.node_class()
+        node.derive(spd, alt)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 8)
+        self.assertAlmostEqual(node[0].value, 94.21, places=1)
 
 class TestAirspeedAtAPGoAroundEngaged(unittest.TestCase):
     '''
