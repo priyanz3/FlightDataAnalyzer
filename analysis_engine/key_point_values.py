@@ -4930,6 +4930,22 @@ class CollectiveFrom10To60PercentDuration(KeyPointValueNode):
 
 
 ##############################################################################
+# Tail Rotor
+
+class TailRotorPedalWhileTaxiingMax(KeyPointValueNode):
+    '''
+    Maximum tail rotor pedal during ground taxi (helicopter_only).
+    '''
+    can_operate = helicopter_only
+
+    units = ut.PERCENT
+
+    def derive(self, pedal=P('Tail Rotor Pedal'), taxiing=S('Taxiing')):
+        self.create_kpvs_within_slices(pedal.array, taxiing.get_slices(),
+                                       max_abs_value)
+
+
+##############################################################################
 # Cyclic
 
 class CyclicDuringTaxiMax(KeyPointValueNode):

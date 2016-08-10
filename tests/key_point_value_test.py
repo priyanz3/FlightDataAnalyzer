@@ -203,6 +203,7 @@ from analysis_engine.key_point_values import (
     ControlColumnForceMax,
     ControlColumnStiffness,
     ControlWheelForceMax,
+    TailRotorPedalWhileTaxiingMax,
     CyclicAftDuringTaxiMax,
     CyclicDuringTaxiMax,
     CyclicForeDuringTaxiMax,
@@ -5455,6 +5456,33 @@ class TestCollectiveFrom10To60PercentDuration(unittest.TestCase):
         node = self.node_class()
         node.derive(collective, rtr)
         self.assertEqual(len(node), 0)
+
+
+class TestTailRotorPedalWhileTaxiingMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = TailRotorPedalWhileTaxiingMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Tail Rotor Pedal', 'Taxiing')])
+
+    def test_derive(self):
+        name = 'Taxiing'
+        section = Section(name, slice(0, 150), 0, 150)
+        taxiing = SectionNode(name, items=[section])
+
+        x = np.linspace(0, 10, 200)
+        pedal = P('Tail Rotor Pedal',(-x*np.sin(x)))
+
+        node = self.node_class()
+        node.derive(pedal, taxiing)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 149)
+        self.assertAlmostEqual(node[0].value, -6.990, places=3)
 
 
 ##############################################################################
