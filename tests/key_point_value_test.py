@@ -652,6 +652,7 @@ from analysis_engine.key_point_values import (
     WindDirectionAtAltitudeDuringDescent,
     WindSpeedAtAltitudeDuringDescent,
     WindSpeedInCriticalAzimuth,
+    CruiseGuideIndicatorMax,
 )
 from analysis_engine.key_time_instances import (
     AltitudeWhenDescending,
@@ -16091,3 +16092,25 @@ class TestFlightControlPreflightCheck(unittest.TestCase):
         self.assertEqual(node, KPV(name=name, items=[
             KeyPointValue(index=7.0, value=300, name=name),
         ]))
+        
+
+class TestCruiseGuideIndicatorMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = CruiseGuideIndicatorMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Cruise Guide',)])
+
+    def test_derive(self):
+        cgi = np.ma.array([-10, 0, 10, 20, 30, 40, -40, 50, 30, 20, 10, 0])
+
+        node = self.node_class()
+        node.derive(cgi)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 7)
+        self.assertEqual(node[0].value, 50)

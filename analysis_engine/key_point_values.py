@@ -16188,3 +16188,17 @@ class SATMin(KeyPointValueNode):
 
     def derive(self, sat=P('SAT')):
         self.create_kpv(*min_value(sat.array))
+
+
+##############################################################################
+# Cruise Guide Indicator
+class CruiseGuideIndicatorMax(KeyPointValueNode):
+    '''
+    Maximum CGI reading throughtout the whole record. (helicopter only)
+    '''
+    units = ut.PERCENT
+    
+    can_operate = helicopter_only
+    
+    def derive(self, cgi=P('Cruise Guide')):
+        self.create_kpv(*max_abs_value(cgi))
