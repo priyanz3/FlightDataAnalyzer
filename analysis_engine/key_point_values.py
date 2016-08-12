@@ -11736,6 +11736,19 @@ class GroundspeedWithZeroAirspeedFor5SecMax(KeyPointValueNode):
             self.create_kpvs_within_slices(gnd_spd.array, zero_airspeed, max_value)
 
 
+class GroundspeedBelow100FtMax(KeyPointValueNode):
+    '''
+    Maximum groundspeed below 100ft (helicopter only)
+    '''
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL')):
+        self.create_kpvs_within_slices(gnd_spd.array, 
+                                       alt_agl.slices_below(100),
+                                       max_value)
+
 ##############################################################################
 # Law
 

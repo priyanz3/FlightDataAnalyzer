@@ -395,6 +395,7 @@ from analysis_engine.key_point_values import (
     GroundspeedWhileTaxiingTurnMax,
     GroundspeedWithThrustReversersDeployedMin,
     GroundspeedWithZeroAirspeedFor5SecMax,
+    GroundspeedBelow100FtMax,
     HeadingAtLowestAltitudeDuringApproach,
     HeadingChange,
     HeadingDeviationFromRunwayAt50FtDuringLanding,
@@ -11260,6 +11261,42 @@ class TestGroundspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].index, 71)
         self.assertEqual(node[0].value, 29)
 
+
+class TestGroundspeedBelow100FtMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GroundspeedBelow100FtMax
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=helicopter),
+            [('Groundspeed', 'Altitude AGL')]
+        )        
+        
+
+    def test_derive(self):
+        alt_agl_data = np.ma.array([
+            500, 300, 100,  90,  60,  70,  75,  80,  90, 101,  80,  70,  80
+        ])
+        gnd_spd_data = np.ma.array([
+            140, 145, 146, 100, 120, 122, 123, 119, 125, 146, 130, 125, 118
+        ])
+        
+        alt_agl = P('Altitude AGL', alt_agl_data)
+        gnd_spd = P('Groundspeed', gnd_spd_data)
+        
+        node = self.node_class()
+        node.derive(gnd_spd, alt_agl)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 2)
+        self.assertEqual(node[0].value, 146)
+        self.assertEqual(node[1].index, 10)
+        self.assertEqual(node[1].value, 130)
 
 ##############################################################################
 # Law
