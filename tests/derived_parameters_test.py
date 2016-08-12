@@ -147,6 +147,7 @@ from analysis_engine.derived_parameters import (
     FuelQtyC,
     FuelQtyL,
     FuelQtyR,
+    FuelQtyAux,
     GrossWeight,
     GrossWeightSmoothed,
     Groundspeed,
@@ -2647,6 +2648,32 @@ class TestFuelQtyR(unittest.TestCase):
                                       np.ma.array([18, 12, 6],
                                                   mask=[False, True, False]))
 
+
+class TestFuelQtyAux(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = FuelQtyAux
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertIn(('Fuel Qty (1)', 'Fuel Qty (2)'), opts)
+        self.assertIn(('Fuel Qty (1)',), opts)
+        self.assertIn(('Fuel Qty (2)',), opts)
+        self.assertEquals(len(opts), 3)
+
+    def test_derive(self):
+        fq1 = np.ma.array([40,30,20,10])
+        fq2 = np.ma.array([10,20,30,40])
+
+        dfq = self.node_class()
+        dfq.derive(fq1, None)
+        assert_array_equal(dfq.array, fq1)
+
+        dfq.derive(None, fq2)
+        assert_array_equal(dfq.array, fq2)
+
+        dfq.derive(fq1, fq2)
+        assert_array_equal(dfq.array, np.ma.array([50,50,50,50]))
 
 class TestGrossWeightSmoothed(unittest.TestCase):
 
