@@ -13514,12 +13514,12 @@ class RollBelow300FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
 
 
-class RollWithAP1AndAP2DisengagedMax(KeyPointValueNode):
+class RollWithAPDisengagedMax(KeyPointValueNode):
     '''
     Maximum roll whilst AP1 and AP2 are disengaged.
     '''
     units = ut.DEGREE
-    name = 'Roll With AP1 And AP2 Disengaged Max'
+    name = 'Roll With AP Disengaged Max'
     can_operate = helicopter_only
     
     def derive(self, roll=P('Roll'), ap1=M('AP 1 Engaged'),

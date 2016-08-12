@@ -549,7 +549,7 @@ from analysis_engine.key_point_values import (
     RollLiftoffTo20FtMax,
     RollOnGroundMax,
     RollRateMax,
-    RollWithAP1AndAP2DisengagedMax,
+    RollWithAPDisengagedMax,
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
@@ -13209,10 +13209,10 @@ class TestRollBelow300FtMax(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, -0.345, places=3)
 
 
-class TestRollWithAP1AndAP2DisengagedMax(unittest.TestCase):
+class TestRollWithAPDisengagedMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = RollWithAP1AndAP2DisengagedMax
+        self.node_class = RollWithAPDisengagedMax
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
