@@ -103,8 +103,8 @@ from analysis_engine.key_point_values import (
     AirspeedDuringCruiseMax,
     AirspeedDuringCruiseMin,
     AirspeedDuringLevelFlightMax,
-    AirspeedWhileAutorotationMax,
-    AirspeedWhileAutorotationMin,
+    AirspeedDuringAutorotationMax,
+    AirspeedDuringAutorotationMin,
     AirspeedDuringRejectedTakeoffMax,
     AirspeedGustsDuringFinalApproach,
     AirspeedMax,
@@ -3918,10 +3918,10 @@ class TestAirspeedDuringLevelFlightMax(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestAirspeedWhileAutorotationMax(unittest.TestCase):
+class TestAirspeedDuringAutorotationMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = AirspeedWhileAutorotationMax
+        self.node_class = AirspeedDuringAutorotationMax
 
     def test_can_operate(self):
         self.assertEqual(
@@ -3948,10 +3948,10 @@ class TestAirspeedWhileAutorotationMax(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, 200, places=0)
 
 
-class TestAirspeedWhileAutorotationMin(unittest.TestCase):
+class TestAirspeedDuringAutorotationMin(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = AirspeedWhileAutorotationMin
+        self.node_class = AirspeedDuringAutorotationMin
 
     def test_can_operate(self):
         self.assertEqual(

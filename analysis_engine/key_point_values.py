@@ -3500,7 +3500,7 @@ class AirspeedDuringLevelFlightMax(KeyPointValueNode):
 
 ##############################################################################
 # Airspeed Autorotation
-class AirspeedWhileAutorotationMax(KeyPointValueNode):
+class AirspeedDuringAutorotationMax(KeyPointValueNode):
     '''
     Maximum airspeed during autorotation (helicopter only)
     '''
@@ -3513,7 +3513,7 @@ class AirspeedWhileAutorotationMax(KeyPointValueNode):
         self.create_kpvs_within_slices(airspeed.array, phase, max_value)
 
 
-class AirspeedWhileAutorotationMin(KeyPointValueNode):
+class AirspeedDuringAutorotationMin(KeyPointValueNode):
     '''
     Minimum airspeed during autorotation (helicopter only)
     '''
