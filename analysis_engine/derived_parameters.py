@@ -3585,8 +3585,8 @@ class FuelQtyAux(DerivedParameterNode):
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self, 
-               fuel_qty_1=P('Fuel Qty (1)'),
-               fuel_qty_2=P('Fuel Qty (2)')):
+               fuel_qty_1=P('Fuel Qty (Aux) (1)'),
+               fuel_qty_2=P('Fuel Qty (Aux) (2)')):
         stacked_params = vstack_params(fuel_qty_1, fuel_qty_2)
         self.array = np.ma.sum(stacked_params, axis=0)
 

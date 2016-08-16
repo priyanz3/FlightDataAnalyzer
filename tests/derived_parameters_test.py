@@ -2656,9 +2656,9 @@ class TestFuelQtyAux(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertIn(('Fuel Qty (1)', 'Fuel Qty (2)'), opts)
-        self.assertIn(('Fuel Qty (1)',), opts)
-        self.assertIn(('Fuel Qty (2)',), opts)
+        self.assertIn(('Fuel Qty (Aux) (1)', 'Fuel Qty (Aux) (2)'), opts)
+        self.assertIn(('Fuel Qty (Aux) (1)',), opts)
+        self.assertIn(('Fuel Qty (Aux) (2)',), opts)
         self.assertEquals(len(opts), 3)
 
     def test_derive(self):
