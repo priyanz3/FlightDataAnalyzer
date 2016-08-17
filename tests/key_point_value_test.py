@@ -568,6 +568,7 @@ from analysis_engine.key_point_values import (
     SATMin,
     SingleEngineDuringTaxiInDuration,
     SingleEngineDuringTaxiOutDuration,
+    MGBOilTempMax,
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
     SpeedbrakeDeployedDuringGoAroundDuration,
@@ -3946,6 +3947,34 @@ class TestAirspeedDuringAutorotationMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 94)
         self.assertAlmostEqual(node[0].value, 200, places=0)
+
+
+class TestMGBOilTempMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MGBOilTempMax
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+
+        self.assertEqual(len(opts),1)
+        self.assertIn('Airborne', opts[0])
+        self.assertIn('MGB Oil Temp', opts[0])
+
+    def test_derive(self):
+        temp = [78.0]*14 + [78.5,78] + [78.5]*23 + [79.0]*5 + [79.5] + [79.0]*5
+        mgb_oil_temp = P('MGB Oil Temp', temp)
+        airs = buildsection('Airborne', 1, 43)
+        
+        node = self.node_class()
+        node.derive(mgb_oil_temp, airs)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 79)
+        self.assertEqual(node[0].index, 39)
 
 
 class TestAirspeedDuringAutorotationMin(unittest.TestCase):

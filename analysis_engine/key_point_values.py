@@ -10481,6 +10481,18 @@ class SingleEngineDuringTaxiOutDuration(KeyPointValueNode):
 
 
 ##############################################################################
+# Gearbox Oil
+
+class MGBOilTempMax(KeyPointValueNode):
+    '''
+    Find the Max temperature for the main gearbox oil.
+    '''
+    units = ut.CELSIUS
+    name = 'MGB Oil Temp Max'
+    can_operate = helicopter_only
+
+    def derive(self, mgb=P('MGB Oil Temp'), airborne=S('Airborne')):
+        self.create_kpvs_within_slices(mgb.array, airborne, max_value)
 
 
 class EventMarkerPressed(KeyPointValueNode):
