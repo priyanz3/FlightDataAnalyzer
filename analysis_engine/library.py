@@ -311,14 +311,15 @@ def align(slave, master, interpolate=True):
     :returns: Slave array aligned to master.
     :rtype: np.ma.array
     """
-    return align_args(
-        slave.array,
+    aligned = align_args(
+        straighten_parameter_array(slave),
         slave.frequency,
         slave.offset,
         master.frequency,
         master.offset,
         interpolate=interpolate,
     )
+    return wrap_array(slave.name, aligned)
 
 
 def align_args(slave_array, slave_frequency, slave_offset, master_frequency, master_offset=0, interpolate=True):
