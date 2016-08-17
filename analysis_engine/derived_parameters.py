@@ -3439,6 +3439,26 @@ class Eng_VibCMax(DerivedParameterNode):
 
 ##############################################################################
 
+class MGBOilTemp(DerivedParameterNode):
+    '''
+    This derived parameter blends together two main gearbox temperatures.
+    '''
+    name = 'MGB Oil Temp'
+    align = False
+    units = ut.CELSIUS
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return any_of(('MGB Oil Temp (1)', 'MGB Oil Temp (2)'), available) \
+               and ac_type == helicopter
+
+    def derive(self, t1=P('MGB Oil Temp (1)'), t2=P('MGB Oil Temp (2)')):
+        self.array, self.frequency, self.offset = \
+            blend_two_parameters(t1, t2)
+
+
+##############################################################################
+
 
 class FuelQty(DerivedParameterNode):
     '''

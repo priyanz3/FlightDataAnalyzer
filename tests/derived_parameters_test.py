@@ -143,6 +143,7 @@ from analysis_engine.derived_parameters import (
     Eng_VibNpMax,
     FlapAngle,
     FlapManoeuvreSpeed,
+    MGBOilTemp,
     FuelQty,
     FuelQtyC,
     FuelQtyL,
@@ -2459,6 +2460,49 @@ class TestEng_NpMin(unittest.TestCase):
                       1,2,3,4,5,6,7,8,9])
         )
 
+
+class TestMGBOilTemp(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MGBOilTemp
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate('MGB Oil Temp (1)',
+                                                    ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate('MGB Oil Temp (2)',
+                                                    ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('MGB Oil Temp (1)',
+                                                     'MGB Oil Temp (2)'),
+                                                    ac_type=helicopter))
+    
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 3)
+
+    def test_derive(self):
+        t1 = [78.0]*14 + [78.5,78] + [78.5]*23 + [79.0]*5 + [79.5] + [79.0]*5
+        t2 = [78.0]*13 + [78.5,78.0, 77.5] + [78.5]*20 + [79.0]*14
+
+        oil_temp1 = P('MGB Oil Temp (1)', np.ma.array(t1))
+        oil_temp2 = P('MGB Oil Temp (2)', np.ma.array(t2))
+        
+        mgb_oil_temp = self.node_class()
+        mgb_oil_temp.derive(oil_temp1, oil_temp2)
+        
+        # array size should be double, 100
+        self.assertEqual(mgb_oil_temp.array.size, (oil_temp1.array.size*2))
+        self.assertEqual(mgb_oil_temp.array.size, (oil_temp2.array.size*2))
+        # Frequency should be doubled 2Hz
+        self.assertEqual(mgb_oil_temp.frequency, (oil_temp1.frequency*2))
+        self.assertEqual(mgb_oil_temp.frequency, (oil_temp2.frequency*2))
+        # Offset should remain the same as the parameter. 0.0
+        self.assertEqual(mgb_oil_temp.offset, oil_temp1.offset)
+        self.assertEqual(mgb_oil_temp.offset, oil_temp2.offset)
+        # Element 44 will become 88 and values 79.5, 79 average to 79.25
+        self.assertEqual(oil_temp1.array[44], 79.5)
+        self.assertEqual(oil_temp2.array[44], 79)
+        self.assertEqual(mgb_oil_temp.array[88],
+                         (oil_temp1.array[44]+oil_temp2.array[44])/2)
 
 class TestFuelQty(unittest.TestCase):
     def test_can_operate(self):
