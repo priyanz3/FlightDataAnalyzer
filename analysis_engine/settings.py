@@ -95,6 +95,46 @@ NODE_CACHE_OFFSET_DP = None
 ##############################################################################
 # Parameter Analysis
 
+# FlightDataConverter parameters which wrap from 359 to 0 or -180 to 180
+WRAPPING_PARAMS = (
+    # Engine angles
+    'Eng (1) Low Press Turbine Imbalance Angle',
+    'Eng (2) Low Press Turbine Imbalance Angle',
+    'Eng (1) Fan Imbalance Angle',
+    'Eng (2) Fan Imbalance Angle',
+    'Eng (1) Imbalance Angle',
+    'Eng (2) Imbalance Angle',
+    # Heading
+    'Heading',
+    'Heading (FO)',
+    'Heading (Capt)',
+    'Heading True',
+    'Heading True (FO)',
+    'Heading True (Capt)',
+    ##'Heading Selected', - is a binary selection, not an angular parameter.
+    'IRU Heading (L)',
+    'IRU Heading (C)',
+    'IRU Heading (R)',
+    # Longitude
+    'Longitude',  # When flying past the Baring Sea (-180 to +180)
+    'Longitude (FO)',
+    'Longitude (Capt)',
+    'Longitude Recorded',
+    # Track
+    'Track Angle',
+    'Track Angle True',
+    'FMC Track Angle True',
+    'IRU Track Angle True',
+    # Wind
+    'Wind Direction',
+    'Wind Direction (1)',
+    'Wind Direction (2)',
+    'Wind Direction True',
+    'FMC Wind Direction True',
+    # Altitude in wrapped format
+    'Altitude STD (Fine)',
+)
+
 
 # The limit of compensation for normal accelerometer errors. For example, to
 # allow for an accelerometer to lie in the range 0.8g to 1.2g, enter a value
