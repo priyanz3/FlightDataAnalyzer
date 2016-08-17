@@ -144,6 +144,7 @@ from analysis_engine.derived_parameters import (
     FlapAngle,
     FlapManoeuvreSpeed,
     MGBOilTemp,
+    MGBOilPress,
     FuelQty,
     FuelQtyC,
     FuelQtyL,
@@ -2503,6 +2504,50 @@ class TestMGBOilTemp(unittest.TestCase):
         self.assertEqual(oil_temp2.array[44], 79)
         self.assertEqual(mgb_oil_temp.array[88],
                          (oil_temp1.array[44]+oil_temp2.array[44])/2)
+
+
+class TestMGBOilPress(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MGBOilPress
+
+    def test_can_operate(self):
+        self.assertFalse(self.node_class.can_operate([], ac_type=aeroplane))
+        self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate('MGB Oil Press (1)',
+                                                    ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate('MGB Oil Press (2)',
+                                                    ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('MGB Oil Press (1)',
+                                                     'MGB Oil Press (2)'),
+                                                    ac_type=helicopter))
+    
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 3)
+
+    def test_derive(self):
+        p1 = [26.51]*7 + [26.63] + [26.51]*7 + [26.4]*27 + [26.29] + [26.4]*7
+        p2 = [26.51]*14 + [26.63] + [26.4]*20 + [26.29] + [26.4]*14
+        oil_press1 = P('MGB Oil Press (1)', np.ma.array(p1))
+        oil_press2 = P('MGB Oil Press (2)', np.ma.array(p2))
+        
+        mgb_oil_press = self.node_class()
+        mgb_oil_press.derive(oil_press1, oil_press2)
+        
+        # array size should be double, 100
+        self.assertEqual(mgb_oil_press.array.size, (oil_press1.array.size*2))
+        self.assertEqual(mgb_oil_press.array.size, (oil_press2.array.size*2))
+        # Frequency should be doubled 2Hz
+        self.assertEqual(mgb_oil_press.frequency, (oil_press1.frequency*2))
+        self.assertEqual(mgb_oil_press.frequency, (oil_press2.frequency*2))
+        # Offset should remain the same as the parameter. 0.0
+        self.assertEqual(mgb_oil_press.offset, oil_press1.offset)
+        self.assertEqual(mgb_oil_press.offset, oil_press2.offset)
+        # Element 7 will become 14 and values 26.63, 26.51 average to 26.57
+        self.assertEqual(oil_press1.array[7], 26.63)
+        self.assertEqual(oil_press2.array[7], 26.51)
+        self.assertEqual(mgb_oil_press.array[14],
+                         (oil_press1.array[7]+oil_press2.array[7])/2)
+
 
 class TestFuelQty(unittest.TestCase):
     def test_can_operate(self):

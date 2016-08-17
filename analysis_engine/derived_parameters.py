@@ -3438,7 +3438,7 @@ class Eng_VibCMax(DerivedParameterNode):
 
 
 ##############################################################################
-
+# Gearbox Oil 
 class MGBOilTemp(DerivedParameterNode):
     '''
     This derived parameter blends together two main gearbox temperatures.
@@ -3457,9 +3457,24 @@ class MGBOilTemp(DerivedParameterNode):
             blend_two_parameters(t1, t2)
 
 
+class MGBOilPress(DerivedParameterNode):
+    '''
+    This derived parameter blends together two main gearbox pressures.
+    '''
+    name = 'MGB Oil Press'
+    align = False
+    units = ut.BAR
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return any_of(('MGB Oil Press (1)', 'MGB Oil Press (2)'), available) \
+               and ac_type == helicopter
+
+    def derive(self, p1=P('MGB Oil Press (1)'), p2=P('MGB Oil Press (2)')):
+        self.array, self.frequency, self.offset = blend_two_parameters(p1, p2)
+
+
 ##############################################################################
-
-
 class FuelQty(DerivedParameterNode):
     '''
     May be supplanted by an LFL parameter of the same name if available.
