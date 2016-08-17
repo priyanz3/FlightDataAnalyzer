@@ -16245,7 +16245,7 @@ class TestCruiseGuideIndicatorMax(unittest.TestCase):
         self.assertEqual(opts, [('Cruise Guide',)])
 
     def test_derive(self):
-        cgi = np.ma.array([-10, 0, 10, 20, 30, 40, -40, 50, 30, 20, 10, 0])
+        cgi = P('CGI', array=np.ma.array([-10, 0, 10, 20, 30, 40, -40, 50, 30, 20, 10, 0]))
 
         node = self.node_class()
         node.derive(cgi)

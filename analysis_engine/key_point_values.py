@@ -16250,4 +16250,4 @@ class CruiseGuideIndicatorMax(KeyPointValueNode):
     can_operate = helicopter_only
     
     def derive(self, cgi=P('Cruise Guide')):
-        self.create_kpv(*max_abs_value(cgi))
+        self.create_kpv(*max_abs_value(cgi.array))
