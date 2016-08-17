@@ -3463,7 +3463,7 @@ class MGBOilPress(DerivedParameterNode):
     '''
     name = 'MGB Oil Press'
     align = False
-    units = ut.BAR
+    units = ut.PSI
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
