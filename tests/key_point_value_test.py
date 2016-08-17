@@ -571,6 +571,7 @@ from analysis_engine.key_point_values import (
     MGBOilTempMax,
     MGBOilPressMax,
     MGBOilPressMin,
+    MGBOilPressLowDuration,
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
     SpeedbrakeDeployedDuringGoAroundDuration,
@@ -4049,6 +4050,49 @@ class TestMGBOilPressMin(unittest.TestCase):
         self.assertEqual(node[0].value, 26.29)
         self.assertEqual(node[0].index, 35)
 
+
+class TestMGBOilPressLowDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MGBOilPressLowDuration
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.SECOND)
+        self.assertEqual(node.name, 'MGB Oil Press Low Duration')
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+
+        self.assertEqual(len(opts),1)
+        self.assertIn('Airborne', opts[0])
+        self.assertIn('MGB Oil Press Low', opts[0])
+
+    def test_derive(self):
+        warn = np.ma.array([0]*5 + [1]*20 + [0]*5)
+        warn_param = M('MGB Oil Press Low',
+                       array=warn,
+                       values_mapping={0:'-', 1:'Warning'})
+        airs = buildsection('Airborne', 1, 38)
+        node = self.node_class() 
+        node.derive(warn_param, airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[0].value, 20)
+
+    #def test_can_operate(self):
+        #opts = FuelQtyLowWarningDuration.get_operational_combinations()
+        #self.assertEqual(opts, [('Fuel Qty (*) Low',)])
+
+    #def test_derive(self):
+        #low = FuelQtyLowWarningDuration()
+        #low.derive(M(array=np.ma.array([0,0,1,1,0]),
+                     #values_mapping={1: 'Warning'}))
+        #self.assertEqual(low[0].index, 2)
+        #self.assertEqual(low[0].value, 2)
 
 class TestAirspeedDuringAutorotationMin(unittest.TestCase):
 

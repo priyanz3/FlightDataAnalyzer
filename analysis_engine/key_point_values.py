@@ -10519,6 +10519,19 @@ class MGBOilPressMin(KeyPointValueNode):
         self.create_kpvs_within_slices(mgb.array, airborne, min_value)
 
 
+class MGBOilPressLowDuration(KeyPointValueNode):
+    '''
+    Duration of the gearbox oil pressure low warning.
+    '''
+    units = ut.SECOND
+    name = 'MGB Oil Press Low Duration'
+    can_operate = helicopter_only
+
+    def derive(self, mgb=P('MGB Oil Press Low'), airborne=S('Airborne')):
+        self.create_kpvs_where(mgb.array == 'Warning', mgb.hz, phase=airborne)
+
+
+##############################################################################
 class EventMarkerPressed(KeyPointValueNode):
     '''
     '''
