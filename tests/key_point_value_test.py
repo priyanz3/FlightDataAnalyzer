@@ -569,6 +569,7 @@ from analysis_engine.key_point_values import (
     SingleEngineDuringTaxiInDuration,
     SingleEngineDuringTaxiOutDuration,
     MGBOilTempMax,
+    MGBOilPressMax,
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
     SpeedbrakeDeployedDuringGoAroundDuration,
@@ -3975,6 +3976,39 @@ class TestMGBOilTempMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 79)
         self.assertEqual(node[0].index, 39)
+
+
+class TestMGBOilPressMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = MGBOilPressMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.PSI)
+        self.assertEqual(node.name, 'MGB Oil Press Max')
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+
+        self.assertEqual(len(opts),1)
+        self.assertIn('Airborne', opts[0])
+        self.assertIn('MGB Oil Press', opts[0])
+
+    def test_derive(self):
+        press = [26.7] + [26.51]*14 + [26.63] + [26.4]*20 + [26.29] + [26.4]*13
+        mgb_oil_press = P('MGB Oil press', press)
+        airs = buildsection('Airborne', 1, 43)
+        
+        node = self.node_class()
+        node.derive(mgb_oil_press, airs)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 26.63)
+        self.assertEqual(node[0].index, 15)
 
 
 class TestAirspeedDuringAutorotationMin(unittest.TestCase):

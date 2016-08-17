@@ -10495,6 +10495,18 @@ class MGBOilTempMax(KeyPointValueNode):
         self.create_kpvs_within_slices(mgb.array, airborne, max_value)
 
 
+class MGBOilPressMax(KeyPointValueNode):
+    '''
+    Find the Maximum main gearbox oil pressure.
+    '''
+    units = ut.PSI
+    name = 'MGB Oil Press Max'
+    can_operate = helicopter_only
+
+    def derive(self, mgb=P('MGB Oil Press'), airborne=S('Airborne')):
+        self.create_kpvs_within_slices(mgb.array, airborne, max_value)
+
+
 class EventMarkerPressed(KeyPointValueNode):
     '''
     '''
