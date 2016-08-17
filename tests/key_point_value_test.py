@@ -3954,6 +3954,11 @@ class TestAirspeedDuringAutorotationMax(unittest.TestCase):
 class TestMGBOilTempMax(unittest.TestCase):
     def setUp(self):
         self.node_class = MGBOilTempMax
+        
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.CELSIUS)
+        self.assertEqual(node.name, 'MGB Oil Temp Max')
 
     def test_can_operate(self):
         self.assertEqual(
