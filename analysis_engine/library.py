@@ -35,6 +35,7 @@ from settings import (
     SLOPE_FOR_TOC_TOD,
     TRUCK_OR_TRAILER_INTERVAL,
     TRUCK_OR_TRAILER_PERIOD,
+    WRAPPING_PARAMS,
 )
 
 EARTH_RADIUS = 6371000
@@ -224,6 +225,56 @@ def is_power2_fraction(number):
     if number < 1:
         number = 1 / number
     return is_power2(number)
+
+
+def straighten_parameter_array(param, copy_array=True):
+    '''
+    Unwrap the parameters which have wraparound characteristics (angles).
+
+    :param param: parameter to be unwrapped
+    :type param: Parameter
+    :param copy_array: should the array be copied if no straightening was
+        taking place
+    :type copy_array: bool
+    :returns: array of unwrapped values
+    :rtype: np.ma.array
+    '''
+    if param.name in WRAPPING_PARAMS:
+        if param.name == 'Altitude STD (Fine)':
+            return straighten_altitudes(param.array, None, 5000)
+        elif param.name.startswith('Longitude'):
+            return straighten_longitude(param.array)
+        else:
+            return straighten_headings(param.array)
+
+    if copy_array:
+        return param.array.copy()
+    else:
+        return param.array
+
+
+def wrap_array(param_name, array):
+    '''
+    Restore the straightened array to normal range.
+
+    :param param_name: name of the parameter to be wrapped
+    :type param: string
+    :param array: the array to be wrapped
+    :type array: np.ma.array
+    :returns: array of wrapped values
+    :rtype: np.ma.array
+    '''
+    if param_name in WRAPPING_PARAMS:
+        if param_name == 'Altitude STD (Fine)':
+            # FIXME: do we need to wrap the values again?
+            return array
+        elif param_name.startswith('Longitude'):
+            # wrap around 180
+            return array - (np.abs(array) > 180) * 360 * ((np.abs(array) + 180) / 360) * np.sign(array)
+        else:
+            # wrap around 360
+            return array - 360 * (array / 360)
+    return array
 
 
 def align(slave, master, interpolate=True):
@@ -3738,7 +3789,7 @@ def slices_remove_small_gaps(slice_list, time_limit=10, hz=1, count=None):
         return slice_list
     elif any(s.start is None for s in slice_list) and any(s.stop is None for s in slice_list):
         return [slice(None, None, slice_list[0].step)]
-    
+
     sample_limit = count if count is not None else time_limit * hz
     slice_list = sorted(slice_list, key=attrgetter('start'))
     new_list = [slice_list[0]]
