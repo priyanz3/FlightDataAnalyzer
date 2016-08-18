@@ -227,7 +227,7 @@ def is_power2_fraction(number):
     return is_power2(number)
 
 
-def straighten_parameter_array(param, copy_array=True):
+def straighten_parameter_array(param, copy_array=False):
     '''
     Unwrap the parameters which have wraparound characteristics (angles).
 
