@@ -10534,12 +10534,20 @@ class MGBOilPressMin(KeyPointValueNode):
     '''
     units = ut.PSI
     name = 'MGB Oil Press Min'
-    can_operate = helicopter_only
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        aircraft = ac_type == helicopter
+        gearbox = any_of(('MGB Oil Press', 'MGB (Fwd) Oil Press',
+                          'MGB (Aft) Oil Press'), available)
+        airborne = 'Airborne' in available
+        return aircraft and gearbox and airborne
 
     def derive(self, mgb=P('MGB Oil Press'), mgb_fwd=P('MGB (Fwd) Oil Press'),
                mgb_aft=P('MGB (Aft) Oil Press'), airborne=S('Airborne')):
-        vstack_params_where_state()
-        self.create_kpvs_within_slices(mgb.array, airborne, min_value)
+        gearboxes = vstack_params(mgb, mgb_fwd, mgb_aft)
+        gearbox = np.ma.min(gearboxes, axis=0)
+        self.create_kpvs_within_slices(gearbox, airborne, min_value)
 
 
 class MGBOilPressLowDuration(KeyPointValueNode):
