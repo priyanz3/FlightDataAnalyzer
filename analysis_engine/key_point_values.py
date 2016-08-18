@@ -10574,6 +10574,18 @@ class CGBOilTempMax(KeyPointValueNode):
         self.create_kpvs_within_slices(cgb.array, airborne, max_value)
 
 
+class CGBOilPressMax(KeyPointValueNode):
+    '''
+    Find the Maximum combining gearbox oil pressure.
+    '''
+    units = ut.PSI
+    name = 'CGB Oil Press Max'
+    can_operate = helicopter_only
+
+    def derive(self, cgb=P('CGB Oil Press'), airborne=S('Airborne')):
+        self.create_kpvs_within_slices(cgb.array, airborne, max_value)
+
+
 ##############################################################################
 class EventMarkerPressed(KeyPointValueNode):
     '''
