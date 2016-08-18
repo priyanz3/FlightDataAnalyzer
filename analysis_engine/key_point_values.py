@@ -107,7 +107,8 @@ from analysis_engine.library import (ambiguous_runway,
                                      level_off_index,
                                      valid_slices_within_array,
                                      value_at_index,
-                                     vstack_params_where_state)
+                                     vstack_params_where_state,
+                                     vstack_params)
 
 
 ##############################################################################
@@ -10489,10 +10490,20 @@ class MGBOilTempMax(KeyPointValueNode):
     '''
     units = ut.CELSIUS
     name = 'MGB Oil Temp Max'
-    can_operate = helicopter_only
 
-    def derive(self, mgb=P('MGB Oil Temp'), airborne=S('Airborne')):
-        self.create_kpvs_within_slices(mgb.array, airborne, max_value)
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        aircraft = ac_type == helicopter
+        gearbox = any_of(('MGB Oil Temp', 'MGB (Fwd) Oil Temp',
+                          'MGB (Aft) Oil Temp'), available)
+        airborne = 'Airborne' in available
+        return aircraft and gearbox and airborne
+
+    def derive(self, mgb=P('MGB Oil Temp'), mgb_fwd=P('MGB (Fwd) Oil Temp'),
+               mgb_aft=P('MGB (Aft) Oil Temp'), airborne=S('Airborne')):
+        gearboxes = vstack_params(mgb, mgb_fwd, mgb_aft)
+        gearbox = np.ma.max(gearboxes, axis=0)
+        self.create_kpvs_within_slices(gearbox, airborne, max_value)
 
 
 class MGBOilPressMax(KeyPointValueNode):

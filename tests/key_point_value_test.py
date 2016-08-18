@@ -3955,7 +3955,7 @@ class TestAirspeedDuringAutorotationMax(unittest.TestCase):
 class TestMGBOilTempMax(unittest.TestCase):
     def setUp(self):
         self.node_class = MGBOilTempMax
-        
+
     def test_attributes(self):
         node = self.node_class()
         self.assertEqual(node.units, ut.CELSIUS)
@@ -3968,17 +3968,36 @@ class TestMGBOilTempMax(unittest.TestCase):
         )
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
 
-        self.assertEqual(len(opts),1)
-        self.assertIn('Airborne', opts[0])
-        self.assertIn('MGB Oil Temp', opts[0])
+        self.assertEqual(len(opts),7)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            mgb = 'MGB Oil Temp' in opt
+            mgb_fwd = 'MGB (Fwd) Oil Temp' in opt
+            mgb_aft = 'MGB (Aft) Oil Temp' in opt
+            self.assertTrue(mgb or mgb_fwd or mgb_aft)
 
     def test_derive(self):
         temp = [78.0]*14 + [78.5,78] + [78.5]*23 + [79.0]*5 + [79.5] + [79.0]*5
         mgb_oil_temp = P('MGB Oil Temp', temp)
-        airs = buildsection('Airborne', 1, 43)
-        
+        airborne = buildsection('Airborne', 1, 43)
+
         node = self.node_class()
-        node.derive(mgb_oil_temp, airs)
+        node.derive(mgb_oil_temp, None, None, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 79)
+        self.assertEqual(node[0].index, 39)
+
+    def test_derive_fwd_aft(self):
+        t1 = [78.0]*14 + [78.5,78] + [78.5]*23 + [79.0]*5 + [79.5] + [79.0]*5
+        t2 = [78.0]*14 + [78.5,78] + [78.0]*23 + [78.5]*5 + [79.5] + [79.0]*5
+
+        mgb_fwd_oil_temp = P('MGB (Fwd) Oil Temp', t1)
+        mgb_aft_oil_temp = P('MGB (Aft) Oil Temp', t2)
+        airborne = buildsection('Airborne', 1, 43)
+
+        node = self.node_class()
+        node.derive(None, mgb_fwd_oil_temp, mgb_aft_oil_temp, airborne)
         
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 79)
