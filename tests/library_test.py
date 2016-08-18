@@ -376,6 +376,7 @@ class TestAlign(unittest.TestCase):
     def test_align_basic(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = None
@@ -402,6 +403,7 @@ class TestAlign(unittest.TestCase):
     def test_align_value_error_raised(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = None
@@ -478,6 +480,7 @@ class TestAlign(unittest.TestCase):
         # Both arrays at 1Hz, master behind slave in time
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -497,6 +500,7 @@ class TestAlign(unittest.TestCase):
         # Both arrays at 1Hz, master ahead of slave in time
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -657,6 +661,7 @@ class TestAlign(unittest.TestCase):
 
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -685,6 +690,7 @@ class TestAlign(unittest.TestCase):
 
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -754,6 +760,7 @@ class TestAlign(unittest.TestCase):
         # Master at higher frequency than slave
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -777,6 +784,7 @@ class TestAlign(unittest.TestCase):
     def test_align_superframe_master(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -795,6 +803,7 @@ class TestAlign(unittest.TestCase):
     def test_align_superframe_slave(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -7893,6 +7902,32 @@ class TestNearestRunway(unittest.TestCase):
         #  TODO: test case to fit description
         runway = nearest_runway(self._airports['004'], 301.640625, hint='landing')
         self.assertEqual(runway, self._expected['017'])
+
+
+class TestWrapArray(unittest.TestCase):
+    def test_wrap_array_heading(self):
+        array = np.ma.arange(720)
+        wrapped = wrap_array('Heading', array)
+        self.assertLessEqual(wrapped.max(), 360)
+        self.assertGreaterEqual(wrapped.min(), 0)
+
+        array = -array
+        wrapped = wrap_array('Heading', array)
+        self.assertLessEqual(wrapped.max(), 360)
+        self.assertGreaterEqual(wrapped.min(), 0)
+
+    def test_wrap_array_longitude(self):
+        # flying from -180deg to the East
+        array = np.ma.arange(-180, 720)
+        wrapped = wrap_array('Longitude', array)
+        self.assertLessEqual(wrapped.max(), 180)
+        self.assertGreaterEqual(wrapped.min(), -180)
+
+        # flying from 180deg to the West
+        array = -array
+        wrapped = wrap_array('Longitude', array)
+        self.assertLessEqual(wrapped.max(), 180)
+        self.assertGreaterEqual(wrapped.min(), -180)
 
 
 if __name__ == '__main__':

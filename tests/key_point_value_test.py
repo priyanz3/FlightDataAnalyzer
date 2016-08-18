@@ -10153,6 +10153,7 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
             'Pitch Rate',
             'Takeoff',
         )]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
 
 
     def test_no_deviation(self):
