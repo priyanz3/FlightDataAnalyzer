@@ -16286,14 +16286,16 @@ class TestCruiseGuideIndicatorMax(unittest.TestCase):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Cruise Guide',)])
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Cruise Guide', opts[0])
+        self.assertIn('Airborne', opts[0])
 
     def test_derive(self):
-        cgi = P('CGI', array=np.ma.array([-10, 0, 10, 20, 30, 40, -40, 50, 30, 20, 10, 0]))
-
+        cgi = P('CGI', array=np.ma.array([-60, 0, 10, 20, 30, 40, -30, -50, 30, 20, 10, 0]))
+        airborne = buildsection('Airborne', 1,10)
         node = self.node_class()
-        node.derive(cgi)
+        node.derive(cgi, airborne)
         
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 7)
-        self.assertEqual(node[0].value, 50)
+        self.assertEqual(node[0].value, -50)
