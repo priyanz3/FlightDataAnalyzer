@@ -10562,6 +10562,18 @@ class MGBOilPressLowDuration(KeyPointValueNode):
         self.create_kpvs_where(mgb.array == 'Warning', mgb.hz, phase=airborne)
 
 
+class CGBOilTempMax(KeyPointValueNode):
+    '''
+    Find the Max temperature for the combining gearbox oil.
+    '''
+    units = ut.CELSIUS
+    name = 'CGB Oil Temp Max'
+    can_operate = helicopter_only
+
+    def derive(self, cgb=P('CGB Oil Temp'), airborne=S('Airborne')):
+        self.create_kpvs_within_slices(cgb.array, airborne, max_value)
+
+
 ##############################################################################
 class EventMarkerPressed(KeyPointValueNode):
     '''

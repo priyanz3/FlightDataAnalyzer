@@ -572,6 +572,7 @@ from analysis_engine.key_point_values import (
     MGBOilPressMax,
     MGBOilPressMin,
     MGBOilPressLowDuration,
+    CGBOilTempMax,
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
     SpeedbrakeDeployedDuringGoAroundDuration,
@@ -4137,6 +4138,38 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[0].value, 20)
 
+
+class TestCGBOilTempMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = CGBOilTempMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.CELSIUS)
+        self.assertEqual(node.name, 'CGB Oil Temp Max')
+
+    def test_can_operate(self):
+        self.assertEqual(
+            self.node_class.get_operational_combinations(ac_type=aeroplane),
+            []
+        )
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+
+        self.assertEqual(len(opts),1)
+        self.assertIn('Airborne', opts[0])
+        self.assertIn('CGB Oil Temp', opts[0])
+
+    def test_derive(self):
+        temp = [78.0]*14 + [78.5,78] + [78.5]*23 + [79.0]*5 + [79.5] + [79.0]*5
+        cgb_oil_temp = P('CGB Oil Temp', temp)
+        airborne = buildsection('Airborne', 1, 43)
+
+        node = self.node_class()
+        node.derive(cgb_oil_temp, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 79)
+        self.assertEqual(node[0].index, 39)
 
 
 class TestAirspeedDuringAutorotationMin(unittest.TestCase):
