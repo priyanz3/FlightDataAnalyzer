@@ -4104,6 +4104,7 @@ class TestMGBOilPressMin(unittest.TestCase):
         self.assertEqual(node[0].value, 26.29)
         self.assertEqual(node[0].index, 35)
 
+
 class TestMGBOilPressLowDuration(unittest.TestCase):
     def setUp(self):
         self.node_class = MGBOilPressLowDuration
@@ -4136,16 +4137,7 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[0].value, 20)
 
-    #def test_can_operate(self):
-        #opts = FuelQtyLowWarningDuration.get_operational_combinations()
-        #self.assertEqual(opts, [('Fuel Qty (*) Low',)])
 
-    #def test_derive(self):
-        #low = FuelQtyLowWarningDuration()
-        #low.derive(M(array=np.ma.array([0,0,1,1,0]),
-                     #values_mapping={1: 'Warning'}))
-        #self.assertEqual(low[0].index, 2)
-        #self.assertEqual(low[0].value, 2)
 
 class TestAirspeedDuringAutorotationMin(unittest.TestCase):
 
