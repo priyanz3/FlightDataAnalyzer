@@ -376,6 +376,7 @@ class TestAlign(unittest.TestCase):
     def test_align_basic(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = None
@@ -402,6 +403,7 @@ class TestAlign(unittest.TestCase):
     def test_align_value_error_raised(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = None
@@ -478,6 +480,7 @@ class TestAlign(unittest.TestCase):
         # Both arrays at 1Hz, master behind slave in time
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -497,6 +500,7 @@ class TestAlign(unittest.TestCase):
         # Both arrays at 1Hz, master ahead of slave in time
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -657,6 +661,7 @@ class TestAlign(unittest.TestCase):
 
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -685,6 +690,7 @@ class TestAlign(unittest.TestCase):
 
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -754,6 +760,7 @@ class TestAlign(unittest.TestCase):
         # Master at higher frequency than slave
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -777,6 +784,7 @@ class TestAlign(unittest.TestCase):
     def test_align_superframe_master(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1
@@ -795,6 +803,7 @@ class TestAlign(unittest.TestCase):
     def test_align_superframe_slave(self):
         class DumParam():
             def __init__(self):
+                self.name = 'Dummy'
                 self.data_type = None
                 self.offset = None
                 self.frequency = 1

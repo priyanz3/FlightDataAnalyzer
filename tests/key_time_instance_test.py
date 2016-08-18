@@ -2176,7 +2176,7 @@ class TestOnBlocks(unittest.TestCase):
 
     def test_basic(self):
         mobile = buildsections('Mobile', [5, None])
-        hdg = P('Heading', array=np.ma.arange(0,360,10))
+        hdg = P('Heading', array=np.ma.arange(0,360,10).astype(np.float))
         on = OnBlocks()
         on.get_derived((mobile, hdg))
         self.assertEqual(len(on),1)
