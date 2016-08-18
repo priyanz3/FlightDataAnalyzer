@@ -10595,8 +10595,8 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         heading = any_of(('Heading True Continuous', 'Heading Continuous'), available)
-        aeroplane = A('Aircraft Type', 'aeroplane')
-        return aeroplane and heading and all_of(('Airspeed', 'Pitch Rate', 'Takeoff'), available)
+        return ac_type == A('Aircraft Type', 'aeroplane') and \
+               heading and all_of(('Airspeed', 'Pitch Rate', 'Takeoff'), available)
 
     units = ut.DEGREE
 

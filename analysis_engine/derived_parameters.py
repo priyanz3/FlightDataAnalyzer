@@ -5214,7 +5214,7 @@ class VerticalSpeedInertial(DerivedParameterNode):
     def derive(self,
                az = P('Acceleration Vertical'),
                alt_std = P('Altitude STD Smoothed'),
-               alt_rad = P('Altitude Radio'),
+               alt_rad = P('Altitude Radio Offset Removed'),
                fast = S('Fast'),
                ac_type=A('Aircraft Type')):
 
