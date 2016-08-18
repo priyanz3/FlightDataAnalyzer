@@ -4020,22 +4020,39 @@ class TestMGBOilPressMax(unittest.TestCase):
         )
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
 
-        self.assertEqual(len(opts),1)
-        self.assertIn('Airborne', opts[0])
-        self.assertIn('MGB Oil Press', opts[0])
+        self.assertEqual(len(opts),7)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            mgb = 'MGB Oil Press' in opt
+            mgb_fwd = 'MGB (Fwd) Oil Press' in opt
+            mgb_aft = 'MGB (Aft) Oil Press' in opt
+            self.assertTrue(mgb or mgb_fwd or mgb_aft)
 
     def test_derive(self):
         press = [26.7] + [26.51]*14 + [26.63] + [26.4]*20 + [26.29] + [26.4]*13
         mgb_oil_press = P('MGB Oil press', press)
-        airs = buildsection('Airborne', 1, 43)
-        
+        airborne = buildsection('Airborne', 1, 43)
+
         node = self.node_class()
-        node.derive(mgb_oil_press, airs)
-        
+        node.derive(mgb_oil_press, None, None, airborne)
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 26.63)
         self.assertEqual(node[0].index, 15)
 
+    def test_derive_fwd_aft(self):
+        p1 = [26.7] + [26.51]*14 + [26.63] + [26.4]*20 + [26.29] + [26.4]*13
+        p2 = [26.7] + [26.51]*15 + [26.4]*20 + [26.11] + [26.4]*13
+        mgb_fwd_oil_press = P('MGB Oil press', p1)
+        mgb_aft_oil_press = P('MGB Oil press', p2)
+        airborne = buildsection('Airborne', 1, 43)
+
+        node = self.node_class()
+        node.derive(None, mgb_fwd_oil_press, mgb_aft_oil_press, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 26.63)
+        self.assertEqual(node[0].index, 15)
 
 class TestMGBOilPressMin(unittest.TestCase):
     def setUp(self):
