@@ -2681,7 +2681,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk)
         elif family_name == 'MD-11':
             self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk, threshold=10.0)
-        elif family_name in ('A330', 'A340', 'A380'):
+        elif family_name in ('A330', 'A340', 'A350', 'A380'):
             self.array = np.ma.where((handle.array < -1.0),
                          'Armed/Cmd Dn', 'Stowed')
             self.array = np.ma.where((spdbrk.array > 5.0),
