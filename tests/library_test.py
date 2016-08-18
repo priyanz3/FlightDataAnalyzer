@@ -7895,6 +7895,32 @@ class TestNearestRunway(unittest.TestCase):
         self.assertEqual(runway, self._expected['017'])
 
 
+class TestWrapArray(unittest.TestCase):
+    def test_wrap_array_heading(self):
+        array = np.ma.arange(720)
+        wrapped = wrap_array('Heading', array)
+        self.assertLessEqual(wrapped.max(), 360)
+        self.assertGreaterEqual(wrapped.min(), 0)
+
+        array = -array
+        wrapped = wrap_array('Heading', array)
+        self.assertLessEqual(wrapped.max(), 360)
+        self.assertGreaterEqual(wrapped.min(), 0)
+
+    def test_wrap_array_longitude(self):
+        # flying from -180deg to the East
+        array = np.ma.arange(-180, 720)
+        wrapped = wrap_array('Longitude', array)
+        self.assertLessEqual(wrapped.max(), 180)
+        self.assertGreaterEqual(wrapped.min(), -180)
+
+        # flying from 180deg to the West
+        array = -array
+        wrapped = wrap_array('Longitude', array)
+        self.assertLessEqual(wrapped.max(), 180)
+        self.assertGreaterEqual(wrapped.min(), -180)
+
+
 if __name__ == '__main__':
     suite = unittest.TestSuite()
     suite.addTest(TestIndexAtValue('test_index_at_value_slice_beyond_top_end_of_data'))
