@@ -4132,7 +4132,7 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
         warn = np.ma.array([0]*5 + [1]*20 + [0]*5)
         warn_param = M('MGB Oil Press Low',
                        array=warn,
-                       values_mapping={0:'-', 1:'Warning'})
+                       values_mapping={0: '-', 1: 'Low Press'})
         airs = buildsection('Airborne', 1, 38)
         node = self.node_class() 
         node.derive(warn_param, airs)

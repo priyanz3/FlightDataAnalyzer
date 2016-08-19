@@ -10558,8 +10558,8 @@ class MGBOilPressLowDuration(KeyPointValueNode):
     name = 'MGB Oil Press Low Duration'
     can_operate = helicopter_only
 
-    def derive(self, mgb=P('MGB Oil Press Low'), airborne=S('Airborne')):
-        self.create_kpvs_where(mgb.array == 'Warning', mgb.hz, phase=airborne)
+    def derive(self, mgb=M('MGB Oil Press Low'), airborne=S('Airborne')):
+        self.create_kpvs_where(mgb.array == 'Low Press', mgb.hz, phase=airborne)
 
 
 class CGBOilTempMax(KeyPointValueNode):
