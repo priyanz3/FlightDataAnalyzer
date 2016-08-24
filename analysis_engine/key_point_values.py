@@ -14209,6 +14209,21 @@ class SpeedbrakeDeployed1000To20FtDuration(KeyPointValueNode):
                                                   mark='start')
 
 
+class AltitudeWithSpeedbrakeDeployedDuringFinalApproachMin(KeyPointValueNode):
+    '''
+    Minimum Altitude when speedbrake is deployed during the final approach.
+    '''
+
+    units = ut.FT
+
+    def derive(self, alt_aal=P('Altitude AAL'),
+               spd_brk=M('Speedbrake Selected'),
+               fin_app=S('Final Approach')):
+        slices = clump_multistate(spd_brk.array, 'Deployed/Cmd Up',
+                                  fin_app.get_slices())
+        self.create_kpvs_within_slices(alt_aal.array, slices, min_value)
+
+
 class SpeedbrakeDeployedWithFlapDuration(KeyPointValueNode):
     '''
     '''

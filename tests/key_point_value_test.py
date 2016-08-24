@@ -578,6 +578,7 @@ from analysis_engine.key_point_values import (
     CGBOilPressMin,
     SmokeWarningDuration,
     SpeedbrakeDeployed1000To20FtDuration,
+    AltitudeWithSpeedbrakeDeployedDuringFinalApproachMin,
     SpeedbrakeDeployedDuringGoAroundDuration,
     SpeedbrakeDeployedWithFlapDuration,
     SpeedbrakeDeployedWithPowerOnDuration,
@@ -14202,6 +14203,38 @@ class TestSpeedbrakeDeployed1000To20FtDuration(unittest.TestCase, NodeTest):
         self.assertEqual(
             node, [KeyPointValue(140, 20.0,
                                  'Speedbrake Deployed 1000 To 20 Ft Duration')])
+
+
+class TestAltitudeWithSpeedbrakeDeployedDuringFinalApproachMin(
+    unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeWithSpeedbrakeDeployedDuringFinalApproachMin
+        self.vmap = {0: 'Undeployed/Cmd Down', 1: 'Deployed/Cmd Up'}
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Altitude AAL', opts[0])
+        self.assertIn('Speedbrake Selected', opts[0])
+        self.assertIn('Final Approach', opts[0])
+
+    def test_derive(self):
+        alt = list(reversed(range(10, 1200,20))) + [1]*10
+        brk = [0]*50 + [1]*11 + [0]*4 + [1]*5
+
+        alt_aal = P('Altitude AAL', np.ma.array(alt))
+        spd_brk = M('Speedbrake Selected', np.ma.array(brk),
+                    values_mapping=self.vmap)
+        fin_app = buildsection('Final Approach', 10, 58)
+
+        node = self.node_class()
+        node.derive(alt_aal=alt_aal, spd_brk=spd_brk, fin_app=fin_app)
+
+        self.assertTrue(alt_aal.array.size == spd_brk.array.size)
+        self.assertEqual(len(node),1)
+        self.assertEqual(node[0].index, 57)
+        self.assertEqual(node[0].value, 50)
 
 
 class TestSpeedbrakeDeployedWithFlapDuration(unittest.TestCase, NodeTest):
