@@ -270,10 +270,10 @@ def wrap_array(param_name, array):
             return array
         elif param_name.startswith('Longitude'):
             # wrap around 180
-            return array - (np.abs(array) > 180) * 360 * ((np.abs(array) + 180) / 360) * np.sign(array)
+            return (array + 180) % 360 - 180
         else:
             # wrap around 360
-            return array - 360 * (array / 360)
+            return array % 360
     return array
 
 
