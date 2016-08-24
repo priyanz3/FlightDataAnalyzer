@@ -459,6 +459,7 @@ from analysis_engine.key_point_values import (
     MasterWarningDuration,
     MasterWarningDuringTakeoffDuration,
     OverspeedDuration,
+    StallFaultCautionDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -14331,6 +14332,66 @@ class TestOverspeedDuration(unittest.TestCase, CreateKPVsWhereTest):
         self.node_class = OverspeedDuration
         self.values_mapping = {0: '-', 1: 'Overspeed'}
         self.basic_setup()
+
+
+class TestStallFaultCautionDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = StallFaultCautionDuration
+        self.vmap = {0:"-", 1:"Caution"}
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.SECOND)
+        self.assertEqual(node.name, 'Stall Fault Caution Duration')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts),3)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            stall_l = 'Stall Fault (L) Caution' in opt
+            stall_r = 'Stall Fault (R) Caution' in opt
+            self.assertTrue(stall_l or stall_r)
+
+    def test_derive(self):
+        l = np.ma.array([0]*10 + [1]*6 + [0]*14 + [1]*5 + [0]*15)
+        r = np.ma.array([0]*14 + [1]*6 + [0]*20 + [1]*5 + [0]*5)
+        self.assertEqual(len(l),len(r))
+        self.assertEqual(len(l),50)
+
+        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
+        stall_r = M('Stall Fault (R) Caution', r, values_mapping=self.vmap)
+
+        airborne = buildsection('Airborne', 1, 48)
+
+        node = self.node_class()
+        node.derive(stall_l, stall_r, airborne)
+
+        self.assertEqual(len(node), 3)
+        self.assertEqual(node[0].index, 10)
+        self.assertEqual(node[0].value, 10)
+        self.assertEqual(node[1].index, 30)
+        self.assertEqual(node[1].value, 5)
+        self.assertEqual(node[2].index, 40)
+        self.assertEqual(node[2].value, 5)
+
+    def test_stall_l(self):
+        l = np.ma.array([0]*10 + [1]*6 + [0]*14 + [1]*5 + [0]*15)
+        self.assertEqual(len(l),50)
+
+        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
+        stall_r = None
+
+        airborne = buildsection('Airborne', 1, 48)
+
+        node = self.node_class()
+        node.derive(stall_l, stall_r, airborne)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 10)
+        self.assertEqual(node[0].value, 6)
+        self.assertEqual(node[1].index, 30)
+        self.assertEqual(node[1].value, 5)
 
 
 ##############################################################################

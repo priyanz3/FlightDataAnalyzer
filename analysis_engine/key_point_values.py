@@ -14350,6 +14350,30 @@ class OverspeedDuration(KeyPointValueNode):
                                self.frequency, phase=airs)
 
 
+class StallFaultCautionDuration(KeyPointValueNode):
+    '''
+    Duration in which either the left or right stall fault caution is raised.
+    '''
+    units = ut.SECOND
+
+    @classmethod 
+    def can_operate(cls, available): 
+        stall_fault = any_of(('Stall Fault (L) Caution',
+                              'Stall Fault (R) Caution'), available) 
+        airborne = 'Airborne' in available 
+        return stall_fault and airborne 
+
+    def derive(self, stall_l=M('Stall Fault (L) Caution'),
+               stall_r=M('Stall Fault (R) Caution'), airborne=S('Airborne')):
+        stall_fault_caution=vstack_params_where_state(
+            (stall_l, 'Caution'),
+            (stall_r, 'Caution')
+        ).any(axis=0)
+        comb_air = mask_outside_slices(stall_fault_caution,
+                                       airborne.get_slices())
+        self.create_kpvs_from_slice_durations(runs_of_ones(comb_air), self.hz)
+
+
 ##############################################################################
 # Tail Clearance
 
