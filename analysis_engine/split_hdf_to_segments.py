@@ -639,7 +639,7 @@ def _mask_invalid_years(array, latest_year):
     return array
 
 
-def get_dt_arrays(hdf, fallback_dt):
+def get_dt_arrays(hdf, fallback_dt, validation_dt):
     now = datetime.utcnow().replace(tzinfo=pytz.utc)
 
     if fallback_dt:
@@ -653,7 +653,7 @@ def get_dt_arrays(hdf, fallback_dt):
         param = hdf.get(name)
         if param:
             if name == 'Year':
-                year = getattr(fallback_dt, 'year', None) or now.year
+                year = getattr(validation_dt, 'year', None) or now.year
                 param.array = _mask_invalid_years(param.array, year)
             # do not interpolate date/time parameters to avoid rollover issues
             array = align(param, onehz, interpolate=False)
@@ -696,7 +696,7 @@ def has_constant_time(hdf):
     return samples > 5 and duration > 5 and np.ptp(minutes.array) == 0
 
 
-def calculate_fallback_dt(hdf, fallback_dt=None, fallback_relative_to_start=True):
+def calculate_fallback_dt(hdf, fallback_dt=None, validation_dt=None, fallback_relative_to_start=True):
     """
     Check the time parameters in the HDF5 file and update the fallback_dt.
 
@@ -718,7 +718,7 @@ def calculate_fallback_dt(hdf, fallback_dt=None, fallback_relative_to_start=True
         return fallback_dt
 
     try:
-        timebase = calculate_timebase(*get_dt_arrays(hdf, fallback_dt))
+        timebase = calculate_timebase(*get_dt_arrays(hdf, fallback_dt, validation_dt))
     except (KeyError, ValueError):
         # The time parameters are not available/operational
         return fallback_dt
@@ -727,7 +727,7 @@ def calculate_fallback_dt(hdf, fallback_dt=None, fallback_relative_to_start=True
         return timebase
 
 
-def _calculate_start_datetime(hdf, fallback_dt):
+def _calculate_start_datetime(hdf, fallback_dt, validation_dt):
     """
     Calculate start datetime.
 
@@ -759,7 +759,7 @@ def _calculate_start_datetime(hdf, fallback_dt):
             "Fallback time '%s' in the future is not allowed. Current time "
             "is '%s'." % (fallback_dt, now))
     # align required parameters to 1Hz
-    dt_arrays = get_dt_arrays(hdf, fallback_dt)
+    dt_arrays = get_dt_arrays(hdf, fallback_dt, validation_dt)
 
     length = max([len(a) for a in dt_arrays])
     if length > 1:
@@ -821,7 +821,7 @@ def _calculate_start_datetime(hdf, fallback_dt):
 
 
 def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
-                        fallback_dt=None, aircraft_info={}):
+                        fallback_dt=None, validation_dt=None, aircraft_info={}):
     """
     Get information about a segment such as type, hash, etc. and return a
     named tuple.
@@ -848,7 +848,7 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
         speed, thresholds = _get_speed_parameter(hdf, aircraft_info)
         duration = hdf.duration
         try:
-            start_datetime = _calculate_start_datetime(hdf, fallback_dt)
+            start_datetime = _calculate_start_datetime(hdf, fallback_dt, validation_dt)
         except TimebaseError:
             # Warn the user and store the fake datetime. The code on the other
             # side should check the datetime and avoid processing this file
@@ -892,7 +892,7 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
 
 
 def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
-                          fallback_relative_to_start=True,
+                          validation_dt=None, fallback_relative_to_start=True,
                           draw=False, dest_dir=None):
     """
     Main method - analyses an HDF file for flight segments and splits each
@@ -939,7 +939,7 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         else:
             logger.info("No PRE_FILE_ANALYSIS actions to perform")
 
-        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, fallback_relative_to_start)
+        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, validation_dt, fallback_relative_to_start)
         segment_tuples = split_segments(hdf, aircraft_info)
 
     # process each segment (into a new file) having closed original hdf_path
@@ -961,7 +961,8 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
                       boundary=boundary)
         segment = append_segment_info(
             dest_path, segment_type, segment_slice, part,
-            fallback_dt=fallback_dt, aircraft_info=aircraft_info)
+            fallback_dt=fallback_dt, validation_dt=validation_dt,
+            aircraft_info=aircraft_info)
 
         if previous_stop_dt and segment.start_dt < previous_stop_dt - timedelta(0, 4):
             # In theory, this should not happen - but be warned of superframe
@@ -990,21 +991,29 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
 def parse_cmdline():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Process a flight.")
+    now = datetime.utcnow().replace(tzinfo=pytz.utc)
+
+    def valid_date(s):
+        try:
+            return datetime.strptime(s, '%Y-%m-%d %H:%M').replace(tzinfo=pytz.utc)
+        except ValueError:
+            raise argparse.ArgumentTypeError('not a valid date and time: %s' % s)
+
+    parser = argparse.ArgumentParser(description='Split a data file into flight segments.')
     parser.add_argument('file', type=str,
                         help='Path of file to process.')
-    parser.add_argument('-tail', '--tail', dest='tail_number', type=str,
-                        default='G-FDSL',
+    parser.add_argument('-tail', '--tail', dest='tail_number', type=str, default='G-FDSL',
                         help='Aircraft Tail Number for processing.')
     parser.add_argument(
-        '--fallback-datetime', '-t',
-        help='Date and time at the beginning of the data, '
-        'used in case the data does not contain reliable time parameters. '
-        'Format YYY-MM-DD hh:mm'
+        '-t', '--fallback-datetime', type=valid_date, default=now, metavar='DATETIME',
+        help='Date and time at beginning of data, used if parameters unreliable (%%Y-%%m-%%d %%H:%%M)',
+    )
+    parser.add_argument(
+        '-d', '--validation-datetime', type=valid_date, default=now, metavar='DATETIME',
+        help='Date and time used to validate time parameters, usually upload time (%%Y-%%m-%%d %%H:%%M)',
     )
     parser.add_argument('-L', '--log-level', default=None, help='Log level')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help="Don't output messages")
+    parser.add_argument('-q', '--quiet', action='store_true', help="Don't output messages")
 
     args = parser.parse_args()
 
@@ -1019,12 +1028,6 @@ def parse_cmdline():
 
     if args.quiet:
         args.log_level_number = 1000
-
-    if args.fallback_datetime:
-        args.fallback_datetime = datetime.strptime(
-            args.fallback_datetime, '%Y-%m-%d %H:%M').replace(tzinfo=pytz.utc)
-    else:
-        args.fallback_datetime = datetime.utcnow().replace(tzinfo=pytz.utc)
 
     return args, parser
 
@@ -1053,6 +1056,7 @@ def main():
         hdf_copy,
         ac_info,
         fallback_dt=args.fallback_datetime,
+        validation_dt=args.validation_datetime,
         draw=False)
 
     # Rename the segment filenames to be able to use glob()
