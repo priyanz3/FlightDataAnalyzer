@@ -756,9 +756,10 @@ def _calculate_start_datetime(hdf, fallback_dt, validation_dt):
         assert fallback_dt <= now, (
             "Fallback time '%s' in the future is not allowed. Current time "
             "is '%s'." % (fallback_dt, now))
-        assert fallback_dt <= validation_dt, (
-            "Fallback time '%s' ahead of validation time is not allowed. Validation time "
-            "is '%s'." % (fallback_dt, validation_dt))
+        if validation_dt is not None:
+            assert fallback_dt <= validation_dt, (
+                "Fallback time '%s' ahead of validation time is not allowed. "
+                "Validation time is '%s'." % (fallback_dt, validation_dt))
     # align required parameters to 1Hz
     dt_arrays = get_dt_arrays(hdf, fallback_dt, validation_dt)
 
