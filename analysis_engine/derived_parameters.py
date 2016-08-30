@@ -444,9 +444,12 @@ class AltitudeAAL(DerivedParameterNode):
     units = ut.FT
 
     @classmethod
-    def can_operate(cls, available):
-        return 'Altitude STD Smoothed' in available and 'Fast' in available
-
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        required = all_of(('Fast', 'Altitude STD Smoothed'), available)
+        if ac_type == helicopter:
+            if not 'Altitude Radio' in available:
+                return required and ('Gear On Ground' in available)
+        return required
 
     def find_liftoff_start(self, alt_std):
         # Test case => NAX_8_LN-NOE_20120109063858_02_L3UQAR___dev__sdb.002.hdf5
@@ -622,10 +625,15 @@ class AltitudeAAL(DerivedParameterNode):
     def derive(self, alt_rad=P('Altitude Radio Offset Removed'),
                alt_std=P('Altitude STD Smoothed'),
                speedies=S('Fast'),
-               pitch=P('Pitch')):
+               pitch=P('Pitch'),
+               gog=P('Gear On Ground'),
+               ac_type=A('Aircraft Type')):
         # Altitude Radio taken as the prime reference to ensure the minimum
         # ground clearance passing peaks is accurately reflected. Alt AAL
         # forced to 2htz
+
+        #TODO: remove me
+        alt_std.array.mask = [False] * len(alt_std.array)
 
         # alt_aal will be zero on the airfield, so initialise to zero.
         alt_aal = np_ma_zeros_like(alt_std.array)
@@ -786,9 +794,14 @@ class AltitudeAAL(DerivedParameterNode):
                         # below the takeoff and landing airfields.
                         next_dip = dips[n + 1]
                         prev_dip = dips[n - 1]
-                        dip['highest_ground'] = min(prev_dip['highest_ground'],
-                                                    dip['alt_std']-1000.0,
-                                                    next_dip['highest_ground'])
+                        if ac_type == helicopter and gog and not alt_rad:
+                            on_ground = slices_and(runs_of_ones(gog.array == 'Ground'), [dip['slice']])
+                            dip['highest_ground'] = np.ma.median(alt_std.array[on_ground])
+                            #alt_std.array[on_ground] = dip['highest_ground']
+                        else:
+                            dip['highest_ground'] = min(prev_dip['highest_ground'],
+                                                        dip['alt_std']-1000.0,
+                                                        next_dip['highest_ground'])
 
             for dip in dips:
                 alt_rad_section = alt_rad.array[dip['slice']] if alt_rad else None

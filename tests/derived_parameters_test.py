@@ -955,6 +955,32 @@ class TestAltitudeAAL(unittest.TestCase):
         alt_aal.derive(alt_rad, alt_std, fast)
         self.assertEqual(np.ma.min(alt_aal.array), 0.0)
 
+    def test_alt_aal__heli__missing_rad_alt(self):
+        '''
+        Helicopter missing Altitude Radio, ensure 0 ft on ground even if alt
+        std records positive.
+        '''
+
+        first_climb = np.ma.arange(0, 3000, 10)
+        second_climb = np.ma.arange(20, 3000, 10)
+
+        alt_array = np.ma.zeros(1350)
+        alt_array[50:350] = first_climb
+        alt_array[350:648] = second_climb[::-1]
+        alt_array[648:702] = np.ma.array([20]*54) # Alt std indicating 20ft on ground
+        alt_array[702:1000] = second_climb
+        alt_array[1000:1300] = first_climb[::-1]
+        alt_std = P('Alttitude STD Smoothed', array=alt_array)
+        fast = buildsection('Fast', 50, 1300)
+        gog_array = np.ma.ones(1350)
+        gog_array[50:648] = 0
+        gog_array[702:1300] = 0
+        gog = M(name='Gear On Ground', array=gog_array, values_mapping={0: 'Air', 1: 'Ground'})
+
+        alt_aal = AltitudeAAL()
+        alt_aal.derive(None, alt_std, fast, None, gog, helicopter)
+        self.assertEqual(alt_aal.array[670], 0)
+
     @unittest.skip('Test Not Implemented')
     def test_alt_aal_faulty_alt_rad(self):
         '''
