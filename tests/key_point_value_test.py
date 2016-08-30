@@ -14490,8 +14490,13 @@ class TestSATMax(unittest.TestCase):
     def setUp(self):
         self.node_class = SATMax
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, ut.CELSIUS)
+        self.assertEqual(node.name, 'SAT Max')
+
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts, [('SAT',)])
 
     def test_derive(self,):

@@ -16339,8 +16339,6 @@ class SATMax(KeyPointValueNode):
     name = 'SAT Max'
     units = ut.CELSIUS
 
-    can_operate = helicopter_only
-
     def derive(self, sat=P('SAT')):
         self.create_kpv(*max_value(sat.array))
 
