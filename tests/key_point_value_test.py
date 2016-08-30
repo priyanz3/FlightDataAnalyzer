@@ -1314,10 +1314,14 @@ class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase,
             ('Acceleration Longitudinal Offset Removed', 'Airborne')
         ]
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 'g')
+        self.assertEqual(node.name,
+                         'Acceleration Longitudinal While Airborne Max')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(
-            ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts, self.operational_combinations)
 
     def test_derive(self):
