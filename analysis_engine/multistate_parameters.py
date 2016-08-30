@@ -2434,15 +2434,24 @@ class SpeedbrakeDeployed(MultistateDerivedParameterNode):
         left = (l, l1, l2, l3, l4, l5, l6, l7, l_out)
         right = (r, r1, r2, r3, r4, r5, r6, r7, r_out)
         pairs = zip(left, right)
+        state = 'Deployed'
 
         combined = [dep.array] if dep else []
         for pair in pairs:
-            if pair[0] and pair[1]:
-                pair_stack = vstack_params_where_state(*[(p, 'Deployed') for p in pair])
-                combined.append(pair_stack.all(axis=0))
+            if not pair[0] or not pair[1]:
+                continue
+            pair_stack = []
+            for param in pair:
+                if state in param.array.state:
+                    array = np_ma_zeros_like(param.array, dtype=np.bool)
+                    array.mask = param.array.mask
+                    array[runs_of_ones(param.array == state, min_samples=1)] = True
+                    pair_stack.append(array)
+                else:
+                    logger.warning("State '%s' not found in param '%s'", state, param.name)
+                    break
+            combined.append(np.ma.vstack(pair_stack).all(axis=0))
         stack = np.ma.vstack(combined)
-
-        #stack = vstack_params_where_state(*[(p, 'Deployed') for p in params])
 
         array = np_ma_zeros_like(stack[0], dtype=np.short)
         array = np.ma.where(stack.any(axis=0), 1, array)
