@@ -12989,6 +12989,28 @@ class RateOfClimbDuringGoAroundMax(KeyPointValueNode):
         self.create_kpvs_within_slices(vrt_spd.array, go_arounds, max_value)
 
 
+class RateOfClimbAtHeightBeforeLevelFlight(KeyPointValueNode):
+    '''
+    '''
+
+    NAME_FORMAT = 'Rate Of Climb At %(altitude)d Ft Before Level Off'
+    NAME_VALUES = {'altitude': [2000, 1000]}
+
+    units = ut.FPM
+
+    def derive(self, vert_spd=P('Vertical Speed'),
+               heights=KTI('Altitude Before Level Flight When Climbing')):
+
+        # TODO: Mask vert spd below 0?
+        for altitude in self.NAME_VALUES['altitude']:
+            ktis = heights.get(name='%d Ft Before Level Flight Climbing'
+                               % altitude)
+            for kti in ktis:
+                value = value_at_index(vert_spd.array, kti.index)
+                self.create_kpv(kti.index, value,
+                                replace_values={'altitude': altitude})
+
+
 ##############################################################################
 # Rate of Descent
 
@@ -13411,6 +13433,28 @@ class RateOfDescentBelow30KtsWithPowerOnMax(KeyPointValueNode):
         speed_bands = slices_and(speed_bands,
                                  slices_above(power.array, 20.0)[1])
         self.create_kpvs_within_slices(vrt_spd.array, speed_bands, min_value)
+
+
+class RateOfDescentAtHeightBeforeLevelFlight(KeyPointValueNode):
+    '''
+    '''
+
+    NAME_FORMAT = 'Rate Of Descent At %(altitude)d Ft Before Level Off'
+    NAME_VALUES = {'altitude': [2000, 1000]}
+
+    units = ut.FPM
+
+    def derive(self, vert_spd=P('Vertical Speed'),
+               heights=KTI('Altitude Before Level Flight When Descending')):
+
+        # TODO: Mask vert spd above 0?
+        for altitude in self.NAME_VALUES['altitude']:
+            ktis = heights.get(name='%d Ft Before Level Flight Descending'
+                               % altitude)
+            for kti in ktis:
+                value = value_at_index(vert_spd.array, kti.index)
+                self.create_kpv(kti.index, value, 
+                                replace_values={'altitude': altitude})
 
 
 ##############################################################################

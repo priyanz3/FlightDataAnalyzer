@@ -12,6 +12,8 @@ from analysis_engine.key_time_instances import (
     AltitudePeak,
     AltitudeWhenClimbing,
     AltitudeWhenDescending,
+    AltitudeBeforeLevelFlightWhenClimbing,
+    AltitudeBeforeLevelFlightWhenDescending,
     APDisengagedSelection,
     APEngagedSelection,
     APUStart,
@@ -546,6 +548,38 @@ class TestAltitudeWhenDescending(unittest.TestCase):
             list(altitude_when_descending),
             [KeyTimeInstance(index=2.5, name='75 Ft Descending'),
              KeyTimeInstance(index=5.0, name='50 Ft Descending')])
+
+
+class TestAltitudeBeforeLevelFlightWhenClimbing(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeBeforeLevelFlightWhenClimbing
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+                                 'Level Flight',
+                                 'Climb')])
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestAltitudeBeforeLevelFlightWhenDescending(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeBeforeLevelFlightWhenDescending
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+                                 'Level Flight',
+                                 'Descending')])
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
 
 
 #class TestAltitudeSTDWhenDescending(unittest.TestCase):
