@@ -2885,15 +2885,15 @@ class TestSpeedbrakeDeployed(unittest.TestCase):
             'Spoiler (R) (5) Deployed', 'Spoiler (R) (6) Deployed', 'Spoiler (R) (7) Deployed')))
 
     def setUp(self):
-        deployed_l_array = [ 0,  0,  0,  1,  0,  1,  1,  0,  0,  0]
-        deployed_r_array = [ 0,  0,  0,  0,  1,  1,  1,  0,  0,  0]
+        deployed_l_array = [ 0,  0,  0,  1,  0,  1,  1,  1,  0,  0]
+        deployed_r_array = [ 0,  0,  0,  0,  1,  1,  1,  1,  0,  0]
 
         self.deployed_l = M(name='Spoiler (L) Deployed', array=np.ma.array(deployed_l_array), values_mapping={1:'Deployed'})
         self.deployed_r = M(name='Spoiler (R) Deployed', array=np.ma.array(deployed_r_array), values_mapping={1:'Deployed'})
         self.node_class = SpeedbrakeDeployed
 
     def test_derive(self):
-        result = [ 0,  0,  0,  0,  0,  1,  1,  0,  0,  0]
+        result = [ 0,  0,  0,  0,  0,  1,  1,  1,  0,  0]
         node = self.node_class()
         node.derive(None, self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result)
@@ -2902,13 +2902,23 @@ class TestSpeedbrakeDeployed(unittest.TestCase):
         self.deployed_l.array.mask = [ 0,  0,  0,  1,  0,  1,  0,  0,  1,  0]
         self.deployed_r.array.mask = [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
-        result_array = [ 0,  0,  0,  0,  0,  0,  1,  0,  0,  0]
+        result_array = [ 0,  0,  0,  0,  0,  0,  1,  1,  0,  0]
         result_mask =  [ 0,  0,  0,  0,  0,  1,  0,  0,  1,  0]
 
         node = self.node_class()
         node.derive(None, self.deployed_l, self.deployed_r, *[None] * 16)
         np.testing.assert_equal(node.array.data, result_array)
         np.testing.assert_equal(node.array.mask, result_mask)
+
+    def test_derive_ignore_single_value(self):
+        self.deployed_l.array = np.ma.array([ 0,  0,  0,  1,  0,  1,  0,  1,  0,  0])
+        self.deployed_r.array = np.ma.array([ 0,  0,  0,  0,  1,  0,  0,  1,  1,  0])
+
+        result = [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+        node = self.node_class()
+        node.derive(None, self.deployed_l, self.deployed_r, *[None] * 16)
+        np.testing.assert_equal(node.array.data, result)
+
 
 
 class TestSpeedbrakeSelected(unittest.TestCase):
