@@ -447,7 +447,7 @@ class AltitudeAAL(DerivedParameterNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = all_of(('Fast', 'Altitude STD Smoothed'), available)
         if ac_type == helicopter:
-            if not 'Altitude Radio' in available:
+            if not 'Altitude Radio Offset Removed' in available:
                 return required and ('Gear On Ground' in available)
         return required
 
@@ -631,9 +631,6 @@ class AltitudeAAL(DerivedParameterNode):
         # Altitude Radio taken as the prime reference to ensure the minimum
         # ground clearance passing peaks is accurately reflected. Alt AAL
         # forced to 2htz
-
-        #TODO: remove me
-        alt_std.array.mask = [False] * len(alt_std.array)
 
         # alt_aal will be zero on the airfield, so initialise to zero.
         alt_aal = np_ma_zeros_like(alt_std.array)

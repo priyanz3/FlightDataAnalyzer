@@ -14947,37 +14947,253 @@ class TestTAWSTerrainPullUpWarningDuration(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase, NodeTest):
+class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
+                                                    NodeTest):
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning1500To1000FtDuration
-        self.operational_combinations = [('TAWS Glideslope', 'Altitude AAL For Flight Phases')]
+        self.alt_aal = P('Altitude AAL For Flight Phases', 
+                         np.linspace(1700.0, 900.0, 50))
+        self.warn_map = {0: '-', 1: 'Warning'}
+        self.alert_map = {0: '-', 1: 'Alert'}
 
-    @unittest.skip('Test Not Implemented')
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'TAWS Glideslope Warning 1500 To 1000 Ft Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3)
+
+        for opt in opts:
+            self.assertIn('Altitude AAL For Flight Phases', opt)
+            warn = 'TAWS Glideslope' in opt
+            alert = 'TAWS Alert' in opt
+            self.assertTrue(warn or alert)
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*10 + [1]*15 + [0]*25),
+                            values_mapping=self.warn_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, None, self.alt_aal)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 13)
+        self.assertEqual(node[0].value, 12)
+
+    def test_derive_2(self):
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*25 + [1]*10 + [0]*15),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(None, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 25)
+        self.assertEqual(node[0].value, 10)
+
+    def test_derive_3(self):
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*15 + [1]*15 + [0]*20),
+                            values_mapping=self.warn_map)
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*25 + [1]*10 + [0]*15),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 15)
+        self.assertEqual(node[0].value, 20)
+
+    def test_derive_4(self):
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*23 + [1]*5 + [0]*22),
+                            values_mapping=self.warn_map)
+
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*30 + [1]*10 + [0]*10),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 23)
+        self.assertEqual(node[0].value, 5)
+        self.assertEqual(node[1].index, 30)
+        self.assertEqual(node[1].value, 10)
 
 
-class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase, NodeTest):
+class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
+                                                   NodeTest):
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning1000To500FtDuration
-        self.operational_combinations = [('TAWS Glideslope', 'Altitude AAL For Flight Phases')]
+        self.alt_aal = P('Altitude AAL For Flight Phases', 
+                         np.linspace(1200.0, 400.0, 50))
+        self.warn_map = {0: '-', 1: 'Warning'}
+        self.alert_map = {0: '-', 1: 'Alert'}
 
-    @unittest.skip('Test Not Implemented')
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'TAWS Glideslope Warning 1000 To 500 Ft Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3)
+
+        for opt in opts:
+            self.assertIn('Altitude AAL For Flight Phases', opt)
+            warn = 'TAWS Glideslope' in opt
+            alert = 'TAWS Alert' in opt
+            self.assertTrue(warn or alert)
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*10 + [1]*15 + [0]*25),
+                            values_mapping=self.warn_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, None, self.alt_aal)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 13)
+        self.assertEqual(node[0].value, 12)
+
+    def test_derive_2(self):
+        taws_alert = M('TAWS Alert', 
+                       np.ma.array([0]*25 + [1]*10 + [0]*15),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(None, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 25)
+        self.assertEqual(node[0].value, 10)
+
+    def test_derive_3(self):
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*15 + [1]*15 + [0]*20),
+                            values_mapping=self.warn_map)
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*25 + [1]*10 + [0]*15),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 15)
+        self.assertEqual(node[0].value, 20)
+
+    def test_derive_4(self):
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*23 + [1]*5 + [0]*22),
+                            values_mapping=self.warn_map)
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*30 + [1]*10 + [0]*10),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 23)
+        self.assertEqual(node[0].value, 5)
+        self.assertEqual(node[1].index, 30)
+        self.assertEqual(node[1].value, 10)
 
 
 class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning500To200FtDuration
-        self.operational_combinations = [('TAWS Glideslope', 'Altitude AAL For Flight Phases')]
+        self.alt_aal = P('Altitude AAL For Flight Phases', 
+                         np.linspace(800.0, 100.0, 50))
+        self.warn_map = {0: '-', 1: 'Warning'}
+        self.alert_map = {0: '-', 1: 'Alert'}
 
-    @unittest.skip('Test Not Implemented')
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'TAWS Glideslope Warning 500 To 200 Ft Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3)
+
+        for opt in opts:
+            self.assertIn('Altitude AAL For Flight Phases', opt)
+            warn = 'TAWS Glideslope' in opt
+            alert = 'TAWS Alert' in opt
+            self.assertTrue(warn or alert)
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        taws_glideslope = M('TAWS Glideslope',
+                            np.ma.array([0]*15 + [1]*10 + [0]*25),
+                            values_mapping=self.warn_map)
+
+        node = self.node_class()
+        node.derive(taws_glideslope, None, self.alt_aal)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 22)
+        self.assertEqual(node[0].value, 3)
+        
+    def test_derive_2(self):
+        taws_alert = M('TAWS Alert',
+                       np.ma.array([0]*25 + [1]*10 + [0]*15),
+                       values_mapping=self.alert_map)
+
+        node = self.node_class()
+        node.derive(None, taws_alert, self.alt_aal)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 25)
+        self.assertEqual(node[0].value, 10)
+
+    def test_derive_3(self):
+            taws_glideslope = M('TAWS Glideslope',
+                                np.ma.array([0]*15 + [1]*10 + [0]*25),
+                                values_mapping=self.warn_map)
+            taws_alert = M('TAWS Alert',
+                           np.ma.array([0]*25 + [1]*10 + [0]*15),
+                           values_mapping=self.alert_map)
+            
+            node = self.node_class()
+            node.derive(taws_glideslope, taws_alert, self.alt_aal)
+            
+            self.assertEqual(len(node), 1)
+            self.assertEqual(node[0].index, 22)
+            self.assertEqual(node[0].value, 13)
+
+    def test_derive_4(self):
+            taws_glideslope = M('TAWS Glideslope', 
+                                np.ma.array([0]*23 + [1]*5 + [0]*22),
+                                values_mapping=self.warn_map)
+            taws_alert = M('TAWS Alert',
+                           np.ma.array([0]*30 + [1]*10 + [0]*10),
+                           values_mapping=self.alert_map)
+
+            node = self.node_class()
+            node.derive(taws_glideslope, taws_alert, self.alt_aal)
+
+            self.assertEqual(len(node), 2)
+            self.assertEqual(node[0].index, 23)
+            self.assertEqual(node[0].value, 5)
+            self.assertEqual(node[1].index, 30)
+            self.assertEqual(node[1].value, 10)
 
 
 class TestTAWSTooLowTerrainWarningDuration(unittest.TestCase, NodeTest):
