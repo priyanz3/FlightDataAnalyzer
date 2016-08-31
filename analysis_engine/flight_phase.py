@@ -1456,6 +1456,45 @@ class Grounded(FlightPhaseNode):
             self._derive_aircraft(speed, hdf_duration, air)
 
 
+class OnDeck(FlightPhaseNode):
+    '''
+    Flight phase for helicopters that land on the deck of a moving vessel.
+
+    Testing for motion will separate moving vessels from stationary decks, chosen as a better
+    option than testing the location against Google Earth for land/sea.
+
+    Also, movement was not practical as helicopters taxi at similar speeds to a ship sailing!
+
+    Note that this qualifies Grounded which is still asserted when On Deck.
+    '''
+
+    can_operate = helicopter_only
+
+    def derive(self, gnds=S('Grounded'),
+               pitch=P('Pitch'), roll=P('Roll')):
+
+        decks = []
+        import matplotlib.pyplot as plt
+        for gnd in gnds:
+            # The fourier transform for pitching motion...
+            p = pitch.array[gnd.slice]
+            n = float(len(p))
+            fft_p = np.abs(np.fft.rfft(p - moving_average(p))) / n
+
+            # similarly for roll
+            r = roll.array[gnd.slice]
+            fft_r = np.abs(np.fft.rfft(r - moving_average(r))) / n
+
+            # What was the maximum harmonic seen?
+            fft_max = np.ma.max(fft_p + fft_r)
+
+            # Values of less than 0.1 were on the ground, and 0.34 on deck for the one case seen to date.
+            if fft_max > 0.2:
+                decks.append(gnd.slice)
+        if decks:
+            self.create_sections(decks)
+
+
 class Taxiing(FlightPhaseNode):
     '''
     This finds the first and last signs of movement to provide endpoints to
