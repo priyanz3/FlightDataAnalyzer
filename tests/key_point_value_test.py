@@ -569,6 +569,7 @@ from analysis_engine.key_point_values import (
     RudderReversalAbove50Ft,
     SATMax,
     SATMin,
+    SATRateOfChangeMax,
     SingleEngineDuringTaxiInDuration,
     SingleEngineDuringTaxiOutDuration,
     MGBOilTempMax,
@@ -1338,7 +1339,7 @@ class TestAccelerationLongitudinalWhileAirborneMax(unittest.TestCase,
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 118)
         self.assertAlmostEqual(node[0].value, -1.1, places=1)
-        
+
 
 ########################################
 # Acceleration: Normal
@@ -4011,7 +4012,7 @@ class TestMGBOilTempMax(unittest.TestCase):
 
         node = self.node_class()
         node.derive(None, mgb_fwd_oil_temp, mgb_aft_oil_temp, airborne)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 79)
         self.assertEqual(node[0].index, 39)
@@ -4095,10 +4096,10 @@ class TestMGBOilPressMin(unittest.TestCase):
         press = [26.51]*14 + [26.63] + [26.4]*20 + [26.29] + [26.4]*13 + [26.1]
         mgb_oil_press = P('MGB Oil press', press)
         airborne = buildsection('Airborne', 1, 43)
-        
+
         node = self.node_class()
         node.derive(mgb_oil_press, None, None, airborne)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 26.29)
         self.assertEqual(node[0].index, 35)
@@ -4109,10 +4110,10 @@ class TestMGBOilPressMin(unittest.TestCase):
         mgb_fwd_oil_press = P('MGB Oil press', p1)
         mgb_aft_oil_press = P('MGB Oil press', p2)
         airborne = buildsection('Airborne', 1, 43)
-        
+
         node = self.node_class()
         node.derive(None, mgb_fwd_oil_press, mgb_aft_oil_press, airborne)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 26.29)
         self.assertEqual(node[0].index, 35)
@@ -4144,7 +4145,7 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
                        array=warn,
                        values_mapping={0: '-', 1: 'Low Press'})
         airs = buildsection('Airborne', 1, 38)
-        node = self.node_class() 
+        node = self.node_class()
         node.derive(warn_param, airs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 5)
@@ -7535,12 +7536,12 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
         )
 
         self.assertEqual(node, expected)
-    
+
     @patch('analysis_engine.key_point_values.at')
     def test_derive_2(self, lookup_table):
-        
+
         lookup_table.get_engine_map.return_value = {'Torque': {'mcp': 90, 'takeoff': 92}}
-        
+
         eng1 = P('Eng (1) Torque', array=load_compressed(
             os.path.join(test_data_path, 'EngTorqueOverThresholdDuration_eng_1_torque.npz')))
         eng2 = P('Eng (2) Torque', array=load_compressed(
@@ -7550,7 +7551,7 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
 
         node = self.node_class()
         node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods)
-        
+
         expected = [KeyPointValue(*a) for a in [
             (538, 44.0, 'Eng Torque Over Takeoff Power Duration'),
             (609, 3.0, 'Eng Torque Over MCP Duration'),
@@ -11578,8 +11579,8 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
         self.assertEqual(
             self.node_class.get_operational_combinations(ac_type=helicopter),
             [('Groundspeed', 'Altitude AGL')]
-        )        
-        
+        )
+
 
     def test_derive(self):
         alt_agl_data = np.ma.array([
@@ -11588,10 +11589,10 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
         gnd_spd_data = np.ma.array([
             140, 145, 146, 100, 120, 122, 123, 119, 125, 146, 130, 125, 118
         ])
-        
+
         alt_agl = P('Altitude AGL', alt_agl_data)
         gnd_spd = P('Groundspeed', gnd_spd_data)
-        
+
         node = self.node_class()
         node.derive(gnd_spd, alt_agl)
 
@@ -11781,12 +11782,12 @@ class TestPitchAbove1000FtMax(unittest.TestCase):
         self.assertEqual(node[0].value, 14)
 
 class TestPitchBelow1000FtMax(unittest.TestCase):
-    
+
     def test_can_operate(self):
         opts = PitchBelow1000FtMax.get_operational_combinations(
             ac_type=helicopter)
         self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
-    
+
     def test_derive(self):
         pitch = P('Pitch', array=[10, 10, 11, 12, 13, 8, 14, 6, 20])
         agl = P('Altitude AGL',
@@ -11798,12 +11799,12 @@ class TestPitchBelow1000FtMax(unittest.TestCase):
         self.assertEqual(node[1].value, 20)
 
 class TestPitchBelow1000FtMin(unittest.TestCase):
-    
+
     def test_can_operate(self):
         opts = PitchBelow1000FtMin.get_operational_combinations(
             ac_type=helicopter)
         self.assertEqual(opts, [('Pitch', 'Altitude AGL')])
-    
+
     def test_derive(self):
         pitch = P('Pitch', array=[10, 10, 11, 12, 13, 8, 14, 6, 20])
         agl = P('Altitude AGL',
@@ -11813,7 +11814,7 @@ class TestPitchBelow1000FtMin(unittest.TestCase):
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].value, 10)
         self.assertEqual(node[1].value, 6)
-        
+
 class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
 
     def setUp(self):
@@ -14610,6 +14611,33 @@ class TestSATMin(unittest.TestCase):
         self.assertEqual(node[0].index, 0)
         self.assertEqual(node[0].value, 0)
 
+class TestSATRateOfChangeMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = SATRateOfChangeMax
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('SAT', 'Airborne')])
+
+    def test_basic(self):
+        sat = P('SAT', np.ma.array(range(20)))
+        air = buildsection('Airborne', 0, 20)
+        node = self.node_class()
+        node.derive(sat, air)
+        self.assertEqual(node[0].value, 1.0)
+
+    def test_pulses(self):
+        sat = P('SAT', np.ma.array([0.0]*10+[20.0]+[0.0]*10+[30.0]+[0.0]*10))
+        air = buildsection('Airborne', 12, 30)
+        node = self.node_class()
+        node.derive(sat, air)
+        # The 4-sec differentiation window makes the peak slope arise
+        # 2 samples before the peak at t=21. Hence this index.
+        self.assertEqual(node[0].index, 19.0)
+        # The 4-sec differentiation window makes the peak slope appear
+        # 30C/4 = 7.5 C/sec. Hence this index.
+        self.assertEqual(node[0].value, 7.5)
 
 ##############################################################################
 # Terrain Clearance
@@ -14694,7 +14722,7 @@ class TestTailwindDuringTakeoffMax(unittest.TestCase):
         spd_array = np.ma.concatenate(([0]*125, np.ma.arange(10,160,2)))
         spd_array = np.ma.masked_less_equal(spd_array, 100)
         ias = P('Airspeed', spd_array)
-        
+
         toff = buildsection('Takeoff', 50, 185)
         liftoff=KTI('Liftoff', items=[KeyTimeInstance(175, 'Liftoff')])
 
@@ -16693,7 +16721,7 @@ class TestAileronPreflightCheck(unittest.TestCase):
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
                        items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-        
+
         accels = KTI('Takeoff Acceleration Start',
                        items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
@@ -16734,7 +16762,7 @@ class TestElevatorPreflightCheck(unittest.TestCase):
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
                        items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-        
+
         accels = KTI('Takeoff Acceleration Start',
                        items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
@@ -16775,7 +16803,7 @@ class TestRudderPreflightCheck(unittest.TestCase):
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
                        items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-        
+
         accels = KTI('Takeoff Acceleration Start',
                        items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
@@ -16822,7 +16850,7 @@ class TestFlightControlPreflightCheck(unittest.TestCase):
         self.assertEqual(node, KPV(name=name, items=[
             KeyPointValue(index=7.0, value=300, name=name),
         ]))
-        
+
 
 class TestCruiseGuideIndicatorMax(unittest.TestCase):
 
@@ -16842,7 +16870,7 @@ class TestCruiseGuideIndicatorMax(unittest.TestCase):
         airborne = buildsection('Airborne', 1,10)
         node = self.node_class()
         node.derive(cgi, airborne)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 7)
         self.assertEqual(node[0].value, -50)
