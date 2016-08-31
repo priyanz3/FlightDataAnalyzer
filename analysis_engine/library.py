@@ -929,6 +929,10 @@ def coreg(y, indep_var=None, force_zero=False):
         p = np.abs((n*sxy - sx*sy)/(np.sqrt(n*sx2-sx*sx)*np.sqrt(n*sy2-sy*sy)))
     except ValueError:
         return None, None, None
+    
+    if np.isnan(p):
+        # known to be caused by negative sqrt in np.sqrt(n*sx2-sx*sx)
+        return None, None, None
 
     # Regression
     if force_zero:
