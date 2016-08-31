@@ -13501,11 +13501,13 @@ class RollLiftoffTo20FtMax(KeyPointValueNode):
 
     def derive(self,
                roll=P('Roll'),
-               alt_aal=P('Altitude AAL For Flight Phases')):
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               airs=S('Airborne')):
 
+        my_slices = slices_and(alt_aal.slices_from_to(1, 20), airs.get_slices())
         self.create_kpvs_within_slices(
             roll.array,
-            alt_aal.slices_from_to(1, 20),
+            my_slices,
             max_abs_value,
         )
 

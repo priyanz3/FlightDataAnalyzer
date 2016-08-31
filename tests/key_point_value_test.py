@@ -13444,17 +13444,27 @@ class TestRateOfDescentAtHeightBeforeLevelOff(unittest.TestCase):
 # Roll
 
 
-class TestRollLiftoffTo20FtMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestRollLiftoffTo20FtMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = RollLiftoffTo20FtMax
-        self.operational_combinations = [('Roll', 'Altitude AAL For Flight Phases')]
+        self.operational_combinations = [('Roll', 'Altitude AAL For Flight Phases', 'Airborne')]
         self.function = max_abs_value
         self.second_param_method_calls = [('slices_from_to', (1, 20), {})]
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(opts, self.operational_combinations)
+
+    def test_basic(self):
+        roll = P('Roll', np.ma.array([10.0]*5+[4.0]*10+[-9.0]*10))
+        aal = P('Altitude AAL For Flight Phases', np.ma.array(range(25)))
+        airs = buildsection('Airborne', 5, 30)
+        kpv = self.node_class()
+        kpv.derive(roll, aal, airs)
+        self.assertEqual(len(kpv), 1)
+        self.assertEqual(kpv[0].index, 15)
+        self.assertEqual(kpv[0].value, -9.0)
 
 
 class TestRoll20To400FtMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
