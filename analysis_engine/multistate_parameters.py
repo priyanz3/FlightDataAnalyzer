@@ -2445,7 +2445,9 @@ class SpeedbrakeDeployed(MultistateDerivedParameterNode):
                 if state in param.array.state:
                     array = np_ma_zeros_like(param.array, dtype=np.bool)
                     array.mask = param.array.mask
-                    array[runs_of_ones(param.array == state, min_samples=1)] = True
+                    slices = runs_of_ones(param.array == state, min_samples=1)
+                    for s in slices:
+                        array[s] = True
                     pair_stack.append(array)
                 else:
                     logger.warning("State '%s' not found in param '%s'", state, param.name)
