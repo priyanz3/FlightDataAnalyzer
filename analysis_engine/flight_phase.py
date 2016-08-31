@@ -1486,7 +1486,6 @@ class OnDeck(FlightPhaseNode):
 
             # What was the maximum harmonic seen?
             fft_max = np.ma.max(fft_p + fft_r)
-            print fft_max
 
             # Values of less than 0.1 were on the ground, and 0.34 on deck for the one case seen to date.
             if fft_max > 0.2:
