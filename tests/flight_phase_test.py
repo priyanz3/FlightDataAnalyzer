@@ -44,6 +44,7 @@ from analysis_engine.flight_phase import (
     LevelFlight,
     MaximumContinuousPower,
     Mobile,
+    OnDeck,
     RejectedTakeoff,
     RotorsTurning,
     StraightAndLevel,
@@ -2822,9 +2823,48 @@ class TestTakeoffRotation(unittest.TestCase):
 
 class TestTwoDegPitchTo35Ft(unittest.TestCase):
     def test_can_operate(self):
-        self.assertEqual(TwoDegPitchTo35Ft.get_operational_combinations(),
-                         [('Takeoff Roll', 'Takeoff',)])
+        self.assertTrue(OnDeck.can_operate(('Grounded', 'Pitch', 'Roll'),
+                                           ac_type=helicopter))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+class TestOnDeck(unittest.TestCase):
+
+    def setUp(self):
+        self.null = np.array([0.0]*100)
+        self.wave = np.sin(np.array(range(100))/3.0)
+        self.gnds = buildsections('Grounded', [10, 89])
+
+    def test_can_operate(self):
+        self.assertTrue(OnDeck.can_operate(('Grounded', 'Pitch', 'Roll'), ac_type=helicopter))
+
+    def test_basic(self):
+        pitch = P('Pitch', self.wave * 2.0)
+        roll = P('Roll', self.null)
+        phase = OnDeck()
+        phase.derive(self.gnds, pitch, roll)
+        self.assertEqual(phase.name,'On Deck')
+        self.assertEqual(phase.get_first().slice, slice(10, 90))
+
+    def test_roll(self):
+        pitch = P('Pitch', self.null)
+        roll = P('Roll', self.wave * 2.0)
+        phase = OnDeck()
+        phase.derive(self.gnds, pitch, roll)
+        self.assertEqual(phase.get_first().slice, slice(10, 90))
+
+    def test_roll_and_pitch(self):
+        pitch = P('Pitch', self.wave)
+        roll = P('Roll', self.wave)
+        phase = OnDeck()
+        phase.derive(self.gnds, pitch, roll)
+        self.assertEqual(phase.get_first().slice, slice(10, 90))
+
+    def test_still_on_ground(self):
+        pitch = P('Pitch', self.null)
+        roll = P('Roll', self.null)
+        phase = OnDeck()
+        phase.derive(self.gnds, pitch, roll)
+        self.assertEqual(phase.get_first(), None)

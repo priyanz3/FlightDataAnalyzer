@@ -1474,11 +1474,10 @@ class OnDeck(FlightPhaseNode):
                pitch=P('Pitch'), roll=P('Roll')):
 
         decks = []
-        import matplotlib.pyplot as plt
         for gnd in gnds:
             # The fourier transform for pitching motion...
             p = pitch.array[gnd.slice]
-            n = float(len(p))
+            n = float(len(p)) # Scaling the result to be independet of data length.
             fft_p = np.abs(np.fft.rfft(p - moving_average(p))) / n
 
             # similarly for roll
@@ -1487,6 +1486,7 @@ class OnDeck(FlightPhaseNode):
 
             # What was the maximum harmonic seen?
             fft_max = np.ma.max(fft_p + fft_r)
+            print fft_max
 
             # Values of less than 0.1 were on the ground, and 0.34 on deck for the one case seen to date.
             if fft_max > 0.2:
