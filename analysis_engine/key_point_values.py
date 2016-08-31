@@ -12717,9 +12717,25 @@ class PitchOnGroundMax(KeyPointValueNode):
     '''
     units = ut.DEGREE
 
-    def derive(self, pitch=P('Pitch'), grounded=S('Grounded')):
+    can_operate = helicopter_only
+
+    def derive(self, pitch=P('Pitch'), grounded=S('Grounded'), on_deck=S('On Deck')):
+            my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
+            self.create_kpvs_within_slices(pitch.array,
+                                       my_slices,
+                                       max_value)
+
+
+class PitchOnDeckMax(KeyPointValueNode):
+    '''
+    '''
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self, pitch=P('Pitch'), on_deck=S('On Deck')):
         self.create_kpvs_within_slices(pitch.array,
-                                       grounded.get_slices(),
+                                       on_deck.get_slices(),
                                        max_value)
 
 
@@ -12728,9 +12744,25 @@ class PitchOnGroundMin(KeyPointValueNode):
     '''
     units = ut.DEGREE
 
-    def derive(self, pitch=P('Pitch'), grounded=S('Grounded')):
+    can_operate = helicopter_only
+
+    def derive(self, pitch=P('Pitch'), grounded=S('Grounded'), on_deck=S('On Deck')):
+        my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
         self.create_kpvs_within_slices(pitch.array,
-                                       grounded.get_slices(),
+                                       my_slices,
+                                       min_value)
+
+
+class PitchOnDeckMin(KeyPointValueNode):
+    '''
+    '''
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self, pitch=P('Pitch'), on_deck=S('On Deck')):
+        self.create_kpvs_within_slices(pitch.array,
+                                       on_deck.get_slices(),
                                        min_value)
 
 
@@ -13453,7 +13485,7 @@ class RateOfDescentAtHeightBeforeLevelFlight(KeyPointValueNode):
                                % altitude)
             for kti in ktis:
                 value = value_at_index(vert_spd.array, kti.index)
-                self.create_kpv(kti.index, value, 
+                self.create_kpv(kti.index, value,
                                 replace_values={'altitude': altitude})
 
 
@@ -14864,7 +14896,7 @@ class TAWSGlideslopeWarning1000To500FtDuration(KeyPointValueNode):
 
         phases = slices_and(runs_of_ones(taws_gs),
                             alt_aal.slices_from_to(1000, 500))
-        
+
         self.create_kpvs_from_slice_durations(phases, self.frequency)
 
 
@@ -14879,7 +14911,7 @@ class TAWSGlideslopeWarning500To200FtDuration(KeyPointValueNode):
     def can_operate(cls, available):
         return 'Altitude AAL For Flight Phases' in available and\
                any_of(['TAWS Glideslope', 'TAWS Alert'], available)
-               
+
 
     def derive(self,
                taws_glideslope=M('TAWS Glideslope'),
@@ -14893,7 +14925,7 @@ class TAWSGlideslopeWarning500To200FtDuration(KeyPointValueNode):
 
         phases = slices_and(runs_of_ones(taws_gs),
                             alt_aal.slices_from_to(500, 200))
-        
+
         self.create_kpvs_from_slice_durations(phases, self.frequency)
 
 

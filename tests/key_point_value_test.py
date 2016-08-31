@@ -495,6 +495,8 @@ from analysis_engine.key_point_values import (
     PitchDuringGoAroundMax,
     Pitch500To50FtMin,
     Pitch50FtToTouchdownMin,
+    PitchOnDeckMax,
+    PitchOnDeckMin,
     PitchOnGroundMax,
     PitchOnGroundMin,
     PitchWhileAirborneMax,
@@ -12389,8 +12391,8 @@ class TestPitchOnGroundMax(unittest.TestCase):
         self.node_class = PitchOnGroundMax
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Pitch', 'Grounded')])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch',  'Grounded', 'On Deck')])
 
     def test_derive(self,):
         pitch = P(
@@ -12400,9 +12402,52 @@ class TestPitchOnGroundMax(unittest.TestCase):
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
-        airborne = SectionNode(name, items=[section, section2])
+        grounded = SectionNode(name, items=[section, section2])
+        on_deck = buildsection('On Deck', 98, 99)
         node = self.node_class()
-        node.derive(pitch, airborne)
+        node.derive(pitch, grounded, on_deck)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 2.5)
+        self.assertEqual(node[0].value, 3)
+        self.assertEqual(node[1].index, 9)
+        self.assertEqual(node[1].value, 0)
+
+
+    def test_not_on_deck(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        name = 'Grounded'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        grounded = SectionNode(name, items=[section, section2])
+        on_deck = buildsection('On Deck', 5, 99)
+        node = self.node_class()
+        node.derive(pitch, grounded, on_deck)
+        self.assertEqual(len(node), 1)
+
+
+class TestPitchOnDeckMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = PitchOnDeckMax
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch', 'On Deck')])
+
+    def test_derive(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        name = 'On Deck'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        on_deck = SectionNode(name, items=[section, section2])
+        node = self.node_class()
+        node.derive(pitch, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 2.5)
         self.assertEqual(node[0].value, 3)
@@ -12416,8 +12461,8 @@ class TestPitchOnGroundMin(unittest.TestCase):
         self.node_class = PitchOnGroundMin
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Pitch', 'Grounded')])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch',  'Grounded', 'On Deck')])
 
     def test_derive(self,):
         pitch = P(
@@ -12427,14 +12472,57 @@ class TestPitchOnGroundMin(unittest.TestCase):
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
-        airborne = SectionNode(name, items=[section, section2])
+        grounded = SectionNode(name, items=[section, section2])
+        on_deck = buildsection('On Deck', 11, 99)
         node = self.node_class()
-        node.derive(pitch, airborne)
+        node.derive(pitch, grounded, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 0)
         self.assertEqual(node[0].value, 0)
         self.assertEqual(node[1].index, 8)
         self.assertEqual(node[1].value, -1)
+
+    def test_not_on_deck(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        name = 'Grounded'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        grounded = SectionNode(name, items=[section, section2])
+        on_deck = buildsection('On Deck', 5, 99)
+        node = self.node_class()
+        node.derive(pitch, grounded, on_deck)
+        self.assertEqual(len(node), 1)
+
+
+class TestPitchOnDeckMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = PitchOnDeckMin
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Pitch', 'On Deck')])
+
+    def test_derive(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        name = 'On Deck'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        on_deck = SectionNode(name, items=[section, section2])
+        node = self.node_class()
+        node.derive(pitch, on_deck)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 0)
+        self.assertEqual(node[0].value, 0)
+        self.assertEqual(node[1].index, 8)
+        self.assertEqual(node[1].value, -1)
+
 
 
 class TestPitchWhileAirborneMax(unittest.TestCase):
@@ -15076,7 +15164,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning1500To1000FtDuration
-        self.alt_aal = P('Altitude AAL For Flight Phases', 
+        self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(1700.0, 900.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
         self.alert_map = {0: '-', 1: 'Alert'}
@@ -15104,7 +15192,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
 
         node = self.node_class()
         node.derive(taws_glideslope, None, self.alt_aal)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 13)
         self.assertEqual(node[0].value, 12)
@@ -15160,7 +15248,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning1000To500FtDuration
-        self.alt_aal = P('Altitude AAL For Flight Phases', 
+        self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(1200.0, 400.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
         self.alert_map = {0: '-', 1: 'Alert'}
@@ -15188,13 +15276,13 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
 
         node = self.node_class()
         node.derive(taws_glideslope, None, self.alt_aal)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 13)
         self.assertEqual(node[0].value, 12)
 
     def test_derive_2(self):
-        taws_alert = M('TAWS Alert', 
+        taws_alert = M('TAWS Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15242,7 +15330,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = TAWSGlideslopeWarning500To200FtDuration
-        self.alt_aal = P('Altitude AAL For Flight Phases', 
+        self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(800.0, 100.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
         self.alert_map = {0: '-', 1: 'Alert'}
@@ -15270,11 +15358,11 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
 
         node = self.node_class()
         node.derive(taws_glideslope, None, self.alt_aal)
-        
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 22)
         self.assertEqual(node[0].value, 3)
-        
+
     def test_derive_2(self):
         taws_alert = M('TAWS Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
@@ -15294,16 +15382,16 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
             taws_alert = M('TAWS Alert',
                            np.ma.array([0]*25 + [1]*10 + [0]*15),
                            values_mapping=self.alert_map)
-            
+
             node = self.node_class()
             node.derive(taws_glideslope, taws_alert, self.alt_aal)
-            
+
             self.assertEqual(len(node), 1)
             self.assertEqual(node[0].index, 22)
             self.assertEqual(node[0].value, 13)
 
     def test_derive_4(self):
-            taws_glideslope = M('TAWS Glideslope', 
+            taws_glideslope = M('TAWS Glideslope',
                                 np.ma.array([0]*23 + [1]*5 + [0]*22),
                                 values_mapping=self.warn_map)
             taws_alert = M('TAWS Alert',
