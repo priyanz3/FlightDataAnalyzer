@@ -10518,7 +10518,7 @@ class MGBOilPressMax(KeyPointValueNode):
                           'MGB (Aft) Oil Press'), available)
         airborne = 'Airborne' in available
         return aircraft and gearbox and airborne
-    
+
     def derive(self, mgb=P('MGB Oil Press'), mgb_fwd=P('MGB (Fwd) Oil Press'),
                mgb_aft=P('MGB (Aft) Oil Press'), airborne=S('Airborne')):
         gearboxes = vstack_params(mgb, mgb_fwd, mgb_aft)
@@ -11859,7 +11859,7 @@ class GroundspeedBelow100FtMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL')):
-        self.create_kpvs_within_slices(gnd_spd.array, 
+        self.create_kpvs_within_slices(gnd_spd.array,
                                        alt_agl.slices_below(100),
                                        max_value)
 
@@ -12041,11 +12041,11 @@ class PitchAbove1000FtMax(KeyPointValueNode):
 class PitchBelow1000FtMax(KeyPointValueNode):
     '''
     Maximum Pitch below 1000ft AGL in flight (helicopter_only).
-    '''    
+    '''
     can_operate = helicopter_only
-    
+
     units = ut.DEGREE
-    
+
     def derive(self, pitch=P('Pitch'), alt=P('Altitude AGL')):
         self.create_kpvs_within_slices(pitch.array,
                                        alt.slices_below(1000), max_value)
@@ -12054,11 +12054,11 @@ class PitchBelow1000FtMax(KeyPointValueNode):
 class PitchBelow1000FtMin(KeyPointValueNode):
     '''
     Minimum Pitch below 1000ft AGL in flight (helicopter_only).
-    '''    
+    '''
     can_operate = helicopter_only
-    
+
     units = ut.DEGREE
-    
+
     def derive(self, pitch=P('Pitch'), alt=P('Altitude AGL')):
         self.create_kpvs_within_slices(pitch.array,
                                        alt.slices_below(1000), min_value)
@@ -13648,7 +13648,7 @@ class RollWithAPDisengagedMax(KeyPointValueNode):
     units = ut.DEGREE
     name = 'Roll With AP Disengaged Max'
     can_operate = helicopter_only
-    
+
     def derive(self, roll=P('Roll'), ap1=M('AP 1 Engaged'),
                ap2=M('AP 2 Engaged')):
         ap = vstack_params_where_state((ap1,'Engaged'),
@@ -14369,12 +14369,12 @@ class StallFaultCautionDuration(KeyPointValueNode):
     '''
     units = ut.SECOND
 
-    @classmethod 
-    def can_operate(cls, available): 
+    @classmethod
+    def can_operate(cls, available):
         stall_fault = any_of(('Stall Fault (L) Caution',
-                              'Stall Fault (R) Caution'), available) 
-        airborne = 'Airborne' in available 
-        return stall_fault and airborne 
+                              'Stall Fault (R) Caution'), available)
+        airborne = 'Airborne' in available
+        return stall_fault and airborne
 
     def derive(self, stall_l=M('Stall Fault (L) Caution'),
                stall_r=M('Stall Fault (R) Caution'), airborne=S('Airborne')):
@@ -16354,6 +16354,23 @@ class SATMin(KeyPointValueNode):
         self.create_kpv(*min_value(sat.array))
 
 
+class SATRateOfChangeMax(KeyPointValueNode):
+    '''
+    Peak rate of increase of SAT - specific to offshore helicopter operations to detect
+    transit though gas plumes.
+    '''
+
+    name = 'SAT Rate Of Change Max'
+    units = ut.CELSIUS
+
+    can_operate = helicopter_only
+
+    def derive(self, sat=P('SAT'), airborne=S('Airborne')):
+
+        sat_roc = rate_of_change_array(sat.array, sat.frequency, width=4)
+        self.create_kpv_from_slices(sat_roc, airborne, max_value)
+
+
 ##############################################################################
 # Cruise Guide Indicator
 class CruiseGuideIndicatorMax(KeyPointValueNode):
@@ -16361,8 +16378,8 @@ class CruiseGuideIndicatorMax(KeyPointValueNode):
     Maximum CGI reading throughtout the whole record. (helicopter only)
     '''
     units = ut.PERCENT
-    
+
     can_operate = helicopter_only
-    
+
     def derive(self, cgi=P('Cruise Guide'), airborne=S('Airborne')):
         self.create_kpv_from_slices(cgi.array, airborne, max_abs_value)
