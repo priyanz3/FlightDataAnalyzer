@@ -658,7 +658,6 @@ from analysis_engine.key_point_values import (
     TouchdownToElevatorDownDuration,
     TouchdownToThrustReversersDeployedDuration,
     TrackVariation100To50Ft,
-    TrainingModeDuration,
     TurbulenceDuringApproachMax,
     TurbulenceDuringCruiseMax,
     TurbulenceDuringFlightMax,
@@ -17016,30 +17015,3 @@ class TestCruiseGuideIndicatorMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 7)
         self.assertEqual(node[0].value, -50)
-
-class TestTrainingModeDuration(unittest.TestCase):
-
-    def test_can_operate(self):
-        self.assertEqual(TrainingModeDuration.get_operational_combinations(),
-                         [('Training Mode',), ('Eng (1) Training Mode', 'Eng (2) Training Mode')])
-
-    def test_derive_S92A(self):
-        trg=P('Training Mode', np.array([0,0,1,1,1,0,0,1,1,0,0]))
-        node = TrainingModeDuration()
-        node.derive(trg, None, None)
-        self.assertEqual(len(node), 2)
-        self.assertEqual(node[0].value, 3)
-        self.assertEqual(node[0].index, 2)
-        self.assertEqual(node[1].value, 2)
-        self.assertEqual(node[1].index, 7)
-
-    def test_derive_H225(self):
-        trg1=P('Eng (1) Training Mode', np.array([0,0,1,1,1,0,0,0,0,0,0]))
-        trg2=P('Eng (2) Training Mode', np.array([0,0,0,0,0,0,0,1,1,0,0]))
-        node = TrainingModeDuration()
-        node.derive(None, trg1, trg2)
-        self.assertEqual(len(node), 2)
-        self.assertEqual(node[0].value, 3)
-        self.assertEqual(node[0].index, 2)
-        self.assertEqual(node[1].value, 2)
-        self.assertEqual(node[1].index, 7)
