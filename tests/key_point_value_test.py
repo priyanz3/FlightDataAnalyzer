@@ -551,6 +551,7 @@ from analysis_engine.key_point_values import (
     RollLeftBelow8000FtAltitudeDensityAbove60Kts,
     RollLeftBelow6000FtAltitudeDensityBelow60Kts,
     RollLiftoffTo20FtMax,
+    RollOnDeckMax,
     RollOnGroundMax,
     RollRateMax,
     RollWithAPDisengagedMax,
@@ -13712,7 +13713,7 @@ class TestRollOnGroundMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll',  'Grounded')])
+        self.assertEqual(opts, [('Roll',  'Grounded', 'On Deck')])
 
     def test_derive(self,):
         x = np.linspace(0, 10, 100)
@@ -13721,8 +13722,50 @@ class TestRollOnGroundMax(unittest.TestCase):
         section = Section(name, slice(10, 50), 10, 50)
         grounded = SectionNode(name, items=[section])
 
+        section = Section('On Deck', slice(80, 90), 80, 90)
+        on_deck = SectionNode(name, items=[section])
+
         node = self.node_class()
-        node.derive(roll, grounded)
+        node.derive(roll, grounded, on_deck)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 20)
+        self.assertAlmostEqual(node[0].value, -1.820, places=3)
+
+    def test_not_on_deck(self,):
+        x = np.linspace(0, 10, 100)
+        roll = P('Roll', -x*np.sin(x))
+        name = 'Grounded'
+        section = Section(name, slice(10, 50), 10, 50)
+        grounded = SectionNode(name, items=[section])
+
+        section = Section('On Deck', slice(10, 50), 10, 50)
+        on_deck = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(roll, grounded, on_deck)
+
+        self.assertEqual(len(node), 0)
+
+class TestRollOnDeckMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RollOnDeckMax
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, [('Roll',  'On Deck')])
+
+    def test_derive(self,):
+        x = np.linspace(0, 10, 100)
+        roll = P('Roll', -x*np.sin(x))
+        name = 'On Deck'
+        section = Section(name, slice(10, 50), 10, 50)
+        on_deck = SectionNode(name, items=[section])
+
+        node = self.node_class()
+        node.derive(roll, on_deck)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 20)

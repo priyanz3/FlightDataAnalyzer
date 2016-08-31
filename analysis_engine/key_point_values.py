@@ -13730,15 +13730,33 @@ class RollBelow500FtMax(KeyPointValueNode):
 
 class RollOnGroundMax(KeyPointValueNode):
     '''
+    Roll attitude on firm ground or a solid rig platform
     '''
 
     units = ut.DEGREE
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), grounded=S('Grounded')):
+    def derive(self, roll=P('Roll'), grounded=S('Grounded'), on_deck=S('On Deck')):
+        my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
         self.create_kpvs_within_slices(roll.array,
-                                       grounded.get_slices(),
+                                       my_slices,
+                                       min_value)
+
+
+class RollOnDeckMax(KeyPointValueNode):
+    '''
+    Roll attitude on moving deck
+    '''
+
+    units = ut.DEGREE
+
+    can_operate = helicopter_only
+
+    def derive(self, roll=P('Roll'), on_deck=S('On Deck')):
+
+        self.create_kpvs_within_slices(roll.array,
+                                       on_deck.get_slices(),
                                        min_value)
 
 
