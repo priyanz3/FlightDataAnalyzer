@@ -25,6 +25,7 @@ from analysis_engine.library import (
     slices_and_not,
     slice_duration,
     slices_not,
+    slices_overlap,
     slices_remove_small_gaps,
     value_at_index,
 )
@@ -1734,6 +1735,78 @@ class AltitudeWhenDescending(KeyTimeInstanceNode):
                                              descend.slice.start, -1))
                 if index:
                     self.create_kti(index, altitude=alt_threshold)
+
+
+class AltitudeBeforeLevelFlightWhenClimbing(KeyTimeInstanceNode):
+
+    NAME_FORMAT = '%(altitude)d Ft Before Level Flight Climbing'
+    NAME_VALUES = {'altitude': [1000, 2000]}
+
+    def derive(self,
+               aal=P('Altitude AAL For Flight Phases'),
+               level_flight=S('Level Flight'),
+               climbing=S('Climb')):
+
+        ordered_level = level_flight.get_ordered_by_index().get_slices()
+        not_level = [slice(0, ordered_level[0].start)] + \
+            slices_not(ordered_level)
+
+        for n, level in enumerate(ordered_level):
+            climb_descent = not_level[n]
+            level_height = np.ma.median(aal.array[level])
+            if level_height < 3000:
+                continue
+            climb_slice = None
+            for climb in climbing:
+                if slices_overlap(climb.slice, climb_descent):
+                    climb_slice = climb_descent
+                    break
+            else:
+                continue  # Must be following a descent
+
+            for height in self.NAME_VALUES['altitude']:
+                index = index_at_value(aal.array, level_height-height,
+                                       _slice=slice(climb_slice.stop,
+                                                    climb_slice.start,
+                                                    -1))
+                if index:
+                    self.create_kti(index, replace_values={'altitude': height})
+
+
+class AltitudeBeforeLevelFlightWhenDescending(KeyTimeInstanceNode):
+
+    NAME_FORMAT = '%(altitude)d Ft Before Level Flight Descending'
+    NAME_VALUES = {'altitude': [1000, 2000]}
+
+    def derive(self,
+               aal=P('Altitude AAL For Flight Phases'),
+               level_flight=S('Level Flight'),
+               descending=S('Descending')):
+
+        ordered_level = level_flight.get_ordered_by_index().get_slices()
+        not_level = [slice(0, ordered_level[0].start)] + \
+            slices_not(ordered_level)
+
+        for n, level in enumerate(ordered_level):
+            climb_descent = not_level[n]
+            level_height = np.ma.median(aal.array[level])
+            if level_height < 3000:
+                continue
+            descent_slice = None
+            for descent in descending:
+                if slices_overlap(descent.slice, climb_descent):
+                    descent_slice = climb_descent
+                    break
+            else:
+                continue  # Must be following a climb
+
+            for height in self.NAME_VALUES['altitude']:
+                index = index_at_value(aal.array, level_height+height,
+                                       _slice=slice(descent_slice.stop,
+                                                    descent_slice.start,
+                                                    -1))
+                if index:
+                    self.create_kti(index, replace_values={'altitude': height})
 
 
 """

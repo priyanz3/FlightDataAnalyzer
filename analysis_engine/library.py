@@ -900,7 +900,7 @@ def coreg(y, indep_var=None, force_zero=False):
     if n < 2:
         logger.warn('Function coreg called with data of length %s' % n)
     if indep_var is None:
-        x = np.ma.arange(n, dtype=float)
+        x = np.ma.arange(n, dtype=np.float64)
     else:
         x = indep_var
         if len(x) != n:
@@ -909,25 +909,29 @@ def coreg(y, indep_var=None, force_zero=False):
 
     # Need to propagate masks into both arrays equally.
     mask = np.ma.logical_or(x.mask, y.mask)
-    x = np.ma.array(data=x.data, mask=mask)
-    y = np.ma.array(data=y.data, mask=mask)
+    x = np.ma.array(data=x.data, mask=mask, dtype=np.float64)
+    y = np.ma.array(data=y.data, mask=mask, dtype=np.float64)
 
     if x.ptp() == 0.0 or y.ptp() == 0.0:
         # raise ValueError, 'Function coreg called with invariant independent variable'
         return None, None, None
 
     # n is the number of useful data pairs for analysis.
-    n = float(np.ma.count(x))
-    sx = float(np.ma.sum(x))
-    sxy = float(np.ma.sum(x*y))
-    sy = float(np.ma.sum(y))
-    sx2 = float(np.ma.sum(x*x))
-    sy2 = float(np.ma.sum(y*y))
+    n = np.float64(np.ma.count(x))
+    sx = np.ma.sum(x)
+    sxy = np.ma.sum(x*y)
+    sy = np.ma.sum(y)
+    sx2 = np.ma.sum(x*x)
+    sy2 = np.ma.sum(y*y)
 
     # Correlation
     try: # in case sqrt of a negative number is attempted
-        p = abs((n*sxy - sx*sy)/(sqrt(n*sx2-sx*sx)*sqrt(n*sy2-sy*sy)))
+        p = np.abs((n*sxy - sx*sy)/(np.sqrt(n*sx2-sx*sx)*np.sqrt(n*sy2-sy*sy)))
     except ValueError:
+        return None, None, None
+    
+    if np.isnan(p):
+        # known to be caused by negative sqrt in np.sqrt(n*sx2-sx*sx)
         return None, None, None
 
     # Regression
@@ -5670,7 +5674,7 @@ def rms_noise(array, ignore_pc=None):
     else:
         monitor = slice(0, floor(len(diffs) * (1-ignore_pc/100.0)))
         to_rms = np.ma.sort(np.ma.abs(diffs))[monitor]
-    return sqrt(np.ma.mean(np.ma.power(to_rms,2))) # RMS in one line !
+    return sqrt(np.ma.mean(np.ma.power(to_rms, 2))) # RMS in one line !
 
 
 def runs_of_ones(bits, min_samples=None):
