@@ -12394,39 +12394,55 @@ class TestPitchOnGroundMax(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Pitch',  'Grounded', 'On Deck')])
+        self.assertEqual(opts, [('Pitch',  'Collective', 'Grounded', 'On Deck')])
 
     def test_derive(self,):
         pitch = P(
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         grounded = SectionNode(name, items=[section, section2])
         on_deck = buildsection('On Deck', 98, 99)
         node = self.node_class()
-        node.derive(pitch, grounded, on_deck)
+        node.derive(pitch, coll, grounded, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 2.5)
         self.assertEqual(node[0].value, 3)
         self.assertEqual(node[1].index, 9)
         self.assertEqual(node[1].value, 0)
 
-
     def test_not_on_deck(self,):
         pitch = P(
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         grounded = SectionNode(name, items=[section, section2])
         on_deck = buildsection('On Deck', 5, 99)
         node = self.node_class()
-        node.derive(pitch, grounded, on_deck)
+        node.derive(pitch, coll, grounded, on_deck)
+        self.assertEqual(len(node), 1)
+
+    def test_not_with_collective(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        coll = P('Collective', np.ma.array([10.0]*5+[55.0]*5))
+        name = 'Grounded'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        grounded = SectionNode(name, items=[section, section2])
+        on_deck = buildsection('On Deck', 98, 99)
+        node = self.node_class()
+        node.derive(pitch, coll, grounded, on_deck)
         self.assertEqual(len(node), 1)
 
 
@@ -12437,24 +12453,41 @@ class TestPitchOnDeckMax(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Pitch', 'On Deck')])
+        self.assertEqual(opts, [('Pitch', 'Collective', 'On Deck')])
 
-    def test_derive(self,):
+    def test_basic(self):
         pitch = P(
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'On Deck'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         on_deck = SectionNode(name, items=[section, section2])
         node = self.node_class()
-        node.derive(pitch, on_deck)
+        node.derive(pitch, coll, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 2.5)
         self.assertEqual(node[0].value, 3)
         self.assertEqual(node[1].index, 9)
         self.assertEqual(node[1].value, 0)
+
+    def test_with_coll_applied(self,):
+        pitch = P(
+            name='Pitch',
+            array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
+        )
+        coll = P('Collective', np.ma.array([10.0]*5+[50.0]*5))
+        name = 'On Deck'
+        section = Section(name, slice(0, 3), 0, 2.5)
+        section2 = Section(name, slice(8, 9), 8, 10)
+        on_deck = SectionNode(name, items=[section, section2])
+        node = self.node_class()
+        node.derive(pitch, coll, on_deck)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 2.5)
+        self.assertEqual(node[0].value, 3)
 
 
 class TestPitchOnGroundMin(unittest.TestCase):

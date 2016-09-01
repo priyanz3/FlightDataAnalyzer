@@ -12714,13 +12714,20 @@ class PitchDuringGoAroundMax(KeyPointValueNode):
 
 class PitchOnGroundMax(KeyPointValueNode):
     '''
+    Pitch attitude maximum to check for sloping ground operation.
+
+    The collective parameter ensures this is not the attitude during liftoff.
     '''
     units = ut.DEGREE
 
     can_operate = helicopter_only
 
-    def derive(self, pitch=P('Pitch'), grounded=S('Grounded'), on_deck=S('On Deck')):
+    def derive(self, pitch=P('Pitch'), coll=P('Collective'),
+               grounded=S('Grounded'), on_deck=S('On Deck')):
+
             my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(my_slices, low_coll)
             self.create_kpvs_within_slices(pitch.array,
                                        my_slices,
                                        max_value)
@@ -12728,14 +12735,17 @@ class PitchOnGroundMax(KeyPointValueNode):
 
 class PitchOnDeckMax(KeyPointValueNode):
     '''
+    Pitch attitude maximum during operation on a moving deck.
     '''
     units = ut.DEGREE
 
     can_operate = helicopter_only
 
-    def derive(self, pitch=P('Pitch'), on_deck=S('On Deck')):
+    def derive(self, pitch=P('Pitch'), coll=P('Collective'), on_deck=S('On Deck')):
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(pitch.array,
-                                       on_deck.get_slices(),
+                                       my_slices,
                                        max_value)
 
 
