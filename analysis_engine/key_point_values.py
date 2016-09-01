@@ -15209,6 +15209,9 @@ class TCASRAWarningDuration(KeyPointValueNode):
                                                          ignore_missing=True)
 
             ras_slices = shift_slices(runs_of_ones(ras_local), air.slice.start)
+            # Where data is corrupted, single samples are a common source of error
+            # time_limit rejects single samples, but 2+ sample events are retained.
+            ras_slices = slices_remove_small_slices(ras_slices, time_limit=1)
             self.create_kpvs_from_slice_durations(ras_slices, self.frequency,
                                                   mark='start')
 

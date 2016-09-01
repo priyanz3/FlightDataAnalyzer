@@ -15701,6 +15701,16 @@ class TestTCASRAWarningDuration(unittest.TestCase, NodeTest):
         self.assertEqual([KeyPointValue(3, 3.0, 'TCAS RA Warning Duration')],
                          node)
 
+    def test_single_samples_rejected(self):
+        values_mapping = {0: '-', 1: 'RA'}
+        ra = M('TCAS RA', array=np.ma.array([0,0,1,1,0,0,1,0,0,0]),
+               values_mapping=values_mapping)
+        airborne = buildsection('Airborne', 1, 8)
+        node = self.node_class()
+        node.derive(ra, None, airborne)
+        self.assertEqual([KeyPointValue(2, 2.0, 'TCAS RA Warning Duration')],
+                         node)
+
 
 class TestTCASRAReactionDelay(unittest.TestCase, NodeTest):
 
