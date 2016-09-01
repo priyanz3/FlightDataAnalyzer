@@ -16512,3 +16512,47 @@ class CruiseGuideIndicatorMax(KeyPointValueNode):
 
     def derive(self, cgi=P('Cruise Guide'), airborne=S('Airborne')):
         self.create_kpv_from_slices(cgi.array, airborne, max_abs_value)
+
+
+##############################################################################
+# Training Mode
+class TrainingModeDuration(KeyPointValueNode):
+    '''
+    Specific to the S92 helicopter, FADEC training mode used.
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available):
+        # S92A case
+        if ('Training Mode' in available) and \
+           not(any_of(('Eng (1) Training Mode', 'Eng (2) Training Mode'), available)):
+            return True
+        # H225 case
+        elif all_of(('Eng (1) Training Mode', 'Eng (2) Training Mode'), available) and \
+            ('Training Mode' not in available) :
+            return True
+        # No other cases operational yet.
+        else:
+            return False
+
+    def derive(self, trg=P('Training Mode'),
+               trg1=P('Eng (1) Training Mode'),
+               trg2=P('Eng (2) Training Mode'),
+               ):
+
+        # S92A case
+        if trg:
+            trg_slices = runs_of_ones(trg.array)
+            frequency = trg.frequency
+        else:
+            # H225 case
+            trg_slices = slices_or(runs_of_ones(trg1.array), runs_of_ones(trg2.array))
+            frequency = trg1.frequency
+
+        self.create_kpvs_from_slice_durations(trg_slices,
+                                              frequency,
+                                              min_duration=2.0,
+                                              mark='start')
+
