@@ -416,6 +416,7 @@ from analysis_engine.key_point_values import (
     HeightLoss35To1000Ft,
     HeightLossLiftoffTo35Ft,
     HeightMinsToTouchdown,
+    HoverHeightMax,
     IANFinalApproachCourseDeviationMax,
     IANGlidepathDeviationMax,
     ILSFrequencyDuringApproach,
@@ -17043,3 +17044,23 @@ class TestTrainingModeDuration(unittest.TestCase):
         self.assertEqual(node[0].index, 2)
         self.assertEqual(node[1].value, 2)
         self.assertEqual(node[1].index, 7)
+
+class TestHoverHeightMax(unittest.TestCase):
+
+    def test_can_operate(self):
+        self.assertEqual(HoverHeightMax.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = HoverHeightMax.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(opts, ([('Altitude Radio', 'Hover',)]))
+
+    def test_derive(self):
+        alt=P('Altitude Radio', np.ma.array(data=[2,3,4,5,3,3,4,3,2,7,8.0],
+                                            mask=[0,0,0,1,0,0,0,0,0,0,0]))
+        hover=buildsections('Hover', [2, 6], [7, 10])
+        node=HoverHeightMax()
+        node.derive(alt, hover)
+        self.assertEqual(len(node),2)
+        self.assertEqual(node[0].index, 2)
+        self.assertEqual(node[0].value, 4)
+        self.assertEqual(node[1].index, 9)
+        self.assertEqual(node[1].value, 7)

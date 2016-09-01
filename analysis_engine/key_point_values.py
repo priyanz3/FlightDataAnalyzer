@@ -16556,3 +16556,18 @@ class TrainingModeDuration(KeyPointValueNode):
                                               min_duration=2.0,
                                               mark='start')
 
+##############################################################################
+# Hover height
+class HoverHeightMax(KeyPointValueNode):
+    '''
+    Maximum hover height, to monitor for safe hover operation.
+    '''
+
+    units = ut.FT
+
+    can_operate = helicopter_only
+
+    def derive(self, rad_alt=P('Altitude Radio'), hover=S('Hover')):
+        self.create_kpvs_within_slices(rad_alt.array, hover.get_slices(), max_value)
+
+
