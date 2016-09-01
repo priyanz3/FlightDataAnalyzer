@@ -930,7 +930,7 @@ def coreg(y, indep_var=None, force_zero=False):
     except ValueError:
         return None, None, None
     
-    if np.isnan(p):
+    if np.isinf(p) or np.isnan(p):
         # known to be caused by negative sqrt in np.sqrt(n*sx2-sx*sx)
         return None, None, None
 
