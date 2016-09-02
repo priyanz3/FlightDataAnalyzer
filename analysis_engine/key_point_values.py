@@ -14865,16 +14865,30 @@ class TAWSTerrainClearanceFloorAlertDuration(KeyPointValueNode):
 
     name = 'TAWS Terrain Clearance Floor Alert Duration'
     units = ut.SECOND
-    
+
+    @classmethod
+    def can_operate(cls, available):
+        return 'Airborne' in available and any_of(
+            ['TAWS Terrain Clearance Floor Alert',
+             'TAWS Terrain Clearance Floor Alert (2)'], available)
+
     def derive(self,
                taws_terrain_clearance_floor_alert=
                M('TAWS Terrain Clearance Floor Alert'),
+               taws_terrain_clearance_floor_alert_2=
+               M('TAWS Terrain Clearance Floor Alert (2)'),
                airborne=S('Airborne')):
-        self.create_kpvs_where(
-            taws_terrain_clearance_floor_alert.array == 'Alert',
-            taws_terrain_clearance_floor_alert.hz,
-            phase=airborne)
-    
+
+        hz = (taws_terrain_clearance_floor_alert or 
+              taws_terrain_clearance_floor_alert_2).hz
+
+        taws_terrain_alert = vstack_params_where_state(
+            (taws_terrain_clearance_floor_alert, 'Alert'),
+            (taws_terrain_clearance_floor_alert_2, 'Alert')).any(axis=0)
+
+        self.create_kpvs_where(taws_terrain_alert, hz, phase=airborne)
+
+
 class TAWSGlideslopeWarning1500To1000FtDuration(KeyPointValueNode):
     '''
     '''

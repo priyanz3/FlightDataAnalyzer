@@ -15205,12 +15205,21 @@ class TestTAWSTerrainPullUpWarningDuration(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestTAWSTerrainClearanceFloorAlertDuration(unittest.TestCase, NodeTest):
+class TestTAWSTerrainClearanceFloorAlertDuration(unittest.TestCase):
 
     def setUp(self):
         self.node_class = TAWSTerrainClearanceFloorAlertDuration
         self.operational_combinations = [('TAWS Terrain Clearance Floor Alert',
                                           'Airborne')]
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            alert1 = 'TAWS Terrain Clearance Floor Alert' in opt
+            alert2 = 'TAWS Terrain Clearance Floor Alert (2)' in opt
+            self.assertTrue(alert1 or alert2)
 
     def test_attributes(self):
         node = self.node_class()
@@ -15219,16 +15228,62 @@ class TestTAWSTerrainClearanceFloorAlertDuration(unittest.TestCase, NodeTest):
                          'TAWS Terrain Clearance Floor Alert Duration')
 
     def test_derive(self):
-        alerts = M('TAWS Terrain Clearance Floor Alert',
-                   np.ma.array([0]*15 + [1]*15 + [0]*10),
-                   values_mapping={0:'-', 1:'Alert'})
+        alerts1 = M('TAWS Terrain Clearance Floor Alert',
+                    np.ma.array([0]*15 + [1]*15 + [0]*10),
+                    values_mapping={0:'-', 1:'Alert'})
+        alerts2 = None
         phase = buildsection('Airborne', 0, 24)
 
         node = self.node_class()
-        node.derive(taws_terrain_clearance_floor_alert=alerts, airborne=phase)
+        node.derive(alerts1, alerts2, phase)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 15)
         self.assertEqual(node[0].value, 10)
+
+    def test_derive_2(self):
+        alerts1 = None
+        alerts2 = M('TAWS Terrain Clearance Floor Alert (2)',
+                    np.ma.array([0]*15 + [1]*15 + [0]*10),
+                    values_mapping={0:'-', 1:'Alert'})
+        phase = buildsection('Airborne', 0, 24)
+
+        node = self.node_class()
+        node.derive(alerts1, alerts2, phase)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 15)
+        self.assertEqual(node[0].value, 10)
+
+    def test_derive_3(self):
+        alerts1 = M('TAWS Terrain Clearance Floor Alert',
+                    np.ma.array([0]*15 + [1]*5 + [0]*20),
+                    values_mapping={0:'-', 1:'Alert'})
+        alerts2 = M('TAWS Terrain Clearance Floor Alert (2)',
+                    np.ma.array([0]*20 + [1]*10 + [0]*10),
+                    values_mapping={0:'-', 1:'Alert'})
+        phase = buildsection('Airborne', 0, 24)
+
+        node = self.node_class()
+        node.derive(alerts1, alerts2, phase)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 15)
+        self.assertEqual(node[0].value, 10)
+
+    def test_derive_4(self):
+        alerts1 = M('TAWS Terrain Clearance Floor Alert',
+                    np.ma.array([0]*10 + [1]*5 + [0]*25),
+                    values_mapping={0:'-', 1:'Alert'})
+        alerts2 = M('TAWS Terrain Clearance Floor Alert (2)',
+                    np.ma.array([0]*25 + [1]*10 + [0]*5),
+                    values_mapping={0:'-', 1:'Alert'})
+        phase = buildsection('Airborne', 0, 29)
+
+        node = self.node_class()
+        node.derive(alerts1, alerts2, phase)
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 10)
+        self.assertEqual(node[0].value, 5)
+        self.assertEqual(node[1].index, 25)
+        self.assertEqual(node[1].value, 5)
 
 
 class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
