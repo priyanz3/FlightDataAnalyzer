@@ -611,6 +611,7 @@ from analysis_engine.key_point_values import (
     TAWSTerrainCautionDuration,
     TAWSTerrainPullUpWarningDuration,
     TAWSTerrainWarningDuration,
+    TAWSTerrainClearanceFloorAlertDuration,
     TAWSTooLowFlapWarningDuration,
     TAWSTooLowGearWarningDuration,
     TAWSTooLowTerrainWarningDuration,
@@ -15202,6 +15203,32 @@ class TestTAWSTerrainPullUpWarningDuration(unittest.TestCase, NodeTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestTAWSTerrainClearanceFloorAlertDuration(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = TAWSTerrainClearanceFloorAlertDuration
+        self.operational_combinations = [('TAWS Terrain Clearance Floor Alert',
+                                          'Airborne')]
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 's')
+        self.assertEqual(node.name,
+                         'TAWS Terrain Clearance Floor Alert Duration')
+
+    def test_derive(self):
+        alerts = M('TAWS Terrain Clearance Floor Alert',
+                   np.ma.array([0]*15 + [1]*15 + [0]*10),
+                   values_mapping={0:'-', 1:'Alert'})
+        phase = buildsection('Airborne', 0, 24)
+
+        node = self.node_class()
+        node.derive(taws_terrain_clearance_floor_alert=alerts, airborne=phase)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 15)
+        self.assertEqual(node[0].value, 10)
 
 
 class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,

@@ -14859,6 +14859,22 @@ class TAWSTerrainPullUpWarningDuration(KeyPointValueNode):
                                taws_terrain_pull_up.hz, phase=airborne)
 
 
+class TAWSTerrainClearanceFloorAlertDuration(KeyPointValueNode):
+    '''
+    '''
+
+    name = 'TAWS Terrain Clearance Floor Alert Duration'
+    units = ut.SECOND
+    
+    def derive(self,
+               taws_terrain_clearance_floor_alert=
+               M('TAWS Terrain Clearance Floor Alert'),
+               airborne=S('Airborne')):
+        self.create_kpvs_where(
+            taws_terrain_clearance_floor_alert.array == 'Alert',
+            taws_terrain_clearance_floor_alert.hz,
+            phase=airborne)
+    
 class TAWSGlideslopeWarning1500To1000FtDuration(KeyPointValueNode):
     '''
     '''
