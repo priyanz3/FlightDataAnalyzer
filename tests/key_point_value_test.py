@@ -341,6 +341,7 @@ from analysis_engine.key_point_values import (
     EngTorqueFor5SecDuringTakeoff5MinRatingMax,
     EngTorqueOverThresholdDuration,
     EngTorqueWhileDescendingMax,
+    EngTorque7FtToTouchdownMax,
     EngVibAMax,
     EngVibBMax,
     EngVibBroadbandMax,
@@ -9398,6 +9399,42 @@ class TestEngTorqueWhileDescendingMax(unittest.TestCase, CreateKPVFromSlicesTest
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestEngTorque7FtToTouchdownMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = EngTorque7FtToTouchdownMax
+        self.touchdowns = KTI(name='Touchdown',
+                              items=[KeyTimeInstance(name='Touchdown',
+                                                     index=5),])
+
+    def test_can_operate(self):
+        prop = A('Engine Propulsion', 'PROP')
+        opts = self.node_class.get_operational_combinations(eng_type=prop)
+
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Eng (*) Torque Max', opts[0])
+        self.assertIn('Altitude AAL For Flight Phases', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Eng Torque 7 Ft To Touchdown Max')
+        self.assertEqual(node.units, '%')
+
+    def test_derive(self):
+        torque = P('Eng (*) Torque Max', 
+                   np.ma.array([80, 80, 81, 85, 90, 80, 78]))
+        alt_aal = P('Altitude AAL For Flight Phases',
+                    np.ma.array([100, 70, 45, 20, 6, 0, 0]))
+
+        node = self.node_class()
+        node.derive(torque, alt_aal, self.touchdowns)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 4)
+        self.assertEqual(node[0].value, 90)
 
 
 class TestTorqueAsymmetryWhileAirborneMax(unittest.TestCase):

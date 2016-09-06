@@ -10168,6 +10168,32 @@ class EngTorqueWhileDescendingMax(KeyPointValueNode):
         self.create_kpv_from_slices(eng_trq_max.array, descending, max_value)
 
 
+class EngTorque7FtToTouchdownMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    @classmethod
+    def can_operate(cls, available, eng_type=A('Engine Propulsion')):
+        turbo_prop = eng_type.value == 'PROP'
+        required_params = all_of(['Eng (*) Torque Max',
+                                  'Altitude AAL For Flight Phases',
+                                  'Touchdown'], available)
+        return turbo_prop and required_params
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               touchdowns=KTI('Touchdown')):
+
+        self.create_kpvs_within_slices(
+            eng_trq_max.array,
+            alt_aal.slices_to_kti(7, touchdowns),
+            max_value,
+        )
+
+
 ##############################################################################
 # Torque
 
