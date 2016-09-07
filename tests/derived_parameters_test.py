@@ -2956,17 +2956,32 @@ class TestGroundspeed(unittest.TestCase):
 
     def setUp(self):
         self.node_class = Groundspeed
+        self.precise = A('Precise Positioning', value=True)
 
     def test_can_operate(self):
         self.assertFalse(Groundspeed.can_operate([], ac_type=aeroplane))
-        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)'], ac_type=aeroplane))
-        self.assertTrue(Groundspeed.can_operate(['Groundspeed (2)'], ac_type=aeroplane))
-        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)', 'Groundspeed (2)'], ac_type=aeroplane))
+        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)'],
+                                                ac_type=aeroplane))
+        self.assertTrue(Groundspeed.can_operate(['Groundspeed (2)'],
+                                                ac_type=aeroplane))
+        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)',
+                                                 'Groundspeed (2)'],
+                                                ac_type=aeroplane))
         self.assertFalse(Groundspeed.can_operate([], ac_type=helicopter))
-        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)', 'Groundspeed (2)'], ac_type=helicopter))
-        self.assertFalse(Groundspeed.can_operate(['Latitude Prepared'], ac_type=helicopter))
-        self.assertFalse(Groundspeed.can_operate(['Longitude Prepared'], ac_type=helicopter))
-        self.assertTrue(Groundspeed.can_operate(['Latitude Prepared', 'Longitude Prepared'], ac_type=helicopter))
+        self.assertTrue(Groundspeed.can_operate(['Groundspeed (1)',
+                                                 'Groundspeed (2)'],
+                                                ac_type=helicopter))
+        self.assertFalse(Groundspeed.can_operate(['Latitude Prepared'],
+                                                 ac_type=helicopter))
+        self.assertFalse(Groundspeed.can_operate(['Longitude Prepared'],
+                                                 ac_type=helicopter))
+        self.assertFalse(Groundspeed.can_operate(['Latitude Prepared',
+                                                  'Longitude Prepared'],
+                                                 ac_type=helicopter))
+        self.assertTrue(Groundspeed.can_operate(['Latitude Prepared',
+                                                 'Longitude Prepared'],
+                                                ac_type=helicopter,
+                                                precise=self.precise ))
 
     def test_basic(self):
         one = P('Groundspeed (1)', np.ma.array([100,200,300]), frequency=0.5, offset=0.0)

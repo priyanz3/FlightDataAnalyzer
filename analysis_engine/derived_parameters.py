@@ -3823,10 +3823,14 @@ class Groundspeed(DerivedParameterNode):
     units = ut.KT
 
     @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        gspd_sources = any_of(('Groundspeed (1)', 'Groundspeed (2)'), available)
-        lat_lon = all_of(('Latitude Prepared', 'Longitude Prepared'), available)
-        return gspd_sources or (lat_lon and ac_type == helicopter)
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    precise=A('Precise Positioning')):
+        gspd_sources = any_of(('Groundspeed (1)', 'Groundspeed (2)'),
+                              available)
+        lat_lon = all_of(('Latitude Prepared', 'Longitude Prepared'),
+                         available)
+        return gspd_sources or (lat_lon and ac_type == helicopter
+                                and precise.value)
 
     def derive(self,
                # aeroplane
