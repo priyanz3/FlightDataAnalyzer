@@ -5075,6 +5075,14 @@ class TestSpeedbrake(unittest.TestCase):
         self.assertTrue(Speedbrake.can_operate(
             ('Spoiler (L) (3)', 'Spoiler (L) (4)', 'Spoiler (L) (5)',
              'Spoiler (R) (3)', 'Spoiler (R) (4)', 'Spoiler (R) (5)'), family=family))
+        family = A(name='Family', value='CL-600')
+        self.assertTrue(Speedbrake.can_operate(
+            ('Spoiler (L) (3)', 'Spoiler (L) (4)',
+             'Spoiler (R) (3)', 'Spoiler (R) (4)',), family=family))
+        self.assertTrue(Speedbrake.can_operate(
+            ('Spoiler (L) (3)', 'Spoiler (R) (3)',), family=family))
+        self.assertTrue(Speedbrake.can_operate(
+            ('Spoiler (L) (2)', 'Spoiler (R) (2)',), family=family))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

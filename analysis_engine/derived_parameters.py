@@ -6369,6 +6369,11 @@ class Speedbrake(DerivedParameterNode):
             For airplanes that do not have the Short Field Performance option
         This suggests that the synchro sourced L&R 3 positions have a scaling
         that changes with short field option.
+        
+        CL-600 has 3 operational combinations; 
+         * CRJ100/200/Challenger 850 Flight Spoiler is L&R 3
+         * CRJ700/900 Flight Spoilers are L&R 3 and 4
+         * Challenger 605 Flight Spoiler is L&R 2
         '''
         family_name = family.value if family else None
         return family_name and (
@@ -6404,6 +6409,11 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (4)',
                 'Spoiler (R) (3)',
                 'Spoiler (R) (4)'),
+                available
+            ) or
+            family_name == 'CL-600' and all_of((
+                'Spoiler (L) (3)',
+                'Spoiler (R) (3)',),
                 available
             ) or
             family_name == 'MD-11' and all_of((
