@@ -15331,7 +15331,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
         self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(1700.0, 900.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
-        self.alert_map = {0: '-', 1: 'Alert'}
+        self.alert_map = {0: '-', 1: 'Warning'}
 
     def test_attributes(self):
         node = self.node_class()
@@ -15346,7 +15346,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
         for opt in opts:
             self.assertIn('Altitude AAL For Flight Phases', opt)
             warn = 'TAWS Glideslope' in opt
-            alert = 'TAWS Alert' in opt
+            alert = 'TAWS Glideslope Alert' in opt
             self.assertTrue(warn or alert)
 
     def test_derive(self):
@@ -15362,7 +15362,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
         self.assertEqual(node[0].value, 12)
 
     def test_derive_2(self):
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15377,7 +15377,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
         taws_glideslope = M('TAWS Glideslope',
                             np.ma.array([0]*15 + [1]*15 + [0]*20),
                             values_mapping=self.warn_map)
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15393,7 +15393,7 @@ class TestTAWSGlideslopeWarning1500To1000FtDuration(unittest.TestCase,
                             np.ma.array([0]*23 + [1]*5 + [0]*22),
                             values_mapping=self.warn_map)
 
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*30 + [1]*10 + [0]*10),
                        values_mapping=self.alert_map)
 
@@ -15415,7 +15415,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
         self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(1200.0, 400.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
-        self.alert_map = {0: '-', 1: 'Alert'}
+        self.alert_map = {0: '-', 1: 'Warning'}
 
     def test_attributes(self):
         node = self.node_class()
@@ -15430,7 +15430,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
         for opt in opts:
             self.assertIn('Altitude AAL For Flight Phases', opt)
             warn = 'TAWS Glideslope' in opt
-            alert = 'TAWS Alert' in opt
+            alert = 'TAWS Glideslope Alert' in opt
             self.assertTrue(warn or alert)
 
     def test_derive(self):
@@ -15446,7 +15446,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
         self.assertEqual(node[0].value, 12)
 
     def test_derive_2(self):
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15461,7 +15461,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
         taws_glideslope = M('TAWS Glideslope',
                             np.ma.array([0]*15 + [1]*15 + [0]*20),
                             values_mapping=self.warn_map)
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15476,7 +15476,7 @@ class TestTAWSGlideslopeWarning1000To500FtDuration(unittest.TestCase,
         taws_glideslope = M('TAWS Glideslope',
                             np.ma.array([0]*23 + [1]*5 + [0]*22),
                             values_mapping=self.warn_map)
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*30 + [1]*10 + [0]*10),
                        values_mapping=self.alert_map)
 
@@ -15497,7 +15497,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
         self.alt_aal = P('Altitude AAL For Flight Phases',
                          np.linspace(800.0, 100.0, 50))
         self.warn_map = {0: '-', 1: 'Warning'}
-        self.alert_map = {0: '-', 1: 'Alert'}
+        self.alert_map = {0: '-', 1: 'Warning'}
 
     def test_attributes(self):
         node = self.node_class()
@@ -15512,7 +15512,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
         for opt in opts:
             self.assertIn('Altitude AAL For Flight Phases', opt)
             warn = 'TAWS Glideslope' in opt
-            alert = 'TAWS Alert' in opt
+            alert = 'TAWS Glideslope Alert' in opt
             self.assertTrue(warn or alert)
 
     def test_derive(self):
@@ -15528,7 +15528,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
         self.assertEqual(node[0].value, 3)
 
     def test_derive_2(self):
-        taws_alert = M('TAWS Alert',
+        taws_alert = M('TAWS Glideslope Alert',
                        np.ma.array([0]*25 + [1]*10 + [0]*15),
                        values_mapping=self.alert_map)
 
@@ -15543,7 +15543,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
             taws_glideslope = M('TAWS Glideslope',
                                 np.ma.array([0]*15 + [1]*10 + [0]*25),
                                 values_mapping=self.warn_map)
-            taws_alert = M('TAWS Alert',
+            taws_alert = M('TAWS Glideslope Alert',
                            np.ma.array([0]*25 + [1]*10 + [0]*15),
                            values_mapping=self.alert_map)
 
@@ -15558,7 +15558,7 @@ class TestTAWSGlideslopeWarning500To200FtDuration(unittest.TestCase, NodeTest):
             taws_glideslope = M('TAWS Glideslope',
                                 np.ma.array([0]*23 + [1]*5 + [0]*22),
                                 values_mapping=self.warn_map)
-            taws_alert = M('TAWS Alert',
+            taws_alert = M('TAWS Glideslope Alert',
                            np.ma.array([0]*30 + [1]*10 + [0]*10),
                            values_mapping=self.alert_map)
 

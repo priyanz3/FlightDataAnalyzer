@@ -14925,16 +14925,16 @@ class TAWSGlideslopeWarning1500To1000FtDuration(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available):
         return 'Altitude AAL For Flight Phases' in available and\
-               any_of(['TAWS Glideslope', 'TAWS Alert'], available)
+               any_of(['TAWS Glideslope', 'TAWS Glideslope Alert'], available)
 
     def derive(self,
                taws_glideslope=M('TAWS Glideslope'),
-               taws_alert=M('TAWS Alert'),
+               taws_alert=M('TAWS Glideslope Alert'),
                alt_aal=P('Altitude AAL For Flight Phases')):
 
         taws_gs = vstack_params_where_state(
             (taws_glideslope, 'Warning'),
-            (taws_alert, 'Alert')
+            (taws_alert, 'Warning')
             ).any(axis=0)
 
         phases = slices_and(runs_of_ones(taws_gs),
@@ -14953,16 +14953,16 @@ class TAWSGlideslopeWarning1000To500FtDuration(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available):
         return 'Altitude AAL For Flight Phases' in available and\
-               any_of(['TAWS Glideslope', 'TAWS Alert'], available)
+               any_of(['TAWS Glideslope', 'TAWS Glideslope Alert'], available)
 
     def derive(self,
                taws_glideslope=M('TAWS Glideslope'),
-               taws_alert=M('TAWS Alert'),
+               taws_alert=M('TAWS Glideslope Alert'),
                alt_aal=P('Altitude AAL For Flight Phases')):
 
         taws_gs = vstack_params_where_state(
             (taws_glideslope, 'Warning'),
-            (taws_alert, 'Alert')
+            (taws_alert, 'Warning')
         ).any(axis=0)
 
         phases = slices_and(runs_of_ones(taws_gs),
@@ -14981,17 +14981,17 @@ class TAWSGlideslopeWarning500To200FtDuration(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available):
         return 'Altitude AAL For Flight Phases' in available and\
-               any_of(['TAWS Glideslope', 'TAWS Alert'], available)
+               any_of(['TAWS Glideslope', 'TAWS Glideslope Alert'], available)
 
 
     def derive(self,
                taws_glideslope=M('TAWS Glideslope'),
-               taws_alert=M('TAWS Alert'),
+               taws_alert=M('TAWS Glideslope Alert'),
                alt_aal=P('Altitude AAL For Flight Phases')):
 
         taws_gs = vstack_params_where_state(
             (taws_glideslope, 'Warning'),
-            (taws_alert, 'Alert')
+            (taws_alert, 'Warning')
         ).any(axis=0)
 
         phases = slices_and(runs_of_ones(taws_gs),
