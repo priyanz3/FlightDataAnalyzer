@@ -1747,6 +1747,10 @@ class AltitudeBeforeLevelFlightWhenClimbing(KeyTimeInstanceNode):
                level_flight=S('Level Flight'),
                climbing=S('Climb')):
 
+        if not level_flight:
+            # no level flights so exit here
+            return
+
         ordered_level = level_flight.get_ordered_by_index().get_slices()
         not_level = [slice(0, ordered_level[0].start)] + \
             slices_not(ordered_level)
@@ -1782,6 +1786,10 @@ class AltitudeBeforeLevelFlightWhenDescending(KeyTimeInstanceNode):
                aal=P('Altitude AAL For Flight Phases'),
                level_flight=S('Level Flight'),
                descending=S('Descending')):
+
+        if not level_flight:
+            # no level flights so exit here
+            return
 
         ordered_level = level_flight.get_ordered_by_index().get_slices()
         not_level = [slice(0, ordered_level[0].start)] + \
