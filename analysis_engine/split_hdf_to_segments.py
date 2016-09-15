@@ -22,6 +22,7 @@ from analysis_engine.library import (align,
                                      repair_mask,
                                      rate_of_change,
                                      runs_of_ones,
+                                     slices_remove_small_gaps,
                                      slices_remove_small_slices,
                                      straighten_headings,
                                      vstack_params)
@@ -102,9 +103,12 @@ def _segment_type_and_slice(speed_array, speed_frequency,
     heading_stop = stop * heading_frequency
     heading_array = heading_array[heading_start:heading_stop]
 
+    # remove small gaps between valid data, e.g. brief data spikes
+    unmasked_slices = slices_remove_small_gaps(
+        np.ma.clump_unmasked(speed_array), 2, speed_frequency)
     # remove small slices to find 'consistent' valid data
     unmasked_slices = slices_remove_small_slices(
-        np.ma.clump_unmasked(speed_array), 10, speed_frequency)
+        unmasked_slices, 10, speed_frequency)
 
     if unmasked_slices:
         # Check speed
