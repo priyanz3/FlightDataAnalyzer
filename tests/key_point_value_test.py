@@ -13780,19 +13780,29 @@ class TestRollBelow300FtMax(unittest.TestCase):
     def setUp(self):
         self.node_class = RollBelow300FtMax
 
+    def test_attribute(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Roll Below 300 Ft Max')
+        self.assertEqual(node.units, 'deg')
+
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Roll', opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+        #self.assertEqual(opts, [('Roll', 'Altitude AGL')])
 
     def test_derive(self):
         alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
+        airborne = buildsections('Airborne', [2, 49])
 
         node = self.node_class()
-        node.derive(roll, alt)
+        node.derive(roll, alt, airborne)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 6)

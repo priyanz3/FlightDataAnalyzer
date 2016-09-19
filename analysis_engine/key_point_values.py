@@ -13753,9 +13753,11 @@ class RollBelow300FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
-        _, height_bands = slices_below(alt_agl.array, 300)
-        self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        alt_slices = slices_and(airborne.get_slices(),
+                                slices_below(alt_agl.array, 300)[1])
+        self.create_kpvs_within_slices(roll.array, alt_slices, max_abs_value)
 
 
 class RollWithAPDisengagedMax(KeyPointValueNode):
