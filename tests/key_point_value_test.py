@@ -14715,8 +14715,8 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(len(opts),3)
         for opt in opts:
             self.assertIn('Airborne', opt)
-            stall_l = 'Stall Fault (L) Caution' in opt
-            stall_r = 'Stall Fault (R) Caution' in opt
+            stall_l = 'Stall (L) Fault Caution' in opt
+            stall_r = 'Stall (R) Fault Caution' in opt
             self.assertTrue(stall_l or stall_r)
 
     def test_derive(self):
@@ -14725,8 +14725,8 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(len(l),len(r))
         self.assertEqual(len(l),50)
 
-        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
-        stall_r = M('Stall Fault (R) Caution', r, values_mapping=self.vmap)
+        stall_l = M('Stall (L) Fault Caution', l, values_mapping=self.vmap)
+        stall_r = M('Stall (R) Fault Caution', r, values_mapping=self.vmap)
 
         airborne = buildsection('Airborne', 1, 48)
 
@@ -14745,7 +14745,7 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         l = np.ma.array([0]*10 + [1]*6 + [0]*14 + [1]*5 + [0]*15)
         self.assertEqual(len(l),50)
 
-        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
+        stall_l = M('Stall (L) Fault Caution', l, values_mapping=self.vmap)
         stall_r = None
 
         airborne = buildsection('Airborne', 1, 48)

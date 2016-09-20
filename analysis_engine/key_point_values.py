@@ -14514,13 +14514,13 @@ class StallFaultCautionDuration(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available):
-        stall_fault = any_of(('Stall Fault (L) Caution',
-                              'Stall Fault (R) Caution'), available)
+        stall_fault = any_of(('Stall (L) Fault Caution',
+                              'Stall (R) Fault Caution'), available)
         airborne = 'Airborne' in available
         return stall_fault and airborne
 
-    def derive(self, stall_l=M('Stall Fault (L) Caution'),
-               stall_r=M('Stall Fault (R) Caution'), airborne=S('Airborne')):
+    def derive(self, stall_l=M('Stall (L) Fault Caution'),
+               stall_r=M('Stall (L) Fault Caution'), airborne=S('Airborne')):
         stall_fault_caution=vstack_params_where_state(
             (stall_l, 'Caution'),
             (stall_r, 'Caution')
