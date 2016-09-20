@@ -4132,7 +4132,7 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.units, ut.SECOND)
+        self.assertEqual(node.units, 's')
         self.assertEqual(node.name, 'MGB Oil Press Low Duration')
 
     def test_can_operate(self):
@@ -4142,9 +4142,14 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
         )
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
 
-        self.assertEqual(len(opts),1)
-        self.assertIn('Airborne', opts[0])
-        self.assertIn('MGB Oil Press Low', opts[0])
+        self.assertEqual(len(opts),7)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            mgb = 'MGB Oil Press Low' in opt
+            mgb1 = 'MGB Oil Press Low (1)' in opt
+            mgb2 = 'MGB Oil Press Low (2)' in opt
+            self.assertTrue(mgb or mgb1 or mgb2)
+            
 
     def test_derive(self):
         warn = np.ma.array([0]*5 + [1]*20 + [0]*5)
@@ -4153,10 +4158,24 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
                        values_mapping={0: '-', 1: 'Low Press'})
         airs = buildsection('Airborne', 1, 38)
         node = self.node_class()
-        node.derive(warn_param, airs)
+        node.derive(mgb=warn_param, airborne=airs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[0].value, 20)
+
+    def test_derive_2(self):
+        warn_param_1 = M('MGB Oil Press Low (1)',
+                       array=np.ma.array([0]*5 + [1]*6 + [0]*19),
+                       values_mapping={0: '-', 1: 'Low Press'})
+        warn_param_2 = M('MGB Oil Press Low (2)',
+                       array=np.ma.array([0]*10 + [1]*5 + [0]*15),
+                       values_mapping={0: '-', 1: 'Low Press'})        
+        airs = buildsection('Airborne', 1, 38)
+        node = self.node_class()
+        node.derive(mgb1=warn_param_1, mgb2=warn_param_2, airborne=airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[0].value, 10)
 
 
 class TestCGBOilTempMax(unittest.TestCase):
