@@ -11884,9 +11884,12 @@ class GroundspeedBelow100FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL')):
+    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        alt_slices = slices_and(airborne.get_slices(),
+                                alt_agl.slices_below(100))
         self.create_kpvs_within_slices(gnd_spd.array,
-                                       alt_agl.slices_below(100),
+                                       alt_slices,
                                        max_value)
 
 ##############################################################################

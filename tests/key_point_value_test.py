@@ -11614,16 +11614,21 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
     def setUp(self):
         self.node_class = GroundspeedBelow100FtMax
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Groundspeed Below 100 Ft Max')
+        self.assertEqual(node.units, 'kt')
+
     def test_can_operate(self):
         self.assertEqual(
             self.node_class.get_operational_combinations(ac_type=aeroplane),
             []
         )
-        self.assertEqual(
-            self.node_class.get_operational_combinations(ac_type=helicopter),
-            [('Groundspeed', 'Altitude AGL')]
-        )
-
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Groundspeed', opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
 
     def test_derive(self):
         alt_agl_data = np.ma.array([
@@ -11635,15 +11640,14 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
 
         alt_agl = P('Altitude AGL', alt_agl_data)
         gnd_spd = P('Groundspeed', gnd_spd_data)
+        airborne = buildsection('Airborne', 1, 10)
 
         node = self.node_class()
-        node.derive(gnd_spd, alt_agl)
+        node.derive(gnd_spd, alt_agl, airborne)
 
-        self.assertEqual(len(node), 2)
+        self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 2)
         self.assertEqual(node[0].value, 146)
-        self.assertEqual(node[1].index, 10)
-        self.assertEqual(node[1].value, 130)
 
 ##############################################################################
 # Law
