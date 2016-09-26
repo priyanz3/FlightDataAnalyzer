@@ -13841,13 +13841,13 @@ class TestRollWithAPDisengagedMax(unittest.TestCase):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'AP 1 Engaged', 'AP 2 Engaged')])
+        self.assertEqual(opts, [('Roll', 'AP (1) Engaged', 'AP (2) Engaged')])
 
     def test_derive(self):
-        ap1 = M('AP 1 Engaged',
+        ap1 = M('AP (1) Engaged',
                 array=np.ma.array([0]*5 + [1]*10 + [0]*50 + [1]*30 + [0]*5),
                 values_mapping={0: '-', 1: 'Engaged'})
-        ap2 = M('AP 2 Engaged',
+        ap2 = M('AP (2) Engaged',
                 array=np.ma.array([0]*5 + [1]*30 + [0]*65),
                 values_mapping={0: '-', 1: 'Engaged'})
         x = np.linspace(0, 10, 100)

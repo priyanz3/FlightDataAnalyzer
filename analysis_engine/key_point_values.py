@@ -13786,8 +13786,8 @@ class RollWithAPDisengagedMax(KeyPointValueNode):
     name = 'Roll With AP Disengaged Max'
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), ap1=M('AP 1 Engaged'),
-               ap2=M('AP 2 Engaged')):
+    def derive(self, roll=P('Roll'), ap1=M('AP (1) Engaged'),
+               ap2=M('AP (2) Engaged')):
         ap = vstack_params_where_state((ap1,'Engaged'),
                                        (ap2,'Engaged')).any(axis=0)
 
