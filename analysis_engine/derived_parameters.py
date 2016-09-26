@@ -4100,6 +4100,8 @@ class SlatAngle(DerivedParameterNode):
 
         if any_of(('Slat Angle (L)', 'Slat Angle (R)'), available):
             return True
+        elif 'Slat Angle Recorded' in available:
+            return True
         else:
             if not all_of(('Slat Fully Extended', 'Model', 'Series', 'Family'), available):
                 return False
@@ -4114,12 +4116,18 @@ class SlatAngle(DerivedParameterNode):
 
     def derive(self, slat_l=P('Slat Angle (L)'), slat_r=P('Slat Angle (R)'),
                slat_full=M('Slat Fully Extended'), slat_part=M('Slat Part Extended'),
-               slat_retracted=M('Slat Retracted'), model=A('Model'),
-               series=A('Series'), family=A('Family')):
+               slat_retracted=M('Slat Retracted'), slat_angle_rec=P('Slat Angle Recorded'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
 
         if slat_l or slat_r:
             self.array, self.frequency, self.offset = \
                 blend_two_parameters(slat_l, slat_r)
+        elif slat_angle_rec:
+            # Spikey Slat Angle parameter renamed to Slat Angle Recorded to
+            # allow removal of single spikes
+            self.frequency = slat_angle_rec.frequency
+            self.offset = slat_angle_rec.offset
+            self.array = second_window(slat_angle_rec.array, 1, 2) # 3 sample smoothing
         else:
             detents = at.get_slat_map(model.value, series.value, family.value).keys()
             detents.sort()
