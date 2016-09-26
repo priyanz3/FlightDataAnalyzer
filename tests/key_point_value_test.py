@@ -558,7 +558,7 @@ from analysis_engine.key_point_values import (
     RollOnDeckMax,
     RollOnGroundMax,
     RollRateMax,
-    RollWithAPDisengagedMax,
+    RollWithAFCSDisengagedMax,
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
@@ -13832,29 +13832,35 @@ class TestRollBelow300FtMax(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, -0.345, places=3)
 
 
-class TestRollWithAPDisengagedMax(unittest.TestCase):
+class TestRollWithAFCSDisengagedMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = RollWithAPDisengagedMax
+        self.node_class = RollWithAFCSDisengagedMax
+        
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Roll With AFCS Disengaged Max')
+        self.assertEqual(node.units, 'deg')
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'AP (1) Engaged', 'AP (2) Engaged')])
+        self.assertEqual(opts, [('Roll', 'AFCS (1) Engaged',
+                                 'AFCS (2) Engaged')])
 
     def test_derive(self):
-        ap1 = M('AP (1) Engaged',
+        afcs1 = M('AFCS (1) Engaged',
                 array=np.ma.array([0]*5 + [1]*10 + [0]*50 + [1]*30 + [0]*5),
                 values_mapping={0: '-', 1: 'Engaged'})
-        ap2 = M('AP (2) Engaged',
+        afcs2 = M('AFCS (2) Engaged',
                 array=np.ma.array([0]*5 + [1]*30 + [0]*65),
                 values_mapping={0: '-', 1: 'Engaged'})
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
 
         node = self.node_class()
-        node.derive(roll, ap1, ap2)
+        node.derive(roll, afcs1, afcs2)
 
         self.assertEqual(len(node), 3)
         self.assertEqual(node[0].index, 4)
