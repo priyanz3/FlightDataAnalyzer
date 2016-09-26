@@ -13927,7 +13927,7 @@ class TestRollOnGroundMax(unittest.TestCase):
 
     def test_derive(self,):
         x = np.linspace(0, 10, 100)
-        roll = P('Roll', -x*np.sin(x))
+        roll = P('Roll', x*np.sin(x))
         name = 'Grounded'
         section = Section(name, slice(10, 50), 10, 50)
         grounded = SectionNode(name, items=[section])
@@ -13939,8 +13939,8 @@ class TestRollOnGroundMax(unittest.TestCase):
         node.derive(roll, grounded, on_deck)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 20)
-        self.assertAlmostEqual(node[0].value, -1.820, places=3)
+        self.assertEqual(node[0].index, 49)
+        self.assertAlmostEqual(node[0].value, -4.811, places=3)
 
     def test_not_on_deck(self,):
         x = np.linspace(0, 10, 100)
@@ -13969,7 +13969,7 @@ class TestRollOnDeckMax(unittest.TestCase):
 
     def test_derive(self,):
         x = np.linspace(0, 10, 100)
-        roll = P('Roll', -x*np.sin(x))
+        roll = P('Roll', x*np.sin(x))
         name = 'On Deck'
         section = Section(name, slice(10, 50), 10, 50)
         on_deck = SectionNode(name, items=[section])
@@ -13978,8 +13978,8 @@ class TestRollOnDeckMax(unittest.TestCase):
         node.derive(roll, on_deck)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 20)
-        self.assertAlmostEqual(node[0].value, -1.820, places=3)
+        self.assertEqual(node[0].index, 49)
+        self.assertAlmostEqual(node[0].value, -4.811, places=3)
 
 
 class TestRollLeftBelow6000FtAltitudeDensityBelow60Kts(unittest.TestCase):
