@@ -564,14 +564,14 @@ class AltitudeAAL(DerivedParameterNode):
             return alt_std - high_gnd
 
         if mode != 'air':
-        # We pretend the aircraft can't go below ground level for altitude AAL:
-        alt_rad_aal = np.ma.maximum(alt_rad, 0.0)
-        ralt_sections = np.ma.clump_unmasked(
-            np.ma.masked_outside(alt_rad_aal, 0.1, ALTITUDE_AAL_TRANS_ALT))
-        if len(ralt_sections) == 0:
-            # No useful radio altitude signals, so just use pressure altitude
-            # and pitch data.
-            return self.shift_alt_std(alt_std, land_pitch)
+            # We pretend the aircraft can't go below ground level for altitude AAL:
+            alt_rad_aal = np.ma.maximum(alt_rad, 0.0)
+            ralt_sections = np.ma.clump_unmasked(
+                np.ma.masked_outside(alt_rad_aal, 0.1, ALTITUDE_AAL_TRANS_ALT))
+            if len(ralt_sections) == 0:
+                # No useful radio altitude signals, so just use pressure altitude
+                # and pitch data.
+                return self.shift_alt_std(alt_std, land_pitch)
 
         if mode == 'land':
             # We refine our definition of the radio altimeter sections to
@@ -740,7 +740,7 @@ class AltitudeAAL(DerivedParameterNode):
                                 'alt_std': hb_min,
                                 'highest_ground': hg_max,
                             })
-                    else:
+                        else:
                             dips.append({
                                 'type': 'air',
                                 'slice': down_up,
