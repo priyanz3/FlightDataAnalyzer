@@ -4988,6 +4988,7 @@ class TestSlatAngle(unittest.TestCase):
             series=A('Series', 'B737-300'),
             family=A('Family', 'B737 Classic'),
         ))
+        self.assertTrue(self.node_class().can_operate(('Slat Angle Recorded',)))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -5017,6 +5018,7 @@ class TestSlatAngle(unittest.TestCase):
                    slat_full,
                    slat_part,
                    slat_retracted,
+                   None,
                    *self.ac_info_attributes)
         expected = np.ma.repeat((0, 22, 32, 22, 0), 10)
         assert_almost_equal(node.array, expected)
