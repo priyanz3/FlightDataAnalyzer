@@ -13814,7 +13814,7 @@ class RollOnGroundMax(KeyPointValueNode):
         my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
         self.create_kpvs_within_slices(roll.array,
                                        my_slices,
-                                       min_value)
+                                       abs_max_value)
 
 
 class RollOnDeckMax(KeyPointValueNode):
@@ -13830,7 +13830,7 @@ class RollOnDeckMax(KeyPointValueNode):
 
         self.create_kpvs_within_slices(roll.array,
                                        on_deck.get_slices(),
-                                       min_value)
+                                       abs_max_value)
 
 
 class RollCyclesDuringFinalApproach(KeyPointValueNode):
