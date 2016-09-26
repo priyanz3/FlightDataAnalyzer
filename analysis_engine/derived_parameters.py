@@ -563,6 +563,7 @@ class AltitudeAAL(DerivedParameterNode):
         if mode=='over_gnd' and (low_hb-high_gnd)>100.0:
             return alt_std - high_gnd
 
+        if mode != 'air':
         # We pretend the aircraft can't go below ground level for altitude AAL:
         alt_rad_aal = np.ma.maximum(alt_rad, 0.0)
         ralt_sections = np.ma.clump_unmasked(
@@ -593,6 +594,9 @@ class AltitudeAAL(DerivedParameterNode):
                 # Altitude Radio did not drop below ALTITUDE_AAL_TRANS_ALT,
                 # so we are better off working with just the pressure altitude signal.
                 return self.shift_alt_std(alt_std, land_pitch)
+
+        elif mode=='air':
+            return alt_std
 
         baro_sections = slices_not(ralt_sections, begin_at=0,
                                    end_at=len(alt_std))
@@ -728,13 +732,20 @@ class AltitudeAAL(DerivedParameterNode):
                         hb_min = np.ma.min(alt_std.array[down_up])
                         hr_min = np.ma.min(alt_rad.array[down_up])
                         hg_max = hb_min - hr_min
-                        if hg_max:
+                        if hg_max and hg_max < 20000:
                             # The rad alt measured height above a peak...
                             dips.append({
                                 'type': 'over_gnd',
                                 'slice': down_up,
                                 'alt_std': hb_min,
                                 'highest_ground': hg_max,
+                            })
+                    else:
+                            dips.append({
+                                'type': 'air',
+                                'slice': down_up,
+                                'alt_std': hb_min,
+                                'highest_ground': None,
                             })
                     else:
                         # We have no rad alt data we can use.
