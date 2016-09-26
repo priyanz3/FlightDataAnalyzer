@@ -4132,7 +4132,7 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.units, ut.SECOND)
+        self.assertEqual(node.units, 's')
         self.assertEqual(node.name, 'MGB Oil Press Low Duration')
 
     def test_can_operate(self):
@@ -4142,9 +4142,14 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
         )
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
 
-        self.assertEqual(len(opts),1)
-        self.assertIn('Airborne', opts[0])
-        self.assertIn('MGB Oil Press Low', opts[0])
+        self.assertEqual(len(opts),7)
+        for opt in opts:
+            self.assertIn('Airborne', opt)
+            mgb = 'MGB Oil Press Low' in opt
+            mgb1 = 'MGB Oil Press Low (1)' in opt
+            mgb2 = 'MGB Oil Press Low (2)' in opt
+            self.assertTrue(mgb or mgb1 or mgb2)
+            
 
     def test_derive(self):
         warn = np.ma.array([0]*5 + [1]*20 + [0]*5)
@@ -4153,10 +4158,24 @@ class TestMGBOilPressLowDuration(unittest.TestCase):
                        values_mapping={0: '-', 1: 'Low Press'})
         airs = buildsection('Airborne', 1, 38)
         node = self.node_class()
-        node.derive(warn_param, airs)
+        node.derive(mgb=warn_param, mgb1=None, mgb2=None, airborne=airs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[0].value, 20)
+
+    def test_derive_2(self):
+        warn_param_1 = M('MGB Oil Press Low (1)',
+                       array=np.ma.array([0]*5 + [1]*6 + [0]*19),
+                       values_mapping={0: '-', 1: 'Low Press'})
+        warn_param_2 = M('MGB Oil Press Low (2)',
+                       array=np.ma.array([0]*10 + [1]*5 + [0]*15),
+                       values_mapping={0: '-', 1: 'Low Press'})        
+        airs = buildsection('Airborne', 1, 38)
+        node = self.node_class()
+        node.derive(None, mgb1=warn_param_1, mgb2=warn_param_2, airborne=airs)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[0].value, 10)
 
 
 class TestCGBOilTempMax(unittest.TestCase):
@@ -11614,16 +11633,21 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
     def setUp(self):
         self.node_class = GroundspeedBelow100FtMax
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Groundspeed Below 100 Ft Max')
+        self.assertEqual(node.units, 'kt')
+
     def test_can_operate(self):
         self.assertEqual(
             self.node_class.get_operational_combinations(ac_type=aeroplane),
             []
         )
-        self.assertEqual(
-            self.node_class.get_operational_combinations(ac_type=helicopter),
-            [('Groundspeed', 'Altitude AGL')]
-        )
-
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Groundspeed', opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
 
     def test_derive(self):
         alt_agl_data = np.ma.array([
@@ -11635,15 +11659,14 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
 
         alt_agl = P('Altitude AGL', alt_agl_data)
         gnd_spd = P('Groundspeed', gnd_spd_data)
+        airborne = buildsection('Airborne', 1, 10)
 
         node = self.node_class()
-        node.derive(gnd_spd, alt_agl)
+        node.derive(gnd_spd, alt_agl, airborne)
 
-        self.assertEqual(len(node), 2)
+        self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 2)
         self.assertEqual(node[0].value, 146)
-        self.assertEqual(node[1].index, 10)
-        self.assertEqual(node[1].value, 130)
 
 ##############################################################################
 # Law
@@ -13780,19 +13803,29 @@ class TestRollBelow300FtMax(unittest.TestCase):
     def setUp(self):
         self.node_class = RollBelow300FtMax
 
+    def test_attribute(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Roll Below 300 Ft Max')
+        self.assertEqual(node.units, 'deg')
+
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Roll', opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+        #self.assertEqual(opts, [('Roll', 'Altitude AGL')])
 
     def test_derive(self):
         alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
+        airborne = buildsections('Airborne', [2, 49])
 
         node = self.node_class()
-        node.derive(roll, alt)
+        node.derive(roll, alt, airborne)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 6)
@@ -14682,8 +14715,8 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(len(opts),3)
         for opt in opts:
             self.assertIn('Airborne', opt)
-            stall_l = 'Stall Fault (L) Caution' in opt
-            stall_r = 'Stall Fault (R) Caution' in opt
+            stall_l = 'Stall (L) Fault Caution' in opt
+            stall_r = 'Stall (R) Fault Caution' in opt
             self.assertTrue(stall_l or stall_r)
 
     def test_derive(self):
@@ -14692,8 +14725,8 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(len(l),len(r))
         self.assertEqual(len(l),50)
 
-        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
-        stall_r = M('Stall Fault (R) Caution', r, values_mapping=self.vmap)
+        stall_l = M('Stall (L) Fault Caution', l, values_mapping=self.vmap)
+        stall_r = M('Stall (R) Fault Caution', r, values_mapping=self.vmap)
 
         airborne = buildsection('Airborne', 1, 48)
 
@@ -14712,7 +14745,7 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         l = np.ma.array([0]*10 + [1]*6 + [0]*14 + [1]*5 + [0]*15)
         self.assertEqual(len(l),50)
 
-        stall_l = M('Stall Fault (L) Caution', l, values_mapping=self.vmap)
+        stall_l = M('Stall (L) Fault Caution', l, values_mapping=self.vmap)
         stall_r = None
 
         airborne = buildsection('Airborne', 1, 48)

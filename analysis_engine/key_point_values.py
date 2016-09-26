@@ -10580,10 +10580,25 @@ class MGBOilPressLowDuration(KeyPointValueNode):
     '''
     units = ut.SECOND
     name = 'MGB Oil Press Low Duration'
-    can_operate = helicopter_only
 
-    def derive(self, mgb=M('MGB Oil Press Low'), airborne=S('Airborne')):
-        self.create_kpvs_where(mgb.array == 'Low Press', mgb.hz, phase=airborne)
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        aircraft = ac_type == helicopter
+        gearbox = any_of(('MGB Oil Press Low', 'MGB Oil Press Low (1)',
+                          'MGB Oil Press Low (2)'), available)
+        airborne = 'Airborne' in available
+        return aircraft and gearbox and airborne
+
+    def derive(self, mgb=M('MGB Oil Press Low'),
+               mgb1=M('MGB Oil Press Low (1)'),
+               mgb2=M('MGB Oil Press Low (2)'),
+               airborne=S('Airborne')):
+        hz = (mgb or mgb1 or mgb2).hz
+        gearbox = vstack_params_where_state((mgb, 'Low Press'),
+                                            (mgb1, 'Low Press'),
+                                            (mgb2, 'Low Press'))
+        self.create_kpvs_where(gearbox.any(axis=0) == True,
+                               hz, phase=airborne)
 
 
 class CGBOilTempMax(KeyPointValueNode):
@@ -11884,9 +11899,12 @@ class GroundspeedBelow100FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL')):
+    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        alt_slices = slices_and(airborne.get_slices(),
+                                alt_agl.slices_below(100))
         self.create_kpvs_within_slices(gnd_spd.array,
-                                       alt_agl.slices_below(100),
+                                       alt_slices,
                                        max_value)
 
 ##############################################################################
@@ -13753,9 +13771,11 @@ class RollBelow300FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
-        _, height_bands = slices_below(alt_agl.array, 300)
-        self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        alt_slices = slices_and(airborne.get_slices(),
+                                slices_below(alt_agl.array, 300)[1])
+        self.create_kpvs_within_slices(roll.array, alt_slices, max_abs_value)
 
 
 class RollWithAPDisengagedMax(KeyPointValueNode):
@@ -14494,13 +14514,13 @@ class StallFaultCautionDuration(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available):
-        stall_fault = any_of(('Stall Fault (L) Caution',
-                              'Stall Fault (R) Caution'), available)
+        stall_fault = any_of(('Stall (L) Fault Caution',
+                              'Stall (R) Fault Caution'), available)
         airborne = 'Airborne' in available
         return stall_fault and airborne
 
-    def derive(self, stall_l=M('Stall Fault (L) Caution'),
-               stall_r=M('Stall Fault (R) Caution'), airborne=S('Airborne')):
+    def derive(self, stall_l=M('Stall (L) Fault Caution'),
+               stall_r=M('Stall (L) Fault Caution'), airborne=S('Airborne')):
         stall_fault_caution=vstack_params_where_state(
             (stall_l, 'Caution'),
             (stall_r, 'Caution')
