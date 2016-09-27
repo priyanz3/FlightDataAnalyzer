@@ -8,6 +8,69 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+
+v0.29.1
+-------
+
+ - Add:
+   - Derived: MGBOilTemp
+   - Derived: MGBOilPress
+   - Derived: FuelQtyAux
+   - KPV: PitchBelow1000FtMax/Min
+   - KPV: RollAbove300FtMax
+   - KPV: RollBelow300FtMax
+   - KPV: TailRotorPedalWhileTaxiingMax
+   - KPV: AccelerationLongitudinalWhileAirborneMax
+   - KPV: AirspeedDuringAutorotationMax/Min
+   - KPV: AirspeedAbove500FtMin
+   - KPV: CruiseGuideIndicatorMax
+   - KPV: GroundspeedBelow100FtMax
+   - KPV: MGBOilTempMax
+   - KPV: MGBOilPressMax/Min
+   - KPV: MGBOilPressLowDuration
+   - KPV: CGBOilTempMax
+   - KPV: CGBOilPressMax/Min
+   - KPV: StallFaultCautionDuration
+   - KPV: AltitudeWithSpeedbrakeDeployedDuringFinalApproachMin
+   - KPV: SATRateOfChangeMax
+   - KPV: ROC/ROD At Height before level off
+   - KPV: RollOnDeckMax
+   - KPV: Pitch On Ground and On Deck, Max and Min
+   - KPV: TrainingModeDuration
+   - KPV: HoverHeightMax
+   - KPV: EngTorque7FtToTouchdownMax
+   - KPV: RollWithAFCSDisengagedMax
+   - Multistate: Helicopters OEI/AEO
+   - Phase: On Deck
+ - Improvement:
+   - Straighten parameters before alignment
+   - Use Float values for frequency and offset by default
+   - Derived: Altitude AAL for helicopters without rad alt
+   - Derived: Altitude AGL handle missing Altitude Radio
+   - Derived: GearOnGround for helicopters with no GoG params
+   - Derived: Groundspeed can_operate requires Precise Positioning for Helicopter.
+   - Derived: Slat Angle: remove single spikes from Slat Angle Recoreded if available
+   - Derived: AltitudeAAL to ignore "ground" higher than most mountains
+   - KPV: SATMax: include fixed wing.
+   - KPV: Acceleration Longitudinal While Airborne Max: include fixed wing.
+   - KPV: TCAS RA event requires a minimum of two samples to trigger
+   - KPV: Heading variation on runway not applicable for helicopters
+   - Library: Change overflow correction to remove gaps based on time
+   - Multistate: Speedbrake Deployed remove single samples
+   - Multistate: Speedbrake Selected: added A310, A350, CRJ100, CRJ200
+   - Phase: Climb/Descent Altitude Radio Offset Removed used
+   - Split: Helicopter: handle missing GOG
+ - Fix:
+   - Wholly masked segments ignored in ClimbCruiseDescent flight phase.
+   - Latitude at liftoff fix for S76
+   - split_hdf_to_segments: ignore brief aspd spikes 
+   - coreg:
+     - avoid python float rounding
+     - handle negative sqrt along with ValueError
+     - handle infinite correlation result
+ - Removed:
+   - KPV: Stall Warning Activated Duration
+
 v0.28.7
 -------
 
