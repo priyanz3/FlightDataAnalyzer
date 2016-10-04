@@ -13543,6 +13543,28 @@ class RateOfDescentAtHeightBeforeLevelFlight(KeyPointValueNode):
                                 replace_values={'altitude': altitude})
 
 
+class VerticalSpeedAtAltitude(KeyPointValueNode):
+    '''
+    Approach vertical speed at 500 and 300 Ft
+    '''
+    NAME_FORMAT = 'Vertical Speed At %(altitude)d Ft'
+    NAME_VALUES = {'altitude': [500, 300]}
+    units = ut.FPM
+    can_operate = helicopter_only
+
+    def derive(self, vert_spd=P('Vertical Speed'), alt_agl=P('Altitude AGL'),
+               approachs=S('Approach')):
+        for approach in approachs:
+            for altitude in self.NAME_VALUES['altitude']:
+                index = index_at_value(alt_agl.array, altitude,
+                                       approach.slice, 'nearest')
+                if not index:
+                    continue
+                value = value_at_index(vert_spd.array, index)
+                if value:
+                    self.create_kpv(index, value, altitude=altitude)
+
+
 ##############################################################################
 # Roll
 
