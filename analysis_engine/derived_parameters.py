@@ -5088,12 +5088,8 @@ class MagneticVariation(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type == helicopter:
-            # Short flight segments can result in problems with small arrays failing to interpolate. FIXME.
-            return False
-        else:
-            lat = any_of(('Latitude', 'Latitude (Coarse)'), available)
-            lon = any_of(('Longitude', 'Longitude (Coarse)'), available)
+        lat = any_of(('Latitude', 'Latitude (Coarse)'), available)
+        lon = any_of(('Longitude', 'Longitude (Coarse)'), available)
         return lat and lon and all_of(('Altitude AAL', 'Start Datetime'),
                                       available)
 
