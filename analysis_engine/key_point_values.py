@@ -5650,7 +5650,7 @@ class DecelerationToAbortTakeoffAtRotation(KeyPointValueNode):
             rot_end = runway_distance_from_end(rwy.value,
                                                lat.array[rot_idx],
                                                lon.array[rot_idx])
-
+            if rot_end:
             lift_speed = value_at_index(speed, rot_idx) * KTS_TO_MPS
             mu = (lift_speed**2.0) / (2.0 * GRAVITY_METRIC * rot_end)
             self.create_kpv(rot_idx, mu)
