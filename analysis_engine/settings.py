@@ -317,6 +317,10 @@ ILS_CAPTURE = 0.8  # dots
 # Full scale reading on the ILS
 ILS_MAX_SCALE = 2.5  # dots
 
+# Tolerance bands for comparison of two sources
+ILS_GS_SPREAD = 0.05
+ILS_LOC_SPREAD = 0.1
+
 # Initial approach threshold height
 INITIAL_APPROACH_THRESHOLD = 3000  # ft
 

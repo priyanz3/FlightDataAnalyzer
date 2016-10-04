@@ -4222,6 +4222,52 @@ class TestBlendTwoParameters(unittest.TestCase):
         self.assertEqual(freq, 2.0)
         self.assertAlmostEqual(off, 0.4)
 
+    def test_blend_two_parameters_for_ils_localizer(self):
+        # Localizer feature allows rejection of one signal
+        p1 = P(array=[1.5, 1.4, 1.3, 1.2, 1.1, 1.0], frequency=0.5, offset = 0.5)
+        p2 = P(array=[0.2, 0.3, 0.4, 1.15, 1.05, 0.95], frequency=0.5, offset = 1.5)
+        arr, freq, off = blend_two_parameters(p1, p2, mode='localizer')
+        expected = np.ma.array(np.linspace(1.5, 0.95, num=12))
+        # See blend_equispaced_sensors for endpoint handling...
+        expected[-1] = 0.975
+        ma_test.assert_masked_array_almost_equal(arr, expected)
+
+    def test_blend_two_parameters_for_ils_localizer_reversed(self):
+        # Localizer feature allows rejection of one signal
+        p2 = P(array=[1.5, 1.4, 1.3, 1.2, 1.1, 1.0], frequency=0.5, offset = 0.5)
+        p1 = P(array=[0.2, 0.3, 0.4, 1.15, 1.05, 0.95], frequency=0.5, offset = 1.5)
+        arr, freq, off = blend_two_parameters(p1, p2, mode='localizer')
+        expected = np.ma.array(np.linspace(1.5, 0.95, num=12))
+        # See blend_equispaced_sensors for endpoint handling...
+        expected[-1] = 0.975
+        ma_test.assert_masked_array_almost_equal(arr, expected)
+
+    def test_blend_two_parameters_for_ils_localizer_inverted(self):
+        # Simply to make sure the ABS functions are right  :)
+        p1 = P(array=[1.5, 1.4, 1.3, 1.2, 1.1, 1.0], frequency=0.5, offset = 0.5)
+        p1.array *= -1
+        p2 = P(array=[0.2, 0.3, 0.4, 1.15, 1.05, 0.95], frequency=0.5, offset = 1.5)
+        p2.array *= -1
+        arr, freq, off = blend_two_parameters(p1, p2, mode='localizer')
+        expected = np.ma.array(np.linspace(-1.5, -0.95, num=12))
+        # See blend_equispaced_sensors for endpoint handling...
+        expected[-1] = -0.975
+        ma_test.assert_masked_array_almost_equal(arr, expected)
+
+    def test_blend_two_parameters_for_ils_glideslope(self):
+        p1 = P(array=[1.5, 1.4, 1.3, 1.2, 1.1, 1.0], frequency=0.5, offset = 0.5)
+        # The p2=1.3 value checks that we are using the right tolerance
+        p2 = P(array=[0.2, 1.3, 0.4, 1.15, 1.05, 0.95], frequency=0.5, offset = 1.5)
+        arr, freq, off = blend_two_parameters(p1, p2, mode='glideslope')
+        expected = np.ma.array(np.linspace(1.5, 0.95, num=12))
+        # See blend_equispaced_sensors for endpoint handling...
+        expected[-1] = 0.975
+        ma_test.assert_masked_array_almost_equal(arr, expected)
+
+    def test_blend_two_parameters_ils_raises(self):
+        p1 = P(array=[1.5, 1.4], frequency=0.5, offset = 0.5)
+        p2 = P(array=[1.5, 1.4], frequency=0.5, offset = 1.5)
+        self.assertRaises(ValueError, blend_two_parameters, p1, p2, mode='glodeslipe')
 
 class TestModulo(unittest.TestCase):
     def test_modulo(self):
@@ -7571,8 +7617,8 @@ class TestNearestRunway(unittest.TestCase):
             'identifier': u'13*',
             'magnetic_heading': Decimal('137.2'),
             'start': {
-                'latitude': 41.788069, 
-                'elevation': 620, 
+                'latitude': 41.788069,
+                'elevation': 620,
                 'longitude': -87.758803
             },
             'end': {

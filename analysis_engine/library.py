@@ -27,6 +27,8 @@ from flightdatautilities.geometry import cross_track_distance
 from settings import (
     BUMP_HALF_WIDTH,
     HEADING_RATE_FOR_MOBILE,
+    ILS_LOC_SPREAD,
+    ILS_GS_SPREAD,
     KTS_TO_MPS,
     METRES_TO_FEET,
     REPAIR_DURATION,
@@ -4341,7 +4343,7 @@ def blend_nonequispaced_sensors(array_one, array_two, padding):
     return av_pairs
 
 
-def blend_two_parameters(param_one, param_two):
+def blend_two_parameters(param_one, param_two, mode=None):
     '''
     Use: blend_two_parameters is intended for analogue parameters. Use
     merge_two_parameters for discrete and multi-state parameters.
@@ -4365,6 +4367,8 @@ def blend_two_parameters(param_one, param_two):
     :type param_one: Parameter
     :param param_two: Parameter object
     :type param_two: Parameter
+    :param mode: Function control for ILS merging; may be 'localizer' or 'glideslope'
+    :type mode: string
 
     :returns array, frequency, offset
     :type array: Numpy masked array
@@ -4411,21 +4415,24 @@ def blend_two_parameters(param_one, param_two):
     # identified already by parameter validity testing. Trap this case and
     # deal with it first, raising a warning and dropping back to the single
     # reliable source of information.
+    # Note that for ILS sources, it is commonplace for this to arise, hence the
+    # special mode options listed below.
     a = np.ma.count(param_one.array)
     b = np.ma.count(param_two.array)
-    if a+b == 0:
-        logger.warning("Neither '%s' or '%s' has valid data available.",
-                       param_one.name, param_two.name)
-        # Return empty space of the right shape...
-        return np_ma_masked_zeros_like(len(param_one.array)*2), 2.0*param_one.frequency, param_one.offset
+    if not mode:
+        if a+b == 0:
+            logger.warning("Neither '%s' or '%s' has valid data available.",
+                           param_one.name, param_two.name)
+            # Return empty space of the right shape...
+            return np_ma_masked_zeros_like(len(param_one.array)*2), 2.0*param_one.frequency, param_one.offset
 
-    if a < b*0.8:
-        logger.warning("Little valid data available for %s (%d valid samples), using %s (%d valid samples).", param_one.name, float(a)/len(param_one.array)*100, param_two.name, float(b)/len(param_two.array)*100)
-        return _interp(param_two.array, param_two.frequency, param_two.offset)
+        if a < b*0.8:
+            logger.warning("Little valid data available for %s (%d valid samples), using %s (%d valid samples).", param_one.name, float(a)/len(param_one.array)*100, param_two.name, float(b)/len(param_two.array)*100)
+            return _interp(param_two.array, param_two.frequency, param_two.offset)
 
-    elif b < a*0.8:
-        logger.warning("Little valid data available for %s (%d valid samples), using %s (%d valid samples).", param_two.name, float(b)/len(param_two.array)*100, param_one.name, float(a)/len(param_one.array)*100)
-        return _interp(param_one.array, param_one.frequency, param_one.offset)
+        elif b < a*0.8:
+            logger.warning("Little valid data available for %s (%d valid samples), using %s (%d valid samples).", param_two.name, float(b)/len(param_two.array)*100, param_one.name, float(a)/len(param_one.array)*100)
+            return _interp(param_one.array, param_one.frequency, param_one.offset)
 
     # A second problem is where both sensor may appear to be serviceable but
     # one is invariant. If the parameters were similar, a/(a+b)=0.5 so we are
@@ -4445,35 +4452,59 @@ def blend_two_parameters(param_one, param_two):
         logger.warning("No variation in %s, using only %s.", param_two.name, param_one.name)
         return _interp(param_one.array, param_one.frequency, param_one.offset)
 
-    else:
-        frequency = param_one.frequency * 2.0
 
-        # Are the parameters equispaced?
-        if abs(param_one.offset - param_two.offset) * frequency == 1.0:
-            # Equispaced process
-            if param_one.offset < param_two.offset:
-                offset = param_one.offset
-                array = blend_equispaced_sensors(param_one.array, param_two.array)
-            else:
-                offset = param_two.offset
-                array = blend_equispaced_sensors(param_two.array, param_one.array)
+    frequency = param_one.frequency * 2.0
 
+    # Special treatment of two-source ILS signals
+    if mode:
+        # The tolerance is set by:
+        if mode == 'localizer':
+            tol = ILS_LOC_SPREAD
+        elif mode == 'glideslope':
+            tol = ILS_GS_SPREAD
         else:
-            # Non-equispaced process
-            offset = (param_one.offset + param_two.offset)/2.0
-            padding = 'Follow'
+            raise ValueError('ILS mode not recognized')
 
-            if offset > 1.0/frequency:
-                offset = offset - 1.0/frequency
-                padding = 'Precede'
+        masked_array = np_ma_masked_zeros_like(param_one.array)
 
-            if param_one.offset <= param_two.offset:
-                # merged array should be monotonic (always increasing in time)
-                array = blend_nonequispaced_sensors(param_one.array, param_two.array, padding)
-            else:
-                array = blend_nonequispaced_sensors(param_two.array, param_one.array, padding)
+        temp = np.ma.where(np.ma.abs(param_one.array) < np.ma.abs(param_two.array) - tol,
+                           x=masked_array ,
+                           y=param_one.array)
+        param_two.array = np.ma.where(np.ma.abs(param_two.array) < np.ma.abs(param_one.array) - tol,
+                                      x=masked_array,
+                                      y=param_two.array)
 
-        return array, frequency, offset
+        param_one.array = temp
+
+    # Are the parameters equispaced?
+    # We force ILS signals through this path as the benefit of gaining the best signal
+    # (i.e. producing a valid result if one singal is inoperative) outweighs
+    # the timing errors involved.
+    if (abs(param_one.offset - param_two.offset) * frequency == 1.0) or mode:
+        # Equispaced process
+        if param_one.offset < param_two.offset:
+            offset = param_one.offset
+            array = blend_equispaced_sensors(param_one.array, param_two.array)
+        else:
+            offset = param_two.offset
+            array = blend_equispaced_sensors(param_two.array, param_one.array)
+
+    else:
+        # Non-equispaced process
+        offset = (param_one.offset + param_two.offset)/2.0
+        padding = 'Follow'
+
+        if offset > 1.0/frequency:
+            offset = offset - 1.0/frequency
+            padding = 'Precede'
+
+        if param_one.offset <= param_two.offset:
+            # merged array should be monotonic (always increasing in time)
+            array = blend_nonequispaced_sensors(param_one.array, param_two.array, padding)
+        else:
+            array = blend_nonequispaced_sensors(param_two.array, param_one.array, padding)
+
+    return array, frequency, offset
 
 
 def blend_parameters(params, offset=0.0, frequency=1.0, small_slice_duration=4, mode='linear'):
