@@ -13563,15 +13563,15 @@ class TestVerticalSpeedAtAtitude(unittest.TestCase):
     def test_derive(self):
         x = np.linspace(0, 12, 70)
         vert_spd = P('Vertical Speed', x*np.sin(x) * 50)      
-        app = buildsections('Approach', [25,30], [60, 65])
+        approaches = buildsections('Approach', [25,30], [60, 65])
         y = np.linspace(190, 403, 17).tolist() + \
             np.linspace(415, 201, 18).tolist() + \
             np.linspace(230, 534, 17).tolist() + \
             np.linspace(503, 208, 18).tolist()
-        alt = P('Altitude AGL', y)
+        alt_agl = P('Altitude AGL', y)
 
         node = self.node_class()
-        node.derive(vert_spd, alt, app)
+        node.derive(vert_spd, alt_agl, approaches)
 
         self.assertEqual(len(node), 4)
         self.assertAlmostEqual(node[0].index, 25, places=0)
