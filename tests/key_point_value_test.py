@@ -535,6 +535,7 @@ from analysis_engine.key_point_values import (
     RateOfDescentMax,
     RateOfDescentTopOfDescentTo10000FtMax,
     RateOfDescentAtHeightBeforeLevelFlight,
+    VerticalSpeedAtAltitude,
     Roll1000To300FtMax,
     Roll20FtToTouchdownMax,
     Roll20To400FtMax,
@@ -13534,6 +13535,53 @@ class TestRateOfDescentAtHeightBeforeLevelOff(unittest.TestCase):
                           value=-625),
         ])
         self.assertEqual(node, expected)
+
+
+class TestVerticalSpeedAtAtitude(unittest.TestCase):
+    def setUp(self):
+        self.node_class = VerticalSpeedAtAltitude
+        
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Vertical Speed At Altitude')
+        self.assertIn('Vertical Speed At 300 Ft', node.names())
+        self.assertIn('Vertical Speed At 500 Ft', node.names())
+        self.assertEqual(node.units, 'fpm')
+        
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(
+            ac_type=aeroplane)
+        self.assertEqual(opts, [])
+        
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(opts[0], ('Vertical Speed',
+                                   'Altitude AGL',
+                                   'Approach'))
+        
+    def test_derive(self):
+        x = np.linspace(0, 12, 70)
+        vert_spd = P('Vertical Speed', x*np.sin(x) * 50)      
+        app = buildsections('Approach', [25,30], [60, 65])
+        y = np.linspace(190, 403, 17).tolist() + \
+            np.linspace(415, 201, 18).tolist() + \
+            np.linspace(230, 534, 17).tolist() + \
+            np.linspace(503, 208, 18).tolist()
+        alt = P('Altitude AGL', y)
+
+        node = self.node_class()
+        node.derive(vert_spd, alt, app)
+
+        self.assertEqual(len(node), 4)
+        self.assertAlmostEqual(node[0].index, 25, places=0)
+        self.assertAlmostEqual(node[1].index, 26, places=0)
+        self.assertAlmostEqual(node[2].index, 60, places=0)
+        self.assertAlmostEqual(node[3].index, 64, places=0)
+        self.assertTrue(node[0].name == node[2].name == \
+                        'Vertical Speed At 500 Ft')
+        self.assertTrue(node[1].name == node[3].name == \
+                        'Vertical Speed At 300 Ft')
 
 
 ##############################################################################
