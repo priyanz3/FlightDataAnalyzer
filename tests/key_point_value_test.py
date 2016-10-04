@@ -88,6 +88,7 @@ from analysis_engine.key_point_values import (
     Airspeed8000To5000FtMax,
     Airspeed20FtToTouchdownMax,
     AirspeedAbove500FtMin,
+    AirspeedAt200Ft,
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
@@ -535,6 +536,7 @@ from analysis_engine.key_point_values import (
     RateOfDescentMax,
     RateOfDescentTopOfDescentTo10000FtMax,
     RateOfDescentAtHeightBeforeLevelFlight,
+    VerticalSpeedAtAltitude,
     Roll1000To300FtMax,
     Roll20FtToTouchdownMax,
     Roll20To400FtMax,
@@ -2265,6 +2267,50 @@ class TestAirspeedAbove500FtMin(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 8)
         self.assertAlmostEqual(node[0].value, 94.21, places=1)
+
+
+class TestAirspeedAt200Ft(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AirspeedAt200Ft
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Airspeed At 200 Ft')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
+        self.assertEqual(opts, [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('Approach', opts[0])
+
+    def test_derive(self):
+        x = np.linspace(3, 141, 17).tolist() + [140] + \
+            np.linspace(140, 2, 17).tolist() + \
+            np.linspace(5, 139, 17).tolist() + [138] + \
+            np.linspace(138, 0, 17).tolist()
+        air_spd = P('Airspeed', x)
+        approaches = buildsections('Approach', [25,30], [60, 65])
+        y = np.linspace(190, 403, 17).tolist() + \
+            np.linspace(415, 20, 18).tolist() + \
+            np.linspace(230, 534, 17).tolist() + \
+            np.linspace(503, 50, 18).tolist()
+        alt_agl = P('Altitude AGL', y)
+
+        node = self.node_class()
+        node.derive(air_spd, alt_agl, approaches)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].index, 26, places=0)
+        self.assertAlmostEqual(node[0].value, 68.8, places=1)
+
+        self.assertAlmostEqual(node[1].index, 63, places=0)
+        self.assertAlmostEqual(node[1].value, 48.6, places=1)
+
 
 class TestAirspeedAtAPGoAroundEngaged(unittest.TestCase):
     '''
@@ -13534,6 +13580,53 @@ class TestRateOfDescentAtHeightBeforeLevelOff(unittest.TestCase):
                           value=-625),
         ])
         self.assertEqual(node, expected)
+
+
+class TestVerticalSpeedAtAtitude(unittest.TestCase):
+    def setUp(self):
+        self.node_class = VerticalSpeedAtAltitude
+        
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Vertical Speed At Altitude')
+        self.assertIn('Vertical Speed At 300 Ft', node.names())
+        self.assertIn('Vertical Speed At 500 Ft', node.names())
+        self.assertEqual(node.units, 'fpm')
+        
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(
+            ac_type=aeroplane)
+        self.assertEqual(opts, [])
+        
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(opts[0], ('Vertical Speed',
+                                   'Altitude AGL',
+                                   'Approach'))
+        
+    def test_derive(self):
+        x = np.linspace(0, 12, 70)
+        vert_spd = P('Vertical Speed', x*np.sin(x) * 50)      
+        approaches = buildsections('Approach', [25,30], [60, 65])
+        y = np.linspace(190, 403, 17).tolist() + \
+            np.linspace(415, 201, 18).tolist() + \
+            np.linspace(230, 534, 17).tolist() + \
+            np.linspace(503, 208, 18).tolist()
+        alt_agl = P('Altitude AGL', y)
+
+        node = self.node_class()
+        node.derive(vert_spd, alt_agl, approaches)
+
+        self.assertEqual(len(node), 4)
+        self.assertAlmostEqual(node[0].index, 25, places=0)
+        self.assertAlmostEqual(node[1].index, 26, places=0)
+        self.assertAlmostEqual(node[2].index, 60, places=0)
+        self.assertAlmostEqual(node[3].index, 64, places=0)
+        self.assertTrue(node[0].name == node[2].name == \
+                        'Vertical Speed At 500 Ft')
+        self.assertTrue(node[1].name == node[3].name == \
+                        'Vertical Speed At 300 Ft')
 
 
 ##############################################################################

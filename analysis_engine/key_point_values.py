@@ -1583,6 +1583,26 @@ class AirspeedAbove500FtMin(KeyPointValueNode):
                                        alt_agl.slices_above(500), min_value)
 
 
+class AirspeedAt200Ft(KeyPointValueNode):
+    '''
+    Approach airspeed when at 200ft (helicopter only)
+    '''
+
+    units = ut.KT
+    can_operate = helicopter_only
+
+    def derive(self, air_spd=P('Airspeed'), alt_agl=P('Altitude AGL'),
+               approaches=S('Approach')):
+        for approach in approaches:
+            index = index_at_value(alt_agl.array, 200, approach.slice,
+                                   'nearest')
+            if not index:
+                continue
+            value = value_at_index(air_spd.array, index)
+            if value:
+                self.create_kpv(index, value)    
+
+
 class AirspeedAtTouchdown(KeyPointValueNode):
     '''
     Airspeed measurement at the point of Touchdown.
@@ -13541,6 +13561,28 @@ class RateOfDescentAtHeightBeforeLevelFlight(KeyPointValueNode):
                 value = value_at_index(vert_spd.array, kti.index)
                 self.create_kpv(kti.index, value,
                                 replace_values={'altitude': altitude})
+
+
+class VerticalSpeedAtAltitude(KeyPointValueNode):
+    '''
+    Approach vertical speed at 500 and 300 Ft
+    '''
+    NAME_FORMAT = 'Vertical Speed At %(altitude)d Ft'
+    NAME_VALUES = {'altitude': [500, 300]}
+    units = ut.FPM
+    can_operate = helicopter_only
+
+    def derive(self, vert_spd=P('Vertical Speed'), alt_agl=P('Altitude AGL'),
+               approaches=S('Approach')):
+        for approach in approaches:
+            for altitude in self.NAME_VALUES['altitude']:
+                index = index_at_value(alt_agl.array, altitude,
+                                       approach.slice, 'nearest')
+                if not index:
+                    continue
+                value = value_at_index(vert_spd.array, index)
+                if value:
+                    self.create_kpv(index, value, altitude=altitude)
 
 
 ##############################################################################
