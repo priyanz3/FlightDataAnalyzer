@@ -4429,8 +4429,10 @@ class ILSFrequency(DerivedParameterNode):
 class ILSLocalizer(DerivedParameterNode):
     '''
     This derived parameter merges the available sources into a single
-    consolidated parameter. The more complex form of parameter blending is
-    used to allow for many permutations.
+    consolidated parameter.
+
+    Different forms of parameter blending are used to cater for the various numbers
+    of available signals on different aircraft.
     '''
 
     name = 'ILS Localizer'
@@ -4439,7 +4441,6 @@ class ILSLocalizer(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return any_of(cls.get_dependency_names(), available)
 
     def derive(self,
@@ -4450,13 +4451,36 @@ class ILSLocalizer(DerivedParameterNode):
                src_E=P('ILS (L) Localizer'),
                src_F=P('ILS (R) Localizer'),
                src_G=P('ILS (C) Localizer'),
-               src_J=P('ILS (EFIS) Localizer')):
+               src_J=P('ILS (EFIS) Localizer'),
+               ias=P('Airspeed'),
+               ):
 
         sources = [src_A, src_B, src_C, src_D, src_E, src_F, src_G, src_J]
-        self.offset = 0.0
-        self.frequency = 2.0
-        self.array = blend_parameters(sources, offset=self.offset,
-                                      frequency=self.frequency)
+        active_sources = [s for s in sources if s]
+
+        source_count = len(active_sources)
+        if source_count == 0:
+            # If all sources of data are masked during validation, return a null parameter
+            self.offset = 0.0
+            self.frequency = 1.0
+            self.array = np_ma_masked_zeros_like(ias.array)
+
+        elif source_count == 1:
+            self.offset = active_sources[0].offset
+            self.frequency = active_sources[0].frequency
+            self.array = active_sources[0].array
+
+        elif source_count == 2:
+            self.array, self.frequency, self.offset = blend_two_parameters(active_sources[0],
+                                                                          active_sources[1],
+                                                                          mode='localizer')
+
+        else:
+            self.offset = 0.0
+            self.frequency = 2.0
+            self.array = blend_parameters(sources, offset=self.offset,
+                                          frequency=self.frequency)
+
 
 class ILSLateralDistance(DerivedParameterNode):
     '''
