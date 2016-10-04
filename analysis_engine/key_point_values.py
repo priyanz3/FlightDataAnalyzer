@@ -13553,8 +13553,8 @@ class VerticalSpeedAtAltitude(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, vert_spd=P('Vertical Speed'), alt_agl=P('Altitude AGL'),
-               approachs=S('Approach')):
-        for approach in approachs:
+               approaches=S('Approach')):
+        for approach in approaches:
             for altitude in self.NAME_VALUES['altitude']:
                 index = index_at_value(alt_agl.array, altitude,
                                        approach.slice, 'nearest')
