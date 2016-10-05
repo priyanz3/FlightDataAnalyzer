@@ -492,6 +492,7 @@ from analysis_engine.key_point_values import (
     PitchBelow1000FtMin,
     PitchBelow5FtMax,
     Pitch5To10FtMax,
+    Pitch10To5FtMax,
     PitchAfterFlapRetractionMax,
     PitchAt35FtDuringClimb,
     PitchAtLiftoff,
@@ -11994,6 +11995,41 @@ class TestPitch5To10FtMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 9)
         self.assertEqual(node[0].index, 4)
+
+
+class TestPitch10To5FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = Pitch10To5FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEquals(node.name, 'Pitch 10 To 5 Ft Max')
+        self.assertEquals(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEquals(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 1)
+        self.assertIn('Pitch',opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+
+    def test_derive(self):
+        arr = np.ma.array([0, 2, 4, 7, 9, 8, 6, 3, -1])
+        arr = np.ma.append(arr, arr[::-1])
+        pitch = P('Pitch', arr)
+        arr_alt = np.ma.array(np.linspace(0, 15, 9))
+        arr_alt = np.ma.append(arr_alt, arr_alt[::-1])
+        alt_agl = P('Altitude AGL', arr_alt)
+        airborne = buildsection('Airborne', 1, 16)
+
+        node = self.node_class()
+        node.derive(pitch, alt_agl, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 9)
+        self.assertEqual(node[0].index, 13)
 
 
 class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
