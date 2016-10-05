@@ -7036,9 +7036,14 @@ def straighten_overflows(array, min_val, max_val, threshold=4):
 
         # locate overflows and shift the arrays
         diff = np.ediff1d(array[unmasked_slice])
+        abs_diff = np.abs(diff)
         straight[unmasked_slice] += overflow * total_range
 
-        for idx in np.where(np.abs(diff) > total_range - partition)[0]:
+        for idx in np.where(abs_diff > total_range - partition)[0]:
+            if (abs_diff[idx - 1] > partition * 2 or
+                abs_diff[idx + 1] > partition * 2):
+                # ignore data spike
+                continue
             sign = np.sign(diff[idx])
             overflow -= sign
             straight[unmasked_slice.start + idx + 1:] -= sign * total_range

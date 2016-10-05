@@ -6613,18 +6613,25 @@ class TestStraightenLongitude(unittest.TestCase):
             mask=mask)
         np.testing.assert_array_almost_equal(straighten_longitude(data), expected)
 
-    def test_straighten_longitude_spike(self):
+    def test_straighten_longitude_1_spike(self):
         '''
         Spike does not trigger overflow as with straighten().
         '''
         data = load_compressed(os.path.join(test_data_path, 'straighten_longitude_1.npz'))
         np.testing.assert_array_almost_equal(straighten_longitude(data), data)
 
-    def test_straighten_longitude_drop(self):
+    def test_straighten_longitude_2_drop(self):
         '''
         Overflow is not triggered as drop is too small.
         '''
         data = load_compressed(os.path.join(test_data_path, 'straighten_longitude_2.npz'))
+        np.testing.assert_array_almost_equal(straighten_longitude(data), data)
+
+    def test_straighten_longitude_3(self):
+        '''
+        Ignore spikes.
+        '''
+        data = load_compressed(os.path.join(test_data_path, 'straighten_longitude_3.npz'))
         np.testing.assert_array_almost_equal(straighten_longitude(data), data)
 
     def test_straighten_longitude_4(self):
