@@ -12142,6 +12142,21 @@ class PitchBelow5FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(pitch.array, slices, max_value)
 
 
+class Pitch5To10FtMax(KeyPointValueNode):
+    '''
+    Maximum Pitch ascending 5 to 10ft AGL in flight (helicopter_only). 
+    '''
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        slices = slices_and(airborne.get_slices(),
+                            alt_agl.slices_from_to(5, 10))
+        self.create_kpvs_within_slices(pitch.array, slices, max_value)
+
+
 class PitchTakeoffMax(KeyPointValueNode):
     '''
     '''
