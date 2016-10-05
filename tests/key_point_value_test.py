@@ -490,6 +490,7 @@ from analysis_engine.key_point_values import (
     PitchAbove1000FtMax,
     PitchBelow1000FtMax,
     PitchBelow1000FtMin,
+    PitchBelow5FtMax,
     PitchAfterFlapRetractionMax,
     PitchAt35FtDuringClimb,
     PitchAtLiftoff,
@@ -11926,6 +11927,38 @@ class TestPitchBelow1000FtMin(unittest.TestCase):
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].value, 10)
         self.assertEqual(node[1].value, 6)
+
+
+class TestPitchBelow5FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = PitchBelow5FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEquals(node.name, 'Pitch Below 5 Ft Max')
+        self.assertEquals(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEquals(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 1)
+        self.assertIn('Pitch',opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+
+    def test_derive(self):
+        pitch = P('Pitch', np.ma.array([0, 2, 4, 7, 9, 8, 6, 3, -1]))
+        alt_agl = P('Altitude AGL', np.ma.array(np.linspace(0, 15, 9)))
+        airborne = buildsection('Airborne', 1.4, 8)
+
+        node = self.node_class()
+        node.derive(pitch, alt_agl, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 4)
+        self.assertEqual(node[0].index, 2)
+
 
 class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
 
