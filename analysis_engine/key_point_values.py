@@ -14324,21 +14324,38 @@ class RotorSpeed36To49Duration(KeyPointValueNode):
     '''
     Duration in which rotor speed in running between 36 and 49%. 
     '''
-    
+
     units = ut.SECOND
-    
+
     @classmethod
     # This KPV is specific to the S92 helicopter
     def can_operate(cls, available, ac_type=A('Aircraft Type'),
                     family=A('Family')):
         is_s92 = ac_type == helicopter and family and family.value == 'S92'
         return is_s92 and all_deps(cls, available)   
-    
+
     def derive(self, nr=P('Nr')):
         self.create_kpvs_from_slice_durations(
             slices_between(nr.array, 36, 49)[1], nr.frequency)
-        
-    
+
+
+class RotorSpeed56To67Duration(KeyPointValueNode):
+    '''
+    Duration in which rotor speed in running between 56 and 67%. 
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)   
+
+    def derive(self, nr=P('Nr')):
+        self.create_kpvs_from_slice_durations(
+            slices_between(nr.array, 56, 67)[1], nr.frequency)
 
 
 ##############################################################################

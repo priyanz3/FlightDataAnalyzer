@@ -569,6 +569,7 @@ from analysis_engine.key_point_values import (
     RotorSpeedDuringAutorotationMax,
     RotorSpeedDuringMaximumContinuousPowerMin,
     RotorSpeed36To49Duration,
+    RotorSpeed56To67Duration,
     RotorSpeedWhileAirborneMax,
     RotorSpeedWhileAirborneMin,
     RotorSpeedWithRotorBrakeAppliedMax,
@@ -14630,17 +14631,17 @@ class TestRotorSpeedDuringMaximumContinuousPowerMin(unittest.TestCase):
         self.assertEqual(node[0].index, 114)
         self.assertAlmostEqual(node[0].value, 99.473, places=3)
 
-        
+
 class TestRotorSpeed36To49Duration(unittest.TestCase):
 
     def setUp(self):
         self.node_class = RotorSpeed36To49Duration
-        
+
     def test_attributes(self):
         node = self.node_class()
         self.assertEqual(node.name, 'Rotor Speed 36 To 49 Duration')
         self.assertEqual(node.units, 's')
-    
+
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
@@ -14654,12 +14655,44 @@ class TestRotorSpeed36To49Duration(unittest.TestCase):
                                   49, 55, 60, 48, 45, 35, 20]))
         node = self.node_class()
         node.derive(nr)
-        
+
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].value, 2)
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[1].value, 2)
         self.assertEqual(node[1].index, 10)
+
+
+class TestRotorSpeed56To67Duration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeed56To67Duration
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed 56 To 67 Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+
+    def test_derive(self):
+        nr = P('Nr', np.ma.array([10, 23, 34, 40, 56, 60, 66,
+                                  67, 68, 69, 66, 58, 54, 40]))
+        node = self.node_class()
+        node.derive(nr)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].value, 2)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[1].value, 2)
+        self.assertEqual(node[1].index, 10)
+
 
 ##############################################################################
 # Rudder
