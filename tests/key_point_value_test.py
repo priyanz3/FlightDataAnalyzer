@@ -567,6 +567,7 @@ from analysis_engine.key_point_values import (
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
+    RotorSpeedDuringAutorotationMin,
     RotorSpeedDuringMaximumContinuousPowerMin,
     RotorSpeed36To49Duration,
     RotorSpeed56To67Duration,
@@ -14458,6 +14459,37 @@ class TestRotorSpeedDuringAutorotationMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 151)
         self.assertAlmostEqual(node[0].value, 100.965, places=3)
+
+
+class TestRotorSpeedDuringAutorotationMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeedDuringAutorotationMin
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed During Autorotation Min')
+        self.assertEqual(node.units, '%')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+
+    def test_derive(self):
+        x = np.linspace(0, 10, 200)
+        rotorspeed = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
+
+        node = self.node_class()
+        node.derive(rotorspeed, autorotation)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 115)
+        self.assertAlmostEqual(node[0].value, 99.5, places=1)
 
 
 class TestRotorSpeedWhileAirborneMax(unittest.TestCase):
