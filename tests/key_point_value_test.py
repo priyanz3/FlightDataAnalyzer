@@ -92,6 +92,7 @@ from analysis_engine.key_point_values import (
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
+    AirspeedAtAPEngaged,
     AirspeedAt35FtDuringTakeoff,
     AirspeedAt8000FtDescending,
     AirspeedAtFlapExtensionWithGearDownSelected,
@@ -2451,6 +2452,40 @@ class TestAirspeedWhileAPVerticalSpeedEngagedMin(unittest.TestCase):
         node = self.node_class()
         node.derive(aspd, airs, mode)
         self.assertEqual(len(node), 0)
+
+
+class TestAirspeedAtAPEngaged(unittest.TestCase):
+    
+    def setUp(self):
+        self.node_class = AirspeedAtAPEngaged
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Airspeed At AP Engaged')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('AP Engaged Selection', opts[0])
+
+    def test_derive(self):
+        air_spd = P('Airspeed',
+                    np.ma.array([0, 0, 70, 80, 90, 110, 116,
+                                 118, 121, 122, 122]))
+        ap_eng = KTI(name='AP Engaged Selection',
+                     items=[KeyTimeInstance(name='AP Engaged Selection',
+                                            index=5),])
+
+        node = self.node_class()
+        node.derive(air_spd, ap_eng)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[0].value, 110)
 
 
 class TestAirspeedAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
