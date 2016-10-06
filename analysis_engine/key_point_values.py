@@ -1714,6 +1714,22 @@ class AirspeedWhileAPVerticalSpeedEngagedMin(KeyPointValueNode):
             self.create_kpv_from_slices(air_spd.array, sections, min_value)
 
 
+class AirspeedAtAPEngaged(KeyPointValueNode):
+    '''
+    Airspeed at which AP is engaged. (helicopter only)
+    '''
+
+    name = 'Airspeed At AP Engaged'
+    units = ut.KT
+    can_operate = helicopter_only
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               ap_eng=KTI('AP Engaged Selection')):
+
+        self.create_kpvs_at_ktis(air_spd.array, ap_eng)
+
+
 class AirspeedTrueAtTouchdown(KeyPointValueNode):
     '''
     Airspeed True at the point of Touchdown.
