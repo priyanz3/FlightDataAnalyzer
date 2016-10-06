@@ -195,6 +195,7 @@ from analysis_engine.key_point_values import (
     AltitudeMax,
     AltitudeOvershootAtSuspectedLevelBust,
     AltitudeRadioDuringAutorotationMin,
+    AltitudeDuringLevelFlightMin,
     AltitudeAALCleanConfigurationMin,
     AltitudeWithFlapMax,
     AltitudeSTDWithGearDownMax,
@@ -5101,6 +5102,42 @@ class TestAltitudeRadioDuringAutorotationMin(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 240.5)
         self.assertEqual(node[0].value, 152)
+
+
+class TestAltitudeDuringLevelFlightMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeDuringLevelFlightMin
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Altitude During Level Flight Min')
+        self.assertEqual(node.units, 'ft')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Level Flight', opts[0])
+
+    def test_derive(self):
+        alt_agl = P('Altitude AGL', 
+                    np.ma.array([0, 100, 400, 1000, 1003, 
+                                 1010, 999, 1000, 500, 100,
+                                 0, 0, 100, 500, 1100,
+                                 1080, 1090, 1070, 500, 100]))
+        lvl_flt = buildsections('Level Flight', [3, 7], [14, 17])
+
+        node = self.node_class()
+        node.derive(alt_agl, lvl_flt)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 6)
+        self.assertEqual(node[0].value, 999)
+        self.assertEqual(node[1].index, 17)
+        self.assertEqual(node[1].value, 1070)
 
 
 class TestAltitudeSTDMax(unittest.TestCase):
