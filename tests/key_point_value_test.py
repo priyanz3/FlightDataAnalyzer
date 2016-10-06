@@ -14389,21 +14389,30 @@ class TestRotorSpeedDuringAutorotationAbove108KtsMin(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationAbove108KtsMin
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Rotor Speed During Autorotation Above 108 Kts Min')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Airspeed', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+        self.assertIn('Airspeed', opts[0])
 
     def test_derive(self,):
-        air_spd = P('Airspeed', np.ma.array(range(50, 150) + range(150, 50, -1)))
+        air_spd = P('Airspeed',
+                    np.ma.array(range(50, 150) + range(150, 50, -1)))
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, air_spd, autorotation)
+        node.derive(rtr_spd, air_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 115)
@@ -14415,21 +14424,30 @@ class TestRotorSpeedDuringAutorotationBelow108KtsMin(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationBelow108KtsMin
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Rotor Speed During Autorotation Below 108 Kts Min')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Airspeed', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+        self.assertIn('Airspeed', opts[0])
 
     def test_derive(self):
-        air_spd = P('Airspeed', np.ma.array(range(50, 150) + range(150, 50, -1)))
+        air_spd = P('Airspeed',
+                    np.ma.array(range(50, 150) + range(150, 50, -1)))
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, air_spd, autorotation)
+        node.derive(rtr_spd, air_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 142)
@@ -14441,20 +14459,26 @@ class TestRotorSpeedDuringAutorotationMax(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationMax
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed During Autorotation Max')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
 
     def test_derive(self):
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, autorotation)
+        node.derive(rtr_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 151)
@@ -14481,11 +14505,11 @@ class TestRotorSpeedDuringAutorotationMin(unittest.TestCase):
 
     def test_derive(self):
         x = np.linspace(0, 10, 200)
-        rotorspeed = P('Nr', array=np.ma.array(np.sin(x)+100))
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
         autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotorspeed, autorotation)
+        node.derive(rtr_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 115)
