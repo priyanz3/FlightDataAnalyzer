@@ -14241,6 +14241,20 @@ class RotorSpeedDuringAutorotationMax(KeyPointValueNode):
         self.create_kpvs_within_slices(nr.array, autorotation.get_slices(), max_value)
 
 
+class RotorSpeedDuringAutorotationMin(KeyPointValueNode):
+    '''
+    Minimum rotor speed during autorotion. (helicopter only)
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, nr=P('Nr'), autorotation=S('Autorotation')):
+        self.create_kpvs_within_slices(nr.array, autorotation.get_slices(),
+                                       min_value)
+
+
 class RotorSpeedWhileAirborneMax(KeyPointValueNode):
     '''
     This excludes autorotation, so is maximum rotor speed with power applied.
