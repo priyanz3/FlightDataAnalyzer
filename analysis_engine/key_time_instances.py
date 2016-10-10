@@ -1470,7 +1470,9 @@ class Touchdown(KeyTimeInstanceNode):
             if alt_rad:
                 # only look for 5ft altitude if Radio Altitude is recorded,
                 # due to Altitude STD accuracy and ground effect.
-                period_start = index_at_value(alt.array, 5, _slice=slice(period_end, period_start, -1))
+                alt_rad_start = index_at_value(alt.array, 5, _slice=slice(period_end, period_start, -1))
+                if alt_rad_start is not None:
+                    period_start = alt_rad_start
             period = slice(period_start, period_end)
 
             if acc_long:
