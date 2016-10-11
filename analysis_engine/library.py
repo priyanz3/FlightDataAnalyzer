@@ -7040,8 +7040,9 @@ def straighten_overflows(array, min_val, max_val, threshold=4):
         straight[unmasked_slice] += overflow * total_range
 
         for idx in np.where(abs_diff > total_range - partition)[0]:
-            if (abs_diff[idx - 1] > partition * 2 or
-                abs_diff[idx + 1] > partition * 2):
+            if (idx + 1 < len(abs_diff) and
+                (abs_diff[idx - 1] > partition * 2 or
+                 abs_diff[idx + 1] > partition * 2)):
                 # ignore data spike
                 continue
             sign = np.sign(diff[idx])
