@@ -122,7 +122,7 @@ class TestSplitSegments(unittest.TestCase):
         # Unmasked single flight.
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -133,7 +133,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_array[-50:] = np.ma.masked
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -141,7 +141,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_array[:100] = np.ma.masked
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'STOP_ONLY')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -151,7 +151,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_array[-100:] = np.ma.masked
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_ONLY')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -160,7 +160,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_array[-100:] = np.ma.masked
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'MID_FLIGHT')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -180,12 +180,12 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 2)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, 398)
         # Heading diff not exceed HEADING_CHANGE_TAXI_THRESHOLD
-        segment_type, segment_slice = segment_tuples[1]
+        segment_type, segment_slice, start_padding = segment_tuples[1]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 398)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -196,12 +196,12 @@ class TestSplitSegments(unittest.TestCase):
                                        np.ma.arange(0, 100, 0.5),
                                        np.ma.arange(100, 0, -0.5)])
         segment_tuples = split_segments(hdf, {})
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, 398.0)
         # Heading diff not exceed HEADING_CHANGE_TAXI_THRESHOLD
-        segment_type, segment_slice = segment_tuples[1]
+        segment_type, segment_slice, start_padding = segment_tuples[1]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 398.0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -214,11 +214,11 @@ class TestSplitSegments(unittest.TestCase):
                                            np.ma.arange(400, 800)])
         eng_array = None
         segment_tuples = split_segments(hdf, {})
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, 395)
-        segment_type, segment_slice = segment_tuples[1]
+        segment_type, segment_slice, start_padding = segment_tuples[1]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 395)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -228,11 +228,11 @@ class TestSplitSegments(unittest.TestCase):
         hdf.reliable_frame_counter = False
         dfc_array = np.ma.masked_array(np.random.randint(1000, size=((len(dfc_array),))))
         segment_tuples = split_segments(hdf, {})
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, 395)
-        segment_type, segment_slice = segment_tuples[1]
+        segment_type, segment_slice, start_padding = segment_tuples[1]
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 395)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -246,11 +246,11 @@ class TestSplitSegments(unittest.TestCase):
         heading_array[5] += 4
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 2)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, 400)
-        segment_type, segment_slice = segment_tuples[1]
+        segment_type, segment_slice, start_padding = segment_tuples[1]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 400)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -266,7 +266,7 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'GROUND_ONLY')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -276,7 +276,7 @@ class TestSplitSegments(unittest.TestCase):
         heading_array = np.ma.arange(len(airspeed_array) / 2) % 360
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -287,7 +287,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_secs = len(airspeed_array) / airspeed_frequency
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'GROUND_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -299,7 +299,7 @@ class TestSplitSegments(unittest.TestCase):
         airspeed_secs = len(airspeed_array) / airspeed_frequency
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'START_AND_STOP', msg="Fast should be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -314,7 +314,7 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
-        segment_type, segment_slice = segment_tuples[0]
+        segment_type, segment_slice, start_padding = segment_tuples[0]
         self.assertEqual(segment_type, 'NO_MOVEMENT')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
@@ -343,11 +343,11 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(segment_tuples,
-                         [('START_AND_STOP', slice(0, 9953.0, None)),
-                          ('START_AND_STOP', slice(9953.0, 21799.0, None)),
-                          ('START_AND_STOP', slice(21799.0, 24665.0, None)),
-                          ('START_AND_STOP', slice(24665.0, 27898.0, None)),
-                          ('START_AND_STOP', slice(27898.0, 31424.0, None))])
+                         [('START_AND_STOP', slice(0, 9953.0, None), 0),
+                          ('START_AND_STOP', slice(9953.0, 21799.0, None), 1),
+                          ('START_AND_STOP', slice(21799.0, 24665.0, None), 3),
+                          ('START_AND_STOP', slice(24665.0, 27898.0, None), 1),
+                          ('START_AND_STOP', slice(27898.0, 31424.0, None), 2)])
 
     def test_split_segments_data_2(self):
         '''Splits on both DFC Jump and Engine parameters.'''
@@ -357,12 +357,12 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(segment_tuples,
-                         [('START_AND_STOP', slice(0, 3407.0, None)),
-                          ('START_AND_STOP', slice(3407.0, 6362.0, None)),
-                          ('START_AND_STOP', slice(6362.0, 9912.0, None)),
-                          ('START_AND_STOP', slice(9912.0, 13064.0, None)),
-                          ('START_AND_STOP', slice(13064.0, 16467.0, None)),
-                          ('START_AND_STOP', slice(16467.0, 19200.0, None))])
+                         [('START_AND_STOP', slice(0, 3407.0, None), 0),
+                          ('START_AND_STOP', slice(3407.0, 6362.0, None), 15),
+                          ('START_AND_STOP', slice(6362.0, 9912.0, None), 26),
+                          ('START_AND_STOP', slice(9912.0, 13064.0, None), 56),
+                          ('START_AND_STOP', slice(13064.0, 16467.0, None), 8),
+                          ('START_AND_STOP', slice(16467.0, 19200.0, None), 19)])
 
     def test_split_segments_data_3(self):
         '''Splits on both Engine and Heading parameters.'''
@@ -372,18 +372,18 @@ class TestSplitSegments(unittest.TestCase):
 
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(segment_tuples,
-                         [('START_AND_STOP', slice(0, 3989.0, None)),
-                          ('START_AND_STOP', slice(3989.0, 7049.0, None)),
-                          ('START_AND_STOP', slice(7049.0, 9569.0, None)),
-                          ('START_AND_STOP', slice(9569.0, 12889.0, None)),
-                          ('START_AND_STOP', slice(12889.0, 15867.0, None)),
-                          ('START_AND_STOP', slice(15867.0, 18526.0, None)),
-                          ('START_AND_STOP', slice(18526.0, 21726.0, None)),
-                          ('START_AND_STOP', slice(21726.0, 24209.0, None)),
-                          ('START_AND_STOP', slice(24209.0, 26607.0, None)),
-                          ('START_AND_STOP', slice(26607.0, 28534.0, None)),
-                          ('START_AND_STOP', slice(28534.0, 30875.0, None)),
-                          ('START_AND_STOP', slice(30875.0, 33680.0, None))])
+                         [('START_AND_STOP', slice(0, 3989.0, None), 0),
+                          ('START_AND_STOP', slice(3989.0, 7049.0, None), 1),
+                          ('START_AND_STOP', slice(7049.0, 9569.0, None), 1),
+                          ('START_AND_STOP', slice(9569.0, 12889.0, None), 1),
+                          ('START_AND_STOP', slice(12889.0, 15867.0, None), 1),
+                          ('START_AND_STOP', slice(15867.0, 18526.0, None), 3),
+                          ('START_AND_STOP', slice(18526.0, 21726.0, None), 2),
+                          ('START_AND_STOP', slice(21726.0, 24209.0, None), 2),
+                          ('START_AND_STOP', slice(24209.0, 26607.0, None), 1),
+                          ('START_AND_STOP', slice(26607.0, 28534.0, None), 3),
+                          ('START_AND_STOP', slice(28534.0, 30875.0, None), 2),
+                          ('START_AND_STOP', slice(30875.0, 33680.0, None), 3)])
 
     @unittest.skipIf(not os.path.isfile(os.path.join(test_data_path,
                                                      "4_3377853_146-301.hdf5")),
