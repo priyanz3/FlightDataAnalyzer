@@ -28,7 +28,7 @@ from analysis_engine.library import (align,
                                      vstack_params)
 
 from hdfaccess.file import hdf_file
-from hdfaccess.utils import write_segment
+from hdfaccess.utils import segment_boundaries, write_segment
 
 from flightdatautilities.filesystem_tools import sha_hash_file
 
@@ -167,7 +167,17 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         segment_type = 'MID_FLIGHT'
     logger.info("Segment type is '%s' between '%s' and '%s'.",
                 segment_type, start, stop)
-    return segment_type, slice(start, stop)
+
+    # ARINC 717 data has frames or superframes. ARINC 767 will be split
+    # on a minimum boundary of 4 seconds for the analyser.
+    boundary = 64 if hdf.superframe_present else 4
+    segment = slice(start, stop)
+
+    supf_start_secs, supf_stop_secs, array_start_secs, array_stop_secs = segment_boundaries(segment, boundary)
+
+    start_padding = segment.start - supf_start_secs
+
+    return segment_type, segment, array_start_secs
 
 
 def _get_normalised_split_params(hdf):
@@ -712,7 +722,7 @@ def calculate_fallback_dt(hdf, fallback_dt=None, validation_dt=None, fallback_re
         # fallback_dt is relative to the end of the data; remove the data
         # duration to make it relative to the start of the data
         secs = hdf.duration
-        fallback_dt -= timedelta(seconds=secs)  # Q: minus the number of segments * gaps between them?  # ADDRESS!
+        fallback_dt -= timedelta(seconds=secs)
         logger.info("Reduced fallback_dt by %ddays %dhr %dmin to %s",
                     secs // 86400, secs % 86400 // 3600,
                     secs % 86400 % 3600 // 60, fallback_dt)
@@ -933,7 +943,6 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         plot_essential(hdf_path)
 
     with hdf_file(hdf_path) as hdf:
-        superframe_present = hdf.superframe_present
 
         # Confirm aircraft tail for the entire datafile
         logger.debug("Validating aircraft matches that recorded in data")
@@ -947,13 +956,18 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         else:
             logger.info("No PRE_FILE_ANALYSIS actions to perform")
 
-        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, validation_dt, fallback_relative_to_start)
+        # ARINC 717 data has frames or superframes. ARINC 767 will be split
+        # on a minimum boundary of 4 seconds for the analyser.
+        boundary = 64 if hdf.superframe_present else 4
+
         segment_tuples = split_segments(hdf, aircraft_info)
+
+        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, validation_dt, fallback_relative_to_start)
 
     # process each segment (into a new file) having closed original hdf_path
     segments = []
     previous_stop_dt = None
-    for part, (segment_type, segment_slice) in enumerate(segment_tuples,
+    for part, (segment_type, segment_slice, start_padding) in enumerate(segment_tuples,
                                                          start=1):
         # write segment to new split file (.001)
         basename = os.path.basename(hdf_path)
@@ -961,15 +975,15 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         dest_path = os.path.join(dest_dir, dest_basename)
         logger.debug("Writing segment %d: %s", part, dest_path)
 
-        # ARINC 717 data has frames or superframes. ARINC 767 will be split
-        # on a minimum boundary of 4 seconds for the analyser.
-        boundary = 64 if superframe_present else 4
-
         write_segment(hdf_path, segment_slice, dest_path,
                       boundary=boundary)
+
+        # adjust fallback time to account for any padding added at start of segment
+        segment_start_dt = fallback_dt - timedelta(seconds=start_padding)
+
         segment = append_segment_info(
             dest_path, segment_type, segment_slice, part,
-            fallback_dt=fallback_dt, validation_dt=validation_dt,
+            fallback_dt=segment_start_dt, validation_dt=validation_dt,
             aircraft_info=aircraft_info)
 
         if previous_stop_dt and segment.start_dt < previous_stop_dt - timedelta(0, 4):
@@ -981,8 +995,8 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         previous_stop_dt = segment.stop_dt
 
         if fallback_dt:
-            # move the fallback_dt on to be relative to start of next segment
-            fallback_dt += segment.stop_dt - segment.start_dt  # plus a small gap between flights
+            # move the fallback_dt on to be relative to start of next segment slice
+            fallback_dt += timedelta(seconds=(segment_slice.stop - segment_slice.start))
         segments.append(segment)
         if draw:
             plot_essential(dest_path)
@@ -1065,6 +1079,7 @@ def main():
         ac_info,
         fallback_dt=args.fallback_datetime,
         validation_dt=args.validation_datetime,
+        fallback_relative_to_start=False,
         draw=False)
 
     # Rename the segment filenames to be able to use glob()
