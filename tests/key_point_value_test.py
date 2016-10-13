@@ -11273,16 +11273,25 @@ class TestFuelJettisonDuration(unittest.TestCase, CreateKPVsWhereTest):
 # Groundspeed
 
 
-class TestGroundspeedWithGearOnGroundMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestGroundspeedWithGearOnGroundMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedWithGearOnGroundMax
         self.operational_combinations = [('Groundspeed', 'Gear On Ground')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test Not Implemented')
+    def test_derive_basic(self):
+        spd=P('Groundspeed', array = np.ma.arange(100, 0, -10))
+        gog=M('Gear On Ground',
+             array=np.ma.array([0]*5 + [1]*5),
+             values_mapping = {0: 'Air', 1: 'Ground'})
+
+        node = self.node_class()
+        node.derive(spd, gog)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0], KeyPointValue(
+            index=5, value=50.0,
+            name='Groundspeed With Gear On Ground Max'))
 
 
 class TestGroundspeedWhileTaxiingStraightMax(unittest.TestCase, NodeTest):
