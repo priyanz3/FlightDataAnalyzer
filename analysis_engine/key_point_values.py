@@ -11481,19 +11481,21 @@ class FuelJettisonDuration(KeyPointValueNode):
 # Groundspeed
 
 
-class GroundspeedMax(KeyPointValueNode):
+class GroundspeedWithGearOnGroundMax(KeyPointValueNode):
     '''
-    TODO: rename kpv to reflect limiting section
-    TODO: change to use takeoff roll wow and landing roll
+
     '''
 
     units = ut.KT
 
     def derive(self,
                gnd_spd=P('Groundspeed'),
-               grounded=S('Grounded')):
+               gear=M('Gear On Ground')):
 
-        self.create_kpvs_within_slices(gnd_spd.array, grounded, max_value)
+        self.create_kpvs_within_slices(
+            gnd_spd.array,
+            runs_of_ones(gear.array == 'Ground'),
+            max_value)
 
 
 class GroundspeedWhileTaxiingStraightMax(KeyPointValueNode):

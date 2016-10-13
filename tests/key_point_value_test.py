@@ -388,7 +388,7 @@ from analysis_engine.key_point_values import (
     GroundspeedInStraightLineDuringTaxiOutMax,
     GroundspeedInTurnDuringTaxiInMax,
     GroundspeedInTurnDuringTaxiOutMax,
-    GroundspeedMax,
+    GroundspeedWithGearOnGroundMax,
     GroundspeedSpeedbrakeDuringTakeoffMax,
     GroundspeedSpeedbrakeHandleDuringTakeoffMax,
     GroundspeedStabilizerOutOfTrimDuringTakeoffMax,
@@ -11273,11 +11273,11 @@ class TestFuelJettisonDuration(unittest.TestCase, CreateKPVsWhereTest):
 # Groundspeed
 
 
-class TestGroundspeedMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestGroundspeedWithGearOnGroundMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
-        self.node_class = GroundspeedMax
-        self.operational_combinations = [('Groundspeed', 'Grounded')]
+        self.node_class = GroundspeedWithGearOnGroundMax
+        self.operational_combinations = [('Groundspeed', 'Gear On Ground')]
         self.function = max_value
 
     @unittest.skip('Test Not Implemented')
