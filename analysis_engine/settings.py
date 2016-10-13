@@ -133,6 +133,12 @@ WRAPPING_PARAMS = (
     'FMC Wind Direction True',
     # Altitude in wrapped format
     'Altitude STD (Fine)',
+    # Date & Time
+    'Month',
+    'Day',
+    'Hour',
+    'Minute',
+    'Second',
 )
 
 
