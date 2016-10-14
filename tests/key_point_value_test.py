@@ -92,7 +92,7 @@ from analysis_engine.key_point_values import (
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
-    AirspeedAtAPEngaged,
+    AirspeedAtAPUpperModesEngaged,
     AirspeedAt35FtDuringTakeoff,
     AirspeedAt8000FtDescending,
     AirspeedAtFlapExtensionWithGearDownSelected,
@@ -2455,39 +2455,76 @@ class TestAirspeedWhileAPVerticalSpeedEngagedMin(unittest.TestCase):
         self.assertEqual(len(node), 0)
 
 
-class TestAirspeedAtAPEngaged(unittest.TestCase):
+class TestAirspeedAtAPUpperModesEngaged(unittest.TestCase):
     
     def setUp(self):
-        self.node_class = AirspeedAtAPEngaged
+        self.node_class = AirspeedAtAPUpperModesEngaged
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Airspeed At AP Engaged')
+        self.assertEqual(node.name, 'Airspeed At AP Upper Modes Engaged')
         self.assertEqual(node.units, 'kt')
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=helicopter), [])        
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
         self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 10)
         self.assertIn('Airspeed', opts[0])
-        self.assertIn('AP Engaged Selection', opts[0])
+        self.assertIn('AP (1) Heading Selected Mode Engaged', opts[0])
+        self.assertIn('AP (2) Heading Selected Mode Engaged', opts[0])
+        self.assertIn('AP (1) Altitude Preselect Mode Engaged', opts[0])
+        self.assertIn('AP (2) Altitude Preselect Mode Engaged', opts[0])
+        self.assertIn('AP (1) Vertical Speed Mode Engaged', opts[0])
+        self.assertIn('AP (2) Vertical Speed Mode Engaged', opts[0])
+        self.assertIn('AP (1) Airspeed Mode Engaged', opts[0])
+        self.assertIn('AP (2) Airspeed Mode Engaged', opts[0])
+        self.assertIn('Initial Climb', opts[0])
 
     def test_derive(self):
-        air_spd = P('Airspeed',
-                    np.ma.array([0, 0, 70, 80, 90, 110, 116,
-                                 118, 121, 122, 122]))
-        ap_eng = KTI(name='AP Engaged Selection',
-                     items=[KeyTimeInstance(name='AP Engaged Selection',
-                                            index=5),])
+        a = np.append(np.linspace(5,100,13), np.linspace(100,5,17))
+        air_spd = P('Airspeed', np.ma.array(np.append(a,a)))
+        climb = buildsections('Initial Climb', [1, 10], [31, 40])
+
+        ap_1_hdg = M('AP (1) Heading Selected Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_alt = M('AP (1) Altitude Preselect Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_vrt = M('AP (1) Vertical Speed Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_air = M('AP (1) Airspeed Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+
+        ap_2_hdg = M('AP (2) Heading Selected Mode Engaged',
+                     np.ma.array([0]*3 + [1]*11 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_alt = M('AP (2) Altitude Preselect Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_vrt = M('AP (2) Vertical Speed Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_air = M('AP (2) Airspeed Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
 
         node = self.node_class()
-        node.derive(air_spd, ap_eng)
+        node.derive(air_spd, ap_1_hdg, ap_2_hdg, ap_1_alt, ap_2_alt,
+                    ap_1_vrt, ap_2_vrt, ap_1_air, ap_2_air, climb)
 
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 5)
-        self.assertEqual(node[0].value, 110)
-
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 3)
+        self.assertAlmostEqual(node[0].value, 28.75, places=2)
+        self.assertEqual(node[1].index, 34)
+        self.assertAlmostEqual(node[1].value, 36.67, places=2)
 
 class TestAirspeedAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
 

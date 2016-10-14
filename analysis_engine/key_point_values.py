@@ -1714,20 +1714,52 @@ class AirspeedWhileAPVerticalSpeedEngagedMin(KeyPointValueNode):
             self.create_kpv_from_slices(air_spd.array, sections, min_value)
 
 
-class AirspeedAtAPEngaged(KeyPointValueNode):
+class AirspeedAtAPUpperModesEngaged(KeyPointValueNode):
     '''
-    Airspeed at which AP is engaged. (helicopter only)
-    '''
+    Airspeed at initial climb in which any of the following AP upper 
+    modes are first engaged:
+    - AP (1) Heading Selected Mode Engaged
+    - AP (2) Heading Selected Mode Engaged
+    - AP (1) Vertical Speed Mode Engaged
+    - AP (2) Vertical Speed Mode Engaged
+    - AP (1) Altitude Preselect Mode Engaged
+    - AP (2) Altitude Preselect Mode Engaged
+    - AP (1) Airspeed Mode Engaged
+    - AP (2) Airspeed Mode Engaged
 
-    name = 'Airspeed At AP Engaged'
+    (S92 helicopters only)
+    '''
+    name = 'Airspeed At AP Upper Modes Engaged'
     units = ut.KT
-    can_operate = helicopter_only
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)  
 
     def derive(self,
                air_spd=P('Airspeed'),
-               ap_eng=KTI('AP Engaged Selection')):
-
-        self.create_kpvs_at_ktis(air_spd.array, ap_eng)
+               ap_1_hdg=M('AP (1) Heading Selected Mode Engaged'),
+               ap_2_hdg=M('AP (2) Heading Selected Mode Engaged'),
+               ap_1_alt=M('AP (1) Altitude Preselect Mode Engaged'),
+               ap_2_alt=M('AP (2) Altitude Preselect Mode Engaged'),
+               ap_1_vrt=M('AP (1) Vertical Speed Mode Engaged'),
+               ap_2_vrt=M('AP (2) Vertical Speed Mode Engaged'),
+               ap_1_air=M('AP (1) Airspeed Mode Engaged'),
+               ap_2_air=M('AP (2) Airspeed Mode Engaged'),
+               climb=S('Initial Climb')):
+        mode_state='Engaged'
+        ap_modes = vstack_params_where_state(
+            (ap_1_hdg, mode_state), (ap_2_hdg, mode_state),
+            (ap_1_alt, mode_state), (ap_2_alt, mode_state),
+            (ap_1_vrt, mode_state), (ap_2_vrt, mode_state),
+            (ap_1_air, mode_state), (ap_2_air, mode_state),
+        ).any(axis=0)
+        ap_slices = slices_and(climb.get_slices(), runs_of_ones(ap_modes))
+        for s in ap_slices:
+            self.create_kpv(s.start, air_spd.array[s.start])
 
 
 class AirspeedTrueAtTouchdown(KeyPointValueNode):
