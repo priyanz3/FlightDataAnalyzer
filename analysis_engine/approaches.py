@@ -16,13 +16,35 @@ from flightdatautilities import api
 
 from analysis_engine import settings
 from analysis_engine.library import all_of, nearest_runway
-from analysis_engine.node import A, ApproachNode, KPV, KTI, P, S, helicopter
+from analysis_engine.node import A, aeroplane, ApproachNode, KPV, KTI, P, S, helicopter
+
+from analysis_engine.library import (ils_established,
+                                     index_at_value,
+                                     is_index_within_slice,
+                                     nearest_neighbour_mask_repair,
+                                     runs_of_ones,
+                                     distance_from_cl,
+                                     peak_curvature,
+                                     rate_of_change_array,
+                                     slice_duration,
+                                     slices_and,
+                                     slices_remove_small_gaps,
+                                     shift_slice,
+                                     shift_slices,
+                                     )
 
 
 ##############################################################################
 # Nodes
 
 
+##############################################################################
+# Helper function
+
+def is_heliport(ac_type, airport):
+    return ac_type == helicopter and airport['runways'][0]['strip']['length']==0
+
+##############################################################################
 # TODO: Update docstring for ApproachNode.
 class ApproachInformation(ApproachNode):
     '''
@@ -48,49 +70,31 @@ class ApproachInformation(ApproachNode):
 
     If we are unable to determine the airport and runway for a landing
     approach, it is also possible to fall back to the achieved flight record.
+    
+    We then determine the periods of use of the ILS localizer and glideslope,
+    based on the installed equipment at the runway, the tuned frequency and 
+    the ILS signals themselves.
+    
+    Analysis allows for offset ILS localizers and runway changes. In both cases
+    only the first established period of operation on the localizer is used to 
+    determine established flight on the localizer (and possibly glideslope) as
+    flight after turning off the offset localizer or stepping across to another
+    runway will be flown visually.
+    
+    Backcourse operation is considered not established, and hence will not
+    trigger safety events.
 
-    A list of approach details are returned in the following format::
-
-        [
-            {
-                'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Airport API.
-                'type': 'LANDING',
-                'datetime': datetime(1970, 1, 1, 0, 0, 0),
-                'slice_start': 100,
-                'slice_stop': 200,
-                'ILS localizer established': slice(start, stop),
-                'ILS glideslope established': slice(start, stop),
-                'ILS frequency', 109.05
-            },
-            {
-                'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Airport API.
-                'type': 'GO_AROUND',
-                'datetime': datetime(1970, 1, 1, 0, 0, 0),
-                'slice_start': 100,
-                'slice_stop': 200,
-                'ILS localizer established': slice(start, stop),
-                'ILS frequency', 109.05
-            },
-            {
-                'airport': {...},  # See output provided by Airport API.
-                'runway': {...},   # See output provided by Airport API.
-                'type': 'TOUCH_AND_GO',
-                'datetime': datetime(1970, 1, 1, 0, 0, 0),
-                'slice_start': 100,
-                'slice_stop': 200,
-            },
-            ...
-        ]
-
-    This separates out the approach phase excluding the landing.
     '''
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        required = ['Approach And Landing', 'Fast']
+        required = ['Approach And Landing']
         required.append('Altitude AGL' if ac_type == helicopter else 'Altitude AAL')
+        # Force both Latitude and Longitude to be available if one is available
+        if 'Latitude Prepared' in available and not 'Longitude Prepared' in available:
+            return False
+        elif 'Longitude Prepared' in available and not 'Latitude Prepared' in available:
+            return False
         return all_of(required, available)
 
     def _lookup_airport_and_runway(self, _slice, precise, lowest_lat,
@@ -115,13 +119,13 @@ class ApproachInformation(ApproachNode):
         else:
             # No suitable coordinates, so fall through and try AFR.
             self.warning('No coordinates for looking up approach airport.')
-            return None, None
+            # return None, None
 
         # A2. If and we have an airport in achieved flight record, use it:
         # NOTE: AFR data is only provided if this approach is a landing.
         if not airport and land_afr_apt:
-            airport = land_afr_apt.value
-            self.debug('Using approach airport from AFR: %s', airport)
+            airport = handler.get_airport(land_afr_apt.value['id'])
+            self.debug('Using approach airport from AFR: %s', airport['name'])
 
         # A3. After all that, we still couldn't determine an airport...
         if not airport:
@@ -165,25 +169,24 @@ class ApproachInformation(ApproachNode):
 
         return airport, runway
 
+        
     def derive(self,
-               app=S('Approach And Landing'),
                alt_aal=P('Altitude AAL'),
-               fast=S('Fast'),
-               land_hdg=KPV('Heading During Landing'),
-               land_lat=KPV('Latitude At Touchdown'),
-               land_lon=KPV('Longitude At Touchdown'),
-               appr_hdg=KPV('Heading At Lowest Altitude During Approach'),
-               appr_lat=KPV('Latitude At Lowest Altitude During Approach'),
-               appr_lon=KPV('Longitude At Lowest Altitude During Approach'),
-               loc_ests=S('ILS Localizer Established'),
-               gs_ests=S('ILS Glideslope Established'),
-               appr_ils_freq=KPV('ILS Frequency During Approach'),
+               alt_agl=P('Altitude AGL'),
+               ac_type=A('Aircraft Type'),
+               app=S('Approach And Landing'),
+               hdg=P('Heading Continuous'),
+               lat=P('Latitude Prepared'),
+               lon=P('Longitude Prepared'),
+               ils_loc=P('ILS Localizer'),
+               ils_gs=S('ILS Glideslope'),
+               ils_freq=P('ILS Frequency'),
                land_afr_apt=A('AFR Landing Airport'),
                land_afr_rwy=A('AFR Landing Runway'),
+               lat_land=KPV('Latitude At Touchdown'),
+               lon_land=KPV('Longitude At Touchdown'),
                precision=A('Precise Positioning'),
-               turnoffs=KTI('Landing Turn Off Runway'),
-               alt_agl=P('Altitude AGL'),
-               ac_type=A('Aircraft Type')):
+               ):
 
         precise = bool(getattr(precision, 'value', False))
 
@@ -198,38 +201,62 @@ class ApproachInformation(ApproachNode):
                 landing = True
             # b) We have a touch and go if Altitude AAL reached zero:
             elif np.ma.any(alt.array[_slice] <= 0):
-                approach_type = 'TOUCH_AND_GO'
-                landing = False
+                if ac_type == aeroplane:
+                    approach_type = 'TOUCH_AND_GO'
+                    landing = False
+                elif ac_type == helicopter:
+                    approach_type = 'LANDING'
+                    landing = True
+                else:
+                    raise ValueError('Not doing hovercraft!')
             # c) In any other case we have a go-around:
             else:
                 approach_type = 'GO_AROUND'
                 landing = False
 
-            # Pass latitude, longitude and heading depending whether this
-            # approach is a landing or not.
-            #
-            # If we are not landing, we go with the lowest point on approach.
-            lat = land_lat if landing else appr_lat
-            lon = land_lon if landing else appr_lon
-            hdg = land_hdg if landing else appr_hdg
+            # Rough reference index to allow for go-arounds
+            ref_idx = index_at_value(alt.array, 0.0, _slice=_slice, endpoint='nearest')
 
-            # Added within_slice as we are not interested in the heading of
-            # the first approach if there are multiple, we are using Approach
-            # and Landing so heading on landing should fall within this slice
-            lowest_lat_kpv = lat.get_first(within_slice=_slice) if lat else None
-            lowest_lon_kpv = lon.get_first(within_slice=_slice) if lon else None
-            lowest_hdg_kpv = hdg.get_first(within_slice=_slice) if hdg else None
-            lowest_lat = lowest_lat_kpv.value if lowest_lat_kpv else None
-            lowest_lon = lowest_lon_kpv.value if lowest_lon_kpv else None
-            lowest_hdg = lowest_hdg_kpv.value if lowest_hdg_kpv else None
+            turnoff = None
+            if landing:
+                tdn_hdg = np.ma.median(hdg.array[ref_idx:_slice.stop])
+                lowest_hdg = tdn_hdg.tolist()%360.0
+                
+                # While we're here, let's compute the turnoff index for this landing.
+                head_landing = hdg.array[(ref_idx+_slice.stop)/2:_slice.stop]
+                peak_bend = peak_curvature(head_landing, curve_sense='Bipolar')
+                fifteen_deg = index_at_value(
+                    np.ma.abs(head_landing - head_landing[0]), 15.0)
+                if peak_bend:
+                    turnoff = ref_idx + peak_bend
+                else:
+                    if fifteen_deg and fifteen_deg < peak_bend:
+                        turnoff = start_search + landing_turn
+                    else:
+                        # No turn, so just use end of landing run.
+                        turnoff = _slice.stop
+            else:
+                # We didn't land, but this is indicative of the runway heading
+                lowest_hdg = hdg.array[ref_idx].tolist()%360.0
+
+            # Pass latitude, longitude and heading
+            if lat and lon and ref_idx:
+                lowest_lat = lat.array[ref_idx]
+                lowest_lon = lon.array[ref_idx]
+            elif lat_land and lon_land:
+                lowest_lat = lat_land[-1].value
+                lowest_lon = lon_land[-1].value
+            else:
+                lowest_lat = None
+                lowest_lon = None
 
             kwargs = dict(
+                precise=precise,
+                _slice=_slice,
                 lowest_lat=lowest_lat,
                 lowest_lon=lowest_lon,
                 lowest_hdg=lowest_hdg,
-                appr_ils_freq=appr_ils_freq,
-                precise=precise,
-                _slice=_slice,
+                appr_ils_freq=None,
             )
 
             # If the approach is a landing, pass through information from the
@@ -242,43 +269,170 @@ class ApproachInformation(ApproachNode):
                     hint='landing',
                 )
 
-            # Prepare approach information and populate with airport and runway
-            # via API calls:
-            gs_est = None
-            if gs_ests:
-                # If the aircraft was established on the glideslope more than
-                # once during this approach, we take the last segment for the
-                # approach as this is must be the one that included (or was
-                # closest to) the landing
-                gs_est = gs_ests.get_last(within_slice=_slice, within_use='any')
-                gs_est = gs_est.slice if gs_est else None
+            airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
+            if not airport:
+                break
+            
+            # Simple determination of heliport.
+            # This function may be expanded to cater for rig approaches in future.
+            heliport = is_heliport(ac_type, airport)
+            
+            if heliport:
+                self.create_approach(
+                    approach_type,
+                    _slice,
+                    runway_change=False,
+                    offset_ils=False,
+                    airport=airport,
+                    landing_runway=None,
+                    approach_runway=None,
+                    gs_est=None,
+                    loc_est=None,
+                    ils_freq=None,
+                    turnoff=None,
+                    lowest_lat=lowest_lat,
+                    lowest_lon=lowest_lon,
+                    lowest_hdg=lowest_hdg,
+                )
+                return
+
+            #########################################################################
+            ## Analysis of fixed wing approach to a runway
+            ## 
+            ## First step is to check the ILS frequency for the runway in use
+            ## and cater for a change from the approach runway to the landing runway.
+            #########################################################################
+            
+            appr_ils_freq = None
+            runway_change = False
+            offset_ils = False
+            
+            # Do we have a recorded ILS frequency? If so, what was it tuned to at the start of the approach??
+            if ils_freq:
+                appr_ils_freq = round(ils_freq.array[_slice.start], 2)
+            # Was this valid, and if so did the start of the approach match the landing runway?
+            if appr_ils_freq and not np.isnan(appr_ils_freq):
+                kwargs['appr_ils_freq'] = appr_ils_freq
+                airport, approach_runway = self._lookup_airport_and_runway(**kwargs)
+                if approach_runway['id'] != landing_runway['id']:
+                    runway_change = True
+            else:
+                # Without a frequency source, we just have to hope any localizer signal is for this runway!
+                approach_runway = landing_runway
+
+            if approach_runway['localizer'].has_key('frequency'):
+                if np.ma.count(ils_loc.array[_slice]) > 10:
+                    if runway_change:
+                        # We only use the first frequency tuned. This stops scanning across both runways if the pilot retunes.
+                        loc_slice = shift_slices(runs_of_ones(np.ma.abs(ils_freq.array[_slice]-appr_ils_freq)<0.001),
+                                                 _slice.start)[0]
+                    else:
+                        loc_slice = _slice
+                else:
+                    # No localizer or inadequate data for this approach.
+                    loc_slice = None
+            else:
+                # The approach was to a runway without an ILS, so even if it was tuned, we ignore this.
+                appr_ils_freq = None
+                loc_slice = None
+
+            if appr_ils_freq and loc_slice:
+                if appr_ils_freq != approach_runway['localizer']['frequency']/1000.0:
+                    loc_slice = None
+
+            #######################################################################
+            ## Identification of the period established on the localizer
+            #######################################################################
+                    
             loc_est = None
-            if loc_ests:
-                # As for the glidepath, we take the last localizer phase as
-                # this avoids working off an earlier segment if the aircraft
-                # carries out a teardrop approach. See approach plate for
-                # TOS 19 when approaching from the South.
-                loc_est = loc_ests.get_last(within_slice=_slice, within_use='any')
-                loc_est = loc_est.slice if loc_est else None
+            if loc_slice:
+                valid_range = np.ma.flatnotmasked_edges(ils_loc.array[_slice])
+                # I have some data to scan. Shorthand names;
+                loc_start = valid_range[0] + _slice.start
+                loc_end = valid_range[1] + _slice.start + 1
+                # First trim to within 45 deg of runway heading, to suppress signals that are not related to this approach.
+                # The value of 45 deg was selected to encompass Washington National airport with a 40 deg offset.
+                hdg_diff = np.ma.abs(np.ma.mod((hdg.array-lowest_hdg)+180.0, 360.0)-180.0)
+                ils_45 = index_at_value(hdg_diff, 45.0, _slice=slice(ref_idx, loc_start, -1))
+                loc_start = max(loc_start, ils_45)
 
-            # Add further details to save hunting when we need them later.
-            ils_freq_kpv = (appr_ils_freq.get_last(within_slice=_slice) if appr_ils_freq else None)
-            ils_freq = ils_freq_kpv.value if ils_freq_kpv else None
-            kwargs['appr_ils_freq'] = ils_freq
+                # Did I get established on the localizer, and if so, when?
+                loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
+                if loc_estab :
+                    loc_start = loc_estab
+                    # Refine the end of the localizer established phase...
+                    if (approach_runway and approach_runway['localizer']['is_offset']):
+                        offset_ils = True
+                        # The ILS established phase ends when the deviation becomes large.
+                        loc_end = ils_established(ils_loc.array, slice(ref_idx, loc_start, -1), ils_loc.hz, duration='immediate')
 
-            turnoff_kpv = (turnoffs.get_first(within_slice=_slice) if turnoffs else None)
-            turnoff = turnoff_kpv.index if turnoff_kpv else None
+                    elif approach_type in ['TOUCH_AND_GO', 'GO_AROUND']:
+                        # We finish at the lowest point
+                        loc_end = ref_idx
+    
+                    elif approach_type == 'LANDING':
+                        if runway_change:
+                            # Step across. Search for end of established phase
+                            loc_end = ils_established(ils_loc.array, slice(loc_end, loc_start, -1), ils_loc.hz, duration='immediate')
+                        else:
+                            # Just end at 2 dots where we turn off the runway
+                            loc_end_2_dots = index_at_value(np.ma.abs(ils_loc.array), 2.0, _slice=slice(loc_end, loc_start, -1))
+                            if loc_end_2_dots:
+                                loc_end = loc_end_2_dots
+                        
+                    loc_est = slice(loc_start, loc_end)
 
-            airport, runway = self._lookup_airport_and_runway(**kwargs)
+            #######################################################################
+            ## Identification of the period established on the glideslope
+            #######################################################################
+
+            gs_est = None
+            if loc_est and approach_runway.has_key('glideslope') and ils_gs:
+                # We only look for glideslope established periods if the localizer is already established.
+
+                # The range to scan for the glideslope starts with localizer capture and ends at the
+                # minimum height point for a go-around, or 200ft for a touch-and-go or landing.
+                ils_gs_start = loc_start
+                ils_gs_end = loc_end
+                if landing:
+                    ils_gs_200 = index_at_value(alt.array, 200.0, _slice=slice(ils_gs_end, ils_gs_start, -1))
+                    if ils_gs_200:
+                        # Don't go beyond the localizer end of capture.
+                        ils_gs_end = min(loc_end, ils_gs_200)
+                else:
+                    ils_gs_end = ref_idx
+
+                # Look for ten seconds within half a dot
+                ils_gs_estab = ils_established(ils_gs.array, slice(ils_gs_start, ils_gs_end), ils_gs.hz)
+                if ils_gs_estab:
+                    gs_est = slice(ils_gs_start, ils_gs_end)
+
+
+            '''
+            # These statements help set up test cases.
+            print
+            print airport['name']
+            print approach_runway['identifier']
+            print landing_runway['identifier']
+            print _slice
+            if loc_est:
+                print 'Localizer established ', loc_est.start, loc_est.stop
+            if gs_est:
+                print 'Glideslope established ', gs_est.start, gs_est.stop
+            print
+            '''
 
             self.create_approach(
                 approach_type,
                 _slice,
+                runway_change=runway_change,
+                offset_ils=offset_ils,
                 airport=airport,
-                runway=runway,
+                landing_runway=landing_runway,
+                approach_runway=approach_runway,
                 gs_est=gs_est,
                 loc_est=loc_est,
-                ils_freq=ils_freq,
+                ils_freq=appr_ils_freq,
                 turnoff=turnoff,
                 lowest_lat=lowest_lat,
                 lowest_lon=lowest_lon,
