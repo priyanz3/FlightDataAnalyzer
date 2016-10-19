@@ -5934,12 +5934,12 @@ class RunwayHeadingTrue(KeyPointValueNode):
                                 runway_heading(takeoff_runway.value))
         if apps:
             for app in apps:
-                if not app.runway:
+                if not app.landing_runway:
                     continue
                 # Q: Is the midpoint of the slice a sensible index?
                 index = (app.slice.start +
                          ((app.slice.stop - app.slice.start) / 2))
-                self.create_kpv(index, runway_heading(app.runway))
+                self.create_kpv(index, runway_heading(app.landing_runway))
 
 
 class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
@@ -5994,7 +5994,7 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
                         ils_approach = True
             # When did we turn off the runway?
             last_turnoff = turnoff.get_last()
-            if not is_index_within_slice(last_turnoff.index, landing.slice):
+            if not last_turnoff or not is_index_within_slice(last_turnoff.index, landing.slice):
                 continue
             # So the period of interest is...
             land_roll = slice(last_tdwn.index, last_turnoff.index)
@@ -6349,20 +6349,13 @@ class ILSFrequencyDuringApproach(KeyPointValueNode):
     name = 'ILS Frequency During Approach'
     units = ut.MHZ
 
-    def derive(self,
-               ils_frq=P('ILS Frequency'),
-               loc_ests=S('ILS Localizer Established')):
+    def derive(self, apps=A('Approach Information')):
 
-        for loc_est in loc_ests:
-            # Find the ILS frequency for the final period of operation of the
-            # ILS during this approach. Note that median picks the value most
-            # commonly recorded, so allows for some masked values and perhaps
-            # one or two rogue values. If, however, all the ILS frequency data
-            # is masked, no KPV is created.
-            frequency = np.ma.median(ils_frq.array[loc_est.slice])
-            if frequency:
+        for app in apps:
+            frequency = app.ils_freq
+            if app.loc_est and frequency:
                 # Set the KPV index to the start of this ILS approach:
-                self.create_kpv(loc_est.slice.start, frequency)
+                self.create_kpv(app.loc_est.start, frequency)
 
 
 class ILSGlideslopeDeviation1500To1000FtMax(KeyPointValueNode):
