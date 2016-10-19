@@ -348,7 +348,7 @@ class ApproachInformation(ApproachNode):
                 valid_range = np.ma.flatnotmasked_edges(ils_loc.array[_slice])
                 # I have some data to scan. Shorthand names;
                 loc_start = valid_range[0] + _slice.start
-                loc_end = valid_range[1] + _slice.start + 1
+                loc_end = valid_range[1] + _slice.start
                 # First trim to within 45 deg of runway heading, to suppress signals that are not related to this approach.
                 # The value of 45 deg was selected to encompass Washington National airport with a 40 deg offset.
                 hdg_diff = np.ma.abs(np.ma.mod((hdg.array-lowest_hdg)+180.0, 360.0)-180.0)
@@ -379,7 +379,7 @@ class ApproachInformation(ApproachNode):
                             if loc_end_2_dots:
                                 loc_end = loc_end_2_dots
                         
-                    loc_est = slice(loc_start, loc_end)
+                    loc_est = slice(loc_start, loc_end+1)
 
             #######################################################################
             ## Identification of the period established on the glideslope
@@ -404,7 +404,7 @@ class ApproachInformation(ApproachNode):
                 # Look for ten seconds within half a dot
                 ils_gs_estab = ils_established(ils_gs.array, slice(ils_gs_start, ils_gs_end), ils_gs.hz)
                 if ils_gs_estab:
-                    gs_est = slice(ils_gs_start, ils_gs_end)
+                    gs_est = slice(ils_gs_start, ils_gs_end+1)
 
 
             '''

@@ -158,7 +158,7 @@ class TestApproachInformation(unittest.TestCase):
                           )
         # Slice changed from original test to reflect new way of determining localizer established phase.
         # Not looking at loc signal, but approach phase and established startpoint, and runway turnoff endpoint.
-        self.assertEqual(approaches[0].loc_est, slice(20, 69))
+        self.assertEqual(approaches[0].loc_est, slice(20, 70))
 
     def test_ils_localizer_stays_established_with_large_visible_deviations(self):
         approaches = ApproachInformation()
@@ -178,7 +178,7 @@ class TestApproachInformation(unittest.TestCase):
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
-        self.assertEqual(approaches[0].loc_est, slice(10, 69)) # 69 reflects the 2 dot endpoint
+        self.assertEqual(approaches[0].loc_est, slice(10, 70)) # 70 reflects the 2 dot endpoint
 
     def test_ils_localizer_insensitive_to_few_masked_values(self):
         ils_array = np.ma.array(np.repeat([0,0,0,1,2.3,2.3,2,1,0,0], 10))
@@ -201,7 +201,7 @@ class TestApproachInformation(unittest.TestCase):
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
-        self.assertEqual(approaches[0].loc_est, slice(10, 69)) # 69 reflects the 2 dot endpoint
+        self.assertEqual(approaches[0].loc_est, slice(10, 70)) # 70 reflects the 2 dot endpoint
 
     def test_ils_localizer_skips_too_many_masked_values(self):
         approaches = ApproachInformation()
@@ -438,7 +438,7 @@ class TestBardufoss(unittest.TestCase):
         self.assertEqual(approaches[0].gs_est, None)
         # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), app_start)
-        self.assertEqual(int(approaches[0].loc_est.stop), 11683)
+        self.assertEqual(int(approaches[0].loc_est.stop), 11684)
 
 
 class TestBodo(unittest.TestCase):
@@ -481,7 +481,7 @@ class TestBodo(unittest.TestCase):
         self.assertEqual(approaches[0].gs_est, None)
         # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), app_start)
-        self.assertEqual(int(approaches[0].loc_est.stop), 8860)
+        self.assertEqual(int(approaches[0].loc_est.stop), 8861)
 
 
 class TestChania(unittest.TestCase):
@@ -568,10 +568,10 @@ class TestDallasFortWorth(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '17R')
         # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 6480)
-        self.assertEqual(int(approaches[0].gs_est.stop), 6733)
+        self.assertEqual(int(approaches[0].gs_est.stop), 6734)
         # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 6480)
-        self.assertEqual(int(approaches[0].loc_est.stop), 6871)
+        self.assertEqual(int(approaches[0].loc_est.stop), 6872)
 
 
 
@@ -614,7 +614,7 @@ class TestFortWorth(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '16L')
         # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), app_start)
-        self.assertEqual(int(approaches[0].gs_est.stop), 18075)
+        self.assertEqual(int(approaches[0].gs_est.stop), 18076)
         # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), app_start)
         self.assertEqual(int(approaches[0].loc_est.stop), app_end)
@@ -744,7 +744,7 @@ class TestScatsta(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '24')
         # We should be established on the (offset) localizer:        
         self.assertEqual(int(approaches[0].loc_est.start), 6996)
-        self.assertEqual(int(approaches[0].loc_est.stop), 7085)
+        self.assertEqual(int(approaches[0].loc_est.stop), 7086)
         # ...but there is no glideslope on this runway.
         self.assertEqual(approaches[0].gs_est, None)
         
@@ -788,7 +788,7 @@ class TestSirSeretseKhama(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '08')
         # The aircraft did get established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 8679)
-        self.assertEqual(int(approaches[0].gs_est.stop), 8881)
+        self.assertEqual(int(approaches[0].gs_est.stop), 8882)
         # ...and was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 8679)
         self.assertEqual(int(approaches[0].loc_est.stop), app_end)
@@ -835,7 +835,7 @@ class TestWashingtonNational(unittest.TestCase):
         self.assertEqual(approaches[0].gs_est, None)
         # ...and was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 8284)
-        self.assertEqual(int(approaches[0].loc_est.stop), 8702)
+        self.assertEqual(int(approaches[0].loc_est.stop), 8703)
 
 
 class TestZaventem(unittest.TestCase):
