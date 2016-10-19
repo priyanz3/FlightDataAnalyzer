@@ -31,7 +31,7 @@ from analysis_engine.library import (
 )
 
 from analysis_engine.node import (
-    A, M, P, S, KTI, KeyTimeInstanceNode,
+    A, App, M, P, S, KTI, KeyTimeInstanceNode,
     aeroplane, aeroplane_only, helicopter, helicopter_only)
 
 from flightdatautilities import units as ut
@@ -1640,36 +1640,10 @@ class LandingDecelerationEnd(KeyTimeInstanceNode):
 
 class LandingTurnOffRunway(KeyTimeInstanceNode):
     # See Takeoff Turn Onto Runway for description.
-    def derive(self, head=P('Heading Continuous'),
-               landings=S('Landing'),
-               fast=S('Fast')):
-        for landing in landings:
-            # Check the landing slice is robust.
-            if landing.slice.start and landing.slice.stop:
-                start_search = fast.get_previous(landing.slice.stop)
-                if start_search:
-                    start_search = start_search.slice.stop
-
-                if (start_search is None) or (start_search < landing.slice.start):
-                    start_search = (landing.slice.start + landing.slice.stop) / 2
-
-                head_landing = head.array[start_search:landing.slice.stop]
-
-                peak_bend = peak_curvature(head_landing, curve_sense='Bipolar')
-
-                fifteen_deg = index_at_value(
-                    np.ma.abs(head_landing - head_landing[0]), 15.0)
-
-                if peak_bend:
-                    landing_turn = start_search + peak_bend
-                else:
-                    if fifteen_deg and fifteen_deg < peak_bend:
-                        landing_turn = start_search + landing_turn
-                    else:
-                        # No turn, so just use end of landing run.
-                        landing_turn = landing.slice.stop
-
-                self.create_kti(landing_turn)
+    def derive(self, apps=App('Approach Information')):
+        for app in apps:
+            if app.turnoff:
+                self.create_kti(app.turnoff)
 
 
 ################################################################################
