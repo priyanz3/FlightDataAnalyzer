@@ -404,7 +404,7 @@ class ApproachInformation(ApproachNode):
                 # Look for ten seconds within half a dot
                 ils_gs_estab = ils_established(ils_gs.array, slice(ils_gs_start, ils_gs_end), ils_gs.hz)
                 if ils_gs_estab:
-                    gs_est = slice(ils_gs_start, ils_gs_end+1)
+                    gs_est = slice(ils_gs_estab, ils_gs_end+1)
 
 
             '''

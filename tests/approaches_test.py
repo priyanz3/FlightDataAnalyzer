@@ -612,8 +612,8 @@ class TestFortWorth(unittest.TestCase):
                           )
         self.assertEqual(approaches[0][2]['name'], 'Fort Worth Alliance')
         self.assertEqual(approaches[0][3]['identifier'], '16L')
-        # The aircraft was established on the glidepath
-        self.assertEqual(int(approaches[0].gs_est.start), app_start)
+        # The aircraft was established on the glidepath slightly after the approach start
+        self.assertEqual(int(approaches[0].gs_est.start), 17870)
         self.assertEqual(int(approaches[0].gs_est.stop), 18076)
         # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), app_start)
@@ -880,7 +880,7 @@ class TestZaventem(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '01')
         self.assertEqual(approaches[0].type, 'GO_AROUND')
         self.assertEqual(approaches[1].type, 'LANDING')
-        self.assertEqual(int(approaches[0].gs_est.start), 11965)
+        self.assertEqual(int(approaches[0].gs_est.start), 12033)
         self.assertEqual(int(approaches[1].gs_est.start), 13500)
         # ...and was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 11965)
