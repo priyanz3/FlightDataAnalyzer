@@ -27,6 +27,9 @@ from flightdatautilities.geometry import cross_track_distance
 from settings import (
     BUMP_HALF_WIDTH,
     HEADING_RATE_FOR_MOBILE,
+    ILS_CAPTURE,
+    ILS_CAPTURE_ROC,
+    ILS_ESTABLISHED_DURATION,
     ILS_LOC_SPREAD,
     ILS_GS_SPREAD,
     KTS_TO_MPS,
@@ -1631,7 +1634,7 @@ def find_app_rwy(app_info, this_loc):
         logger.warning("No approach found within slice '%s'.",this_loc)
         return None, None
 
-    runway = approach.runway
+    runway = approach.approach_runway
     if not runway:
         logger.warning("Approach runway information not available.")
         return approach, None
@@ -2975,6 +2978,32 @@ def hysteresis(array, hysteresis):
     # At the end of the process we reinstate the mask, although the data
     # values may have affected the result.
     return np.ma.array(result, mask=array.mask)
+
+
+def ils_established(array, _slice, hz, duration='established'):
+    '''
+    Helper function for ILS established computations
+    :param array: ILS localizer or glideslope data array
+    :type array: numpy masked array in dots
+    :param _slice: slice of this array to scan
+    :type _slice: Python slice
+    :param hz: frequency of the array
+    :type hz: float
+    '''
+    if duration == 'established':
+        time_required = ILS_ESTABLISHED_DURATION
+    elif duration == 'immediate':
+        time_required = 1.0
+
+    captures = np.ma.clump_unmasked(np.ma.masked_greater(np.ma.abs(array[_slice]), ILS_CAPTURE))
+    ils_rate = rate_of_change_array(array[_slice], hz)
+    low_rocs = np.ma.clump_unmasked(np.ma.masked_greater(np.ma.abs(ils_rate), ILS_CAPTURE_ROC))
+
+    for capture in slices_and(captures, low_rocs):
+        if slice_duration(capture, hz) > time_required:
+            return _slice.start + (_slice.step or 1)*capture.start
+            break
+    return None
 
 
 def ils_glideslope_align(runway):
@@ -7984,7 +8013,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
                 logger.info("Runway '%s' selected: Only runway within %d degrees of provided heading.", x[0]['identifier'], limit)
                 return x[0]
 
-    # 4. Attempt to identify by nearest runway (if precise positioning):
+    # 4. Attempt to identify by nearest runway:
     if latitude is not None and longitude is not None:
         assert -90 <= latitude <= 90, 'Latitude must be between -90 and 90 degrees.'
         assert -180 < longitude <= 180, 'Longitude must be between -180 and 180 degrees.'
