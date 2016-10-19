@@ -4359,6 +4359,14 @@ def blend_nonequispaced_sensors(array_one, array_two, padding):
     '''
     assert len(array_one) == len(array_two)
     both = merge_sources(array_one, array_two)
+    
+    new_both = both
+    mask_array = np.ma.getmaskarray(both)
+    for i in range(1, len(both)-1):
+        if mask_array[i]:
+            new_both[i] = (both[i-1]+both[i+1])/2
+    both = new_both
+    
     # A simpler technique than trying to append to the averaged array.
     av_pairs = np.ma.empty_like(both)
     if padding == 'Follow':
@@ -4369,6 +4377,7 @@ def blend_nonequispaced_sensors(array_one, array_two, padding):
         av_pairs[1:] = (both[:-1]+both[1:])/2
         av_pairs[0] = av_pairs[1]
         av_pairs[0] = np.ma.masked
+
     return av_pairs
 
 
@@ -4509,7 +4518,7 @@ def blend_two_parameters(param_one, param_two, mode=None):
     # We force ILS signals through this path as the benefit of gaining the best signal
     # (i.e. producing a valid result if one singal is inoperative) outweighs
     # the timing errors involved.
-    if (abs(param_one.offset - param_two.offset) * frequency == 1.0) or mode:
+    if (abs(param_one.offset - param_two.offset) * frequency == 1.0):
         # Equispaced process
         if param_one.offset < param_two.offset:
             offset = param_one.offset
