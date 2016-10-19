@@ -47,7 +47,7 @@ logger = logging.getLogger(name=__name__)
 # Define named tuples for KPV and KTI and FlightPhase
 ApproachItem = recordtype(
     'ApproachItem',
-    'type slice airport runway gs_est loc_est ils_freq turnoff lowest_lat lowest_lon lowest_hdg',
+    'type slice airport landing_runway approach_runway gs_est loc_est ils_freq turnoff lowest_lat lowest_lon lowest_hdg',
     default=None)
 KeyPointValue = recordtype('KeyPointValue',
                            'index value name slice datetime latitude longitude',
@@ -2236,7 +2236,8 @@ class ApproachNode(ListNode):
         if _type not in ('APPROACH', 'LANDING', 'GO_AROUND', 'TOUCH_AND_GO'):
             raise ValueError("Unknown approach type: '%s'." % _type)
 
-    def create_approach(self, _type, _slice, airport=None, runway=None,
+    def create_approach(self, _type, _slice, runway_change=False, offset_ils=False,
+                        airport=None, landing_runway=None, approach_runway=None,
                         gs_est=None, loc_est=None, ils_freq=None, turnoff=None,
                         lowest_lat=None, lowest_lon=None, lowest_hdg=None):
         '''
@@ -2246,8 +2247,10 @@ class ApproachNode(ListNode):
         :type _slice: slice
         :param airport: Approach airport dictionary.
         :type airport: dict or None
-        :param runway: Approach runway dictionary.
-        :type runway: dict or None
+        :param landing_runway: Landing runway dictionary.
+        :type landing_runway: dict or None
+        :param approach_runway: Approach runway dictionary.
+        :type approach_runway: dict or None
         :param gs_est: ILS Glideslope established slice.
         :type gs_est: slice or None
         :param loc_est: ILS Localiser established slice.
@@ -2267,7 +2270,8 @@ class ApproachNode(ListNode):
         '''
         self._check_type(_type)
         approach = ApproachItem(
-            type=_type, slice=_slice, airport=airport, runway=runway,
+            type=_type, slice=_slice, airport=airport,
+            landing_runway=landing_runway, approach_runway=approach_runway,
             gs_est=gs_est, loc_est=loc_est, ils_freq=ils_freq, turnoff=turnoff,
             lowest_lat=lowest_lat, lowest_lon=lowest_lon, lowest_hdg=lowest_hdg)
         self.append(approach)
@@ -2340,7 +2344,8 @@ class ApproachNode(ListNode):
                 lowest_hdg=approach.lowest_hdg,
                 lowest_lat=approach.lowest_lat,
                 lowest_lon=approach.lowest_lon,
-                runway=approach.runway,
+                landing_runway=approach.landing_runway,
+                approach_runway=approach.approach_runway,
                 slice=_slice,
                 turnoff=(turnoff * multiplier) + offset if turnoff else None,
                 type=approach.type,
