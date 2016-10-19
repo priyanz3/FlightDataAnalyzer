@@ -2237,10 +2237,10 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Airspeed', 'Altitude AGL', 'Touchdown')])
+        self.assertEqual(opts, [('Airspeed', 'Altitude AGL For Flight Phases', 'Touchdown')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.array((range(90, 0, -1)+[0]*10)))
+        alt = P('Altitude AGL For Flight Phases', np.ma.array((range(90, 0, -1)+[0]*10)))
         spd = P('Airspeed', np.ma.arange(100, 0, -1))
         tdwns = KTI('Touchdown', items=[KeyTimeInstance(90, 'Touchdown')])
 
@@ -2263,10 +2263,10 @@ class TestAirspeedAbove500FtMin(unittest.TestCase):
             []
         )
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Airspeed', 'Altitude AGL')])
+        self.assertEqual(opts, [('Airspeed', 'Altitude AGL For Flight Phases')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.array(np.linspace(200, 1000, 20)))
+        alt = P('Altitude AGL For Flight Phases', np.ma.array(np.linspace(200, 1000, 20)))
         spd = P('Airspeed', np.ma.array(np.linspace(90, 100, 20)))
 
         node = self.node_class()
@@ -2292,7 +2292,7 @@ class TestAirspeedAt200Ft(unittest.TestCase):
         self.assertEqual(opts, [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(len(opts), 1)
-        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Altitude AGL For Flight Phases', opts[0])
         self.assertIn('Airspeed', opts[0])
         self.assertIn('Approach', opts[0])
 
@@ -2307,7 +2307,7 @@ class TestAirspeedAt200Ft(unittest.TestCase):
             np.linspace(415, 20, 18).tolist() + \
             np.linspace(230, 534, 17).tolist() + \
             np.linspace(503, 50, 18).tolist()
-        alt_agl = P('Altitude AGL', y)
+        alt_agl = P('Altitude AGL For Flight Phases', y)
 
         node = self.node_class()
         node.derive(air_spd, alt_agl, approaches)
@@ -11816,7 +11816,7 @@ class TestGroundspeedBelow100FtMax(unittest.TestCase):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(len(opts), 1)
         self.assertIn('Groundspeed', opts[0])
-        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Altitude AGL For Flight Phases', opts[0])
         self.assertIn('Airborne', opts[0])
 
     def test_derive(self):
@@ -12334,7 +12334,7 @@ class TestPitch100To20FtMax(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descent', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL For Flight Phases', 'Descent', 'Aircraft Type'), ac_type=helicopter))
 
     def test_derive(self):
         alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
@@ -12356,7 +12356,7 @@ class TestPitch100To20FtMin(unittest.TestCase):
 
     def setUp(self):
         self.node_class = Pitch100To20FtMin
-        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descent')]
+        self.operational_combinations = [('Pitch', 'Altitude AGL For Flight Phases', 'Descent')]
         self.can_operate_kwargs = {'ac_type': aeroplane}
         self.function = min_value
 
@@ -12365,7 +12365,7 @@ class TestPitch100To20FtMin(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descent', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL For Flight Phases', 'Descent', 'Aircraft Type'), ac_type=helicopter))
 
     def test_derive(self):
         alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
@@ -12396,7 +12396,7 @@ class TestPitch500To100FtMax(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descent', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL For Flight Phases', 'Descent', 'Aircraft Type'), ac_type=helicopter))
 
     def test_derive(self):
         alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
@@ -12418,7 +12418,7 @@ class TestPitch500To100FtMin(unittest.TestCase):
 
     def setUp(self):
         self.node_class = Pitch500To100FtMin
-        self.operational_combinations = [('Pitch', 'Altitude AGL', 'Descent')]
+        self.operational_combinations = [('Pitch', 'Altitude AGL For Flight Phases', 'Descent')]
         self.can_operate_kwargs = {'ac_type': helicopter}
         self.function = min_value
 
@@ -12427,7 +12427,7 @@ class TestPitch500To100FtMin(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Pitch', 'Altitude AAL For Flight Phases', 'Final Approach', 'Aircraft Type'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL', 'Descent', 'Aircraft Type'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Pitch', 'Altitude AGL For Flight Phases', 'Descent', 'Aircraft Type'), ac_type=helicopter))
 
     def test_derive(self):
         alt = P('Altitude AAL For Flight Phases', np.ma.arange(500, 0, -5))
@@ -13694,12 +13694,12 @@ class TestRateOfDescentBelow500FtMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Vertical Speed', 'Altitude AGL', 'Descending')])
+        self.assertEqual(opts, [('Vertical Speed', 'Altitude AGL For Flight Phases', 'Descending')])
 
     def test_derive(self,):
         array = np.ma.concatenate((np.ma.arange(0, 2000, 100), np.ma.arange(5000, 10000, 1000)))
         array = np.ma.concatenate((array, array[::-1]))
-        alt = P('Altitude AGL', array, frequency=0.25)
+        alt = P('Altitude AGL For Flight Phases', array, frequency=0.25)
         roc_array = np.ma.concatenate(([437, 625, 812, 1000, 1125, 625, 475, 500, 125, 375, 275], [250]*14))
         roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
         vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
@@ -14075,10 +14075,10 @@ class TestRoll100To20FtMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL', 'Descent')])
+        self.assertEqual(opts, [('Roll', 'Altitude AGL For Flight Phases', 'Descent')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.arange(500, 0, -5), frequency=0.25)
+        alt = P('Altitude AGL For Flight Phases', np.ma.arange(500, 0, -5), frequency=0.25)
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x), frequency=0.25)
         name = 'Descent'
@@ -14102,10 +14102,10 @@ class TestRollAbove300FtMax(unittest.TestCase):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+        self.assertEqual(opts, [('Roll', 'Altitude AGL For Flight Phases')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        alt = P('Altitude AGL For Flight Phases', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
 
@@ -14133,12 +14133,12 @@ class TestRollBelow300FtMax(unittest.TestCase):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(len(opts), 1)
         self.assertIn('Roll', opts[0])
-        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Altitude AGL For Flight Phases', opts[0])
         self.assertIn('Airborne', opts[0])
         #self.assertEqual(opts, [('Roll', 'Altitude AGL')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        alt = P('Altitude AGL For Flight Phases', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
         airborne = buildsections('Airborne', [2, 49])
@@ -14197,10 +14197,10 @@ class TestRollAbove500FtMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+        self.assertEqual(opts, [('Roll', 'Altitude AGL For Flight Phases')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        alt = P('Altitude AGL For Flight Phases', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
 
@@ -14219,10 +14219,10 @@ class TestRollBelow500FtMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll', 'Altitude AGL')])
+        self.assertEqual(opts, [('Roll', 'Altitude AGL For Flight Phases')])
 
     def test_derive(self):
-        alt = P('Altitude AGL', np.ma.arange(0, 5000, 50))
+        alt = P('Altitude AGL For Flight Phases', np.ma.arange(0, 5000, 50))
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
 
