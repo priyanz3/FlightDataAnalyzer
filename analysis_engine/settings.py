@@ -312,7 +312,9 @@ HYSTERESIS_FPROC = 40  # fpm / RMS altitude noise
 HYSTERESIS_FPROT = 2  # deg/sec
 
 # ILS Capture threshold. Set lower than the lowest exceedance threshold.
-ILS_CAPTURE = 0.8  # dots
+ILS_CAPTURE = 0.5  # dots
+ILS_CAPTURE_ROC = 0.1 # dots/sec
+ILS_ESTABLISHED_DURATION = 10.0 # sec
 
 # Full scale reading on the ILS
 ILS_MAX_SCALE = 2.5  # dots
