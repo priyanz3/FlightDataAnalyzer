@@ -4814,13 +4814,6 @@ class CoordinatesSmoothed(object):
                     # Adjust distance units
                     distances = app_range.array[this_loc_slice]
 
-                    ## This test was introduced as a  precaution against poor
-                    ## quality data, but in fact for landings where only airspeed
-                    ## data is available, none of the data below 60kt will be valid,
-                    ## hence this test was removed.
-                    ##if np.ma.count(distances)/float(len(distances)) < 0.8:
-                        ##continue # Insufficient range data to make this worth computing.
-
                     # Tweek the localizer position to be on the start:end centreline
                     localizer_on_cl = ils_localizer_align(runway)
 
@@ -4868,9 +4861,6 @@ class CoordinatesSmoothed(object):
                     #    coordinates if it drops below a certain altitude as
                     #    this will be more accurate than low precision
                     #    positioning equipment.
-
-                    if not tdwn_index:
-                        continue
 
                     # Adjust distance units
                     distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
