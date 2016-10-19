@@ -1193,76 +1193,10 @@ class IANGlidepathEstablished(FlightPhaseNode):
 class ILSLocalizerEstablished(FlightPhaseNode):
     name = 'ILS Localizer Established'
 
-    @classmethod
-    def can_operate(cls, available):
-        return all_of(('ILS Localizer',
-                       'Altitude AAL For Flight Phases',
-                       'Approach And Landing'), available)
-
-    def derive(self, ils_loc=P('ILS Localizer'),
-               alt_aal=P('Altitude AAL For Flight Phases'),
-               apps=S('Approach And Landing'),
-               ils_freq=P('ILS Frequency'),
-               hdg=P('Heading Continuous'),
-               hdg_ldg=KPV('Heading During Landing')):
-
-        def create_ils_phases(slices):
-            for _slice in slices:
-                ils_slice = scan_ils('localizer', ils_loc.array, alt_aal.array,
-                                   _slice, ils_loc.frequency,
-                                   hdg=hdg.array, hdg_ldg=hdg_ldg)
-                if ils_slice is not None:
-                    self.create_phase(ils_slice)
-
-        if not ils_freq:
-            # If we don't have a frequency source, just scan the signal and
-            # hope it was for this runway!
-            for _slice in apps.get_slices():
-                if not np.ma.count(ils_loc.array[_slice]):
-                    # No valid ils localizer data for this approach.
-                    continue
-                valid_slices = np.ma.clump_unmasked(ils_loc.array[_slice])
-                valid_slices = slices_remove_small_gaps(valid_slices, count=5)
-                last_valid_slice = shift_slice(valid_slices[-1], _slice.start)
-                create_ils_phases([last_valid_slice])
-            self.info("No ILS Frequency used. Created %d established phases" % len(self))
-            return
-        if np.ma.count(ils_freq.array) < 10:
-            # ILS frequency tells us that no localizer was established
-            self.info("ILS Frequency has no valid data. No established phases created")
-            return
-        '''
-        Note: You can be tuned onto multiple frequencies or the same
-              frequency multiple times during each approach.
-        '''
-        # If we have ILS frequency tuned in check for multiple frequencies
-        # using np.ma.around as 110.7 == 110.7 is not always the case when
-        # dealing with floats
-        frequency_slices = []
-        for app_slice in apps.get_slices():
-            if not np.ma.count(ils_freq.array[app_slice]):
-                # No valid frequency data at all in this slice.
-                continue
-            # Repair data (without interpolating) during each approach.
-            # nn_repair will extrapolate each signal to the start and end of
-            # the approach, and we'll fill in the gaps for up to 8 samples
-            # from each end (16 repairs in total). Gaps bigger than this will
-            # not count towards being established on the ILS.
-            ils_freq_repaired = nearest_neighbour_mask_repair(
-                ils_freq.array[app_slice], repair_gap_size=16)
-            # Look for the changes or when it was not tuned
-            frequency_changes = np.ma.diff(np.ma.around(ils_freq_repaired, decimals=2))
-            # Create slices for each ILS frequency so they are scanned separately
-            app_freq_slices = shift_slices(runs_of_ones(frequency_changes == 0), app_slice.start)
-            frequency_slices.extend(app_freq_slices)
-
-        # If we have a frequency source, only create slices if we have some
-        # valid frequencies. Note that we are not checking this is the right
-        # frequency for that runway. This allows for problems in ILS
-        # Frequency decoding which occur on some types.
-        create_ils_phases(frequency_slices)
-        self.info("ILS Frequency has valid data. Created %d established phases" % len(self))
-
+    def derive(self, apps=App('Approach Information')):
+        for app in apps:
+            if app.loc_est:
+                self.create_phase(app.loc_est)
 
 '''
 class ILSApproach(FlightPhaseNode):
@@ -1294,36 +1228,11 @@ class ILSApproach(FlightPhaseNode):
 
 class ILSGlideslopeEstablished(FlightPhaseNode):
     name = "ILS Glideslope Established"
-    """
-    Within the Localizer Established phase, compute duration of approach with
-    (repaired) Glideslope deviation continuously less than 1 dot,. Where > 10
-    seconds, identify as Glideslope Established.
-    """
-    def derive(self, ils_gs = P('ILS Glideslope'),
-               ils_loc_ests = S('ILS Localizer Established'),
-               alt_aal=P('Altitude AAL For Flight Phases')):
-        # We don't accept glideslope approaches without localizer established
-        # first, so this only works within that context. If you want to
-        # follow a glidepath without a localizer, seek flight safety guidance
-        # elsewhere.
-        for ils_loc_est in ils_loc_ests:
-            # Only look for glideslope established if the localizer was
-            # established.
-            if ils_loc_est.slice.start and ils_loc_est.slice.stop:
-                gs_est = scan_ils('glideslope', ils_gs.array, alt_aal.array,
-                                  ils_loc_est.slice, ils_gs.frequency)
-                # If the glideslope signal is corrupt or there is no
-                # glidepath (not fitted or out of service) there may be no
-                # glideslope established phase, or the proportion of unmasked
-                # values may be small.
-                if gs_est:
-                    good_data = np.ma.count(ils_gs.array[gs_est])
-                    all_data = len(ils_gs.array[gs_est]) or 1
-                    if (float(good_data)/all_data) < 0.7:
-                        self.warning('ILS glideslope signal poor quality in '
-                                     'approach - considered not established.')
-                        continue
-                    self.create_phase(gs_est)
+
+    def derive(self, apps=App('Approach Information')):
+        for app in apps:
+            if app.gs_est:
+                self.create_phase(app.gs_est)
 
 
 class InitialApproach(FlightPhaseNode):

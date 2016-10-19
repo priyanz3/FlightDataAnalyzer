@@ -810,16 +810,12 @@ class TestIANGlidepathEstablished(unittest.TestCase):
 
 class TestILSGlideslopeEstablished(unittest.TestCase):
 
-    def setUp(self):
-        self.node_class = ILSGlideslopeEstablished
-
     def test_can_operate(self):
-        expected=[('ILS Glideslope', 'ILS Localizer Established',
-                   'Altitude AAL For Flight Phases')]
+        expected=[('Approach Information',)]
         opts = ILSGlideslopeEstablished.get_operational_combinations()
         self.assertEqual(opts, expected)
 
-    @unittest.skip('Test Not Implemented')
+    @unittest.skip('No longer applicable - algorithm change')
     def test_derive(self):
         hdf_copy = copy_file(os.path.join(test_data_path, 'coreg.hdf5'),
                              postfix='_test_copy')
@@ -842,6 +838,7 @@ class TestILSGlideslopeEstablished(unittest.TestCase):
         sections
         self.assertTrue(False, msg='Test not implemented.')
 
+    @unittest.skip('No longer applicable - algorithm change')
     def test_ils_localizer_example(self):
         ils_loc_array = np.load(os.path.join(test_data_path, 'ILS_glideslope_example.npy'))
         ils_loc_array = np.ma.masked_invalid(ils_loc_array)
