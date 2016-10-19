@@ -4500,7 +4500,7 @@ class ILSLateralDistance(DerivedParameterNode):
         self.array = np_ma_masked_zeros_like(loc.array)
 
         for approach in approaches:
-            runway = approach.runway
+            runway = approach.approach_runway
             if not runway:
                 # no runway to establish distance to localizer antenna
                 continue
@@ -4567,7 +4567,7 @@ class AimingPointRange(DerivedParameterNode):
         self.array = np_ma_masked_zeros_like(app_rng.array)
 
         for approach in approaches:
-            runway = approach.runway
+            runway = approach.landing_runway
             if not runway:
                 # no runway to establish distance to glideslope antenna
                 continue
@@ -4774,14 +4774,14 @@ class CoordinatesSmoothed(object):
 
             this_app_slice = approach.slice
 
-            tdwn_index = None
+            tdwn_index = this_app_slice.stop - 1
             for tdwn in tdwns:
                 if not is_index_within_slice(tdwn.index, this_app_slice):
                     continue
                 else:
                     tdwn_index = tdwn.index
 
-            runway = approach.runway
+            runway = approach.approach_runway
             if not runway:
                 continue
 
@@ -6661,7 +6661,7 @@ class ApproachRange(DerivedParameterNode):
             for approach in approaches:
                 # We are going to reference the approach to a runway touchdown
                 # point. Without that it's pretty meaningless, so give up now.
-                runway = approach.runway
+                runway = approach.landing_runway
                 if not runway:
                     continue
 
@@ -7160,14 +7160,18 @@ class TrackDeviationFromRunway(DerivedParameterNode):
             self._track_deviation(track.array, _slice, to_rwy.value, magnetic)
         if apps:
             for app in apps:
-                if not app.runway:
+                if app.type=='LANDING':
+                    runway = app.landing_runway
+                else:
+                    runway = app.approach_runway
+                if not runway:
                     self.warning("Cannot calculate TrackDeviationFromRunway for "
                                  "approach as there is no runway.")
                     continue
                 # extend approach slice up to 15 minutes earlier (or to takeoff)
                 app_start = max(to_stop, app.slice.start-900)
                 _slice = slice(app_start, app.slice.stop)
-                self._track_deviation(track.array, _slice, app.runway, magnetic)
+                self._track_deviation(track.array, _slice, runway, magnetic)
 
 
 ##############################################################################
