@@ -408,7 +408,7 @@ class TestBardufoss(unittest.TestCase):
                 return None 
         root = os.path.join(test_data_path, 'ILS_test_9928419_')
         app_start = 11352
-        app_end = 11800 # guess!     
+        app_end = 11800  
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
@@ -862,7 +862,7 @@ class TestZaventem(unittest.TestCase):
                                            start_edge=11754, stop_edge=12346),
                                    Section(name='Approach And Landing', 
                                            slice=slice(13500, 13898),
-                                           start_edge=13500, stop_edge=13898)                                   ]),
+                                           start_edge=13500, stop_edge=13898)]),
                           fetch('Heading Continuous'),
                           fetch('Latitude Prepared'),
                           fetch('Longitude Prepared'),
