@@ -1714,6 +1714,54 @@ class AirspeedWhileAPVerticalSpeedEngagedMin(KeyPointValueNode):
             self.create_kpv_from_slices(air_spd.array, sections, min_value)
 
 
+class AirspeedAtAPUpperModesEngaged(KeyPointValueNode):
+    '''
+    Airspeed at initial climb in which any of the following AP upper 
+    modes are first engaged:
+    - AP (1) Heading Selected Mode Engaged
+    - AP (2) Heading Selected Mode Engaged
+    - AP (1) Vertical Speed Mode Engaged
+    - AP (2) Vertical Speed Mode Engaged
+    - AP (1) Altitude Preselect Mode Engaged
+    - AP (2) Altitude Preselect Mode Engaged
+    - AP (1) Airspeed Mode Engaged
+    - AP (2) Airspeed Mode Engaged
+
+    (S92 helicopters only)
+    '''
+    name = 'Airspeed At AP Upper Modes Engaged'
+    units = ut.KT
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)  
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               ap_1_hdg=M('AP (1) Heading Selected Mode Engaged'),
+               ap_2_hdg=M('AP (2) Heading Selected Mode Engaged'),
+               ap_1_alt=M('AP (1) Altitude Preselect Mode Engaged'),
+               ap_2_alt=M('AP (2) Altitude Preselect Mode Engaged'),
+               ap_1_vrt=M('AP (1) Vertical Speed Mode Engaged'),
+               ap_2_vrt=M('AP (2) Vertical Speed Mode Engaged'),
+               ap_1_air=M('AP (1) Airspeed Mode Engaged'),
+               ap_2_air=M('AP (2) Airspeed Mode Engaged'),
+               climb=S('Initial Climb')):
+        mode_state='Engaged'
+        ap_modes = vstack_params_where_state(
+            (ap_1_hdg, mode_state), (ap_2_hdg, mode_state),
+            (ap_1_alt, mode_state), (ap_2_alt, mode_state),
+            (ap_1_vrt, mode_state), (ap_2_vrt, mode_state),
+            (ap_1_air, mode_state), (ap_2_air, mode_state),
+        ).any(axis=0)
+        ap_slices = slices_and(climb.get_slices(), runs_of_ones(ap_modes))
+        for s in ap_slices:
+            self.create_kpv(s.start, air_spd.array[s.start])
+
+
 class AirspeedTrueAtTouchdown(KeyPointValueNode):
     '''
     Airspeed True at the point of Touchdown.
@@ -4301,6 +4349,18 @@ class AltitudeRadioDuringAutorotationMin(KeyPointValueNode):
 
     def derive(self, alt_rad=P('Altitude Radio'), autorotation=S('Autorotation')):
         self.create_kpvs_within_slices(alt_rad.array, autorotation, min_value)
+
+
+class AltitudeDuringLevelFlightMin(KeyPointValueNode):
+    '''
+    Minimum altitude (AGL) recorded during level flight (helicopter only).
+    '''
+
+    units = ut.FT
+    can_operate = helicopter_only
+
+    def derive(self, alt_agl=P('Altitude AGL'), lvl_flt=S('Level Flight')):
+        self.create_kpvs_within_slices(alt_agl.array, lvl_flt, min_value)
 
 
 ########################################
@@ -11446,19 +11506,21 @@ class FuelJettisonDuration(KeyPointValueNode):
 # Groundspeed
 
 
-class GroundspeedMax(KeyPointValueNode):
+class GroundspeedWithGearOnGroundMax(KeyPointValueNode):
     '''
-    TODO: rename kpv to reflect limiting section
-    TODO: change to use takeoff roll wow and landing roll
+
     '''
 
     units = ut.KT
 
     def derive(self,
                gnd_spd=P('Groundspeed'),
-               grounded=S('Grounded')):
+               gear=M('Gear On Ground')):
 
-        self.create_kpvs_within_slices(gnd_spd.array, grounded, max_value)
+        self.create_kpvs_within_slices(
+            gnd_spd.array,
+            runs_of_ones(gear.array == 'Ground'),
+            max_value)
 
 
 class GroundspeedWhileTaxiingStraightMax(KeyPointValueNode):
@@ -12119,6 +12181,50 @@ class PitchBelow1000FtMin(KeyPointValueNode):
     def derive(self, pitch=P('Pitch'), alt=P('Altitude AGL')):
         self.create_kpvs_within_slices(pitch.array,
                                        alt.slices_below(1000), min_value)
+
+
+class PitchBelow5FtMax(KeyPointValueNode):
+    '''
+    Maximum Pitch below 5ft AGL in flight (helicopter_only). 
+    '''
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        slices = slices_and(airborne.get_slices(), alt_agl.slices_below(5))
+        self.create_kpvs_within_slices(pitch.array, slices, max_value)
+
+
+class Pitch5To10FtMax(KeyPointValueNode):
+    '''
+    Maximum Pitch ascending 5 to 10ft AGL in flight (helicopter_only). 
+    '''
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        slices = slices_and(airborne.get_slices(),
+                            alt_agl.slices_from_to(5, 10))
+        self.create_kpvs_within_slices(pitch.array, slices, max_value)
+
+
+class Pitch10To5FtMax(KeyPointValueNode):
+    '''
+    Maximum Pitch descending 10 to 5ft AGL in flight (helicopter_only). 
+    '''
+    can_operate = helicopter_only
+
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt_agl=P('Altitude AGL'),
+               airborne=S('Airborne')):
+        slices = slices_and(airborne.get_slices(),
+                            alt_agl.slices_from_to(10, 5))
+        self.create_kpvs_within_slices(pitch.array, slices, max_value)
 
 
 class PitchTakeoffMax(KeyPointValueNode):
@@ -14190,6 +14296,20 @@ class RotorSpeedDuringAutorotationMax(KeyPointValueNode):
         self.create_kpvs_within_slices(nr.array, autorotation.get_slices(), max_value)
 
 
+class RotorSpeedDuringAutorotationMin(KeyPointValueNode):
+    '''
+    Minimum rotor speed during autorotion. (helicopter only)
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, nr=P('Nr'), autorotation=S('Autorotation')):
+        self.create_kpvs_within_slices(nr.array, autorotation.get_slices(),
+                                       min_value)
+
+
 class RotorSpeedWhileAirborneMax(KeyPointValueNode):
     '''
     This excludes autorotation, so is maximum rotor speed with power applied.
@@ -14267,6 +14387,44 @@ class RotorSpeedDuringMaximumContinuousPowerMin(KeyPointValueNode):
                                     slices_and_not(mcp.get_slices(),
                                                    autorotation.get_slices()),
                                     min_value)
+
+
+class RotorSpeed36To49Duration(KeyPointValueNode):
+    '''
+    Duration in which rotor speed in running between 36 and 49%. 
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)   
+
+    def derive(self, nr=P('Nr')):
+        self.create_kpvs_from_slice_durations(
+            slices_between(nr.array, 36, 49)[1], nr.frequency)
+
+
+class RotorSpeed56To67Duration(KeyPointValueNode):
+    '''
+    Duration in which rotor speed in running between 56 and 67%. 
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)   
+
+    def derive(self, nr=P('Nr')):
+        self.create_kpvs_from_slice_durations(
+            slices_between(nr.array, 56, 67)[1], nr.frequency)
 
 
 ##############################################################################

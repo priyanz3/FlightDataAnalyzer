@@ -4461,8 +4461,8 @@ class ILSLocalizer(DerivedParameterNode):
         source_count = len(active_sources)
         if source_count == 0:
             # If all sources of data are masked during validation, return a null parameter
-            self.offset = 0.0
-            self.frequency = 1.0
+            self.offset = ias.offset
+            self.frequency = ias.frequency
             self.array = np_ma_masked_zeros_like(ias.array)
 
         elif source_count == 1:

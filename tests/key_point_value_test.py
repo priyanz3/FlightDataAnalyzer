@@ -92,6 +92,7 @@ from analysis_engine.key_point_values import (
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
+    AirspeedAtAPUpperModesEngaged,
     AirspeedAt35FtDuringTakeoff,
     AirspeedAt8000FtDescending,
     AirspeedAtFlapExtensionWithGearDownSelected,
@@ -194,6 +195,7 @@ from analysis_engine.key_point_values import (
     AltitudeMax,
     AltitudeOvershootAtSuspectedLevelBust,
     AltitudeRadioDuringAutorotationMin,
+    AltitudeDuringLevelFlightMin,
     AltitudeAALCleanConfigurationMin,
     AltitudeWithFlapMax,
     AltitudeSTDWithGearDownMax,
@@ -386,7 +388,7 @@ from analysis_engine.key_point_values import (
     GroundspeedInStraightLineDuringTaxiOutMax,
     GroundspeedInTurnDuringTaxiInMax,
     GroundspeedInTurnDuringTaxiOutMax,
-    GroundspeedMax,
+    GroundspeedWithGearOnGroundMax,
     GroundspeedSpeedbrakeDuringTakeoffMax,
     GroundspeedSpeedbrakeHandleDuringTakeoffMax,
     GroundspeedStabilizerOutOfTrimDuringTakeoffMax,
@@ -490,6 +492,9 @@ from analysis_engine.key_point_values import (
     PitchAbove1000FtMax,
     PitchBelow1000FtMax,
     PitchBelow1000FtMin,
+    PitchBelow5FtMax,
+    Pitch5To10FtMax,
+    Pitch10To5FtMax,
     PitchAfterFlapRetractionMax,
     PitchAt35FtDuringClimb,
     PitchAtLiftoff,
@@ -564,7 +569,10 @@ from analysis_engine.key_point_values import (
     RotorSpeedDuringAutorotationAbove108KtsMin,
     RotorSpeedDuringAutorotationBelow108KtsMin,
     RotorSpeedDuringAutorotationMax,
+    RotorSpeedDuringAutorotationMin,
     RotorSpeedDuringMaximumContinuousPowerMin,
+    RotorSpeed36To49Duration,
+    RotorSpeed56To67Duration,
     RotorSpeedWhileAirborneMax,
     RotorSpeedWhileAirborneMin,
     RotorSpeedWithRotorBrakeAppliedMax,
@@ -2446,6 +2454,77 @@ class TestAirspeedWhileAPVerticalSpeedEngagedMin(unittest.TestCase):
         node.derive(aspd, airs, mode)
         self.assertEqual(len(node), 0)
 
+
+class TestAirspeedAtAPUpperModesEngaged(unittest.TestCase):
+    
+    def setUp(self):
+        self.node_class = AirspeedAtAPUpperModesEngaged
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Airspeed At AP Upper Modes Engaged')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=helicopter), [])        
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 10)
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('AP (1) Heading Selected Mode Engaged', opts[0])
+        self.assertIn('AP (2) Heading Selected Mode Engaged', opts[0])
+        self.assertIn('AP (1) Altitude Preselect Mode Engaged', opts[0])
+        self.assertIn('AP (2) Altitude Preselect Mode Engaged', opts[0])
+        self.assertIn('AP (1) Vertical Speed Mode Engaged', opts[0])
+        self.assertIn('AP (2) Vertical Speed Mode Engaged', opts[0])
+        self.assertIn('AP (1) Airspeed Mode Engaged', opts[0])
+        self.assertIn('AP (2) Airspeed Mode Engaged', opts[0])
+        self.assertIn('Initial Climb', opts[0])
+
+    def test_derive(self):
+        a = np.append(np.linspace(5,100,13), np.linspace(100,5,17))
+        air_spd = P('Airspeed', np.ma.array(np.append(a,a)))
+        climb = buildsections('Initial Climb', [1, 10], [31, 40])
+
+        ap_1_hdg = M('AP (1) Heading Selected Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_alt = M('AP (1) Altitude Preselect Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_vrt = M('AP (1) Vertical Speed Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_1_air = M('AP (1) Airspeed Mode Engaged',
+                     np.ma.array([0]*34 + [1]*10 + [0]*16),
+                     values_mapping={0: '-', 1: 'Engaged'})
+
+        ap_2_hdg = M('AP (2) Heading Selected Mode Engaged',
+                     np.ma.array([0]*3 + [1]*11 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_alt = M('AP (2) Altitude Preselect Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_vrt = M('AP (2) Vertical Speed Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+        ap_2_air = M('AP (2) Airspeed Mode Engaged',
+                     np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping={0: '-', 1: 'Engaged'})
+
+        node = self.node_class()
+        node.derive(air_spd, ap_1_hdg, ap_2_hdg, ap_1_alt, ap_2_alt,
+                    ap_1_vrt, ap_2_vrt, ap_1_air, ap_2_air, climb)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 3)
+        self.assertAlmostEqual(node[0].value, 28.75, places=2)
+        self.assertEqual(node[1].index, 34)
+        self.assertAlmostEqual(node[1].value, 36.67, places=2)
 
 class TestAirspeedAtTouchdown(unittest.TestCase, CreateKPVsAtKTIsTest):
 
@@ -5060,6 +5139,42 @@ class TestAltitudeRadioDuringAutorotationMin(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 240.5)
         self.assertEqual(node[0].value, 152)
+
+
+class TestAltitudeDuringLevelFlightMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeDuringLevelFlightMin
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Altitude During Level Flight Min')
+        self.assertEqual(node.units, 'ft')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Level Flight', opts[0])
+
+    def test_derive(self):
+        alt_agl = P('Altitude AGL', 
+                    np.ma.array([0, 100, 400, 1000, 1003, 
+                                 1010, 999, 1000, 500, 100,
+                                 0, 0, 100, 500, 1100,
+                                 1080, 1090, 1070, 500, 100]))
+        lvl_flt = buildsections('Level Flight', [3, 7], [14, 17])
+
+        node = self.node_class()
+        node.derive(alt_agl, lvl_flt)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 6)
+        self.assertEqual(node[0].value, 999)
+        self.assertEqual(node[1].index, 17)
+        self.assertEqual(node[1].value, 1070)
 
 
 class TestAltitudeSTDMax(unittest.TestCase):
@@ -11189,16 +11304,25 @@ class TestFuelJettisonDuration(unittest.TestCase, CreateKPVsWhereTest):
 # Groundspeed
 
 
-class TestGroundspeedMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestGroundspeedWithGearOnGroundMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = GroundspeedMax
-        self.operational_combinations = [('Groundspeed', 'Grounded')]
+        self.node_class = GroundspeedWithGearOnGroundMax
+        self.operational_combinations = [('Groundspeed', 'Gear On Ground')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test Not Implemented')
+    def test_derive_basic(self):
+        spd=P('Groundspeed', array = np.ma.arange(100, 0, -10))
+        gog=M('Gear On Ground',
+             array=np.ma.array([0]*5 + [1]*5),
+             values_mapping = {0: 'Air', 1: 'Ground'})
+
+        node = self.node_class()
+        node.derive(spd, gog)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0], KeyPointValue(
+            index=5, value=50.0,
+            name='Groundspeed With Gear On Ground Max'))
 
 
 class TestGroundspeedWhileTaxiingStraightMax(unittest.TestCase, NodeTest):
@@ -11920,6 +12044,108 @@ class TestPitchBelow1000FtMin(unittest.TestCase):
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].value, 10)
         self.assertEqual(node[1].value, 6)
+
+
+class TestPitchBelow5FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = PitchBelow5FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEquals(node.name, 'Pitch Below 5 Ft Max')
+        self.assertEquals(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEquals(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 1)
+        self.assertIn('Pitch',opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+
+    def test_derive(self):
+        pitch = P('Pitch', np.ma.array([0, 2, 4, 7, 9, 8, 6, 3, -1]))
+        alt_agl = P('Altitude AGL', np.ma.array(np.linspace(0, 15, 9)))
+        airborne = buildsection('Airborne', 1.4, 8)
+
+        node = self.node_class()
+        node.derive(pitch, alt_agl, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 4)
+        self.assertEqual(node[0].index, 2)
+
+
+class TestPitch5To10FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = Pitch5To10FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEquals(node.name, 'Pitch 5 To 10 Ft Max')
+        self.assertEquals(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEquals(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 1)
+        self.assertIn('Pitch',opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+
+    def test_derive(self):
+        arr = np.ma.array([0, 2, 4, 7, 9, 8, 6, 3, -1])
+        arr = np.ma.append(arr, arr[::-1])
+        pitch = P('Pitch', arr)
+        arr_alt = np.ma.array(np.linspace(0, 15, 9))
+        arr_alt = np.ma.append(arr_alt, arr_alt[::-1])
+        alt_agl = P('Altitude AGL', arr_alt)
+        airborne = buildsection('Airborne', 1, 16)
+
+        node = self.node_class()
+        node.derive(pitch, alt_agl, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 9)
+        self.assertEqual(node[0].index, 4)
+
+
+class TestPitch10To5FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = Pitch10To5FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEquals(node.name, 'Pitch 10 To 5 Ft Max')
+        self.assertEquals(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEquals(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEquals(len(opts), 1)
+        self.assertIn('Pitch',opts[0])
+        self.assertIn('Altitude AGL', opts[0])
+        self.assertIn('Airborne', opts[0])
+
+    def test_derive(self):
+        arr = np.ma.array([0, 2, 4, 7, 9, 8, 6, 3, -1])
+        arr = np.ma.append(arr, arr[::-1])
+        pitch = P('Pitch', arr)
+        arr_alt = np.ma.array(np.linspace(0, 15, 9))
+        arr_alt = np.ma.append(arr_alt, arr_alt[::-1])
+        alt_agl = P('Altitude AGL', arr_alt)
+        airborne = buildsection('Airborne', 1, 16)
+
+        node = self.node_class()
+        node.derive(pitch, alt_agl, airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 9)
+        self.assertEqual(node[0].index, 13)
+
 
 class TestPitch35ToClimbAccelerationStartMax(unittest.TestCase):
 
@@ -14275,21 +14501,30 @@ class TestRotorSpeedDuringAutorotationAbove108KtsMin(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationAbove108KtsMin
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Rotor Speed During Autorotation Above 108 Kts Min')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Airspeed', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+        self.assertIn('Airspeed', opts[0])
 
     def test_derive(self,):
-        air_spd = P('Airspeed', np.ma.array(range(50, 150) + range(150, 50, -1)))
+        air_spd = P('Airspeed',
+                    np.ma.array(range(50, 150) + range(150, 50, -1)))
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, air_spd, autorotation)
+        node.derive(rtr_spd, air_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 115)
@@ -14301,21 +14536,30 @@ class TestRotorSpeedDuringAutorotationBelow108KtsMin(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationBelow108KtsMin
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Rotor Speed During Autorotation Below 108 Kts Min')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Airspeed', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+        self.assertIn('Airspeed', opts[0])
 
     def test_derive(self):
-        air_spd = P('Airspeed', np.ma.array(range(50, 150) + range(150, 50, -1)))
+        air_spd = P('Airspeed',
+                    np.ma.array(range(50, 150) + range(150, 50, -1)))
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, air_spd, autorotation)
+        node.derive(rtr_spd, air_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 142)
@@ -14327,24 +14571,61 @@ class TestRotorSpeedDuringAutorotationMax(unittest.TestCase):
     def setUp(self):
         self.node_class = RotorSpeedDuringAutorotationMax
 
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed During Autorotation Max')
+        self.assertEqual(node.units, '%')
+
     def test_can_operate(self):
-        self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Nr', 'Autorotation')])  # TODO: check naming "Rotor"/"Nr"
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
 
     def test_derive(self):
         x = np.linspace(0, 10, 200)
-        rotor = P('Rotor', array=np.ma.array(np.sin(x)+100))
-        name = 'Autorotation'
-        section = Section(name, slice(115, 152), 115, 152)
-        autorotation = SectionNode(name, items=[section])
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
 
         node = self.node_class()
-        node.derive(rotor, autorotation)
+        node.derive(rtr_spd, autorotation)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 151)
         self.assertAlmostEqual(node[0].value, 100.965, places=3)
+
+
+class TestRotorSpeedDuringAutorotationMin(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeedDuringAutorotationMin
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed During Autorotation Min')
+        self.assertEqual(node.units, '%')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+        self.assertIn('Autorotation', opts[0])
+
+    def test_derive(self):
+        x = np.linspace(0, 10, 200)
+        rtr_spd = P('Nr', array=np.ma.array(np.sin(x)+100))
+        autorotation = buildsection('Autorotation', 115, 152)
+
+        node = self.node_class()
+        node.derive(rtr_spd, autorotation)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 115)
+        self.assertAlmostEqual(node[0].value, 99.5, places=1)
 
 
 class TestRotorSpeedWhileAirborneMax(unittest.TestCase):
@@ -14517,6 +14798,69 @@ class TestRotorSpeedDuringMaximumContinuousPowerMin(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 114)
         self.assertAlmostEqual(node[0].value, 99.473, places=3)
+
+
+class TestRotorSpeed36To49Duration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeed36To49Duration
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed 36 To 49 Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+
+    def test_derive(self):
+        nr = P('Nr', np.ma.array([10, 13, 24, 30, 36, 40, 46,
+                                  49, 55, 60, 48, 45, 35, 20]))
+        node = self.node_class()
+        node.derive(nr)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].value, 2)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[1].value, 2)
+        self.assertEqual(node[1].index, 10)
+
+
+class TestRotorSpeed56To67Duration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorSpeed56To67Duration
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Rotor Speed 56 To 67 Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+
+    def test_derive(self):
+        nr = P('Nr', np.ma.array([10, 23, 34, 40, 56, 60, 66,
+                                  67, 68, 69, 66, 58, 54, 40]))
+        node = self.node_class()
+        node.derive(nr)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].value, 2)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[1].value, 2)
+        self.assertEqual(node[1].index, 10)
+
 
 ##############################################################################
 # Rudder
