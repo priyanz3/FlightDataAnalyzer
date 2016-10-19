@@ -1202,17 +1202,25 @@ class TestBlendNonequispacedSensors(unittest.TestCase):
         np.testing.assert_array_equal(result.mask, [False,False,False,False,
                                                    False,False,False,True])
 
-    def test_blend_alternate_sensors_mask(self):
+    def test_blend_alternate_sensors_both_mask(self):
+        array_1 = np.ma.array([0, 0, 1, 1],dtype=float)
+        array_2 = np.ma.array([5, 5, 6, 6],dtype=float)
+        array_1[2] = np.ma.masked
+        array_2[2] = np.ma.masked
+        result = blend_nonequispaced_sensors (array_1, array_2, 'Follow')
+        expected = np.ma.array(data=[2.5, 2.5, 2.5, 9, 9, 9, 3.5, 9],
+                               mask = [0,   0,   0, 1, 1, 1,   0, 1])
+        ma_test.assert_masked_array_equal(expected, result)
+
+    def test_blend_alternate_sensors_one_mask(self):
         array_1 = np.ma.array([0, 0, 1, 1],dtype=float)
         array_2 = np.ma.array([5, 5, 6, 6],dtype=float)
         array_1[2] = np.ma.masked
         result = blend_nonequispaced_sensors (array_1, array_2, 'Follow')
-        np.testing.assert_array_equal(result.data[0:3], [2.5,2.5,2.5])
-        np.testing.assert_array_equal(result.data[6:8], [3.5,3.5])
-        np.testing.assert_array_equal(result.mask, [False,False,False,
-                                                    True,True,False,
-                                                    False,True])
-
+        expected = np.ma.array(data=[2.5, 2.5, 2.5, 5.25, 5.75, 3.5, 3.5, 9],
+                               mask = [0,   0,   0,    0,    0,   0,   0, 1])
+        ma_test.assert_masked_array_equal(expected, result)
+        
     def test_blend_alternate_sensors_reverse(self):
         array_1 = np.ma.array([0, 0, 1, 1],dtype=float)
         array_2 = np.ma.array([5, 5, 6, 6],dtype=float)
@@ -3483,6 +3491,49 @@ class TestIsIndexWithinSlices(unittest.TestCase):
         self.assertTrue(is_index_within_slices(10, [slice(8,None)]))
         self.assertTrue(is_index_within_slices(10, [slice(None, 12)]))
 
+
+class TestILSEstablished(unittest.TestCase):
+    def test_basic(self):
+        array = np.ma.array([0]*20)
+        _slice = slice(1,19)
+        hz = 1.0
+        result = ils_established(array, _slice, hz)
+        self.assertEqual(result, 1)
+
+    def test_back(self):
+        array = np.ma.array([0]*20)
+        _slice = slice(19,1,-1)
+        hz = 1.0
+        result = ils_established(array, _slice, hz)
+        self.assertEqual(result, 19)
+
+    def test_unsteady(self):
+        array = np.ma.array([1.0, 1.0, -1.0, -1.0]*5)
+        _slice = slice(1,19)
+        hz = 1.0
+        result = ils_established(array, _slice, hz)
+        self.assertEqual(result, None)
+
+    def test_capture(self):
+        array = np.ma.array([1.0, 1.0, -1.0, -1.0]*2 + [0.0]*15)
+        _slice = slice(2,21)
+        hz = 1.0
+        result = ils_established(array, _slice, hz)
+        self.assertEqual(result, 9)
+
+    def test_too_short(self):
+        array = np.ma.array([1.0, 1.0, -1.0, -1.0]*3 + [0.0]*10)
+        _slice = slice(2,21)
+        hz = 1.0
+        result = ils_established(array, _slice, hz)
+        self.assertEqual(result, None)
+
+    def test_immediate(self):
+        array = np.ma.array([1.0, 1.0, -1.0, -1.0]*3 + [0.0]*10)
+        _slice = slice(2,21)
+        hz = 1.0
+        result = ils_established(array, _slice, hz, duration='immediate')
+        self.assertEqual(result, 13)
 
 class TestILSGlideslopeAlign(unittest.TestCase):
     def test_ils_glideslope_align(self):
