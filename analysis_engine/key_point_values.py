@@ -1359,7 +1359,7 @@ class Airspeed500To100FtMax(KeyPointValueNode):
 
     def derive(self,
                air_spd=P('Airspeed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent')):
 
         alt_band = np.ma.masked_outside(alt_agl.array, 500, 100)
@@ -1384,7 +1384,7 @@ class Airspeed500To100FtMin(KeyPointValueNode):
 
     def derive(self,
                air_spd=P('Airspeed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -1410,7 +1410,7 @@ class Airspeed100To20FtMax(KeyPointValueNode):
 
     def derive(self,
                air_spd=P('Airspeed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -1436,7 +1436,7 @@ class Airspeed100To20FtMin(KeyPointValueNode):
 
     def derive(self,
                air_spd=P('Airspeed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -1472,7 +1472,7 @@ class Airspeed500To20FtMax(KeyPointValueNode):
                # aeroplane
                alt_aal=P('Altitude AAL For Flight Phases'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -1559,7 +1559,7 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
 
     def derive(self,
                air_spd=P('Airspeed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                touchdowns=KTI('Touchdown')):
 
         self.create_kpvs_within_slices(
@@ -1578,7 +1578,7 @@ class AirspeedAbove500FtMin(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, air_spd= P('Airspeed'), alt_agl=P('Altitude AGL')):
+    def derive(self, air_spd= P('Airspeed'), alt_agl=P('Altitude AGL For Flight Phases')):
         self.create_kpvs_within_slices(air_spd.array,
                                        alt_agl.slices_above(500), min_value)
 
@@ -1591,7 +1591,7 @@ class AirspeedAt200Ft(KeyPointValueNode):
     units = ut.KT
     can_operate = helicopter_only
 
-    def derive(self, air_spd=P('Airspeed'), alt_agl=P('Altitude AGL'),
+    def derive(self, air_spd=P('Airspeed'), alt_agl=P('Altitude AGL For Flight Phases'),
                approaches=S('Approach')):
         for approach in approaches:
             index = index_at_value(alt_agl.array, 200, approach.slice,
@@ -11981,7 +11981,7 @@ class GroundspeedBelow100FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL'),
+    def derive(self, gnd_spd=P('Groundspeed'), alt_agl=P('Altitude AGL For Flight Phases'),
                airborne=S('Airborne')):
         alt_slices = slices_and(airborne.get_slices(),
                                 alt_agl.slices_below(100))
@@ -12396,7 +12396,7 @@ class Pitch1000To500FtMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                fin_app=S('Final Approach'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
 
@@ -12439,7 +12439,7 @@ class Pitch1000To500FtMin(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                fin_app=S('Final Approach'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -12482,7 +12482,7 @@ class Pitch500To50FtMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                fin_app=S('Final Approach'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
 
@@ -12525,7 +12525,7 @@ class Pitch500To50FtMin(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                fin_app=S('Final Approach'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending'),
                ac_type=A('Aircraft Type')):
 
@@ -12557,7 +12557,7 @@ class Pitch500To100FtMax(KeyPointValueNode):
 
     def derive(self,
                pitch=P('Pitch'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -12581,7 +12581,7 @@ class Pitch500To100FtMin(KeyPointValueNode):
 
     def derive(self,
                pitch=P('Pitch'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -12656,7 +12656,7 @@ class Pitch100To20FtMax(KeyPointValueNode):
 
     def derive(self,
                pitch=P('Pitch'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -12680,7 +12680,7 @@ class Pitch100To20FtMin(KeyPointValueNode):
 
     def derive(self,
                pitch=P('Pitch'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descent'),
                ac_type=A('Aircraft Type')):
 
@@ -13475,7 +13475,7 @@ class RateOfDescent500To50FtMax(KeyPointValueNode):
                alt_aal=P('Altitude AAL For Flight Phases'),
                fin_app=S('Final Approach'),
                # helicopter
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending')):
 
         alt_band = np.ma.masked_outside((alt_aal or alt_agl).array, 500, 50)
@@ -13621,7 +13621,7 @@ class RateOfDescentBelow500FtMax(KeyPointValueNode):
 
     def derive(self,
                vrt_spd=P('Vertical Speed'),
-               alt_agl=P('Altitude AGL'),
+               alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending')):
         height_bands = slices_and(descending.get_slices(),
                                   slices_below(alt_agl.array, 500)[1])
@@ -13836,7 +13836,7 @@ class Roll100To20FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'), descending=S('Descent')):
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL For Flight Phases'), descending=S('Descent')):
         alt_band = np.ma.masked_outside(alt_agl.array, 100, 20)
         alt_app_sections = valid_slices_within_array(alt_band, descending)
         self.create_kpvs_within_slices(
@@ -13905,7 +13905,7 @@ class RollAbove300FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL For Flight Phases')):
         _, height_bands = slices_above(alt_agl.array, 300)
         self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
 
@@ -13919,7 +13919,7 @@ class RollBelow300FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL'),
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL For Flight Phases'),
                airborne=S('Airborne')):
         alt_slices = slices_and(airborne.get_slices(),
                                 slices_below(alt_agl.array, 300)[1])
@@ -13951,7 +13951,7 @@ class RollAbove500FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL For Flight Phases')):
         height_bands = slices_above(alt_agl.array, 500)[1]
         self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
 
@@ -13964,7 +13964,7 @@ class RollBelow500FtMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL')):
+    def derive(self, roll=P('Roll'), alt_agl=P('Altitude AGL For Flight Phases')):
         height_bands = slices_below(alt_agl.array, 500)[1]
         self.create_kpvs_within_slices(roll.array, height_bands, max_abs_value)
 
