@@ -2910,7 +2910,7 @@ class StableApproach(MultistateDerivedParameterNode):
             #== 3. Track Deviation ==
             self.array[_slice][stable] = 3
 
-            runway = approach.runway
+            runway = approach.approach_runway
             if runway and runway.get('localizer', {}).get('is_offset'):
                 # offset ILS Localizer or offset approach without ILS (IAN approach)
                 STABLE_TRACK = 30  # degrees
