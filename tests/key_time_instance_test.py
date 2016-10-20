@@ -6,7 +6,7 @@ import unittest
 from flightdatautilities.array_operations import load_compressed
 
 from analysis_engine.node import (
-    A, aeroplane, helicopter, KeyTimeInstance, KTI, load, Parameter, P, Section, S, M,)
+    A, ApproachItem, aeroplane, helicopter, KeyTimeInstance, KTI, load, Parameter, P, Section, S, M,)
 
 from analysis_engine.key_time_instances import (
     AltitudePeak,
@@ -662,37 +662,18 @@ class TestLandingStart(unittest.TestCase):
 
 
 class TestLandingTurnOffRunway(unittest.TestCase):
+    node_class = LandingTurnOffRunway
     def test_can_operate(self):
-        expected = [('Heading Continuous','Landing','Fast')]
-        opts = LandingTurnOffRunway.get_operational_combinations()
+        expected = [('Approach Information',)]
+        opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts, expected)
 
     def test_landing_turn_off_runway_basic(self):
-        instance = LandingTurnOffRunway()
-        head = P('Heading Continuous', np.ma.array([0]*30))
-        fast = buildsection('Fast', 0, 19)
-        land = buildsection('Landing', 10, 25)
-        instance.derive(head, land, fast)
+        node = self.node_class()
+        apps = [ApproachItem('LANDING', slice(0, 5), turnoff=26)]
+        node.derive(apps)
         expected = [KeyTimeInstance(index=26, name='Landing Turn Off Runway')]
-        self.assertEqual(instance, expected)
-
-    def test_landing_turn_off_runway_curved(self):
-        instance = LandingTurnOffRunway()
-        head = P('Heading Continuous',np.ma.array([0]*70+range(20)))
-        fast = buildsection('Fast',0,64)
-        land = buildsection('Landing',60,86)
-        instance.derive(head, land, fast)
-        expected = [KeyTimeInstance(index=73, name='Landing Turn Off Runway')]
-        self.assertEqual(instance, expected)
-
-    def test_landing_turn_off_runway_curved_left(self):
-        instance = LandingTurnOffRunway()
-        head = P('Heading Continuous',np.ma.array([0]*70+range(20))*-1.0)
-        fast = buildsection('Fast',0,64)
-        land = buildsection('Landing',60,86)
-        instance.derive(head, land, fast)
-        expected = [KeyTimeInstance(index=73, name='Landing Turn Off Runway')]
-        self.assertEqual(instance, expected)
+        self.assertEqual(node, expected)
 
 
 class TestLiftoff(unittest.TestCase):

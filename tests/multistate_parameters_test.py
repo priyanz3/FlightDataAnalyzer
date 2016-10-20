@@ -3067,7 +3067,7 @@ class TestStableApproach(unittest.TestCase):
         apps = App()
         apps.create_approach('LANDING', slice(15, 20),
                              gs_est=True, loc_est=True,
-                             runway={'localizer':{'is_offset':False}})
+                             landing_runway={'localizer':{'is_offset':False}})
 
         # Arrays will be 20 seconds long, index 4, 13,14,15 are stable
         #0. first and last values are not in approach slice
@@ -3161,7 +3161,7 @@ class TestStableApproach(unittest.TestCase):
         apps = App()
         apps.create_approach('LANDING', slice(2800, 3000),
                              gs_est=True, loc_est=True,
-                             runway={'localizer':{'is_offset':False}})
+                             landing_runway={'localizer':{'is_offset':False}})
         phases = S(items=[Section(name='Approach And Landing',
                                 slice=slice(2702, 2993, None),
                                 start_edge=2702.0, stop_edge=2993.0)])

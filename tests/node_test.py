@@ -542,13 +542,13 @@ class TestApproachNode(unittest.TestCase):
         lowest_lon = 42.1
         lowest_hdg = 15
         approach.create_approach(
-            'LANDING', slice(20, 30), airport=airport, runway=runway,
+            'LANDING', slice(20, 30), airport=airport, landing_runway=runway,
             gs_est=gs_est, loc_est=loc_est, ils_freq=ils_freq, turnoff=turnoff,
             lowest_lat=lowest_lat, lowest_lon=lowest_lon, lowest_hdg=lowest_hdg,
         )
         self.assertEqual(len(approach), 2)
         self.assertEqual(approach[1], ApproachItem(
-            'LANDING', slice(20, 30), airport=airport, runway=runway,
+            'LANDING', slice(20, 30), airport=airport, landing_runway=runway,
             gs_est=gs_est, loc_est=loc_est, ils_freq=ils_freq, turnoff=turnoff,
             lowest_lat=lowest_lat, lowest_lon=lowest_lon,
             lowest_hdg=lowest_hdg,))
@@ -581,7 +581,7 @@ class TestApproachNode(unittest.TestCase):
         approach = ApproachNode('One', frequency=2, offset=0.75, items=[
             ApproachItem('GO_AROUND', slice(5, 15)),
             ApproachItem('TOUCH_AND_GO', slice(15, 25), airport=airport,
-                         runway=runway, ils_freq=110, gs_est=slice(17, 22),
+                         landing_runway=runway, ils_freq=110, gs_est=slice(17, 22),
                          loc_est=slice(18,23)),
             ApproachItem('LANDING', slice(25, 35), turnoff=40),
         ])
@@ -592,7 +592,7 @@ class TestApproachNode(unittest.TestCase):
             offset=align_to.offset, items=[
                 ApproachItem('GO_AROUND', slice(3, 8)),
                 ApproachItem('TOUCH_AND_GO', slice(8, 13), airport=airport,
-                         runway=runway, ils_freq=110, gs_est=slice(9, 12),
+                         landing_runway=runway, ils_freq=110, gs_est=slice(9, 12),
                          loc_est=slice(10,12)),
                 ApproachItem('LANDING', slice(13, 18), turnoff=20.5),
             ])

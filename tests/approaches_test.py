@@ -4,6 +4,8 @@ import unittest
 
 from mock import call, Mock, patch
 
+from flightdatautilities import api
+
 from analysis_engine.approaches import ApproachInformation
 from analysis_engine.flight_phase import ApproachAndLanding
 from analysis_engine.node import (
@@ -17,6 +19,92 @@ class TestApproachInformation(unittest.TestCase):
 
     def setUp(self):
         self.node_class = ApproachInformation
+        self.gatwick = {
+            u'code': {u'iata': u'LGW', u'icao': u'EGKK'},
+            u'id': 2379,
+            u'latitude': 51.1481,
+            u'location': {u'city': u'London', u'country': u'United Kingdom'},
+            u'longitude': -0.19027799999999323,
+            u'magnetic_variation': u'W002151 0106',
+            u'name': u'London Gatwick',
+            u'runways': [{u'end': {u'elevation': 192,
+                                   u'latitude': 51.15104455515743,
+                                   u'longitude': -0.18257838717218264},
+                          u'id': 11157,
+                          u'identifier': u'08L',
+                          u'localizer': {u'is_offset': False},
+                          u'magnetic_heading': 79.0,
+                          u'start': {u'elevation': 196,
+                                     u'latitude': 51.147517078222265,
+                                     u'longitude': -0.20812928297646227},
+                          u'strip': {u'id': 5579,
+                                     u'length': 8415,
+                                     u'surface': u'ASP',
+                                     u'width': 147}},
+                         {u'end': {u'elevation': 196,
+                                   u'latitude': 51.147518261297485,
+                                   u'longitude': -0.20812525966285345},
+                          u'id': 11158,
+                          u'identifier': u'26R',
+                          u'localizer': {u'is_offset': False},
+                          u'magnetic_heading': 259.0,
+                          u'start': {u'elevation': 192,
+                                     u'latitude': 51.15104119022213,
+                                     u'longitude': -0.18258777490374156},
+                          u'strip': {u'id': 5579,
+                                     u'length': 8415,
+                                     u'surface': u'ASP',
+                                     u'width': 147}},
+                         {u'end': {u'elevation': 196,
+                                   u'latitude': 51.15068539847952,
+                                   u'longitude': -0.1719688502925267},
+                          u'glideslope': {u'angle': 3.0,
+                                          u'elevation': 203,
+                                          u'latitude': 51.14514999999999,
+                                          u'longitude': -0.20205800000000806,
+                                          u'threshold_distance': 1015},
+                          u'id': 11155,
+                          u'identifier': u'08R',
+                          u'localizer': {u'beam_width': 4.5,
+                                         u'elevation': 196,
+                                         u'frequency': 110900.0,
+                                         u'heading': 79,
+                                         u'is_offset': False,
+                                         u'latitude': 51.15191199360326,
+                                         u'longitude': -0.16279833729559284},
+                          u'magnetic_heading': 79.0,
+                          u'start': {u'elevation': 203,
+                                     u'latitude': 51.14587210964842,
+                                     u'longitude': -0.20683126477435884},
+                          u'strip': {u'id': 5578,
+                                     u'length': 10879,
+                                     u'surface': u'ASP',
+                                     u'width': 151}},
+                         {u'end': {u'elevation': 203,
+                                   u'latitude': 51.145874291845004,
+                                   u'longitude': -0.2068352880878914},
+                          u'glideslope': {u'angle': 3.0,
+                                          u'elevation': 196,
+                                          u'latitude': 51.14875099112509,
+                                          u'longitude': -0.17583128587918148,
+                                          u'threshold_distance': 1035},
+                          u'id': 11156,
+                          u'identifier': u'26L',
+                          u'localizer': {u'beam_width': 4.5,
+                                         u'elevation': 203,
+                                         u'frequency': 110900.0,
+                                         u'heading': 259,
+                                         u'is_offset': False,
+                                         u'latitude': 51.14476743283252,
+                                         u'longitude': -0.21478732275384915},
+                          u'magnetic_heading': 259.0,
+                          u'start': {u'elevation': 196,
+                                     u'latitude': 51.15068067964555,
+                                     u'longitude': -0.17196482697896875},
+                          u'strip': {u'id': 5578,
+                                     u'length': 10879,
+                                     u'surface': u'ASP',
+                                     u'width': 151}}]}
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations()
@@ -31,9 +119,14 @@ class TestApproachInformation(unittest.TestCase):
             ('Approach And Landing', 'Altitude AAL', 'Latitude Prepared'), ac_type=aeroplane))
         self.assertFalse(ApproachInformation.can_operate(
             ('Approach And Landing', 'Altitude AAL', 'Longitude Prepared'), ac_type=aeroplane))
-        
-        
-    def test_ils_localizer_established_basic(self):
+
+    @patch('analysis_engine.approaches.api')
+    def test_ils_localizer_established_basic(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
         approaches = ApproachInformation()
         approaches.derive(P('Altitude AAL For Flight Phases', np.ma.arange(1000, 0, -10)),
                           None,
@@ -43,14 +136,15 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           None,
                           P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
-                          P('ILS Frequency', np.ma.array([110.90]*20)),
+                          P('ILS Glideslope',np.ma.array([0.0]*100)),
+                          P('ILS Frequency', np.ma.array([110.90]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
+        get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(41, 100, None))
 
     def test_ils_localizer_frequency_masked(self):
@@ -83,8 +177,8 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           None,
                           P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
-                          P('ILS Frequency', np.ma.array(data=[110.95]*20)),
+                          P('ILS Glideslope',np.ma.array([0.0]*100)),
+                          P('ILS Frequency', np.ma.array(data=[110.95]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
@@ -93,7 +187,13 @@ class TestApproachInformation(unittest.TestCase):
                           )
         self.assertEqual(approaches[0].loc_est, None)
 
-    def test_ils_localizer_established_masked_preamble(self):
+    @patch('analysis_engine.approaches.api')
+    def test_ils_localizer_established_masked_preamble(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
         approaches = ApproachInformation()
         ils_array = np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))
         ils_array.mask = np.ma.getmaskarray(ils_array)
@@ -107,14 +207,15 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           None,
                           P('ILS Localizer', ils_array),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
-                          P('ILS Frequency', np.ma.array(data=[110.90]*20)),
+                          P('ILS Glideslope',np.ma.array([0.0]*100)),
+                          P('ILS Frequency', np.ma.array(data=[110.90]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
+        get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(45, 70))
 
     def test_ils_localizer_established_never_on_loc(self):
@@ -138,7 +239,13 @@ class TestApproachInformation(unittest.TestCase):
         self.assertEqual(approaches[0].loc_est, None)
         self.assertEqual(approaches[0].gs_est, None)
 
-    def test_ils_localizer_established_only_last_segment(self):
+    @patch('analysis_engine.approaches.api')
+    def test_ils_localizer_established_only_last_segment(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
         approaches = ApproachInformation()
         approaches.derive(P('Alttiude AAL For Flight Phases', np.ma.arange(1000, 0,-10)),
                           None,
@@ -148,7 +255,7 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           None,
                           P('ILS Localizer',np.ma.repeat([0,0,0,1,3,3,2,1,0,0], 10), frequency = 0.5),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
+                          P('ILS Glideslope',np.ma.array([0.0]*100)),
                           P('ILS Frequency', np.ma.array(data=[110.90]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
@@ -156,6 +263,7 @@ class TestApproachInformation(unittest.TestCase):
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
+        get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         # Slice changed from original test to reflect new way of determining localizer established phase.
         # Not looking at loc signal, but approach phase and established startpoint, and runway turnoff endpoint.
         self.assertEqual(approaches[0].loc_est, slice(20, 70))
@@ -355,6 +463,90 @@ class TestApproachInformation(unittest.TestCase):
     @unittest.skip('Covered by TestHerat')
     def test_derive_afr_fallback(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+    @patch('analysis_engine.approaches.api')
+    def test_landing_turn_off_runway_basic(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.side_effect = api.NotFoundError()
+        get_handler.get_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array([0]*30)),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(10, 27), 10, 26)]),
+                          P('Heading Continuous', np.ma.array([260]*30)),
+                          None,
+                          None,
+                          None,
+                          None,
+                          None,
+                          A(name='AFR Landing Airport', value={'id': 2379}),
+                          A(name='AFR Landing Runway', value=None) ,
+                          None,
+                          None,
+                          A('Precise Positioning', True),
+                          )
+        get_handler.get_airport.assert_called_with(2379)
+        self.assertEqual(approaches[0].turnoff, 26)
+
+    @patch('analysis_engine.approaches.api')
+    def test_landing_turn_off_runway_curved(self, api):
+        
+        get_handler = Mock()
+        get_handler.get_nearest_airport.side_effect = api.NotFoundError()
+        get_handler.get_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array(range(50, 0, -1)+[0]*40)),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                          P('Heading Continuous', np.ma.concatenate(([260]*70, np.arange(20)+260))),
+                          None,
+                          None,
+                          None,
+                          None,
+                          None,
+                          A(name='AFR Landing Airport', value={'id': 2379}),
+                          A(name='AFR Landing Runway', value=None) ,
+                          None,
+                          None,
+                          A('Precise Positioning', True),
+                          )
+        get_handler.get_airport.assert_called_with(2379)
+        self.assertEqual(approaches[0].turnoff, 70)
+
+    @patch('analysis_engine.approaches.api')
+    def test_landing_turn_off_runway_curved_left(self, api):
+        
+        get_handler = Mock()
+        get_handler.get_nearest_airport.side_effect = api.NotFoundError()
+        get_handler.get_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array(range(50, 0, -1)+[0]*40)),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                          P('Heading Continuous', np.ma.concatenate(([260]*70, np.arange(0, -20, -1)+260))),
+                          None,
+                          None,
+                          None,
+                          None,
+                          None,
+                          A(name='AFR Landing Airport', value={'id': 2379}),
+                          A(name='AFR Landing Runway', value=None) ,
+                          None,
+                          None,
+                          A('Precise Positioning', True),
+                          )
+        get_handler.get_airport.assert_called_with(2379)
+        self.assertEqual(approaches[0].turnoff, 70)
 
 
 class TestAlicante(unittest.TestCase):
