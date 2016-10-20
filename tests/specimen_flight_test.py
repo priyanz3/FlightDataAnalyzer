@@ -110,7 +110,7 @@ class TestProcessSpecimenFlight(unittest.TestCase):
                         'magnetic_variation': 'E001226 0106',
                         'name': 'Oslo Gardermoen',
                     },
-                    runway={
+                    landing_runway={
                         'start': {
                             'elevation': 650,
                             'latitude': 60.185019,

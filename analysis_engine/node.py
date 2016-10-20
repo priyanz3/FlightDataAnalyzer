@@ -47,7 +47,7 @@ logger = logging.getLogger(name=__name__)
 # Define named tuples for KPV and KTI and FlightPhase
 ApproachItem = recordtype(
     'ApproachItem',
-    'type slice airport landing_runway approach_runway gs_est loc_est ils_freq turnoff lowest_lat lowest_lon lowest_hdg',
+    'type slice airport landing_runway approach_runway gs_est loc_est ils_freq turnoff lowest_lat lowest_lon lowest_hdg runway_change offset_ils',
     default=None)
 KeyPointValue = recordtype('KeyPointValue',
                            'index value name slice datetime latitude longitude',
@@ -2236,7 +2236,7 @@ class ApproachNode(ListNode):
         if _type not in ('APPROACH', 'LANDING', 'GO_AROUND', 'TOUCH_AND_GO'):
             raise ValueError("Unknown approach type: '%s'." % _type)
 
-    def create_approach(self, _type, _slice, runway_change=False, offset_ils=False,
+    def create_approach(self, _type, _slice, runway_change=None, offset_ils=None,
                         airport=None, landing_runway=None, approach_runway=None,
                         gs_est=None, loc_est=None, ils_freq=None, turnoff=None,
                         lowest_lat=None, lowest_lon=None, lowest_hdg=None):
@@ -2245,6 +2245,10 @@ class ApproachNode(ListNode):
         :type _type: str
         :param _slice: Slice of approach section.
         :type _slice: slice
+        :param runway_change: Runway changed during approach.
+        :type runway_change: bool
+        :param offset_ils: Approach was to an offset ILS.
+        :type offset_ils: bool
         :param airport: Approach airport dictionary.
         :type airport: dict or None
         :param landing_runway: Landing runway dictionary.
@@ -2273,7 +2277,9 @@ class ApproachNode(ListNode):
             type=_type, slice=_slice, airport=airport,
             landing_runway=landing_runway, approach_runway=approach_runway,
             gs_est=gs_est, loc_est=loc_est, ils_freq=ils_freq, turnoff=turnoff,
-            lowest_lat=lowest_lat, lowest_lon=lowest_lon, lowest_hdg=lowest_hdg)
+            lowest_lat=lowest_lat, lowest_lon=lowest_lon, lowest_hdg=lowest_hdg,
+            runway_change=runway_change, offset_ils=offset_ils,
+        )
         self.append(approach)
         # TODO: order approaches.
         return approach

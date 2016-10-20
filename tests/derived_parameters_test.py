@@ -1113,7 +1113,7 @@ class TestAimingPointRange(unittest.TestCase):
     def test_basic_scaling(self):
         approaches = App(items=[ApproachItem(
             'Landing', slice(3, 8),
-            runway={'end':
+            landing_runway={'end':
                     {'elevation': 3294,
                      'latitude': 31.497511,
                      'longitude': 65.833933},
@@ -3372,7 +3372,7 @@ class TestTrackDeviationFromRunway(unittest.TestCase):
                      'longitude': 8.54313,
                      'magnetic_variation': 'E000459 0106',
                      'name': 'Frankfurt Am Main'},
-            runway={'end': {'latitude': 50.027542, 'longitude': 8.534175},
+            landing_runway={'end': {'latitude': 50.027542, 'longitude': 8.534175},
                     'glideslope': {'angle': 3.0,
                                    'latitude': 50.037992,
                                    'longitude': 8.582733,
@@ -5417,7 +5417,7 @@ class TestCoordinatesSmoothed(TemporaryFileTest, unittest.TestCase):
                                      'longitude': 65.8478,
                                      'magnetic_variation': 'E001590 0506',
                                      'name': 'Kandahar'},
-                            runway={'end': {'elevation': 3294,
+                            landing_runway={'end': {'elevation': 3294,
                                             'latitude': 31.497511,
                                             'longitude': 65.833933},
                                     'id': 44,
@@ -5444,7 +5444,7 @@ class TestCoordinatesSmoothed(TemporaryFileTest, unittest.TestCase):
                                      'longitude': 55.3644,
                                      'magnetic_variation': 'E001315 0706',
                                      'name': 'Dubai Intl'},
-                            runway={'end': {'latitude': 25.262131, 'longitude': 55.347572},
+                            landing_runway={'end': {'latitude': 25.262131, 'longitude': 55.347572},
                                     'glideslope': {'angle': 3.0,
                                                    'latitude': 25.246333,
                                                    'longitude': 55.378417,
@@ -5651,7 +5651,7 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
                               'longitude': 65.8478,
                               'magnetic_variation': 'E001590 0506',
                               'name': 'Kandahar'},
-                     runway={'end': {'elevation': 3294,
+                     landing_runway={'end': {'elevation': 3294,
                                      'latitude': 31.497511,
                                      'longitude': 65.833933},
                              'id': 44,
@@ -5678,7 +5678,7 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
                               'longitude': 55.3644,
                               'magnetic_variation': 'E001315 0706',
                               'name': 'Dubai Intl'},
-                     runway={'end': {'latitude': 25.262131, 'longitude': 55.347572},
+                     landing_runway={'end': {'latitude': 25.262131, 'longitude': 55.347572},
                              'glideslope': {'angle': 3.0,
                                             'latitude': 25.246333,
                                             'longitude': 55.378417,

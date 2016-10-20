@@ -227,7 +227,7 @@ class ApproachInformation(ApproachNode):
                 fifteen_deg = index_at_value(
                     np.ma.abs(head_landing - head_landing[0]), 15.0)
                 if peak_bend:
-                    turnoff = ref_idx + peak_bend
+                    turnoff = (ref_idx+_slice.stop)/2 + peak_bend
                 else:
                     if fifteen_deg and fifteen_deg < peak_bend:
                         turnoff = start_search + landing_turn
@@ -311,8 +311,16 @@ class ApproachInformation(ApproachNode):
                 appr_ils_freq = round(ils_freq.array[_slice.start], 2)
             # Was this valid, and if so did the start of the approach match the landing runway?
             if appr_ils_freq and not np.isnan(appr_ils_freq):
-                kwargs['appr_ils_freq'] = appr_ils_freq
-                airport, approach_runway = self._lookup_airport_and_runway(**kwargs)
+                runway_kwargs = {
+                    'ilsfreq': appr_ils_freq,
+                    'latitude': lowest_lat,
+                    'longitude': lowest_lon,
+                }
+                if not precise:
+                    runway_kwargs['hint'] = kwargs.get('hint', 'approach')
+                    del runway_kwargs['latitude']
+                    del runway_kwargs['longitude']
+                approach_runway = nearest_runway(airport, lowest_hdg, **runway_kwargs)
                 if approach_runway['id'] != landing_runway['id']:
                     runway_change = True
             else:
