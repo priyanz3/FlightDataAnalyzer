@@ -5042,6 +5042,45 @@ class HeightAtDistancesFromThreshold(KeyPointValueNode):
                                 replace_values={'distance':distance})
 
 
+class HeightAtOffsetILSTurn(KeyPointValueNode):
+    '''
+    This is the height above threshold for approaches to runways with offset ILS
+    localizer at the point where the aircraft passes outside 0.5 dots and turns
+    towards the runway.
+    '''
+    
+    NAME_FORMAT = 'Height At Offset ILS Turn'
+    
+    def derive(self, alt= P('Altitude AAL'),
+               apps=App('Approach Information')):
+        
+        for app in apps:
+            if app.offset_ils:
+                index = app.loc_est.stop
+                value = alt.array[index]
+                self.create_kpv(index, value)
+
+
+class HeightAtRunwayChange(KeyPointValueNode):
+    '''
+    This is the height above threshold for approaches where the runway 
+    changes, as identified by departure from the localizer for the first 
+    runway.
+    '''
+    
+    NAME_FORMAT = 'Height At Runway Change'
+    
+    def derive(self, alt= P('Altitude AAL'),
+               apps=App('Approach Information')):
+        
+        for app in apps:
+            if app.runway_change:
+                index = app.loc_est.stop
+                value = alt.array[index]
+                self.create_kpv(index, value)
+
+
+
 ##############################################################################
 # Collective
 
