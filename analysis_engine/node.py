@@ -2355,6 +2355,8 @@ class ApproachNode(ListNode):
                 slice=_slice,
                 turnoff=(turnoff * multiplier) + offset if turnoff else None,
                 type=approach.type,
+                runway_change=approach.runway_change,
+                offset_ils=approach.offset_ils,
             ))
         return ApproachNode(param.name, param.frequency, param.offset,
                             items=approaches)
