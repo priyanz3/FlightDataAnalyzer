@@ -185,6 +185,7 @@ class ApproachInformation(ApproachNode):
                lat_land=KPV('Latitude At Touchdown'),
                lon_land=KPV('Longitude At Touchdown'),
                precision=A('Precise Positioning'),
+               fast=S('Fast'),
                ):
 
         precise = bool(getattr(precision, 'value', False))
@@ -218,7 +219,13 @@ class ApproachInformation(ApproachNode):
 
             turnoff = None
             if landing:
-                tdn_hdg = np.ma.median(hdg.array[ref_idx:_slice.stop])
+                search_end = fast.get_surrounding(_slice.start)
+                if search_end:
+                    search_end = min(search_end[0].slice.stop, _slice.stop)
+                else:
+                    search_end = _slice.stop
+
+                tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end])
                 lowest_hdg = tdn_hdg.tolist()%360.0
                 
                 # While we're here, let's compute the turnoff index for this landing.
