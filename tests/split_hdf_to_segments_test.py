@@ -12,6 +12,7 @@ from analysis_engine.split_hdf_to_segments import (
     _mask_invalid_years,
     append_segment_info,
     calculate_fallback_dt,
+    get_dt_arrays,
     has_constant_time,
     split_segments)
 from analysis_engine.node import P, Parameter
@@ -65,6 +66,26 @@ class TestDateTimeFunctions(unittest.TestCase):
 
         #TODO: Test case for calculate_fallback_dt where has_constant_time is
         # True
+
+    def test_get_dt_arrays__hour_after_midnight(self):
+        '''
+        test to check hour following midnight does not get replaced if 0 and less than 1 hour in length
+        '''
+        duration = 1740 # 29 minutes
+        year = P('Year', array=np.ma.array([2016]*duration))
+        month = P('Month', array=np.ma.array([8]*duration))
+        day = P('Day', array=np.ma.array([5]*duration))
+        hour = P('Hour', array=np.ma.array([0]*duration))
+        minute = P('Minute', array=np.ma.repeat(np.ma.arange(duration/60), 60))
+        second = P('Second', array=np.ma.array(np.tile(np.arange(60), duration/60)))
+        values = {'Year': year, 'Month': month, 'Day': day, 'Hour': hour, 'Minute': minute, 'Second': second}
+        def hdf_get(arg):
+            return values[arg]
+        hdf = mock.Mock()
+        hdf.duration = duration
+        hdf.get.side_effect = hdf_get
+        dt_arrays = get_dt_arrays(hdf, datetime(2016, 8, 4, 23, 59, 59), datetime(2016, 8, 5, 1, 59, 59))
+        self.assertEqual(dt_arrays, [year.array, month.array, day.array, hour.array, minute.array, second.array])
 
 
 class TestSplitSegments(unittest.TestCase):
