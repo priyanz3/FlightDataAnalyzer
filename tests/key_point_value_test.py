@@ -206,6 +206,9 @@ from analysis_engine.key_point_values import (
     BrakePressureInTakeoffRollMax,
     BrakeTempAfterTouchdownDelta,
     BrakeTempDuringTaxiInMax,
+    HeightAtDistancesFromThreshold,
+    HeightAtOffsetILSTurn,
+    HeightAtRunwayChange,
     CollectiveFrom10To60PercentDuration,
     ControlColumnForceMax,
     ControlColumnStiffness,
@@ -690,6 +693,7 @@ from analysis_engine.key_time_instances import (
     AltitudeBeforeLevelFlightWhenDescending,
     EngStart,
     EngStop,
+    DistanceFromThreshold,
 )
 from analysis_engine.library import (max_abs_value, max_value, min_value)
 from analysis_engine.flight_phase import Fast, RejectedTakeoff
@@ -6005,6 +6009,119 @@ class TestControlWheelForceMax(unittest.TestCase, NodeTest):
                 items=[KeyPointValue(
                     index=3.0, value=47.0,
                     name='Control Wheel Force Max')]))
+
+
+class TestHeightAtDistancesFromThreshold(unittest.TestCase):
+    def setUp(self):
+        self.node_class = HeightAtDistancesFromThreshold
+        self.NAME_VALUES = {'distance': [0, 1, 2, 4]}
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Height At Distances From Threshold')
+        self.assertEqual(node.NAME_FORMAT,
+                         'Height At %(distance)d NM From Threshold')
+        self.assertEqual(node.NAME_VALUES, self.NAME_VALUES)
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Altitude AAL', opts[0])
+        self.assertIn('Distance From Threshold', opts[0])
+
+    def test_derive(self):
+        alt = P('Altitude AAL', np.ma.array(np.linspace(800, 0, 55)))
+        items =[]
+        indices = [40, 30, 20, 10]
+        for d, i in zip(self.NAME_VALUES['distance'], indices):
+            items.append(KeyTimeInstance(index=i,
+                                         name='%d NM From Threshold' % d))
+        dist_ktis = DistanceFromThreshold(name='Distance From Threshold',
+                                          items=items)
+
+        node = self.node_class()
+        node.derive(alt, dist_ktis)
+
+        self.assertEqual(len(node), 4)
+
+        self.assertEqual(node[0].name, 'Height At 0 NM From Threshold')
+        self.assertEqual(node[0].index, 40)
+        self.assertAlmostEqual(node[0].value, 207.41, places=2)
+
+        self.assertEqual(node[1].name, 'Height At 1 NM From Threshold')
+        self.assertEqual(node[1].index, 30)
+        self.assertAlmostEqual(node[1].value, 355.56, places=2)
+
+        self.assertEqual(node[2].name, 'Height At 2 NM From Threshold')
+        self.assertEqual(node[2].index, 20)
+        self.assertAlmostEqual(node[2].value, 503.70, places=2)
+
+        self.assertEqual(node[3].name, 'Height At 4 NM From Threshold')
+        self.assertEqual(node[3].index, 10)
+        self.assertAlmostEqual(node[3].value, 651.85, places=2)
+
+
+class TestHeightAtOffsetILSTurn(unittest.TestCase):
+    def setUp(self):
+        self.node_class = HeightAtOffsetILSTurn
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Height At Offset ILS Turn')
+        self.assertEqual(node.units, 'ft')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Altitude AAL', opts[0])
+        self.assertIn('Approach Information', opts[0])
+
+    def test_derive(self):
+        alt = P('Altitude AAL', np.ma.array(np.linspace(800, 0, 55)))
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(10, 40),
+                                       offset_ils=True,
+                                       loc_est=slice(20, 30))])
+
+        node = self.node_class()
+        node.derive(alt, apps)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 30)
+        self.assertAlmostEqual(node[0].value, 355.56, places=2)
+
+
+class TestHeightAtRunwayChange(unittest.TestCase):
+    def setUp(self):
+        self.node_class = HeightAtRunwayChange
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Height At Runway Change')
+        self.assertEqual(node.units, 'ft')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Altitude AAL', opts[0])
+        self.assertIn('Approach Information', opts[0])
+
+    def test_derive(self):
+        alt = P('Altitude AAL', np.ma.array(np.linspace(800, 0, 55)))
+        apps = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(10, 40),
+                                       runway_change=True,
+                                       loc_est=slice(20, 30))])
+
+        node = self.node_class()
+        node.derive(alt, apps)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 30)
+        self.assertAlmostEqual(node[0].value, 355.56, places=2)
 
 
 ##############################################################################

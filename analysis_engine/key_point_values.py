@@ -5049,7 +5049,8 @@ class HeightAtOffsetILSTurn(KeyPointValueNode):
     towards the runway.
     '''
     
-    NAME_FORMAT = 'Height At Offset ILS Turn'
+    name = 'Height At Offset ILS Turn'
+    units = ut.FT
     
     def derive(self, alt= P('Altitude AAL'),
                apps=App('Approach Information')):
@@ -5068,7 +5069,8 @@ class HeightAtRunwayChange(KeyPointValueNode):
     runway.
     '''
     
-    NAME_FORMAT = 'Height At Runway Change'
+    name = 'Height At Runway Change'
+    units = ut.FT
     
     def derive(self, alt= P('Altitude AAL'),
                apps=App('Approach Information')):
