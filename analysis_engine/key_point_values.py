@@ -1569,6 +1569,23 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class Airspeed2NMToTouchdown(KeyPointValueNode):
+    '''
+    Airspeed 2NM from touchdown
+    '''
+
+    units = ut.KT
+
+    name = 'Airspeed 2 NM To Touchdown'
+
+    can_operate = helicopter_only
+
+    def derive(self, airspeed=P('Airspeed'), dtl=P('Distance To Landing'), touchdown=P('Touchdown')):
+        for tdwn in touchdown:
+            dtl_idx = index_at_value(dtl.array, 2.0, slice(tdwn.index, 0, -1))
+            self.create_kpv(dtl_idx, value_at_index(airspeed.array, dtl_idx))
+
+
 class AirspeedAbove500FtMin(KeyPointValueNode):
     '''
     Minimum airspeed above 500ft (helicopter only)

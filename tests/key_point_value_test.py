@@ -87,6 +87,7 @@ from analysis_engine.key_point_values import (
     Airspeed8000To10000FtMax,
     Airspeed8000To5000FtMax,
     Airspeed20FtToTouchdownMax,
+    Airspeed2NMToTouchdown,
     AirspeedAbove500FtMin,
     AirspeedAt200Ft,
     AirspeedAtAPGoAroundEngaged,
@@ -2256,6 +2257,48 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 71)
         self.assertEqual(node[0].value, 29)
+
+
+class TestAirspeed2NMToTouchdown(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Airspeed2NMToTouchdown
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Airspeed 2 NM To Touchdown')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('Distance To Landing', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        air_spd = np.linspace(64, 7, 25).tolist()
+        air_spd += np.linspace(84, 28, 11).tolist()
+        airspeed = P('Airspeed', np.ma.array(air_spd))
+        dist = [2.4, 2.3, 2.2, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3,
+                1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1,
+                0.0]
+        dist += ([2.4, 2.15, 1.9, 1.65, 1.4, 1.15, 0.9, 0.65, 0.4,
+                  0.15, 0.0])
+        dtl = P('Distance To Landing', np.ma.array(dist))
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(24, 'Touchdown'),
+                                            KeyTimeInstance(35, 'Touchdown')])
+        node = self.node_class()
+        node.derive(airspeed, dtl, touchdown)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].index, 4.0, places=1)
+        self.assertAlmostEqual(node[0].value, 54.5, places=1)
+        self.assertAlmostEqual(node[1].index, 26.6, places=1)
+        self.assertAlmostEqual(node[1].value, 75.0, places=1)
 
 
 class TestAirspeedAbove500FtMin(unittest.TestCase):
