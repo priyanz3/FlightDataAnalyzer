@@ -509,7 +509,7 @@ from analysis_engine.key_point_values import (
     PitchOnGroundMin,
     PitchWhileAirborneMax,
     PitchWhileAirborneMin,
-    PitchTowndownTo60KtsAirspeedMax,
+    PitchTouchdownTo60KtsAirspeedMax,
     PitchRate20FtToTouchdownMax,
     PitchRate20FtToTouchdownMin,
     PitchRate2DegPitchTo35FtMax,
@@ -12942,13 +12942,13 @@ class TestPitchWhileAirborneMin(unittest.TestCase):
         self.assertEqual(node[0].value, 2)
 
 
-class TestPitchAtTowndownTo60KtsAirspeedMax(unittest.TestCase):
+class TestPitchTouchdownTo60KtsAirspeedMax(unittest.TestCase):
     def setUp(self):
-        self.node_class = PitchTowndownTo60KtsAirspeedMax
+        self.node_class = PitchTouchdownTo60KtsAirspeedMax
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Pitch Towndown To 60 Kts Airspeed Max')
+        self.assertEqual(node.name, 'Pitch Touchdown To 60 Kts Airspeed Max')
         self.assertEqual(node.units, 'deg')
 
     def test_can_operate(self):
