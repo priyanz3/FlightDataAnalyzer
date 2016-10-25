@@ -13000,7 +13000,7 @@ class PitchWhileAirborneMin(KeyPointValueNode):
         self.create_kpvs_within_slices(pitch.array, airborne, min_value)
 
 
-class PitchTowndownTo60KtsAirspeedMax(KeyPointValueNode):
+class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     '''
     Maximum pitch at point of touchdown until airspeed reaches 60 kts.
     '''
