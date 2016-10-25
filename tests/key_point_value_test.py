@@ -381,6 +381,7 @@ from analysis_engine.key_point_values import (
     GrossWeightConditionalAtTouchdown,
     GrossWeightDelta60SecondsInFlightMax,
     Groundspeed20FtToTouchdownMax,
+    Groundspeed20SecToTouchdownMax,
     GroundspeedAtLiftoff,
     GroundspeedAtTOGA,
     GroundspeedAtTouchdown,
@@ -11908,6 +11909,53 @@ class TestGroundspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 71)
         self.assertEqual(node[0].value, 29)
+
+
+class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = Groundspeed20SecToTouchdownMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Groundspeed 20 Sec To Touchdown Max')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Groundspeed', opts[0])
+        self.assertIn('Touchdown', opts[0])
+        self.assertIn('Secs To Touchdown', opts[0])
+
+    def test_derive(self):
+        groundspeed = P('Groundspeed',
+                        np.ma.array([45, 43, 39, 34, 30,
+                                     22, 15,  7,  2,  1,
+                                     1,   0,  0,  0,  0,
+                                     50, 47, 44, 39, 32,
+                                     30, 32, 31, 16,  8,
+                                     8,   8,  7,  8,  8]))
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(10, 'Touchdown'),
+                                            KeyTimeInstance(25, 'Touchdown')])
+        secs_tdwn = KTI('Secs To Touchdown',
+                        items=[KeyTimeInstance(1, '90 Secs To Touchdown'),
+                               KeyTimeInstance(7, '30 Secs To Touchdown'),
+                               KeyTimeInstance(8, '20 Secs To Touchdown'),
+                               KeyTimeInstance(16, '90 Secs To Touchdown'),
+                               KeyTimeInstance(22, '30 Secs To Touchdown'),
+                               KeyTimeInstance(23, '20 Secs To Touchdown')])
+
+        node = self.node_class()
+        node.derive(groundspeed, touchdown, secs_tdwn)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 8)
+        self.assertEqual(node[0].value, 2)
+        self.assertEqual(node[1].index, 23)
+        self.assertEqual(node[1].value, 16)
 
 
 class TestGroundspeedBelow100FtMax(unittest.TestCase):

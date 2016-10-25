@@ -1849,7 +1849,7 @@ class MinsToTouchdown(KeyTimeInstanceNode):
 class SecsToTouchdown(KeyTimeInstanceNode):
     #TODO: TESTS
     NAME_FORMAT = "%(time)d Secs To Touchdown"
-    NAME_VALUES = {'time': [90, 30]}
+    NAME_VALUES = {'time': [90, 30, 20]}
 
     def derive(self, touchdowns=KTI('Touchdown'),
                liftoffs=KTI('Liftoff')):

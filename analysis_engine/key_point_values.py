@@ -11750,6 +11750,29 @@ class Groundspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class Groundspeed20SecToTouchdownMax(KeyPointValueNode):
+    '''
+    Find the maximum groundspeed 20 seconds from the point of touchdown.
+    (helicopters only)
+    '''
+    units = ut.KT
+    
+    can_operate = helicopter_only
+    
+    def derive(self, groundspeed=P('Groundspeed'),
+               touchdown=KTI('Touchdown'),
+               secs_tdwn=KTI('Secs To Touchdown')):
+
+        idx_to_tdwn = \
+            [s.index for s in secs_tdwn if s.name == '20 Secs To Touchdown']
+        idx_at_tdwn = [t.index for t in touchdown]
+        
+        if idx_to_tdwn and idx_at_tdwn:
+            _slice = [slice(a, b) for a, b in zip(idx_to_tdwn, idx_at_tdwn)]
+            self.create_kpvs_within_slices(groundspeed.array, _slice,
+                                           max_value)
+
+
 class GroundspeedVacatingRunway(KeyPointValueNode):
     '''
     '''
