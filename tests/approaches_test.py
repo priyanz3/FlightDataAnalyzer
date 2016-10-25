@@ -197,8 +197,8 @@ class TestApproachInformation(unittest.TestCase):
                           P('ILS Frequency', np.ma.array(data=[110.90]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
-                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=80, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=80, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
@@ -310,8 +310,8 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None) ,
-                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
@@ -329,7 +329,7 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(2, 19), 2, 19)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.array([260.0]*20)),
                           None,
                           None,
                           P('ILS Localizer',np.ma.array(data=[0.0]*20, mask=[1]*20)),
@@ -337,8 +337,8 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None) ,
-                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
@@ -364,8 +364,8 @@ class TestApproachInformation(unittest.TestCase):
                           P('ILS Frequency', np.ma.array([110.90]*20)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
-                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
                           A('Precise Positioning', True),
                           )
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
