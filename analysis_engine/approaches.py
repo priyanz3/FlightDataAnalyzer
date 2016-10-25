@@ -141,8 +141,6 @@ class ApproachInformation(ApproachNode):
                 # the airport. If the measurments are not precise, remove them.
                 if not precise:
                     kwargs['hint'] = hint
-                    del kwargs['latitude']
-                    del kwargs['longitude']
 
             runway = nearest_runway(airport, lowest_hdg, **kwargs)
             if not runway:
@@ -246,15 +244,19 @@ class ApproachInformation(ApproachNode):
                 lowest_hdg = hdg.array[ref_idx].tolist()%360.0
 
             # Pass latitude, longitude and heading
+            lowest_lat = None
+            lowest_lon = None
             if lat and lon and ref_idx:
-                lowest_lat = lat.array[ref_idx]
-                lowest_lon = lon.array[ref_idx]
-            elif lat_land and lon_land:
-                lowest_lat = lat_land[-1].value
-                lowest_lon = lon_land[-1].value
-            else:
-                lowest_lat = None
-                lowest_lon = None
+                lowest_lat = lat.array[ref_idx] or None
+                lowest_lon = lon.array[ref_idx] or None
+            if lat_land and lon_land and not (lowest_lat and lowest_lon):
+                # use lat/lon at landing if values at ref_idx are masked
+                # only interested in landing within approach slice.
+                lat_land = lat_land.get(within_slice=_slice)
+                lon_land = lon_land.get(within_slice=_slice)
+                if lat_land and lon_land:
+                    lowest_lat = lat_land[0].value or None
+                    lowest_lon = lon_land[0].value or None
 
             kwargs = dict(
                 precise=precise,
@@ -277,7 +279,7 @@ class ApproachInformation(ApproachNode):
 
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
             if not airport:
-                break
+                continue
             
             # Simple determination of heliport.
             # This function may be expanded to cater for rig approaches in future.
@@ -325,8 +327,6 @@ class ApproachInformation(ApproachNode):
                 }
                 if not precise:
                     runway_kwargs['hint'] = kwargs.get('hint', 'approach')
-                    del runway_kwargs['latitude']
-                    del runway_kwargs['longitude']
                 approach_runway = nearest_runway(airport, lowest_hdg, **runway_kwargs)
                 if approach_runway['id'] != landing_runway['id']:
                     runway_change = True
