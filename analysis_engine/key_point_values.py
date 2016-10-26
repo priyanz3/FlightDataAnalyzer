@@ -11791,6 +11791,25 @@ class Groundspeed20SecToTouchdownMax(KeyPointValueNode):
                                            max_value)
 
 
+class Groundspeed0_8NMToTouchdown(KeyPointValueNode):
+    '''
+    Groundspeed at 0.8 NM away from touchdown. (helicopters only)
+    '''
+
+    name = 'Groundspeed 0.8 NM To Touchdown'
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, groundspeed=P('Groundspeed'), 
+               dtl=P('Distance To Landing'), touchdown=KTI('Touchdown')):
+        for tdwn in touchdown:
+            dtl_idx = index_at_value(dtl.array, 0.8, slice(tdwn.index, 0, -1))
+            self.create_kpv(dtl_idx, value_at_index(groundspeed.array,
+                                                    dtl_idx))
+
+
 class GroundspeedVacatingRunway(KeyPointValueNode):
     '''
     '''
