@@ -380,6 +380,7 @@ from analysis_engine.key_point_values import (
     GrossWeightDelta60SecondsInFlightMax,
     Groundspeed20FtToTouchdownMax,
     Groundspeed20SecToTouchdownMax,
+    Groundspeed0_8NMToTouchdown,
     GroundspeedAtLiftoff,
     GroundspeedAtTOGA,
     GroundspeedAtTouchdown,
@@ -11888,6 +11889,48 @@ class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].value, 2)
         self.assertEqual(node[1].index, 23)
         self.assertEqual(node[1].value, 16)
+
+
+class TestGroundspeed0_8NMToTouchdown (unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = Groundspeed0_8NMToTouchdown
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Groundspeed 0.8 NM To Touchdown')
+        self.assertEqual(node.units, 'kt')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Groundspeed', opts[0])
+        self.assertIn('Distance To Landing', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        gnd_spd = np.linspace(57, 2, 25).tolist()
+        gnd_spd += np.linspace(111, 7, 11).tolist()
+        groundspeed = P('Airspeed', np.ma.array(gnd_spd))
+        dist = [2.4, 2.3, 2.2, 2.1, 2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3,
+                1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1,
+                0.0]
+        dist += ([2.4, 2.15, 1.9, 1.65, 1.4, 1.15, 0.9, 0.65, 0.4,
+                  0.15, 0.0])
+        dtl = P('Distance To Landing', np.ma.array(dist))
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(24, 'Touchdown'),
+                                            KeyTimeInstance(35, 'Touchdown')])
+        node = self.node_class()
+        node.derive(groundspeed, dtl, touchdown)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].index, 16.0, places=1)
+        self.assertAlmostEqual(node[0].value, 20.3, places=1)
+        self.assertAlmostEqual(node[1].index, 31.4, places=1)
+        self.assertAlmostEqual(node[1].value, 44.4, places=1)
 
 
 class TestGroundspeedBelow100FtMax(unittest.TestCase):
