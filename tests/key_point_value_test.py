@@ -411,6 +411,7 @@ from analysis_engine.key_point_values import (
     HeadingDeviationFromRunwayAt50FtDuringLanding,
     HeadingDeviationFromRunwayAtTOGADuringTakeoff,
     HeadingDeviationFromRunwayDuringLandingRoll,
+    HeadingDeviation1_5NMTo1_0NMFromTouchdownMax,
     HeadingDuringLanding,
     HeadingDuringTakeoff,
     HeadingRateWhileAirborneMax,
@@ -10737,6 +10738,54 @@ class TestHeadingDeviationFromRunwayDuringLandingRoll(unittest.TestCase, NodeTes
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestHeadingDeviation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = HeadingDeviation1_5NMTo1_0NMFromTouchdownMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(
+            node.name,
+            'Heading Deviation 1.5 NM To 1.0 NM From Touchdown Max'
+        )
+        self.assertEqual(node.units, 'deg')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Heading Continuous', opts[0])
+        self.assertIn('Distance To Landing', opts[0])
+        #self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        dtl = P('Distance To Land', np.ma.array([
+            1.7,  1.6, 1.55, 1.5, 1.45, 1.4, 1.35, 1.3, 1.25, 1.2, 1.15, 1.1,
+            1.05, 1.0, 0.9,  0.8, 0.7,  0.6, 0.5,  0.4, 0.3,  0.2, 0.1,  0.0, 
+            1.7,  1.6, 1.55, 1.5, 1.45, 1.4, 1.35, 1.3, 1.25, 1.2, 1.15, 1.1,
+            1.05, 1.0, 0.9,  0.8, 0.7,  0.6, 0.5,  0.4, 0.3,  0.2, 0.1,  0.0
+        ]))
+        heading = P('Heading Continuous', np.ma.array([
+            -210, -209, -207, -206, -204, -201, -200, -199, -198, -197,
+            -197, -196, -195, -195, -195, -194, -193, -193, -193, -193,
+            -193, -193, -193, -193, -193, -193, -193, -193, -194, -194,
+            -195, -195, -195, -195, -196, -197, -198, -200, -202, -204,
+            -205, -207, -209, -211, -211, -210, -211, -211
+        ]))
+
+        node = self.node_class()
+        node.derive(heading, dtl)
+
+        self.assertEqual(len(node), 2)
+        self.assertEqual(node[0].index, 4)
+        self.assertEqual(node[0].value, 3)
+        self.assertEqual(node[1].index, 36)
+        self.assertEqual(node[1].value, -2)
 
 
 class TestHeadingVariation300To50Ft(unittest.TestCase):
