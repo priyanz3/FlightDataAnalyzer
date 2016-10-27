@@ -343,6 +343,7 @@ from analysis_engine.key_point_values import (
     EngTorqueFor5SecDuringGoAround5MinRatingMax,
     EngTorqueFor5SecDuringMaximumContinuousPowerMax,
     EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax,
+    EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax,
     EngTorqueFor5SecDuringTakeoff5MinRatingMax,
     EngTorqueOverThresholdDuration,
     EngTorqueWhileDescendingMax,
@@ -9636,6 +9637,53 @@ class TestEngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax(
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 27)
         self.assertEqual(node[0].value, 75)
+
+
+class TestEngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax(
+    unittest.TestCase):
+    
+    def setUp(self):
+        self.node_class = \
+            EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(
+            node.name,
+            'Eng Torque During Maximum Continuous Power Airspeed Above '\
+            '100 Kts Max'
+        )
+        self.assertEqual(node.units, '%')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Eng (*) Torque Max', opts[0])
+        self.assertIn('Maximum Continuous Power', opts[0])
+        self.assertIn('Airspeed', opts[0])
+
+    def test_derive(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+        air_spd = P('Airspeed', np.ma.array([
+            136, 132, 131, 131, 132, 135, 131, 132, 131, 131,
+            132, 131, 132, 131, 131, 132, 130, 121, 113, 99,
+            97,  89,  81,  73,  65,  57,  49,  41,  33,  25
+        ]))
+        mcp = buildsection('Maximum Continuous Power', 1, 28)
+
+        node = self.node_class()
+        node.derive(eng, mcp, air_spd)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 11)
+        self.assertEqual(node[0].value, 73)
 
 
 class TestEngTorque500To50FtMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
