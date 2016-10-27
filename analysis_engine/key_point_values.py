@@ -10253,6 +10253,26 @@ class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
         self.create_kpvs_within_slices(array, ratings, max_value)
 
 
+class EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax(
+    KeyPointValueNode):
+    '''
+    Maximum engine torque during maximum continuous power phases where the
+    indicate airspeed is below 100 kts. (helicopter only)
+    '''
+
+    name = 'Eng Torque During Maximum Continuous Power Airspeed Below '\
+        '100 Kts Max'
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, eng=P('Eng (*) Torque Max'),
+               mcp=S('Maximum Continuous Power'), air_spd=P('Airspeed')):
+        slices = slices_and(mcp.get_slices(), air_spd.slices_below(100))
+        self.create_kpvs_within_slices(eng.array, slices, max_value)
+
+
 class EngTorque500To50FtMax(KeyPointValueNode):
     '''
     '''
