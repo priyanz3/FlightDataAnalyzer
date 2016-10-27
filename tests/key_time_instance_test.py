@@ -557,7 +557,7 @@ class TestAltitudeBeforeLevelFlightWhenClimbing(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+        self.assertEqual(opts, [('Altitude STD Smoothed',
                                  'Level Flight',
                                  'Climb')])
 
@@ -573,7 +573,7 @@ class TestAltitudeBeforeLevelFlightWhenDescending(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+        self.assertEqual(opts, [('Altitude STD Smoothed',
                                  'Level Flight',
                                  'Descending')])
 
