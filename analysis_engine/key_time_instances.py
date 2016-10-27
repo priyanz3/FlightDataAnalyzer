@@ -1743,7 +1743,7 @@ class AltitudeBeforeLevelFlightWhenClimbing(KeyTimeInstanceNode):
     NAME_VALUES = {'altitude': [1000, 2000]}
 
     def derive(self,
-               aal=P('Altitude AAL For Flight Phases'),
+               aal=P('Altitude STD Smoothed'),
                level_flight=S('Level Flight'),
                climbing=S('Climb')):
 
@@ -1783,7 +1783,7 @@ class AltitudeBeforeLevelFlightWhenDescending(KeyTimeInstanceNode):
     NAME_VALUES = {'altitude': [1000, 2000]}
 
     def derive(self,
-               aal=P('Altitude AAL For Flight Phases'),
+               aal=P('Altitude STD Smoothed'),
                level_flight=S('Level Flight'),
                descending=S('Descending')):
 
