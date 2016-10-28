@@ -4369,16 +4369,16 @@ class AltitudeRadioDuringAutorotationMin(KeyPointValueNode):
         self.create_kpvs_within_slices(alt_rad.array, autorotation, min_value)
 
 
-class AltitudeDuringLevelFlightMin(KeyPointValueNode):
+class AltitudeDuringCruiseMin(KeyPointValueNode):
     '''
-    Minimum altitude (AGL) recorded during level flight (helicopter only).
+    Minimum altitude (AGL) recorded during cruise (helicopter only).
     '''
 
     units = ut.FT
     can_operate = helicopter_only
 
-    def derive(self, alt_agl=P('Altitude AGL'), lvl_flt=S('Level Flight')):
-        self.create_kpvs_within_slices(alt_agl.array, lvl_flt, min_value)
+    def derive(self, alt_agl=P('Altitude AGL'), cruise=S('Cruise')):
+        self.create_kpvs_within_slices(alt_agl.array, cruise, min_value)
 
 
 ########################################
