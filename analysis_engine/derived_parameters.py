@@ -985,18 +985,18 @@ class AltitudeAGLForFlightPhases(DerivedParameterNode):
     be used to compute KPV values themselves, to avoid using interpolated
     values in an event.
     
-    Hysteresis avoids repeated triggering of events when operating at one of 
+    Hysteresis avoids repeated triggering of KPVs when operating at one of 
     the nominal heights. For example, helicopter searches at 500ft.
     '''
 
     name = 'Altitude AGL For Flight Phases'
     units = ut.FT
 
-    def derive(self, alt_aal=P('Altitude AGL')):
+    def derive(self, alt_agl=P('Altitude AGL')):
 
-        repair_array = repair_mask(alt_aal.array, repair_duration=None)
-        hyst_array = np.ma.max(hysteresis(repair_array, 10.0), 0.0)
-        self.array = np.ma.where(alt_aal.array > 0.0, hyst_array, 0.0)
+        repair_array = repair_mask(alt_agl.array, repair_duration=None)
+        hyst_array = hysteresis(repair_array, 10.0)
+        self.array = np.ma.where(alt_agl.array > 10.0, hyst_array, repair_array)
 
 
 class AltitudeDensity(DerivedParameterNode):
