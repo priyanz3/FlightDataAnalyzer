@@ -4794,7 +4794,7 @@ class CoordinatesSmoothed(object):
 
             this_app_slice = approach.slice
 
-            tdwn_index = this_app_slice.stop - 1
+            tdwn_index = this_app_slice.stop - 2
             for tdwn in tdwns:
                 if not is_index_within_slice(tdwn.index, this_app_slice):
                     continue
