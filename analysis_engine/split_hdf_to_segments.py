@@ -671,11 +671,12 @@ def get_dt_arrays(hdf, fallback_dt, validation_dt):
                 param.array = _mask_invalid_years(param.array, year)
             # do not interpolate date/time parameters to avoid rollover issues
             array = align(param, onehz, interpolate=False)
-            if len(array) == 0 or np.ma.count(array) == 0 \
-                    or np.ma.all(array == 0):
+            if len(array) == 0 or np.ma.count(array) == 0:
+                logger.warning("No valid values returned for %s", name)
+            elif (np.ma.all(array == 0)) and not (name == 'Hour' and len(array) < 3600): # Hour can be 0 for up to 1 hour (after midnight)
                 # Other than the year 2000 or possibly 2100, no date values
                 # can be all 0's
-                logger.warning("No valid values returned for %s", name)
+                logger.warning("Only zero values returned for %s", name)
             else:
                 # values returned, continue
                 dt_arrays.append(array)
@@ -911,7 +912,7 @@ def append_segment_info(hdf_segment_path, segment_type, segment_slice, part,
 
 def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
                           validation_dt=None, fallback_relative_to_start=True,
-                          draw=False, dest_dir=None):
+                          draw=False, dest_dir=None, pre_file_kwargs={}):
     """
     Main method - analyses an HDF file for flight segments and splits each
     flight into a new segment appropriately.
@@ -930,6 +931,8 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
     :param dest_dir: Destination directory, if None, the source file directory
         is used
     :type dest_dir: str
+    :param pre_file_kwargs: Pre-file analysis keyword arguments.
+    :type pre_file_kwargs: dict
     :returns: List of Segments
     :rtype: List of Segment recordtypes ('slice type part duration path hash')
     """
@@ -950,9 +953,9 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
 
         # now we know the Aircraft is correct, go and do the PRE FILE ANALYSIS
         if hooks.PRE_FILE_ANALYSIS:
-            logger.debug(
-                "Performing PRE_FILE_ANALYSIS analysis: %s", hooks.PRE_FILE_ANALYSIS.func_name)
-            hooks.PRE_FILE_ANALYSIS(hdf, aircraft_info)
+            logger.debug("Performing PRE_FILE_ANALYSIS action '%s' with options: %s",
+                         hooks.PRE_FILE_ANALYSIS.func_name, pre_file_kwargs)
+            hooks.PRE_FILE_ANALYSIS(hdf, aircraft_info, **pre_file_kwargs)
         else:
             logger.info("No PRE_FILE_ANALYSIS actions to perform")
 

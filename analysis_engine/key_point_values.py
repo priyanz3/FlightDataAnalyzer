@@ -1569,6 +1569,24 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
+class Airspeed2NMToTouchdown(KeyPointValueNode):
+    '''
+    Airspeed 2NM from touchdown
+    '''
+
+    units = ut.KT
+
+    name = 'Airspeed 2 NM To Touchdown'
+
+    can_operate = helicopter_only
+
+    def derive(self, airspeed=P('Airspeed'), dtl=P('Distance To Landing'),
+               touchdown=P('Touchdown')):
+        for tdwn in touchdown:
+            dtl_idx = index_at_value(dtl.array, 2.0, slice(tdwn.index, 0, -1))
+            self.create_kpv(dtl_idx, value_at_index(airspeed.array, dtl_idx))
+
+
 class AirspeedAbove500FtMin(KeyPointValueNode):
     '''
     Minimum airspeed above 500ft (helicopter only)
@@ -4351,16 +4369,16 @@ class AltitudeRadioDuringAutorotationMin(KeyPointValueNode):
         self.create_kpvs_within_slices(alt_rad.array, autorotation, min_value)
 
 
-class AltitudeDuringLevelFlightMin(KeyPointValueNode):
+class AltitudeDuringCruiseMin(KeyPointValueNode):
     '''
-    Minimum altitude (AGL) recorded during level flight (helicopter only).
+    Minimum altitude (AGL) recorded during cruise (helicopter only).
     '''
 
     units = ut.FT
     can_operate = helicopter_only
 
-    def derive(self, alt_agl=P('Altitude AGL'), lvl_flt=S('Level Flight')):
-        self.create_kpvs_within_slices(alt_agl.array, lvl_flt, min_value)
+    def derive(self, alt_agl=P('Altitude AGL'), cruise=S('Cruise')):
+        self.create_kpvs_within_slices(alt_agl.array, cruise, min_value)
 
 
 ########################################
@@ -5049,7 +5067,8 @@ class HeightAtOffsetILSTurn(KeyPointValueNode):
     towards the runway.
     '''
     
-    NAME_FORMAT = 'Height At Offset ILS Turn'
+    name = 'Height At Offset ILS Turn'
+    units = ut.FT
     
     def derive(self, alt= P('Altitude AAL'),
                apps=App('Approach Information')):
@@ -5068,7 +5087,8 @@ class HeightAtRunwayChange(KeyPointValueNode):
     runway.
     '''
     
-    NAME_FORMAT = 'Height At Runway Change'
+    name = 'Height At Runway Change'
+    units = ut.FT
     
     def derive(self, alt= P('Altitude AAL'),
                apps=App('Approach Information')):
@@ -10233,6 +10253,46 @@ class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
         self.create_kpvs_within_slices(array, ratings, max_value)
 
 
+class EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax(
+    KeyPointValueNode):
+    '''
+    Maximum engine torque during maximum continuous power phases where the
+    indicate airspeed is below 100 kts. (helicopter only)
+    '''
+
+    name = 'Eng Torque During Maximum Continuous Power Airspeed Below '\
+        '100 Kts Max'
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, eng=P('Eng (*) Torque Max'),
+               mcp=S('Maximum Continuous Power'), air_spd=P('Airspeed')):
+        slices = slices_and(mcp.get_slices(), air_spd.slices_below(100))
+        self.create_kpvs_within_slices(eng.array, slices, max_value)
+
+
+class EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax(
+    KeyPointValueNode):
+    '''
+    Maximum engine torque during maximum continuous power phases where the
+    indicate airspeed is above 100 kts. (helicopter only)
+    '''
+
+    name = 'Eng Torque During Maximum Continuous Power Airspeed Above 100 '\
+        'Kts Max'
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self, eng=P('Eng (*) Torque Max'),
+               mcp=S('Maximum Continuous Power'), air_spd=P('Airspeed')):
+        slices = slices_and(mcp.get_slices(), air_spd.slices_above(100))
+        self.create_kpvs_within_slices(eng.array, slices, max_value)
+
+
 class EngTorque500To50FtMax(KeyPointValueNode):
     '''
     '''
@@ -10960,6 +11020,24 @@ class HeadingDeviationFromRunwayDuringLandingRoll(KeyPointValueNode):
         final_landing = land_rolls[-1].slice
         dev = runway_deviation(head.array, rwy.value)
         self.create_kpv_from_slices(dev, [final_landing], max_abs_value)
+
+
+class HeadingDeviation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
+    '''
+    Maximum heading deviation 1.5 to 1.0 NM from touchdown. (helicopter only)
+    '''
+
+    units = ut.DEGREE
+
+    name = 'Heading Deviation 1.5 NM To 1.0 NM From Touchdown Max'
+
+    can_operate = helicopter_only
+
+    def derive(self, heading=P('Heading Continuous'),
+               dtl=P('Distance To Landing')):
+        slices = dtl.slices_from_to(1.5, 1.0)
+        heading_delta = np.diff(heading.array % 360)
+        self.create_kpvs_within_slices(heading_delta, slices, max_abs_value)
 
 
 class HeadingVariation300To50Ft(KeyPointValueNode):
@@ -11746,6 +11824,48 @@ class Groundspeed20FtToTouchdownMax(KeyPointValueNode):
             alt_agl.slices_to_kti(20, touchdowns),
             max_value,
         )
+
+
+class Groundspeed20SecToTouchdownMax(KeyPointValueNode):
+    '''
+    Find the maximum groundspeed 20 seconds from the point of touchdown.
+    (helicopters only)
+    '''
+    units = ut.KT
+    
+    can_operate = helicopter_only
+    
+    def derive(self, groundspeed=P('Groundspeed'),
+               touchdown=KTI('Touchdown'),
+               secs_tdwn=KTI('Secs To Touchdown')):
+
+        idx_to_tdwn = \
+            [s.index for s in secs_tdwn if s.name == '20 Secs To Touchdown']
+        idx_at_tdwn = [t.index for t in touchdown]
+        
+        if idx_to_tdwn and idx_at_tdwn:
+            _slice = [slice(a, b) for a, b in zip(idx_to_tdwn, idx_at_tdwn)]
+            self.create_kpvs_within_slices(groundspeed.array, _slice,
+                                           max_value)
+
+
+class Groundspeed0_8NMToTouchdown(KeyPointValueNode):
+    '''
+    Groundspeed at 0.8 NM away from touchdown. (helicopters only)
+    '''
+
+    name = 'Groundspeed 0.8 NM To Touchdown'
+
+    units = ut.KT
+
+    can_operate = helicopter_only
+
+    def derive(self, groundspeed=P('Groundspeed'), 
+               dtl=P('Distance To Landing'), touchdown=KTI('Touchdown')):
+        for tdwn in touchdown:
+            dtl_idx = index_at_value(dtl.array, 0.8, slice(tdwn.index, 0, -1))
+            self.create_kpv(dtl_idx, value_at_index(groundspeed.array,
+                                                    dtl_idx))
 
 
 class GroundspeedVacatingRunway(KeyPointValueNode):
@@ -12998,6 +13118,26 @@ class PitchWhileAirborneMin(KeyPointValueNode):
         self.create_kpvs_within_slices(pitch.array, airborne, min_value)
 
 
+class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
+    '''
+    Maximum pitch at point of touchdown until airspeed reaches 60 kts.
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
+               touchdown=KTI('Touchdown')):
+        tdwn_idx = touchdown.get_first().index
+        _slice = slice(
+            tdwn_idx,
+            index_at_value(airspeed.array, 60,
+                           slice(tdwn_idx, None), endpoint='nearest')
+        )
+        self.create_kpvs_within_slices(pitch.array, [_slice,], max_value)
+
+
+##############################################################################
+# Pitch Rate
 class PitchRateWhileAirborneMax(KeyPointValueNode):
     '''
     '''
@@ -13006,11 +13146,6 @@ class PitchRateWhileAirborneMax(KeyPointValueNode):
 
     def derive(self, pitch_rate=P('Pitch Rate'), airborne=S('Airborne')):
         self.create_kpvs_within_slices(pitch_rate.array, airborne, max_abs_value)
-
-
-
-##############################################################################
-# Pitch Rate
 
 
 class PitchRate35To1000FtMax(KeyPointValueNode):

@@ -1719,7 +1719,7 @@ class AltitudeBeforeLevelFlightWhenClimbing(KeyTimeInstanceNode):
     NAME_VALUES = {'altitude': [1000, 2000]}
 
     def derive(self,
-               aal=P('Altitude AAL For Flight Phases'),
+               aal=P('Altitude STD Smoothed'),
                level_flight=S('Level Flight'),
                climbing=S('Climb')):
 
@@ -1759,7 +1759,7 @@ class AltitudeBeforeLevelFlightWhenDescending(KeyTimeInstanceNode):
     NAME_VALUES = {'altitude': [1000, 2000]}
 
     def derive(self,
-               aal=P('Altitude AAL For Flight Phases'),
+               aal=P('Altitude STD Smoothed'),
                level_flight=S('Level Flight'),
                descending=S('Descending')):
 
@@ -1849,7 +1849,7 @@ class MinsToTouchdown(KeyTimeInstanceNode):
 class SecsToTouchdown(KeyTimeInstanceNode):
     #TODO: TESTS
     NAME_FORMAT = "%(time)d Secs To Touchdown"
-    NAME_VALUES = {'time': [90, 30]}
+    NAME_VALUES = {'time': [90, 30, 20]}
 
     def derive(self, touchdowns=KTI('Touchdown'),
                liftoffs=KTI('Liftoff')):

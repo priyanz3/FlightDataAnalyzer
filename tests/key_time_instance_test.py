@@ -557,7 +557,7 @@ class TestAltitudeBeforeLevelFlightWhenClimbing(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+        self.assertEqual(opts, [('Altitude STD Smoothed',
                                  'Level Flight',
                                  'Climb')])
 
@@ -573,7 +573,7 @@ class TestAltitudeBeforeLevelFlightWhenDescending(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertEqual(opts, [('Altitude AAL For Flight Phases',
+        self.assertEqual(opts, [('Altitude STD Smoothed',
                                  'Level Flight',
                                  'Descending')])
 
@@ -1857,11 +1857,13 @@ class TestSecsToTouchdown(unittest.TestCase):
         lo = KTI('Liftoff', items=[KeyTimeInstance(1, 'Liftoff')])
         sttd = SecsToTouchdown()
         sttd.derive(td, lo)
+        self.assertEqual(len(sttd), 3)
         self.assertEqual(
             sttd,
             [
                 KeyTimeInstance(index=10, name='90 Secs To Touchdown'),
                 KeyTimeInstance(index=70, name='30 Secs To Touchdown'),
+                KeyTimeInstance(index=80, name='20 Secs To Touchdown'),
             ]
         )
 
@@ -1870,7 +1872,14 @@ class TestSecsToTouchdown(unittest.TestCase):
         lo = KTI('Liftoff', items=[KeyTimeInstance(30, 'Liftoff')])
         sttd = SecsToTouchdown()
         sttd.derive(td, lo)
-        self.assertEqual(len(sttd), 1)
+        self.assertEqual(len(sttd), 2)
+        self.assertEqual(
+            sttd,
+            [
+                KeyTimeInstance(index=70, name='30 Secs To Touchdown'),
+                KeyTimeInstance(index=80, name='20 Secs To Touchdown'),
+            ]
+        )
 
 
 class TestDistanceFromTakeoffAirport(unittest.TestCase):
