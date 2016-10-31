@@ -1580,11 +1580,12 @@ class Airspeed2NMToTouchdown(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, airspeed=P('Airspeed'), dtl=P('Distance To Landing'),
+    def derive(self, airspeed=P('Airspeed'), dtts=P('Distance To Touchdown'),
                touchdown=KTI('Touchdown')):
-        for tdwn in touchdown:
-            dtl_idx = index_at_value(dtl.array, 2.0, slice(tdwn.index, 0, -1))
-            self.create_kpv(dtl_idx, value_at_index(airspeed.array, dtl_idx))
+
+        indices = [d.index for d in dtts if '2.0 NM To Touchdown' in d.name]
+        for tdwn, index in zip(touchdown, indices):
+            self.create_kpv(index, value_at_index(airspeed.array, index))
 
 
 class AirspeedAbove500FtMin(KeyPointValueNode):
@@ -11034,8 +11035,11 @@ class HeadingDeviation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, heading=P('Heading Continuous'),
-               dtl=P('Distance To Landing')):
-        slices = dtl.slices_from_to(1.5, 1.0)
+               dtts=P('Distance To Touchdown')):
+        start_idx = [d.index for d in dtts if '1.5 NM To Touchdown' in d.name]
+        stop_idx = [d.index for d in dtts if '1.0 NM To Touchdown' in d.name]
+        slices = [slice(start, stop) for start, stop in zip(start_idx, 
+                                                            stop_idx)]
         heading_delta = np.diff(heading.array % 360)
         self.create_kpvs_within_slices(heading_delta, slices, max_abs_value)
 
@@ -11861,11 +11865,10 @@ class Groundspeed0_8NMToTouchdown(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, groundspeed=P('Groundspeed'), 
-               dtl=P('Distance To Landing'), touchdown=KTI('Touchdown')):
-        for tdwn in touchdown:
-            dtl_idx = index_at_value(dtl.array, 0.8, slice(tdwn.index, 0, -1))
-            self.create_kpv(dtl_idx, value_at_index(groundspeed.array,
-                                                    dtl_idx))
+               dtts=KTI('Distance To Touchdown'), touchdown=KTI('Touchdown')):
+        indices = [d.index for d in dtts if '0.8 NM To Touchdown' in d.name]
+        for tdwn, index in zip(touchdown, indices):
+            self.create_kpv(index, value_at_index(groundspeed.array, index))
 
 
 class GroundspeedVacatingRunway(KeyPointValueNode):

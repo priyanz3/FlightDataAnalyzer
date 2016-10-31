@@ -62,6 +62,7 @@ from analysis_engine.key_time_instances import (
     OffBlocks,
     OnBlocks,
     SecsToTouchdown,
+    DistanceToTouchdown,
     SlatAlternateArmedSet,
     TakeoffAccelerationStart,
     TakeoffPeakAcceleration,
@@ -1880,6 +1881,27 @@ class TestSecsToTouchdown(unittest.TestCase):
                 KeyTimeInstance(index=80, name='20 Secs To Touchdown'),
             ]
         )
+
+
+class TestDistanceToTouchdown(unittest.TestCase):
+    def test_can_operate(self):
+        self.assertEqual(DistanceToTouchdown.get_operational_combinations(),
+                         [('Distance To Landing', 'Touchdown')])
+
+    def test_derive(self):
+        td = [KeyTimeInstance(index=49, name='Touchdown')]
+        dtl=P('Distance To Landing', np.ma.array(np.linspace(5.0, 0.0)))
+        dtt = DistanceToTouchdown()
+        dtt.derive(dtl, td)
+        self.assertEqual(len(dtt), 4)
+        self.assertAlmostEqual(dtt[0].index, 41.2, places=1)
+        self.assertEqual(dtt[0].name, '0.8 NM To Touchdown')
+        self.assertAlmostEqual(dtt[1].index, 39.2, places=1)
+        self.assertEqual(dtt[1].name, '1.0 NM To Touchdown')
+        self.assertAlmostEqual(dtt[2].index, 34.3, places=1)
+        self.assertEqual(dtt[2].name, '1.5 NM To Touchdown')
+        self.assertAlmostEqual(dtt[3].index, 29.4, places=1)
+        self.assertEqual(dtt[3].name, '2.0 NM To Touchdown')
 
 
 class TestDistanceFromTakeoffAirport(unittest.TestCase):
