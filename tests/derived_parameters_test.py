@@ -1998,7 +1998,7 @@ class TestDistanceToLanding(unittest.TestCase):
         tdwns = KTI('Touchdown', items=[KeyTimeInstance(70, 'Touchdown'),
                                         KeyTimeInstance(95, 'Touchdown')])
 
-        expected_result = np.ma.concatenate((np.ma.arange(70, 0, -1),np.ma.arange(25, 0, -1),np.ma.arange(0, 5, 1)))
+        expected_result = np.ma.concatenate((np.ma.arange(70, -1, -1),np.ma.arange(24, -1, -1),np.ma.arange(1, 5, 1)))
         dtl = DistanceToLanding()
         dtl.derive(distance_travelled, tdwns)
         assert_array_equal(dtl.array, expected_result)
