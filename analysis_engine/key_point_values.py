@@ -1581,7 +1581,7 @@ class Airspeed2NMToTouchdown(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, airspeed=P('Airspeed'), dtl=P('Distance To Landing'),
-               touchdown=P('Touchdown')):
+               touchdown=KTI('Touchdown')):
         for tdwn in touchdown:
             dtl_idx = index_at_value(dtl.array, 2.0, slice(tdwn.index, 0, -1))
             self.create_kpv(dtl_idx, value_at_index(airspeed.array, dtl_idx))
