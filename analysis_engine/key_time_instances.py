@@ -1891,11 +1891,15 @@ class DistanceToTouchdown(KeyTimeInstanceNode):
 
     def derive(self, dtl=P('Distance To Landing'),
                touchdowns=KTI('Touchdown')):
+        last_tdwn_idx = 0
         for touchdown in touchdowns:
             for d in self.NAME_VALUES['distance']:
                 index = index_at_value(dtl.array, d,
-                                       slice(touchdown.index, 0, -1))
-                self.create_kti(index, distance=d)
+                                       slice(touchdown.index, last_tdwn_idx, -1))
+                if index:
+                    # may not have travelled far enough to find distance threshold.
+                    self.create_kti(index, distance=d)
+            last_tdwn_idx = touchdown.index
 
 
 class Autoland(KeyTimeInstanceNode):
