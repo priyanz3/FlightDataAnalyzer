@@ -1826,7 +1826,7 @@ class DistanceToLanding(DerivedParameterNode):
         if tdwns:
             last_tdwn = 0
             for this_tdwn in [t.index for t in tdwns.get_ordered_by_index()]:
-                self.array[last_tdwn:this_tdwn+1] = np.ma.abs(dist.array[last_tdwn:this_tdwn+1] - value_at_index(dist.array, this_tdwn))
+                self.array[last_tdwn:this_tdwn+1] = np.ma.abs(dist.array[last_tdwn:this_tdwn+1] - (value_at_index(dist.array, this_tdwn) or np.ma.masked))
                 last_tdwn = this_tdwn+1
             self.array[last_tdwn:] = np.ma.abs(dist.array[last_tdwn:] - dist.array[this_tdwn])
         else:
