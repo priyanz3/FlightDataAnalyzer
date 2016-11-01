@@ -1903,6 +1903,35 @@ class TestDistanceToTouchdown(unittest.TestCase):
         self.assertAlmostEqual(dtt[3].index, 29.4, places=1)
         self.assertEqual(dtt[3].name, '2.0 NM To Touchdown')
 
+    def test_derive__multiple_touchdowns(self):
+        touchdown_name = 'Touchdown'
+        td = KTI(touchdown_name, 
+                 items=[
+                     KeyTimeInstance(index=50.51, name=touchdown_name),
+                     KeyTimeInstance(index=101.53, name=touchdown_name)
+                     ]
+                 )
+        dtl=P('Distance To Landing', np.ma.concatenate((np.arange(10, -0.2, -0.2), np.arange(10, -0.2, -0.2), np.arange(0.2, 2, 0.2))))
+        dtt = DistanceToTouchdown()
+        dtt.derive(dtl, td)
+        self.assertEqual(len(dtt), 8)
+        self.assertAlmostEqual(dtt[0].index, 46.0, places=1)
+        self.assertEqual(dtt[0].name, '0.8 NM To Touchdown')
+        self.assertAlmostEqual(dtt[1].index, 45.0, places=1)
+        self.assertEqual(dtt[1].name, '1.0 NM To Touchdown')
+        self.assertAlmostEqual(dtt[2].index, 42.5, places=1)
+        self.assertEqual(dtt[2].name, '1.5 NM To Touchdown')
+        self.assertAlmostEqual(dtt[3].index, 40.0, places=1)
+        self.assertEqual(dtt[3].name, '2.0 NM To Touchdown')
+        self.assertAlmostEqual(dtt[4].index, 97.0, places=1)
+        self.assertEqual(dtt[4].name, '0.8 NM To Touchdown')
+        self.assertAlmostEqual(dtt[5].index, 96.0, places=1)
+        self.assertEqual(dtt[5].name, '1.0 NM To Touchdown')
+        self.assertAlmostEqual(dtt[6].index, 93.5, places=1)
+        self.assertEqual(dtt[6].name, '1.5 NM To Touchdown')
+        self.assertAlmostEqual(dtt[7].index, 91.0, places=1)
+        self.assertEqual(dtt[7].name, '2.0 NM To Touchdown')
+
 
 class TestDistanceFromTakeoffAirport(unittest.TestCase):
     def test_can_operate(self):
