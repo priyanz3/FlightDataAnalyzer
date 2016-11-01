@@ -1895,7 +1895,7 @@ class DistanceToTouchdown(KeyTimeInstanceNode):
         for touchdown in touchdowns:
             for d in self.NAME_VALUES['distance']:
                 index = index_at_value(dtl.array, d,
-                                       slice(touchdown.index, last_tdwn_idx, -1))
+                                       slice(floor(touchdown.index), last_tdwn_idx, -1))
                 if index:
                     # may not have travelled far enough to find distance threshold.
                     self.create_kti(index, distance=d)
