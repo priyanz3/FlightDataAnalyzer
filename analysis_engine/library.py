@@ -2995,12 +2995,16 @@ def ils_established(array, _slice, hz, duration='established'):
     elif duration == 'immediate':
         time_required = 1.0
 
+    # When is the ILS signal within ILS_CAPTURE (0.5 dots)?
     captures = np.ma.clump_unmasked(np.ma.masked_greater(np.ma.abs(array[_slice]), ILS_CAPTURE))
+    # When is the signal changing at less than ILS_CAPTURE_RATE (+/- 0.1 dots/second)?
     ils_rate = rate_of_change_array(array[_slice], hz)
     low_rocs = np.ma.clump_unmasked(np.ma.masked_greater(np.ma.abs(ils_rate), ILS_CAPTURE_ROC))
 
+    # We want both conditions to be true at the same time, so AND the two conditions
     for capture in slices_and(captures, low_rocs):
-        if slice_duration(capture, hz) > time_required:
+        # and now check that this period is longer than the required period.
+        if slice_duration(capture, hz) >= time_required:
             return _slice.start + (_slice.step or 1)*capture.start
             break
     return None
