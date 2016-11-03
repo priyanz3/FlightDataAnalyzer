@@ -1826,8 +1826,8 @@ class DistanceToLanding(DerivedParameterNode):
         if tdwns:
             last_tdwn = 0
             for this_tdwn in [t.index for t in tdwns.get_ordered_by_index()]:
-                self.array[last_tdwn:this_tdwn] = np.ma.abs(dist.array[last_tdwn:this_tdwn] - dist.array[this_tdwn])
-                last_tdwn = this_tdwn
+                self.array[last_tdwn:this_tdwn+1] = np.ma.abs(dist.array[last_tdwn:this_tdwn+1] - (value_at_index(dist.array, this_tdwn) or np.ma.masked))
+                last_tdwn = this_tdwn+1
             self.array[last_tdwn:] = np.ma.abs(dist.array[last_tdwn:] - dist.array[this_tdwn])
         else:
             self.array.mask = True
@@ -6430,11 +6430,15 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (2)' in available and
                 'Spoiler (R) (2)' in available
             ) or
-            family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A350', 'A380') and (
+            family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380') and (
                 ('Spoiler (L) (3)' in available and
                     'Spoiler (R) (3)' in available) or
                 ('Spoiler (L) (2)' in available and
                     'Spoiler (R) (2)' in available)
+            ) or
+            family_name in ( 'A350' ) and (
+                'Spoiler (L) (4)' in available and
+                'Spoiler (R) (4)' in available
             ) or
             family_name in ('B737 Classic', 'B737 NG') and (
                 'Spoiler (L) (4)' in available and
@@ -6519,11 +6523,13 @@ class Speedbrake(DerivedParameterNode):
 
         if family_name in ('G-V', 'G-IV') or (family_name == 'CL-600' and spoiler_l2 and spoiler_r2):
             self.merge_spoiler(spoiler_l2, spoiler_r2)
-        elif family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A350', 'A380'):
+        elif family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380'):
             if spoiler_l3 is not None:
                 self.merge_spoiler(spoiler_l3, spoiler_r3)
             else:
                 self.merge_spoiler(spoiler_l2, spoiler_r2)
+        elif family_name in ('A350'):
+            self.merge_spoiler(spoiler_l4, spoiler_r4)
         elif family_name in ('B737 Classic', 'B737 NG'):
             self.merge_spoiler(spoiler_l4, spoiler_r4)
         elif family_name == 'Global':
@@ -6981,13 +6987,14 @@ class AirspeedSelectedForApproaches(DerivedParameterNode):
     Use Airspeed Selected if frequency >= 0.25, otherwise upsample to 1Hz using
     next sampled value.
     '''
-    def derive(self, aspd=P('Airspeed Selected')):
+    def derive(self, aspd=P('Airspeed Selected'), fast=S('Fast')):
         if aspd.frequency >= 0.25:
             self.array = aspd.array
             return
 
         rep = 1 / aspd.frequency
-        array = aspd.array.repeat(rep)
+        array = repair_mask(mask_outside_slices(aspd.array, fast.get_slices()), method='fill_start', repair_duration=None)
+        array = array.repeat(rep)
         if aspd.offset >= 1:
             # Compensate for the offset of the source parameter to align the
             # value steps with the recorded ones

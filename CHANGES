@@ -9,6 +9,42 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.29.3
+-------
+
+   - Speedbrake logic for A350
+
+v0.29.2
+-------
+
+ - Add:
+   - Derived: AltitudeAGLForFlightPhases
+   - KPV: Airspeed2NMToTouchdown
+   - KPV: AirspeedAt200Ft
+   - KPV: AirspeedAtAPUpperModesEngaged
+   - KPV: APEngagedSelection
+   - KPV: AltitudeDuringCruiseMin
+   - KPV: EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax
+   - KPV: EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax
+   - KPV: Groundspeed0.8NMToTouchdown
+   - KPV: Groundspeed20SecToTouchdownMax
+   - KPV: GroundspeedMax --> GroundspeedWithGearOnGroundMax
+   - KPV: HeadingDeviation1.5NMTo1.0NMFromTouchdownMax
+   - KPV: PitchBelow5FtMax
+   - KPV: Pitch5To10FtMax
+   - KPV: Pitch10To5FtMax
+   - KPV: PitchTowndownTo60KtsAirspeedMax
+   - KPV: RotorSpeed36To49Duration
+   - KPV: RotorSpeed56To67Duration
+   - KPV: RotorSpeedDuringAutorotationMin
+   - KPV: VerticalSpeedAt500Ft
+   - KPV: VerticalSpeedAt300Ft
+ - Fix:
+   - KTI: AltitudeBeforeLevelOff use Altitude Smoothed
+   - Splitting: fallback dt in future during splitting
+   - Splitting: get_dt_arrays throwing away valid hour of 0
+
+
 v0.29.1
 -------
 

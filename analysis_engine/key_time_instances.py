@@ -1861,6 +1861,23 @@ class SecsToTouchdown(KeyTimeInstanceNode):
                     self.create_kti(index, time=t)
 
 
+class DistanceToTouchdown(KeyTimeInstanceNode):
+    NAME_FORMAT = "%(distance)s NM To Touchdown"
+    NAME_VALUES = {'distance': [0.8, 1.0, 1.5, 2.0]}
+
+    def derive(self, dtl=P('Distance To Landing'),
+               touchdowns=KTI('Touchdown')):
+        last_tdwn_idx = 0
+        for touchdown in touchdowns:
+            for d in self.NAME_VALUES['distance']:
+                index = index_at_value(dtl.array, d,
+                                       slice(floor(touchdown.index), last_tdwn_idx, -1))
+                if index:
+                    # may not have travelled far enough to find distance threshold.
+                    self.create_kti(index, distance=d)
+            last_tdwn_idx = touchdown.index
+
+
 class Autoland(KeyTimeInstanceNode):
     '''
     All requried autopilots engaged at touchdown. Many Boeing aircraft require
