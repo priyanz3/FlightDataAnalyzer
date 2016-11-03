@@ -4848,7 +4848,7 @@ class CoordinatesSmoothed(object):
                 lon_adj[this_loc_slice.start] = np.ma.masked
 
                 ils_join_offset = None
-                if approach.type == 'LANDING':
+                if approach.type == 'LANDING' and not(approach.offset_ils or approach.runway_change):
                     # Remember where we lost the ILS, in preparation for the taxi in.
                     ils_join, _ = last_valid_sample(lat_adj[this_loc_slice])
                     if ils_join:
