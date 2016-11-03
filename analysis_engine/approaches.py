@@ -364,16 +364,33 @@ class ApproachInformation(ApproachNode):
                 # I have some data to scan. Shorthand names;
                 loc_start = valid_range[0] + _slice.start
                 loc_end = valid_range[1] + _slice.start
-                # First trim to within 45 deg of runway heading, to suppress signals that are not related to this approach.
+                scan_back = slice(ref_idx, loc_start, -1)
+
+                # If we are turning in, we are not interested in signals that are not related to this approach.
                 # The value of 45 deg was selected to encompass Washington National airport with a 40 deg offset.
                 hdg_diff = np.ma.abs(np.ma.mod((hdg.array-lowest_hdg)+180.0, 360.0)-180.0)
-                ils_45 = index_at_value(hdg_diff, 45.0, _slice=slice(ref_idx, loc_start, -1))
-                loc_start = max(loc_start, ils_45)
-
-                # Did I get established on the localizer, and if so, when?
+                ils_hdg_45 = index_at_value(hdg_diff, 45.0, _slice=scan_back)
+                
+                # We are not interested above 1,500 ft, so may trim back the start point to that point:
+                ils_alt_1500 = index_at_value(alt_aal.array, 1500.0, _slice=scan_back)
+                
+                # The criteria for start of established phase is the latter of the approach phase start, the turn-in or 1500ft.
+                # The "or 0" allow for flights that do not turn through 45 deg or keep below 1500ft.
+                loc_start = max(loc_start, ils_hdg_45 or 0, ils_alt_1500 or 0)
+                
+                # Did I get established on the localizer, and if so, when? We only look AFTER the aircraft is already
+                # within 45deg of the runway heading, below 1500ft and the data is valid for this runway.
+                # Testing that the aircraft is not just passing across the localizer is built into the ils_established function.
                 loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
                 if loc_estab :
-                    loc_start = loc_estab
+                    
+                    # We will consider the aircraft established at 1000ft come what may.
+                    ils_alt_1000 = index_at_value(alt_aal.array, 1000.0, _slice=scan_back) 
+                    if ils_alt_1000:
+                        loc_start = min(loc_estab, ils_alt_1000)
+                    else:
+                        loc_start = loc_estab
+                        
                     # Refine the end of the localizer established phase...
                     if (approach_runway and approach_runway['localizer']['is_offset']):
                         offset_ils = True
@@ -383,16 +400,19 @@ class ApproachInformation(ApproachNode):
                     elif approach_type in ['TOUCH_AND_GO', 'GO_AROUND']:
                         # We finish at the lowest point
                         loc_end = ref_idx
+                        
+                    elif runway_change:
+                        # Use the end of localizer phase as this already reflects the tuned frequency.
+                        loc_end = loc_slice.stop
+                        loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
+                        if loc_end_1_dot:
+                            loc_end = loc_end_1_dot                        
     
                     elif approach_type == 'LANDING':
-                        if runway_change:
-                            # Step across. Search for end of established phase
-                            loc_end = ils_established(ils_loc.array, slice(loc_end, loc_start, -1), ils_loc.hz, duration='immediate')
-                        else:
-                            # Just end at 2 dots where we turn off the runway
-                            loc_end_2_dots = index_at_value(np.ma.abs(ils_loc.array), 2.0, _slice=slice(loc_end, loc_start, -1))
-                            if loc_end_2_dots:
-                                loc_end = loc_end_2_dots
+                        # Just end at 2 dots where we turn off the runway
+                        loc_end_2_dots = index_at_value(np.ma.abs(ils_loc.array), 2.0, _slice=slice(loc_end, loc_start, -1))
+                        if loc_end_2_dots:
+                            loc_end = loc_end_2_dots
                         
                     loc_est = slice(loc_start, loc_end+1)
 
@@ -404,17 +424,14 @@ class ApproachInformation(ApproachNode):
             if loc_est and approach_runway.has_key('glideslope') and ils_gs:
                 # We only look for glideslope established periods if the localizer is already established.
 
-                # The range to scan for the glideslope starts with localizer capture and ends at the
-                # minimum height point for a go-around, or 200ft for a touch-and-go or landing.
+                # The range to scan for the glideslope starts with localizer capture and ends at
+                # 200ft or the minimum height point for a go-around or the end of 
+                # localizer established, if either is earlier.
                 ils_gs_start = loc_start
-                ils_gs_end = loc_end
-                if landing:
-                    ils_gs_200 = index_at_value(alt.array, 200.0, _slice=slice(ils_gs_end, ils_gs_start, -1))
-                    if ils_gs_200:
-                        # Don't go beyond the localizer end of capture.
-                        ils_gs_end = min(loc_end, ils_gs_200)
-                else:
-                    ils_gs_end = ref_idx
+                ils_gs_200 = index_at_value(alt.array, 200.0, _slice=slice(loc_end, ils_gs_start, -1))
+                # The expression "ils_gs_200 or np.inf" caters for the case where the aircraft did not pass
+                # through 200ft, so the result is None, in which case any other value is left to be the minimum.
+                ils_gs_end = min(ils_gs_200 or np.inf, ref_idx, loc_end)
 
                 # Look for ten seconds within half a dot
                 ils_gs_estab = ils_established(ils_gs.array, slice(ils_gs_start, ils_gs_end), ils_gs.hz)

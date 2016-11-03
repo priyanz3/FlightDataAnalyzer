@@ -371,6 +371,61 @@ class TestApproachInformation(unittest.TestCase):
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(2,19,None))
 
+    @patch('analysis_engine.approaches.api')
+    def test_ils_localizer_established_not_above_1500ft(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.arange(2000, 0,-100)),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(2, 19), 2, 19)]),
+                          P('Heading Continuous', np.ma.array([260.0]*20)),
+                          None,
+                          None,
+                          P('ILS Localizer',np.ma.array([0.0]*20)),
+                          P('ILS Glideslope',np.ma.array([0.0]*20)),
+                          P('ILS Frequency', np.ma.array([110.90]*20)),
+                          A(name='AFR Landing Airport', value={'id': 2379}),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
+                          A('Precise Positioning', True),
+                          )
+        get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
+        self.assertEqual(approaches[0].loc_est, slice(5,19,None))
+
+
+    @patch('analysis_engine.approaches.api')
+    def test_ils_localizer_established_not_below_1000ft(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = self.gatwick
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.arange(2000, 0,-50)),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(2, 39), 2, 39)]),
+                          P('Heading Continuous', np.ma.array([260.0]*40)),
+                          None,
+                          None,
+                          P('ILS Localizer',np.ma.array([2.0]*21+[0.0]*12+[-2.0]*7)),
+                          P('ILS Glideslope',np.ma.array([0.0]*40)),
+                          P('ILS Frequency', np.ma.array([110.90]*40)),
+                          A(name='AFR Landing Airport', value={'id': 2379}),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
+                          A('Precise Positioning', True),
+                          )
+        get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
+        self.assertEqual(approaches[0].loc_est, slice(20,38.5,None))
+
 
     #@patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
     @unittest.skip('superceded')
@@ -620,7 +675,7 @@ class TestBardufoss(unittest.TestCase):
         # (started OK, but went outside 0.5 dots within 10 seconds of acquiring the localizer).
         self.assertEqual(approaches[0].gs_est, None)
         # ...but was on the localizer
-        self.assertEqual(int(approaches[0].loc_est.start), app_start)
+        self.assertEqual(int(approaches[0].loc_est.start), 11541)
         self.assertEqual(int(approaches[0].loc_est.stop), 11684)
 
 
@@ -766,11 +821,11 @@ class TestDallasFortWorth(unittest.TestCase):
         # ...but landed on 17R...
         self.assertEqual(approaches[0][3]['identifier'], '17R')
         # The aircraft was established on the glidepath
-        self.assertEqual(int(approaches[0].gs_est.start), 6480)
-        self.assertEqual(int(approaches[0].gs_est.stop), 6734)
+        self.assertEqual(int(approaches[0].gs_est.start), 6523)
+        self.assertEqual(int(approaches[0].gs_est.stop), 6590)
         # ...but was on the localizer
-        self.assertEqual(int(approaches[0].loc_est.start), 6480)
-        self.assertEqual(int(approaches[0].loc_est.stop), 6872)
+        self.assertEqual(int(approaches[0].loc_est.start), 6523)
+        self.assertEqual(int(approaches[0].loc_est.stop), 6590)
 
 
 
@@ -963,7 +1018,7 @@ class TestScatsta(unittest.TestCase):
         self.assertEqual(approaches[0][2]['name'], 'Scatsta')
         self.assertEqual(approaches[0][3]['identifier'], '24')
         # We should be established on the (offset) localizer:        
-        self.assertEqual(int(approaches[0].loc_est.start), 6996)
+        self.assertEqual(int(approaches[0].loc_est.start), 7055)
         self.assertEqual(int(approaches[0].loc_est.stop), 7086)
         # ...but there is no glideslope on this runway.
         self.assertEqual(approaches[0].gs_est, None)
@@ -1064,7 +1119,7 @@ class TestWashingtonNational(unittest.TestCase):
         # The aircraft did get established on the glidepath
         self.assertEqual(approaches[0].gs_est, None)
         # ...and was on the localizer
-        self.assertEqual(int(approaches[0].loc_est.start), 8284)
+        self.assertEqual(int(approaches[0].loc_est.start), 8534)
         self.assertEqual(int(approaches[0].loc_est.stop), 8703)
 
 
@@ -1115,8 +1170,8 @@ class TestZaventem(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '01')
         self.assertEqual(approaches[0].type, 'GO_AROUND')
         self.assertEqual(approaches[1].type, 'LANDING')
-        self.assertEqual(int(approaches[0].gs_est.start), 12033)
-        self.assertEqual(int(approaches[1].gs_est.start), 13500)
+        self.assertEqual(int(approaches[0].gs_est.start), 12106)
+        self.assertEqual(int(approaches[1].gs_est.start), 13554)
         # ...and was on the localizer
-        self.assertEqual(int(approaches[0].loc_est.start), 11965)
-        self.assertEqual(int(approaches[1].loc_est.start), 13500)
+        self.assertEqual(int(approaches[0].loc_est.start), 12106)
+        self.assertEqual(int(approaches[1].loc_est.start), 13554)
