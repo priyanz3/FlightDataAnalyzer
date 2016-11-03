@@ -6987,13 +6987,14 @@ class AirspeedSelectedForApproaches(DerivedParameterNode):
     Use Airspeed Selected if frequency >= 0.25, otherwise upsample to 1Hz using
     next sampled value.
     '''
-    def derive(self, aspd=P('Airspeed Selected')):
+    def derive(self, aspd=P('Airspeed Selected'), fast=S('Fast')):
         if aspd.frequency >= 0.25:
             self.array = aspd.array
             return
 
         rep = 1 / aspd.frequency
-        array = aspd.array.repeat(rep)
+        array = repair_mask(mask_outside_slices(aspd.array, fast.get_slices()), method='fill_start', repair_duration=None)
+        array = array.repeat(rep)
         if aspd.offset >= 1:
             # Compensate for the offset of the source parameter to align the
             # value steps with the recorded ones

@@ -578,12 +578,32 @@ class TestAccelerationAlongTrack(unittest.TestCase):
 
 
 class TestAirspeedSelectedForApproaches(unittest.TestCase):
+
+    node_class = AirspeedSelectedForApproaches
+
     def test_derive(self):
         airspd = P('Airspeed Selected', array=np.ma.arange(10), frequency=1 / 64.)
-        p = AirspeedSelectedForApproaches(frequency=1 / 64.)
-        p.derive(airspd)
+        fast = buildsection('Fast', 0, 9)
+        p = self.node_class(frequency=1 / 64.)
+        p.derive(airspd, fast)
         self.assertEquals(len(p.array), 640)
         self.assertTrue(p.array[1], 1)
+
+    def test_derive__superframe_change_after_fast(self):
+        '''
+        test to check that Airspeed Selected being reset to 100 after runway
+        turnoff when recorded 1/64 does not affect the values used in approach
+        '''
+        speeds = np.ma.array([158, 250, 300, 278, 320, 240, 175, 135, 100])
+        airspd = P('Airspeed Selected', array=speeds.repeat(10), frequency=1 / 64.)
+        fast = buildsection('Fast', 5, 79.5)
+        fast.frequency = 1 / 64.
+        node = self.node_class(frequency=1 / 64.)
+        node.derive(airspd, fast)
+        self.assertEquals(len(node.array), 5760)
+        final_approach_values = node.array[4992:5184]
+        self.assertEqual(len(np.unique(final_approach_values)), 1)
+        self.assertEqual(np.unique(final_approach_values)[0], 135)
 
 
 class TestAirspeedSelected(unittest.TestCase):
