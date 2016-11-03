@@ -5094,7 +5094,7 @@ class HeightAtRunwayChange(KeyPointValueNode):
                apps=App('Approach Information')):
         
         for app in apps:
-            if app.runway_change:
+            if app.runway_change and app.loc_est:
                 index = app.loc_est.stop
                 value = alt.array[index]
                 self.create_kpv(index, value)
