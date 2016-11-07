@@ -40,8 +40,19 @@ from analysis_engine.library import (ils_established,
 ##############################################################################
 # Helper function
 
-def is_heliport(ac_type, airport):
-    return ac_type == helicopter and airport['runways'][0]['strip']['length']==0
+def is_heliport(ac_type, airport, landing_runway):
+    '''
+    helicopter and no airport
+    helicopter and runway strip length == 0
+    no runway and one strip with length == 0
+    '''
+    if ac_type == aeroplane:
+        return False # Aeroplane does not land on heliport
+    if landing_runway: # heliport entered as runway with 0 length strip
+        return landing_runway.get('strip', {}).get('length') == 0
+    else:
+        # I've landed in a field or on a ship or not using a runway.
+        return True
 
 ##############################################################################
 # TODO: Update docstring for ApproachNode.
@@ -278,13 +289,13 @@ class ApproachInformation(ApproachNode):
                 )
 
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
-            if not airport:
+            if not airport and ac_type == aeroplane:
                 continue
-            
+
             # Simple determination of heliport.
             # This function may be expanded to cater for rig approaches in future.
-            heliport = is_heliport(ac_type, airport)
-            
+            heliport = is_heliport(ac_type, airport, landing_runway)
+
             if heliport:
                 self.create_approach(
                     approach_type,
