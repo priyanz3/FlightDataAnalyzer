@@ -4633,7 +4633,7 @@ class TestATEngagedAPDisengagedOutsideClimbDuration(unittest.TestCase, NodeTest)
 
     def setUp(self):
         self.node_class = ATEngagedAPDisengagedOutsideClimbDuration
-        self.operational_combinations = [('AT Engaged', 'AP Engaged', 'Climbing', 'Airborne')]
+        self.operational_combinations = [('AT Engaged', 'AP Engaged', 'Climbing', 'Airborne', 'Takeoff')]
         self.can_operate_kwargs = {'ac_family': A('Family', value='B737-NG')}
 
     def test_derive(self):
@@ -4650,6 +4650,26 @@ class TestATEngagedAPDisengagedOutsideClimbDuration(unittest.TestCase, NodeTest)
             KeyPointValue(name=name, index=10, value=25),
         ])
         self.assertEqual(node, expected)
+
+    def test_derive__invalid_at_liftoff(self):
+        '''
+        test to check around liftoff when climb starts the sample after airborne.
+        '''
+        at_engaged = M('AT Engaged', array=np.ma.array([1]*40), values_mapping={0: '-', 1: 'Engaged'})
+        ap_engaged = M('AP Engaged', array=np.ma.array([1]*5+ [0]*30 + [1]*5), values_mapping={0: '-', 1: 'Engaged'})
+        airs = buildsection('Airborne', 5, 39)
+        climbs = buildsection('Climbing', 6, 10)
+        toff = buildsection('Takeoff', 0, 7)
+
+        node = self.node_class()
+        node.derive(at_engaged, ap_engaged, climbs, airs, toff)
+
+        name = 'AT Engaged AP Disengaged Outside Climb Duration'
+        expected = KPV(name=name, items=[
+            KeyPointValue(name=name, index=10, value=25),
+        ])
+        self.assertEqual(node, expected)
+
 
 
 ##############################################################################
