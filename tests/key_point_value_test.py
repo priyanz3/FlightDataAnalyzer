@@ -4634,7 +4634,7 @@ class TestATEngagedAPDisengagedOutsideClimbDuration(unittest.TestCase, NodeTest)
     def setUp(self):
         self.node_class = ATEngagedAPDisengagedOutsideClimbDuration
         self.operational_combinations = [('AT Engaged', 'AP Engaged', 'Climbing', 'Airborne', 'Takeoff')]
-        self.can_operate_kwargs = {'ac_family': A('Family', value='B737-NG')}
+        self.can_operate_kwargs = {'ac_family': A('Family', value='B737 NG')}
 
     def test_derive(self):
         at_engaged = M('AT Engaged', array=np.ma.array([1]*40), values_mapping={0: '-', 1: 'Engaged'})

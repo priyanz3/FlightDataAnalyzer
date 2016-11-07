@@ -5000,7 +5000,7 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available, ac_family=A('Family')):
-        if ac_family and ac_family.value in ('B737-NG', 'B747', 'B757', 'B767'):
+        if ac_family and ac_family.value in ('B737 NG', 'B747', 'B757', 'B767'):
             return all_deps(cls, available)
         else:
             return False
