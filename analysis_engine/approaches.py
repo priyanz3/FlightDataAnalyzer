@@ -235,7 +235,7 @@ class ApproachInformation(ApproachNode):
                     search_end = _slice.stop
 
                 tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end])
-                lowest_hdg = tdn_hdg.tolist()%360.0
+                lowest_hdg = (tdn_hdg % 360.0).item()
                 
                 # While we're here, let's compute the turnoff index for this landing.
                 head_landing = hdg.array[(ref_idx+_slice.stop)/2:_slice.stop]
@@ -252,7 +252,7 @@ class ApproachInformation(ApproachNode):
                         turnoff = _slice.stop
             else:
                 # We didn't land, but this is indicative of the runway heading
-                lowest_hdg = hdg.array[ref_idx].tolist()%360.0
+                lowest_hdg = (hdg.array[ref_idx] % 360.0).item()
 
             # Pass latitude, longitude and heading
             lowest_lat = None
@@ -291,6 +291,9 @@ class ApproachInformation(ApproachNode):
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
             if not airport and ac_type == aeroplane:
                 continue
+
+            if ac_type == aeroplane and not airport.get('runways'):
+                self.error("Airport %s: contains no runways", airport['code'])
 
             # Simple determination of heliport.
             # This function may be expanded to cater for rig approaches in future.
@@ -339,13 +342,13 @@ class ApproachInformation(ApproachNode):
                 if not precise:
                     runway_kwargs['hint'] = kwargs.get('hint', 'approach')
                 approach_runway = nearest_runway(airport, lowest_hdg, **runway_kwargs)
-                if approach_runway['id'] != landing_runway['id']:
+                if all((approach_runway, landing_runway)) and approach_runway['id'] != landing_runway['id']:
                     runway_change = True
             else:
                 # Without a frequency source, we just have to hope any localizer signal is for this runway!
                 approach_runway = landing_runway
 
-            if approach_runway['localizer'].has_key('frequency'):
+            if approach_runway and approach_runway['localizer'].has_key('frequency'):
                 if np.ma.count(ils_loc.array[_slice]) > 10:
                     if runway_change:
                         # We only use the first frequency tuned. This stops scanning across both runways if the pilot retunes.
