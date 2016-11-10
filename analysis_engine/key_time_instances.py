@@ -598,7 +598,7 @@ class EngStop(KeyTimeInstanceNode):
                 stopped = False
 
             if not stopped:
-                i, v = last_valid_sample(eng_nx.array)
+                i, v = last_valid_sample(eng_nx.array, min_samples=5)
                 if i is not None and v >= limit:
                     self.warning(
                         'Eng (%d) Stop: `%s` spin down not detected, '
