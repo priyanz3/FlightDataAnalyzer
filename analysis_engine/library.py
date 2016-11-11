@@ -2099,7 +2099,7 @@ def first_valid_sample(array, start_index=0):
         return Value(None, None)
 
 
-def last_valid_sample(array, end_index=None):
+def last_valid_sample(array, end_index=None, min_samples=None):
     '''
     Returns the last valid sample of data before a point in an array.
 
@@ -2119,6 +2119,8 @@ def last_valid_sample(array, end_index=None):
         return Value(None, None)
 
     clumps = np.ma.clump_unmasked(array[:end_index+1])
+    if min_samples:
+        clumps = slices_remove_small_slices(clumps, count=min_samples)
     if clumps:
         index = clumps[-1].stop - 1
         return Value(index, array[index])

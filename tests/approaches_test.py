@@ -6,7 +6,7 @@ from mock import call, Mock, patch
 
 from flightdatautilities import api
 
-from analysis_engine.approaches import ApproachInformation
+from analysis_engine.approaches import ApproachInformation, is_heliport
 from analysis_engine.flight_phase import ApproachAndLanding
 from analysis_engine.node import (
     A, ApproachItem, aeroplane, helicopter, KPV, KeyPointValue, P, S, Section,
@@ -16,6 +16,17 @@ from . import airports
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data', 'approaches')
+
+class TestIsHeliport(unittest.TestCase):
+
+    def test_is_heliport(self):
+        self.assertFalse(is_heliport(aeroplane, airports.gatwick, airports.gatwick['runways'][0]))
+        self.assertTrue(is_heliport(helicopter, None, None))
+        helipad = {'identifier':'H', 'strip': {'length': 0}}
+        heliport = {'name':'Vangard helipad', 'runways':[helipad]}
+        self.assertTrue(is_heliport(helicopter, heliport, helipad))
+        self.assertTrue(is_heliport(helicopter, {}, helipad))
+        self.assertFalse(is_heliport(helicopter, airports.gatwick, airports.gatwick['runways'][0]))
 
 class TestApproachInformation(unittest.TestCase):
 

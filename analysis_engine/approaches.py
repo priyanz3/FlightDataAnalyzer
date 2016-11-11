@@ -40,8 +40,19 @@ from analysis_engine.library import (ils_established,
 ##############################################################################
 # Helper function
 
-def is_heliport(ac_type, airport):
-    return ac_type == helicopter and airport['runways'][0]['strip']['length']==0
+def is_heliport(ac_type, airport, landing_runway):
+    '''
+    helicopter and no airport
+    helicopter and runway strip length == 0
+    no runway and one strip with length == 0
+    '''
+    if ac_type == aeroplane:
+        return False # Aeroplane does not land on heliport
+    if landing_runway: # heliport entered as runway with 0 length strip
+        return landing_runway.get('strip', {}).get('length') == 0
+    else:
+        # I've landed in a field or on a ship or not using a runway.
+        return True
 
 ##############################################################################
 # TODO: Update docstring for ApproachNode.
@@ -224,7 +235,7 @@ class ApproachInformation(ApproachNode):
                     search_end = _slice.stop
 
                 tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end])
-                lowest_hdg = tdn_hdg.tolist()%360.0
+                lowest_hdg = (tdn_hdg % 360.0).item()
                 
                 # While we're here, let's compute the turnoff index for this landing.
                 head_landing = hdg.array[(ref_idx+_slice.stop)/2:_slice.stop]
@@ -241,7 +252,7 @@ class ApproachInformation(ApproachNode):
                         turnoff = _slice.stop
             else:
                 # We didn't land, but this is indicative of the runway heading
-                lowest_hdg = hdg.array[ref_idx].tolist()%360.0
+                lowest_hdg = (hdg.array[ref_idx] % 360.0).item()
 
             # Pass latitude, longitude and heading
             lowest_lat = None
@@ -278,13 +289,16 @@ class ApproachInformation(ApproachNode):
                 )
 
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
-            if not airport:
+            if not airport and ac_type == aeroplane:
                 continue
-            
+
+            if ac_type == aeroplane and not airport.get('runways'):
+                self.error("Airport %s: contains no runways", airport['code'])
+
             # Simple determination of heliport.
             # This function may be expanded to cater for rig approaches in future.
-            heliport = is_heliport(ac_type, airport)
-            
+            heliport = is_heliport(ac_type, airport, landing_runway)
+
             if heliport:
                 self.create_approach(
                     approach_type,
@@ -328,13 +342,13 @@ class ApproachInformation(ApproachNode):
                 if not precise:
                     runway_kwargs['hint'] = kwargs.get('hint', 'approach')
                 approach_runway = nearest_runway(airport, lowest_hdg, **runway_kwargs)
-                if approach_runway['id'] != landing_runway['id']:
+                if all((approach_runway, landing_runway)) and approach_runway['id'] != landing_runway['id']:
                     runway_change = True
             else:
                 # Without a frequency source, we just have to hope any localizer signal is for this runway!
                 approach_runway = landing_runway
 
-            if approach_runway['localizer'].has_key('frequency'):
+            if approach_runway and approach_runway['localizer'].has_key('frequency'):
                 if np.ma.count(ils_loc.array[_slice]) > 10:
                     if runway_change:
                         # We only use the first frequency tuned. This stops scanning across both runways if the pilot retunes.
@@ -377,12 +391,20 @@ class ApproachInformation(ApproachNode):
                 # The criteria for start of established phase is the latter of the approach phase start, the turn-in or 1500ft.
                 # The "or 0" allow for flights that do not turn through 45 deg or keep below 1500ft.
                 loc_start = max(loc_start, ils_hdg_45 or 0, ils_alt_1500 or 0)
-                
-                # Did I get established on the localizer, and if so, when? We only look AFTER the aircraft is already
-                # within 45deg of the runway heading, below 1500ft and the data is valid for this runway.
-                # Testing that the aircraft is not just passing across the localizer is built into the ils_established function.
-                loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
-                if loc_estab :
+
+                if loc_start < ref_idx:
+                    # Did I get established on the localizer, and if so,
+                    # when? We only look AFTER the aircraft is already within
+                    # 45deg of the runway heading, below 1500ft and the data
+                    # is valid for this runway. Testing that the aircraft is
+                    # not just passing across the localizer is built into the
+                    # ils_established function.
+                    loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
+                else:
+                    # If localiser start is after we touchdown bail.
+                    loc_estab = None
+
+                if loc_estab:
                     
                     # We will consider the aircraft established at 1000ft come what may.
                     ils_alt_1000 = index_at_value(alt_aal.array, 1000.0, _slice=scan_back) 

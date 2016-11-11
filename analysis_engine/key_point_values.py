@@ -5000,7 +5000,7 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available, ac_family=A('Family')):
-        if ac_family and ac_family.value in ('B737-NG', 'B747', 'B757', 'B767'):
+        if ac_family and ac_family.value in ('B737 NG', 'B747', 'B757', 'B767'):
             return all_deps(cls, available)
         else:
             return False
@@ -5009,12 +5009,17 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
                at_engaged=M('AT Engaged'),
                ap_engaged=M('AP Engaged'),
                climbing=S('Climbing'),
-               airborne=S('Airborne')):
+               airborne=S('Airborne'),
+               takeoff=S('Takeoff')):
+        '''
+        Takeoff added due to climb starting up to a couple of samples after airborne
+        '''
         condition = vstack_params_where_state(
             (at_engaged, 'Engaged'),
             (ap_engaged, '-'),
         ).all(axis=0)
-        not_climbing = slices_and_not(airborne.get_slices(), climbing.get_slices())
+        not_climbing = slices_and_not(airborne.get_slices(), slices_or(climbing.get_slices() +
+                                                                        takeoff.get_slices()))
         phases = slices_and(runs_of_ones(condition), not_climbing)
         self.create_kpvs_from_slice_durations(phases, self.frequency)
 
