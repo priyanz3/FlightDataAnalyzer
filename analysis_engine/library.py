@@ -6857,13 +6857,13 @@ def track_linking(pos, local_pos):
         if a==0:
             link_a = 1
         else:
-            adj_a = local_pos[a-1] - pos[a-1]
+            adj_a = (local_pos[a-1] - pos[a-1]) or 0.0
 
         # now the other end
         if b==last:
             link_b = 1
         else:
-            adj_b = local_pos[b] - pos[b]
+            adj_b = (local_pos[b] - pos[b]) or 0.0
 
         fix_a = adj_a + link_a*adj_b
         fix_b = adj_b + link_b*adj_a
