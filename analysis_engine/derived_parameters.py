@@ -3920,8 +3920,15 @@ class GroundspeedSigned(DerivedParameterNode):
         # recorded, but in effect it's negative.
         own_power = np.ma.masked_less(power.array, 1)
         pushbacks = slices_remove_small_slices(np.ma.clump_masked(own_power))
-        for pushback in pushbacks:
-            self.array[pushback]*=(-1.0)
+        # We sometimes see engines started while the aircraft is being pushed back, so
+        # we scan forwards for the faster movement forward and back to find the end of 
+        # the stationary period.
+        move_off = index_at_value(gspd.array, 10.0, _slice=slice(pushbacks[0].stop,None))
+        end_stationary = index_at_value(gspd.array, 0.0, _slice=slice(move_off, pushbacks[0].stop, -1))
+        if end_stationary:
+            self.array[pushbacks[0].start:end_stationary]*=(-1.0)
+        else:
+            self.array[pushbacks[0]]*=(-1.0)
 
 
 class FlapAngle(DerivedParameterNode):
