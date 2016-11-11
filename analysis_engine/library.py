@@ -2864,7 +2864,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
                                              approx_grad=True, epsilon=1.0E-3,
                                              factr=1e14,
                                              #bounds=boundaries,
-                                             maxfun=100)
+                                             maxfun=500)
         """
         fmin_l_bfgs_b license: This software is freely available, but we expect that all publications describing work using this software, or all commercial products using it, quote at least one of the references given below. This software is released under the BSD License.
         R. H. Byrd, P. Lu and J. Nocedal. A Limited Memory Algorithm for Bound Constrained Optimization, (1995), SIAM Journal on Scientific and Statistical Computing, 16, 5, pp. 1190-1208.
