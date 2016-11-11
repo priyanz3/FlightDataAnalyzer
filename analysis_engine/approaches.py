@@ -391,12 +391,20 @@ class ApproachInformation(ApproachNode):
                 # The criteria for start of established phase is the latter of the approach phase start, the turn-in or 1500ft.
                 # The "or 0" allow for flights that do not turn through 45 deg or keep below 1500ft.
                 loc_start = max(loc_start, ils_hdg_45 or 0, ils_alt_1500 or 0)
-                
-                # Did I get established on the localizer, and if so, when? We only look AFTER the aircraft is already
-                # within 45deg of the runway heading, below 1500ft and the data is valid for this runway.
-                # Testing that the aircraft is not just passing across the localizer is built into the ils_established function.
-                loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
-                if loc_estab :
+
+                if loc_start < ref_idx:
+                    # Did I get established on the localizer, and if so,
+                    # when? We only look AFTER the aircraft is already within
+                    # 45deg of the runway heading, below 1500ft and the data
+                    # is valid for this runway. Testing that the aircraft is
+                    # not just passing across the localizer is built into the
+                    # ils_established function.
+                    loc_estab = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz)
+                else:
+                    # If localiser start is after we touchdown bail.
+                    loc_estab = None
+
+                if loc_estab:
                     
                     # We will consider the aircraft established at 1000ft come what may.
                     ils_alt_1000 = index_at_value(alt_aal.array, 1000.0, _slice=scan_back) 
