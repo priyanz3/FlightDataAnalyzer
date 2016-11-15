@@ -234,7 +234,7 @@ class ApproachInformation(ApproachNode):
                 else:
                     search_end = _slice.stop
 
-                tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end])
+                tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end+1])
                 lowest_hdg = (tdn_hdg % 360.0).item()
                 
                 # While we're here, let's compute the turnoff index for this landing.
