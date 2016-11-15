@@ -1129,6 +1129,21 @@ class TestAltitudeAAL(unittest.TestCase):
         idx = aal.find_liftoff_start(herc_alt_std)
         self.assertEqual(idx, 63)
 
+    def test_alt_aal_helicopter_no_rad_alt(self):
+        '''
+        real heli example with no rad alt
+        '''
+        alt_std = load(os.path.join(
+            test_data_path, 'AltitudeAAL__S76__AltitudeSTDSmoothed.nod'))
+        pitch = load(os.path.join(
+            test_data_path, 'AltitudeAAL__S76__Pitch.nod'))
+        gog = load(os.path.join(
+            test_data_path, 'AltitudeAAL__S76__GearOnGround.nod'))
+        fast = buildsection('Fast', 832, 10750)
+        alt_aal = AltitudeAAL()
+        alt_aal.derive(None, alt_std, fast, pitch, gog, helicopter)
+
+
 class TestAimingPointRange(unittest.TestCase):
     def test_basic_scaling(self):
         approaches = App(items=[ApproachItem(

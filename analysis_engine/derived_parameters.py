@@ -760,6 +760,13 @@ class AltitudeAAL(DerivedParameterNode):
                             prev_dip['alt_std'] = \
                                 min(prev_dip['alt_std'],
                                     next_alt)
+                        elif ac_type == helicopter and gog and any(gog.array[down_up] == 'Ground'):
+                            dips.append({
+                                'type': 'over_gnd',
+                                'slice': down_up,
+                                'alt_std': next_alt,
+                                'highest_ground':  next_alt,
+                            })
                         else:
                             dips.append({
                                 'type': 'high',
