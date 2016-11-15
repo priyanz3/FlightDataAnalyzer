@@ -693,6 +693,7 @@ from analysis_engine.key_point_values import (
     WindSpeedAtAltitudeDuringDescent,
     WindSpeedInCriticalAzimuth,
     CruiseGuideIndicatorMax,
+    DriftAtTouchdown,
 )
 from analysis_engine.key_time_instances import (
     AltitudeWhenDescending,
@@ -18160,3 +18161,37 @@ class TestHoverHeightMax(unittest.TestCase):
         self.assertEqual(node[0].value, 4)
         self.assertEqual(node[1].index, 9)
         self.assertEqual(node[1].value, 7)
+
+
+class TestDriftAtTouchdown(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = DriftAtTouchdown
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Drift At Touchdown')
+        self.assertEqual(node.units, 'deg')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Drift', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        drift = P('Drift', np.ma.array([
+            -9.9, -9.7, -9.1, -8.7, -9.0, -9.3, -9.4, -8.9, -8.3, -8.2,
+            -6.5, -5.5, -4.9, -4.7, -2.9, -0.4, -1.2, -2.3, -2.3, -2.8,
+            -2.1, -2.0, -2.5, -2.5, -2.5, -2.1, -1.7, -1.9, -1.8, -2.5
+        ]))
+        touchdown = KTI(items=[KeyTimeInstance(index=13, name='Touchdown'),])
+
+        node = self.node_class()
+        node.derive(drift, touchdown)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 13)
+        self.assertEqual(node[0].value, -4.7)
+

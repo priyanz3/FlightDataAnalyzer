@@ -17035,3 +17035,15 @@ class HoverHeightMax(KeyPointValueNode):
         self.create_kpvs_within_slices(rad_alt.array, hover.get_slices(), max_value)
 
 
+##############################################################################
+# Drift
+class DriftAtTouchdown(KeyPointValueNode):
+    '''
+    Returns the value of drift at touchdown. 
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self, drift=P('Drift'), touchdown=KTI('Touchdown')):
+        self.create_kpvs_at_ktis(drift.array, touchdown)
+
