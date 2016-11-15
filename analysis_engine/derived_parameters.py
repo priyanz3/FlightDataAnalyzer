@@ -811,8 +811,11 @@ class AltitudeAAL(DerivedParameterNode):
                         prev_dip = dips[n - 1]
                         if ac_type == helicopter and gog and not alt_rad:
                             on_ground = slices_and(runs_of_ones(gog.array == 'Ground'), [dip['slice']])
-                            dip['highest_ground'] = np.ma.median(alt_std.array[on_ground])
-                            #alt_std.array[on_ground] = dip['highest_ground']
+                            if on_ground:
+                                dip['highest_ground'] = np.ma.median(alt_std.array[on_ground])
+                            else:
+                                dip['highest_ground'] = min(prev_dip['highest_ground'],
+                                                        next_dip['highest_ground'])
                         else:
                             dip['highest_ground'] = min(prev_dip['highest_ground'],
                                                         dip['alt_std']-1000.0,
