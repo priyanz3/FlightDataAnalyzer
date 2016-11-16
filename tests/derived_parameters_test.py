@@ -3111,7 +3111,14 @@ class TestGroundspeedSigned(unittest.TestCase):
         gs.derive(gspd, running)
         assert_equal(gs.array[4], -1.0)
         assert_equal(gs.array[22], 0.0)
-        assert_equal(gs.array[27], 2.0)   
+        assert_equal(gs.array[27], 2.0)
+        
+    def test_no_pushback(self):
+        gspd = P('Groundspeed', np.ma.array([1.0]*15+[0]*10+range(15)))
+        running = P('Eng (*) Any Running', np.ma.array([1]*40))
+        gs = GroundspeedSigned()
+        gs.derive(gspd, running)
+        assert_equal(gs.array, gspd.array)
 
 class TestGroundspeedAlongTrack(unittest.TestCase):
 
