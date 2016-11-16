@@ -824,7 +824,7 @@ class AltitudeAAL(DerivedParameterNode):
             for dip in dips:
                 alt_rad_section = alt_rad.array[dip['slice']] if alt_rad else None
 
-                if (dip['type']=='land') and (alt_rad_section==None) and \
+                if (dip['type']=='land') and (alt_rad_section is None) and \
                    (dip['slice'].stop<dip['slice'].start) and pitch:
                     land_pitch=pitch.array[dip['slice']]
                 else:
