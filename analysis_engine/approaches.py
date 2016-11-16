@@ -428,11 +428,11 @@ class ApproachInformation(ApproachNode):
                         loc_end = loc_slice.stop
                         loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
                         if loc_end_1_dot:
-                            loc_end = loc_end_1_dot                        
+                            loc_end = loc_end_1_dot
     
                     elif approach_type == 'LANDING':
                         # Just end at 2 dots where we turn off the runway
-                        loc_end_2_dots = index_at_value(np.ma.abs(ils_loc.array), 2.0, _slice=slice(loc_end, loc_start, -1))
+                        loc_end_2_dots = index_at_value(np.ma.abs(ils_loc.array), 2.0, _slice=slice(loc_end, loc_estab, -1))
                         if loc_end_2_dots:
                             loc_end = loc_end_2_dots
                         
@@ -457,6 +457,7 @@ class ApproachInformation(ApproachNode):
 
                 # Look for ten seconds within half a dot
                 ils_gs_estab = ils_established(ils_gs.array, slice(ils_gs_start, ils_gs_end), ils_gs.hz)
+
                 if ils_gs_estab:
                     gs_est = slice(ils_gs_estab, ils_gs_end+1)
 
