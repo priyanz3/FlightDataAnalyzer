@@ -13,6 +13,7 @@ from analysis_engine.library import (
     hysteresis,
     index_at_distance,
     index_at_value,
+    is_index_within_slice,
     last_valid_sample,
     max_value,
     minimum_unmasked,
@@ -579,12 +580,16 @@ class EngStop(KeyTimeInstanceNode):
                 HYSTERESIS_ENG_START_STOP)
             below_slices = runs_of_ones(array < limit)
 
+            last_idx, last_value = last_valid_sample(eng_nx.array, min_samples=5)
+
             for below_slice in below_slices:
                 if (below_slice.start == 0 or
-                        slice_duration(below_slice, self.hz) < 6 or
                         eng_nx.array[below_slice.start - 1] is np.ma.masked):
-                    # Small dip, reached the end of the array or
-                    # following masked data.
+                    # start of data, or following masked data.
+                    continue
+                elif (slice_duration(below_slice, self.hz) < 6 and not
+                      is_index_within_slice(last_idx, below_slice)):
+                    # Small dip not at end of data (handled later)
                     continue
 
                 stopped = True
@@ -598,13 +603,12 @@ class EngStop(KeyTimeInstanceNode):
                 stopped = False
 
             if not stopped:
-                i, v = last_valid_sample(eng_nx.array, min_samples=5)
-                if i is not None and v >= limit:
+                if last_idx is not None and last_value >= limit:
                     self.warning(
                         'Eng (%d) Stop: `%s` spin down not detected, '
                         'set at the last valid data sample.' % (number,
                                                               eng_nx.name))
-                    self.create_kti(i, replace_values={'number': number})
+                    self.create_kti(last_idx, replace_values={'number': number})
 
 
 class LastEngStopAfterTouchdown(KeyTimeInstanceNode):

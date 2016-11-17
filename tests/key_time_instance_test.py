@@ -1204,6 +1204,24 @@ class TestEngStop(unittest.TestCase):
         self.assertEqual(es[1].name, 'Eng (1) Stop')
         self.assertEqual(es[1].index, 21)
 
+    def test_stop_at_end_of_data(self):
+        eng1 = Parameter(
+            'Eng (1) N2', np.ma.array(
+                data=[60, 50, 40, 35, 30, 0, 0], mask=[0, 0, 0, 0, 0, 1, 1]))
+        eng_start = EngStart(name='Eng Start', items=[
+            KeyTimeInstance(2, 'Engine (1) Start'),
+        ])
+        es = EngStop()
+        es.get_derived([
+            None, None, None, None,
+            eng1, None, None, None,
+            None, None, None, None,
+            None, None, None, None, eng_start, None
+        ])
+        self.assertEqual(len(es), 1)
+        self.assertEqual(es[0].name, 'Eng (1) Stop')
+        self.assertEqual(es[0].index, 4)
+
 
 class TestLastEngStopAfterTouchdown(unittest.TestCase):
 
