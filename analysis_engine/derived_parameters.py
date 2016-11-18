@@ -1071,7 +1071,7 @@ class AltitudeRadio(DerivedParameterNode):
         self.offset = 0.0
         self.frequency = 4.0
 
-        if family and family.value in ('A300', 'A310', 'A318' 'A319', 'A320', 'A321', 'A330', 'A340'):
+        if family and family.value in ('A300', 'A310', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340'):
             # The Altitude Radio, Altitude Radio (*) in Airbus frames should
             # not contain "Overflow Correction = True". The below procedure
             # works a lot more effective, especially in case of ARINC pattern
