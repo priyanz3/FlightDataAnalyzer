@@ -1775,7 +1775,7 @@ class Takeoff(FlightPhaseNode):
             # takeoff !
             last = takeoff_run + (300 * alt_aal.frequency)
             takeoff_end = index_at_value(alt_aal.array, INITIAL_CLIMB_THRESHOLD,
-                                         slice(takeoff_run, last))
+                                         slice(last, takeoff_run, -1))
 
             if takeoff_end <= 0:
                 # catches if None or zero

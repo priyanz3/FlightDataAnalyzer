@@ -2103,7 +2103,27 @@ class TestTakeoff(unittest.TestCase):
                        P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast)
         expected = []
-        self.assertEqual(takeoff, expected)
+        self.assertEqual(takeoff.get_slices(), expected)
+    
+    def test_takeoff_alt_spike(self):
+        '''
+        Altitude spike below rate of change limit before liftoff was truncating
+        Takeoff slice.
+        '''
+        takeoff = Takeoff(frequency=4)
+        head = load(os.path.join(
+            test_data_path,
+            'Takeoff_HeadingContinuous_1.nod'))
+        alt_aal = load(os.path.join(
+            test_data_path,
+            'Takeoff_AltitudeAAL_1.nod'))
+        fast = buildsection('Fast', 14063, 107663)
+        airs = buildsection('Airborne', 14187, 107591)
+        takeoff.derive(aeroplane, head, alt_aal, fast, airs)
+        slices = takeoff.get_slices()
+        self.assertEqual(len(slices), 1)
+        self.assertEqual(round(slices[0].start), 13923)
+        self.assertEqual(round(slices[0].stop), 14200)
 
 
 class TestTaxiOut(unittest.TestCase):
