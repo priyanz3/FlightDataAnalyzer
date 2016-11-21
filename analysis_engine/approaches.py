@@ -287,6 +287,12 @@ class ApproachInformation(ApproachNode):
                     land_afr_rwy=land_afr_rwy,
                     hint='landing',
                 )
+                # if we have a frequency and are within ils capture at touchdown
+                appr_ils_freq = None
+                if ils_freq:
+                    appr_ils_freq = round(ils_freq.array[ref_idx], 2) or None
+                if not precise and appr_ils_freq  and ils_loc and np.ma.abs(ils_loc.array[ref_idx]) < settings.ILS_CAPTURE:
+                    kwargs['appr_ils_freq'] = appr_ils_freq
 
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
             if not airport and ac_type == aeroplane:
@@ -425,7 +431,6 @@ class ApproachInformation(ApproachNode):
                         
                     elif runway_change:
                         # Use the end of localizer phase as this already reflects the tuned frequency.
-                        loc_end = loc_slice.stop
                         loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
                         if loc_end_1_dot:
                             loc_end = loc_end_1_dot
