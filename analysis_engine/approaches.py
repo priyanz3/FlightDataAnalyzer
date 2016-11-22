@@ -290,7 +290,7 @@ class ApproachInformation(ApproachNode):
                 # if we have a frequency and are within ils capture at touchdown
                 appr_ils_freq = None
                 if ils_freq:
-                    appr_ils_freq = round(ils_freq.array[ref_idx], 2) or None
+                    appr_ils_freq = np.ma.round(ils_freq.array[ref_idx] or 0, 2)
                 if not precise and appr_ils_freq  and ils_loc and np.ma.abs(ils_loc.array[ref_idx]) < settings.ILS_CAPTURE:
                     kwargs['appr_ils_freq'] = appr_ils_freq
 
