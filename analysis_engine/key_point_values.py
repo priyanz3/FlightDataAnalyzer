@@ -13126,14 +13126,14 @@ class PitchWhileAirborneMin(KeyPointValueNode):
         self.create_kpvs_within_slices(pitch.array, airborne, min_value)
 
 
-class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
+class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     '''
-    Maximum pitch at point of touchdown until airspeed reaches 60 kts.
+    Maximum pitch rate at point of touchdown until airspeed reaches 60 kts.
     '''
 
-    units = ut.DEGREE
+    units = ut.DEGREE_S
 
-    def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
+    def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
                touchdown=KTI('Touchdown')):
         tdwn_idx = touchdown.get_first().index
         _slice = slice(
@@ -13141,7 +13141,7 @@ class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
             index_at_value(airspeed.array, 60,
                            slice(tdwn_idx, None), endpoint='nearest')
         )
-        self.create_kpvs_within_slices(pitch.array, [_slice,], max_value)
+        self.create_kpvs_within_slices(pitchrate.array, [_slice,], max_value)
 
 
 ##############################################################################

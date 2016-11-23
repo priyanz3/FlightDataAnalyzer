@@ -518,7 +518,7 @@ from analysis_engine.key_point_values import (
     PitchOnGroundMin,
     PitchWhileAirborneMax,
     PitchWhileAirborneMin,
-    PitchTouchdownTo60KtsAirspeedMax,
+    PitchRateTouchdownTo60KtsAirspeedMax,
     PitchRate20FtToTouchdownMax,
     PitchRate20FtToTouchdownMin,
     PitchRate2DegPitchTo35FtMax,
@@ -13368,27 +13368,29 @@ class TestPitchWhileAirborneMin(unittest.TestCase):
         self.assertEqual(node[0].value, 2)
 
 
-class TestPitchTouchdownTo60KtsAirspeedMax(unittest.TestCase):
+class TestPitchRateTouchdownTo60KtsAirspeedMax(unittest.TestCase):
     def setUp(self):
-        self.node_class = PitchTouchdownTo60KtsAirspeedMax
+        self.node_class = PitchRateTouchdownTo60KtsAirspeedMax
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Pitch Touchdown To 60 Kts Airspeed Max')
-        self.assertEqual(node.units, 'deg')
+        self.assertEqual(node.name,
+                         'Pitch Rate Touchdown To 60 Kts Airspeed Max')
+        self.assertEqual(node.units, 'deg/s')
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
         self.assertEqual(len(opts), 1)
         self.assertEqual(len(opts[0]), 3)
-        self.assertIn('Pitch', opts[0])
+        self.assertIn('Pitch Rate', opts[0])
         self.assertIn('Airspeed', opts[0])
         self.assertIn('Touchdown', opts[0])
 
     def test_derive(self):
-        pitch = P('Pitch', np.ma.array([8.6, 7.4, 7.2, 5.5, 8.4,
-                                        5.9, 4.1, 3.4, 2.8, 2.0,
-                                        1.2, 0.3, -0.5, 0.2, 0.1]))
+        pitch = P('Pitch Rate', np.ma.array([0.7, 1.1, 0.2, -0.8, -1.2,
+                                             -0.7, -0.1, 0.1, 0.5, -0.5,
+                                             -0.1, -0.1, -0.1, 1.0, 0.0]))
+        
         airspeed = P('Airspeed', np.ma.array(np.linspace(110, 47, 15)))
         touchdown = KTI('Touchdown', items=[KeyTimeInstance(3, 'Touchdown')])
 
@@ -13396,8 +13398,8 @@ class TestPitchTouchdownTo60KtsAirspeedMax(unittest.TestCase):
         node.derive(pitch, airspeed, touchdown)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 4)
-        self.assertEqual(node[0].value, 8.4)
+        self.assertEqual(node[0].index, 8)
+        self.assertEqual(node[0].value, 0.5)
 
 
 ##############################################################################
