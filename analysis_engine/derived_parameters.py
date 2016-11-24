@@ -4900,12 +4900,14 @@ class CoordinatesSmoothed(object):
                     #    this will be more accurate than low precision
                     #    positioning equipment.
 
+                    landing_runway = approach.landing_runway
+
                     # Adjust distance units
                     distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
-                    bearing = np.ma.array([(runway_heading(runway)+180)%360.0])
+                    bearing = np.ma.array([(runway_heading(landing_runway)+180)%360.0])
                     # Reference point for visual approaches is the runway end.
 
-                    ref_point = approach.landing_runway['end']
+                    ref_point = landing_runway['end']
 
                     # Work out the touchdown point
                     lat_tdwn, lon_tdwn = latitudes_and_longitudes \
