@@ -4904,7 +4904,8 @@ class CoordinatesSmoothed(object):
                     distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
                     bearing = np.ma.array([(runway_heading(runway)+180)%360.0])
                     # Reference point for visual approaches is the runway end.
-                    ref_point = runway['end']
+
+                    ref_point = approach.landing_runway['end']
 
                     # Work out the touchdown point
                     lat_tdwn, lon_tdwn = latitudes_and_longitudes \
