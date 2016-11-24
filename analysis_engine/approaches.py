@@ -431,7 +431,7 @@ class ApproachInformation(ApproachNode):
                         
                     elif runway_change:
                         # Use the end of localizer phase as this already reflects the tuned frequency.
-                        loc_end = loc_slice.stop
+                        loc_end = min(loc_slice.stop, loc_end)
                         loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
                         if loc_end_1_dot:
                             loc_end = loc_end_1_dot
