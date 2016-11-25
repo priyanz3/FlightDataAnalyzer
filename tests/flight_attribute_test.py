@@ -8,7 +8,7 @@ from mock import Mock, call, patch
 from analysis_engine import __version__, settings
 from analysis_engine.library import align
 from analysis_engine.node import (
-    A, KPV, KTI, P, S,
+    A, App, KPV, KTI, P, S,
     load,
     KeyPointValue,
     KeyTimeInstance,
@@ -490,96 +490,20 @@ class TestLandingAirport(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = LandingAirport
         self.operational_combinations = [
+            ('Approach Information',),
             ('AFR Landing Airport',),
-            ('Latitude At Touchdown', 'Longitude At Touchdown'),
-            ('Latitude At Touchdown', 'AFR Landing Airport'),
-            ('Longitude At Touchdown', 'AFR Landing Airport'),
-            ('Latitude At Touchdown', 'Longitude At Touchdown', 'AFR Landing Airport'),
+            ('Approach Information', 'AFR Landing Airport'),
         ]
 
-    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
-    def test_derive_airport_not_found(self, get_nearest_airport):
-        '''
-        Attribute is not set when airport is not found.
-        '''
-        get_nearest_airport.side_effect = api.NotFoundError('Not Found.')
-        lat = KPV(name='Latitude At Touchdown', items=[
-            KeyPointValue(index=12, value=0.5),
-            KeyPointValue(index=32, value=0.9),
-        ])
-        lon = KPV(name='Longitude At Touchdown', items=[
-            KeyPointValue(index=12, value=7.1),
-            KeyPointValue(index=32, value=8.4),
-        ])
+    def test_derive_afr_fallback(self):
         afr_apt = A(name='AFR Landing Airport', value={'id': 25})
         apt = self.node_class()
         apt.set_flight_attr = Mock()
-        # Check that no attribute is created if not found via API:
-        apt.derive(lat, lon, None)
-        apt.set_flight_attr.assert_called_once_with(None)
-        apt.set_flight_attr.reset_mock()
-        get_nearest_airport.assert_called_once_with(0.9, 8.4)
-        get_nearest_airport.reset_mock()
-        # Check that the AFR airport was used if not found via API:
-        apt.derive(lat, lon, afr_apt)
+        approach = App()
+        approach.create_approach('LANDING', slice(None))
+        apt.derive(approach, afr_apt)
         apt.set_flight_attr.assert_called_once_with(afr_apt.value)
         apt.set_flight_attr.reset_mock()
-        get_nearest_airport.assert_called_once_with(0.9, 8.4)
-        get_nearest_airport.reset_mock()
-
-    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
-    def test_derive_airport_found(self, get_nearest_airport):
-        '''
-        Attribute is set when airport is found.
-        '''
-        info = {'id': 123}
-        get_nearest_airport.return_value = info
-        lat = KPV(name='Latitude At Touchdown', items=[
-            KeyPointValue(index=12, value=0.5),
-            KeyPointValue(index=32, value=0.9),
-        ])
-        lon = KPV(name='Longitude At Touchdown', items=[
-            KeyPointValue(index=12, value=7.1),
-            KeyPointValue(index=32, value=8.4),
-        ])
-        afr_apt = A(name='AFR Landing Airport', value={'id': 25})
-        apt = self.node_class()
-        apt.set_flight_attr = Mock()
-        # Check that the airport returned via API is used for the attribute:
-        apt.derive(lat, lon, afr_apt)
-        apt.set_flight_attr.assert_called_once_with(info)
-        apt.set_flight_attr.reset_mock()
-        get_nearest_airport.assert_called_once_with(0.9, 8.4)
-        get_nearest_airport.reset_mock()
-
-    @patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')
-    def test_derive_afr_fallback(self, get_nearest_airport):
-        info = {'id': '50'}
-        get_nearest_airport.return_value = info
-        lat = KPV(name='Latitude At Touchdown', items=[
-            KeyPointValue(index=12, value=0.5),
-            KeyPointValue(index=32, value=0.9),
-        ])
-        lon = KPV(name='Longitude At Touchdown', items=[
-            KeyPointValue(index=12, value=7.1),
-            KeyPointValue(index=32, value=8.4),
-        ])
-        afr_apt = A(name='AFR Landing Airport', value={'id': 25})
-        apt = self.node_class()
-        apt.set_flight_attr = Mock()
-        # Check that the AFR airport was used and the API wasn't called:
-        apt.derive(None, None, afr_apt)
-        apt.set_flight_attr.assert_called_once_with(afr_apt.value)
-        apt.set_flight_attr.reset_mock()
-        assert not get_nearest_airport.called, 'method should not have been called'
-        apt.derive(lat, None, afr_apt)
-        apt.set_flight_attr.assert_called_once_with(afr_apt.value)
-        apt.set_flight_attr.reset_mock()
-        assert not get_nearest_airport.called, 'method should not have been called'
-        apt.derive(None, lon, afr_apt)
-        apt.set_flight_attr.assert_called_once_with(afr_apt.value)
-        apt.set_flight_attr.reset_mock()
-        assert not get_nearest_airport.called, 'method should not have been called'
 
 
 class TestLandingDatetime(unittest.TestCase):
@@ -710,119 +634,24 @@ class TestLandingPilot(unittest.TestCase):
 class TestLandingRunway(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = LandingRunway
-        self.operational_combination_length = 144
-        self.check_operational_combination_length_only = True
+        self.operational_combinations = [
+            ('Approach Information',),
+            ('AFR Landing Runway',),
+            ('Approach Information', 'AFR Landing Runway'),
+        ]
 
-    @patch('analysis_engine.flight_attribute.nearest_runway')
-    def test_derive(self, nearest_runway):
-        info = {
-            'end': {'latitude': 58.211678, 'longitude': 8.095269},
-            'glideslope': {'latitude': 58.198664, 'frequency': '335000M', 'angle': 3.4, 'longitude': 8.080164, 'threshold_distance': 720},
-            'id': 8127,
-            'identifier': '27L',
-            'localizer': {'latitude': 58.212397, 'beam_width': 4.5, 'frequency': '110300M', 'heading': 36, 'longitude': 8.096228},
-            'start': {'latitude': 58.196703, 'longitude': 8.075406},
-            'strip': {'width': 147, 'length': 6660, 'id': 4064, 'surface': 'ASP'},
-        }
-        nearest_runway.return_value = info
-        fdr_apt = A(name='FDR Landing Airport', value={'id': 25, 'runways':[info]})
-        afr_apt = None
-        lat = KPV(name='Latitude At Touchdown', items=[
-            KeyPointValue(index=16, value=4.0),
-            KeyPointValue(index=18, value=6.0),
-        ])
-        lon = KPV(name='Longitude At Touchdown', items=[
-            KeyPointValue(index=16, value=3.0),
-            KeyPointValue(index=18, value=9.0),
-        ])
-        hdg = KPV(name='Heading During Landing', items=[
-            KeyPointValue(index=16, value=60.0),
-            KeyPointValue(index=18, value=20.0),
-        ])
-        precise = A(name='Precise Positioning')
-        approaches = S(name='Approach', items=[
-            Section(name='Approach', slice=slice(14, 20), start_edge=14, stop_edge=20),
-        ])
-        ils_freq_on_app = KPV(name='ILS Frequency During Approach', items=[
-            KeyPointValue(index=18, value=330150),
-        ])
-        rwy = self.node_class()
-        rwy.set_flight_attr = Mock()
-        # Test with bare minimum information:
-        rwy.derive(fdr_apt, afr_apt, hdg, None, None, None, approaches)
-        rwy.set_flight_attr.assert_called_once_with(info)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, hint='landing')
-        nearest_runway.reset_mock()
-        # Test with ILS frequency:
-        rwy.derive(fdr_apt, afr_apt, hdg, None, None, None, approaches,
-                   ils_freq_on_app)
-        rwy.set_flight_attr.assert_called_once_with(info)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ilsfreq=330150, hint='landing')
-        nearest_runway.reset_mock()
-        # Test for aircraft where positioning is not precise:
-        precise.value = True
-        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise, approaches, ils_freq_on_app)
-        rwy.set_flight_attr.assert_called_with(info)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=6.0, longitude=9.0, ilsfreq=330150)
-        nearest_runway.reset_mock()
-        # Test for aircraft where positioning is not precise:
-        precise.value = False
-        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise, approaches, ils_freq_on_app)
-        rwy.set_flight_attr.assert_called_with(info)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, ilsfreq=330150, hint='landing')
-        nearest_runway.reset_mock()
-
-    @patch('analysis_engine.flight_attribute.nearest_runway')
-    def test_derive_afr_fallback(self, nearest_runway):
-        info = {'identifier': '09L'}
-        def runway_side_effect(apt, hdg, *args, **kwargs):
-            if hdg == 90.0:
-                return info
-        nearest_runway.side_effect = runway_side_effect
-        fdr_apt = A(name='FDR Landing Airport', value={'id': 50, 'runways':[info]})
+    def test_derive_afr_fallback(self):
         afr_rwy = A(name='AFR Landing Runway', value={'identifier': '27R'})
-        hdg_a = KPV(name='Heading During Landing', items=[
-            KeyPointValue(index=1, value=360.0),
-            KeyPointValue(index=2, value=270.0),
-        ])
-        hdg_b = KPV(name='Heading During Landing', items=[
-            KeyPointValue(index=1, value=180.0),
-            KeyPointValue(index=2, value=90.0),
-        ])
+        approach = App()
+        approach.create_approach('LANDING', slice(None))
         rwy = self.node_class()
         rwy.set_flight_attr = Mock()
         # Check that the AFR airport was used and the API wasn't called:
-        rwy.derive(None, None, None)
+        rwy.derive(None, None)
         rwy.set_flight_attr.assert_called_once_with(None)
         rwy.set_flight_attr.reset_mock()
-        assert not nearest_runway.called, 'method should not have been called'
-        rwy.derive(fdr_apt, afr_rwy, None)
+        rwy.derive(approach, afr_rwy)
         rwy.set_flight_attr.assert_called_once_with(afr_rwy.value)
-        rwy.set_flight_attr.reset_mock()
-        assert not nearest_runway.called, 'method should not have been called'
-        rwy.derive(None, afr_rwy, hdg_a)
-        rwy.set_flight_attr.assert_called_once_with(afr_rwy.value)
-        rwy.set_flight_attr.reset_mock()
-        assert not nearest_runway.called, 'method should not have been called'
-        rwy.derive(None, afr_rwy, None)
-        rwy.set_flight_attr.assert_called_once_with(afr_rwy.value)
-        rwy.set_flight_attr.reset_mock()
-        assert not nearest_runway.called, 'method should not have been called'
-        # Check wrong heading triggers AFR:
-        rwy.derive(fdr_apt, afr_rwy, hdg_a)
-        rwy.set_flight_attr.assert_called_once_with(afr_rwy.value)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, hdg_a.get_last().value, hint='landing')
-        nearest_runway.reset_mock()
-        rwy.derive(fdr_apt, afr_rwy, hdg_b)
-        rwy.set_flight_attr.assert_called_once_with(info)
-        rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, hdg_b.get_last().value, hint='landing')
-        nearest_runway.reset_mock()
 
 
 class TestOffBlocksDatetime(unittest.TestCase):

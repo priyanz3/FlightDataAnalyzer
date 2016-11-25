@@ -20,7 +20,7 @@ from analysis_engine.library import (
     most_common_value,
     nearest_runway,
 )
-from analysis_engine.node import A, KTI, KPV, FlightAttributeNode, M, P, S
+from analysis_engine.node import A, App, KTI, KPV, FlightAttributeNode, M, P, S
 
 
 ##############################################################################
@@ -292,38 +292,24 @@ class LandingAirport(FlightAttributeNode):
         1. Find the nearest airport to the coordinates at landing.
         2. Use the airport data provided in the achieved flight record.
         '''
-        return 'AFR Landing Airport' in available or all((
-            'Latitude At Touchdown' in available,
-            'Longitude At Touchdown' in available,
-        ))
+        return any_of(('Approach Information', 'AFR Landing Airport'), available)
 
     def derive(self,
-               land_lat=KPV('Latitude At Touchdown'),
-               land_lon=KPV('Longitude At Touchdown'),
-               land_afr_apt=A('AFR Landing Airport')):
+               approaches=KPV('Approach Information'),
+               land_afr_apt=App('AFR Landing Airport')):
         '''
         '''
-        # 1. If we have latitude and longitude, look for the nearest airport:
-        if land_lat and land_lon:
-            lat = land_lat.get_last()
-            lon = land_lon.get_last()
-            if lat and lon:
-                handler = api.get_handler(settings.API_HANDLER)
-                try:
-                    airport = handler.get_nearest_airport(lat.value, lon.value)
-                except api.NotFoundError:
-                    msg = 'No landing airport found near coordinates (%f, %f).'
-                    self.warning(msg, lat.value, lon.value)
-                    # No airport was found, so fall through and try AFR.
-                else:
-                    codes = airport.get('code', {})
-                    code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
-                    self.info('Detected landing airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)
-                    self.set_flight_attr(airport)
-                    return  # We found an airport, so finish here.
+        # 1. If we have Approach Information use this as hardwork already done.
+        if approaches:
+            landing_approach = approaches.get_last(_type='LANDING')
+            airport = landing_approach.airport
+            if airport:
+                self.set_flight_attr(airport)
+                return  # We found an airport, so finish here.
+            elif landing_approach:
+                self.warning('No landing airport found.')
             else:
-                self.warning('No coordinates for looking up landing airport.')
-                # No suitable coordinates, so fall through and try AFR.
+                self.warning('No Landing Approach for looking up landing airport.')
 
         # 2. If we have an airport provided in achieved flight record, use it:
         if land_afr_apt:
@@ -348,116 +334,24 @@ class LandingRunway(FlightAttributeNode):
 
     @classmethod
     def can_operate(cls, available):
-        '''
-        We can determine a landing runway in a number of ways:
-
-        1. Imprecisely using airport and heading during landing.
-        2. Precisely using airport, heading and coordinates at landing.
-        3. Use the runway data provided in the achieved flight record.
-        '''
-        minimum = all((
-            'FDR Landing Airport' in available,
-            'Heading During Landing' in available,
-            'Approach And Landing' in available,
-        ))
-
-        fallback = 'AFR Landing Runway' in available
-
-        return minimum or fallback
+        return any_of(('Approach Information', 'AFR Landing Runway'), available)
 
     def derive(self,
-               land_fdr_apt=A('FDR Landing Airport'),
-               land_afr_rwy=A('AFR Landing Runway'),
-               land_hdg=KPV('Heading During Landing'),
-               land_lat=KPV('Latitude At Touchdown'),
-               land_lon=KPV('Longitude At Touchdown'),
-               precision=A('Precise Positioning'),
-               approaches=S('Approach And Landing'),
-               ils_freq_on_app=KPV('ILS Frequency During Approach')):
+               approaches=App('Approach Information'),
+               land_afr_rwy=A('AFR Landing Runway'),):
         '''
         '''
-        fallback = False
-        precise = bool(getattr(precision, 'value', False))
-
-        try:
-            airport = land_fdr_apt.value  # FIXME
-        except AttributeError:
-            self.warning('Invalid airport... Fallback to AFR Landing Runway.')
-            fallback = True
-        else:
-            if airport is None:
-                fallback = True
-
-        try:
-            heading = land_hdg.get_last().value
-            if heading is None:
-                raise ValueError
-        except (AttributeError, ValueError):
-            self.warning('Invalid heading... Fallback to AFR Landing Runway.')
-            fallback = True
-
-        try:
-            landing = approaches.get_last()
-            if landing is None:
-                raise ValueError
-        except (AttributeError, ValueError):
-            self.warning('No approaches... Fallback to AFR Landing Runway.')
-            # Don't set fallback - can still attempt to use heading only...
-
-        # 1. If we have airport and heading, look for the nearest runway:
-        if not fallback:
-            kwargs = {}
-
-            # The last approach is assumed to be the landing.
-            # XXX: Last approach may not be landing for partial data?!
-            if ils_freq_on_app:
-                if landing.start_edge:
-                    ils_app_slice = slice(landing.start_edge, landing.slice.stop)
-                else:
-                    ils_app_slice = landing.slice
-                ils_freq = ils_freq_on_app.get_last(within_slice=ils_app_slice)
-                if ils_freq:
-                    kwargs.update(ilsfreq=ils_freq.value)
-
-            '''
-            Original comment:
-            # We only provide coordinates when looking up a landing runway if
-            # the recording of latitude and longitude on the aircraft is
-            # precise. Inertial recordings are too inaccurate to pinpoint the
-            # correct runway and we use ILS frequencies if possible to get a
-            # more exact match.
-
-            Revised comment:
-            In the absence of an ILS frequency, the recorded latitude and longitude
-            is better than nothing and reduces the chance of identifying the wrong runway.
-            '''
-            if (precise or not ils_freq_on_app) and landing and land_lat and land_lon:
-                lat = land_lat.get_last(within_slice=landing.slice)
-                lon = land_lon.get_last(within_slice=landing.slice)
-                if lat and lon:
-                    kwargs.update(
-                        latitude=lat.value,
-                        longitude=lon.value,
-                    )
-                else:
-                    self.warning('No coordinates for landing runway lookup.')
-            else:
-                kwargs.update(hint='landing')
-
-            runway = nearest_runway(airport, heading, **kwargs)
-            if not runway:
-                msg = 'No runway found for airport #%d @ %03.1f deg with %s.'
-                self.warning(msg, airport['id'], heading, kwargs)
-                # No runway was found, so fall through and try AFR.
-                if 'lis_freq' in kwargs:
-                    # This is a trap for airports where the ILS data is not
-                    # available, but the aircraft approached with the ILS
-                    # tuned. A good prompt for an omission in the database.
-                    self.warning('Fix database? No runway but ILS was tuned.')
-            else:
-                self.info('Detected landing runway: %s for airport #%d @ %03.1f deg with %s', runway['identifier'], airport['id'], heading, kwargs)
+        # 1. If we have Approach Information use this as hardwork already done.
+        if approaches:
+            landing_approach = approaches.get_last(_type='LANDING')
+            runway = landing_approach.landing_runway
+            if runway:
                 self.set_flight_attr(runway)
-                return  # We found a runway, so finish here.
+                return  # We found an airport, so finish here.
+            elif landing_approach:
+                self.warning('No landing runway found.')
+            else:
+                self.warning('No Landing Approach for looking up landing airport.')
 
         # 2. If we have a runway provided in achieved flight record, use it:
         if land_afr_rwy:
