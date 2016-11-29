@@ -10890,8 +10890,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                head_mag=P('Heading Continuous'),
                airspeed=P('Airspeed'),
                pitch_rate=P('Pitch Rate'),
-               toffs=S('Takeoff'),
-               ):
+               toffs=S('Takeoff')):
 
         for toff in toffs:
             begin = index_at_value(airspeed.array, 80.0, _slice=toff.slice)
@@ -10928,10 +10927,11 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
             # 80kt and 1.5deg conditions. This also reduces the computational load as
             # we don't have to work out the deviation from the takeoff runway for all the flight.
             to_test = np.ma.concatenate([
-                np.ma.array([value_at_index(head.array, begin)]),
+                np.ma.array([value_at_index(head.array, begin) or
+                             closest_unmasked_value(head.array, begin).value]),
                 head.array[scan],
-                np.ma.array([value_at_index(head.array, end)]),
-                ])
+                np.ma.array([value_at_index(head.array, end) or
+                             closest_unmasked_value(head.array, end).value])])
             dev = to_test - datum_heading
             index, value = max_abs_value(dev, slice(0,len(dev)))
 

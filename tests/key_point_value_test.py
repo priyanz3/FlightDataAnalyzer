@@ -10796,7 +10796,6 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         node.derive(self.nosewheel, self.hdg, None, self.ias, self.q, self.toff)
         self.assertEqual(node[0].index, 2.0)
 
-
     def test_derive__stationary_off_centre(self):
         '''
         Test for when aircraft stops off centre at start of runway,
@@ -10811,6 +10810,30 @@ class TestHeadingVariationAbove80KtsAirspeedDuringTakeoff(unittest.TestCase, Nod
         node = self.node_class()
         node.derive(None, hdg, None, ias, q, toff)
         self.assertAlmostEqual(node[0].value, 0.0, places=5)
+
+    def test_derive_heading_masked(self):
+        
+        def load_param(name):
+            array = load_compressed(os.path.join(
+                test_data_path, 'HeadingVariationAbove80KtsAirspeedDuringTakeoff_%s.npz' % name))
+            cls = M if isinstance(array, MappedArray) else P
+            return cls(name, array, frequency=0.25)
+
+
+        nosewheel = load_param('Gear')
+        head_true = load_param('HeadingTrueContinuous')
+        head_mag = load_param('HeadingContinuous')
+        airspeed = load_param('Airspeed')
+        pitch_rate = load_param('PitchRate')
+        
+        toffs = buildsection('Takeoff', 96, 108)
+        toffs.frequency = 0.25
+        
+        node = self.node_class()
+        node.derive(nosewheel, head_true, head_mag, airspeed, pitch_rate, toffs)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].index, 107, places=2)
+        self.assertAlmostEqual(node[0].value, -3.29, places=2)
 
 
 class TestHeadingDeviationFromRunwayAtTOGADuringTakeoff(unittest.TestCase, NodeTest):
