@@ -783,7 +783,7 @@ class TestChania(unittest.TestCase):
         self.assertEqual(approaches[0][3]['identifier'], '29')
         self.assertEqual(approaches[0].gs_est, None)
         self.assertEqual(approaches[0].loc_est, None)
-        self.assertEqual(approaches[0].ils_freq, None) 
+        self.assertEqual(approaches[0].ils_freq, None)
 
 
 class TestDallasFortWorth(unittest.TestCase):
@@ -1186,3 +1186,257 @@ class TestZaventem(unittest.TestCase):
         # ...and was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 12106)
         self.assertEqual(int(approaches[1].loc_est.start), 13554)
+
+
+class TestBarcelona(unittest.TestCase):
+    '''
+    c60cf86bb146
+    '''
+
+    # A change in runways late on the approach.
+    @patch('analysis_engine.approaches.api')
+    def test_no_runway_change_at_barcelona(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = airports.barcelona
+        api.get_handler.return_value = get_handler
+
+        def fetch(par_name):
+            try:
+                return load(root + par_name + '.nod')
+            except:
+                return None
+        root = os.path.join(test_data_path, 'ILS_test_004_')
+
+        approaches = ApproachInformation()
+        approaches.derive(fetch('Altitude AAL'),
+                          fetch('Altitude AGL'),
+                          A('Aircraft Type', 'aeroplane'),
+                          S(name='Approach And Landing', 
+                            items=[Section(name='Approach And Landing', 
+                                           slice=slice(18919, 19340),
+                                           start_edge=18919, 
+                                           stop_edge=19340),
+                            Section(name='Approach And Landing', 
+                                    slice=slice(20826, 21386),
+                                    start_edge=20826, 
+                                    stop_edge=21386)]),
+                          fetch('Heading Continuous'),
+                          fetch('Latitude Prepared'),
+                          fetch('Longitude Prepared'),
+                          fetch('ILS Localizer'),
+                          fetch('ILS Glideslope'),
+                          fetch('ILS Frequency'),
+                          A(name='AFR Landing Airport', value=None),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[]),
+                          KPV('Longitude At Touchdown', items=[]),
+                          A('Precise Positioning', False),
+                          )
+        # Go Around
+        self.assertEqual(approaches[0].type, 'GO_AROUND')
+        # We approached runway 17C...
+        self.assertEqual(approaches[0].approach_runway['identifier'], '07L')
+        # ...but landed on 17R...
+        self.assertEqual(approaches[0].landing_runway['identifier'], '07L')
+        # The aircraft was established on the glidepath
+        self.assertEqual(int(approaches[0].gs_est.start), 19085)
+        self.assertEqual(int(approaches[0].gs_est.stop), 19312)
+        # ...but was on the localizer
+        self.assertEqual(int(approaches[0].loc_est.start), 19085)
+        self.assertEqual(int(approaches[0].loc_est.stop), 19340)
+        # There was no runway change
+        self.assertEqual(approaches[0].runway_change, False)
+
+        # Landing
+        self.assertEqual(approaches[1].type, 'LANDING')
+        # We approached runway 17C...
+        self.assertEqual(approaches[1].approach_runway['identifier'], '07L')
+        # ...but landed on 17R...
+        self.assertEqual(approaches[1].landing_runway['identifier'], '07L')
+        # The aircraft was established on the glidepath
+        self.assertEqual(int(approaches[1].gs_est.start), 21025)
+        self.assertEqual(int(approaches[1].gs_est.stop), 21251)
+        # ...but was on the localizer
+        self.assertEqual(int(approaches[1].loc_est.start), 21025)
+        self.assertEqual(int(approaches[1].loc_est.stop), 21371)
+        # There was no runway change
+        self.assertEqual(approaches[1].runway_change, False)
+
+
+
+class TestNice(unittest.TestCase):
+    '''
+    bb25dd623581
+    '''
+
+    # A change in runways late on the approach.
+    @patch('analysis_engine.approaches.api')
+    def test__no_runway_change_at_nice(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = airports.nice
+        api.get_handler.return_value = get_handler
+
+        def fetch(par_name):
+            try:
+                return load(root + par_name + '.nod')
+            except:
+                return None
+        root = os.path.join(test_data_path, 'ILS_test_003_')
+        app_start = 3312 * 2
+        app_end = 3606 * 2
+
+        approaches = ApproachInformation()
+        approaches.derive(fetch('Altitude AAL'),
+                          fetch('Altitude AGL'),
+                          A('Aircraft Type', 'aeroplane'),
+                          S(name='Approach And Landing', 
+                            items=[Section(name='Approach And Landing', 
+                                           slice=slice(app_start, app_end),
+                                           start_edge=app_start, 
+                                           stop_edge=app_end)]),
+                          fetch('Heading Continuous'),
+                          fetch('Latitude Prepared'),
+                          fetch('Longitude Prepared'),
+                          fetch('ILS Localizer'),
+                          fetch('ILS Glideslope'),
+                          fetch('ILS Frequency'),
+                          A(name='AFR Landing Airport', value=None),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[]),
+                          KPV('Longitude At Touchdown', items=[]),
+                          A('Precise Positioning', False),
+                          )
+
+        self.assertEqual(approaches[0].type, 'LANDING')
+        # We approached runway 26L...
+        self.assertEqual(approaches[0].approach_runway['identifier'], '04R')
+        # ...and landed on 26L...
+        self.assertEqual(approaches[0].landing_runway['identifier'], '04R')
+        # The aircraft was established on the glidepath
+        self.assertEqual(int(approaches[0].gs_est.start), 6818)
+        self.assertEqual(int(approaches[0].gs_est.stop), 7025)
+        # ...but was on the localizer
+        self.assertEqual(int(approaches[0].loc_est.start), 6818)
+        self.assertEqual(int(approaches[0].loc_est.stop), 7055)
+        # There was no runway change
+        self.assertEqual(approaches[0].runway_change, False)
+
+
+class TestGranCanaria(unittest.TestCase):
+    '''
+    0d61c465aad2
+    '''
+
+    # A change in runways late on the approach.
+    @patch('analysis_engine.approaches.api')
+    def test_no_runway_change_at_gran_canaria(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = airports.gran_canaria
+        api.get_handler.return_value = get_handler
+
+        def fetch(par_name):
+            try:
+                return load(root + par_name + '.nod')
+            except:
+                return None
+        root = os.path.join(test_data_path, 'ILS_test_002_')
+        app_start = 10949 * 2
+        app_end = 11318 * 2
+
+        approaches = ApproachInformation()
+        approaches.derive(fetch('Altitude AAL'),
+                          fetch('Altitude AGL'),
+                          A('Aircraft Type', 'aeroplane'),
+                          S(name='Approach And Landing', 
+                            items=[Section(name='Approach And Landing', 
+                                           slice=slice(app_start, app_end),
+                                           start_edge=app_start, 
+                                           stop_edge=app_end)]),
+                          fetch('Heading Continuous'),
+                          fetch('Latitude Prepared'),
+                          fetch('Longitude Prepared'),
+                          fetch('ILS Localizer'),
+                          fetch('ILS Glideslope'),
+                          fetch('ILS Frequency'),
+                          A(name='AFR Landing Airport', value=None),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[]),
+                          KPV('Longitude At Touchdown', items=[]),
+                          A('Precise Positioning', False),
+                          )
+
+        self.assertEqual(approaches[0].type, 'LANDING')
+        # We approached runway 26L...
+        self.assertEqual(approaches[0].approach_runway['identifier'], '03L')
+        # ...and landed on 26L...
+        self.assertEqual(approaches[0].landing_runway['identifier'], '03R')
+        # The aircraft was established on the glidepath
+        self.assertEqual(int(approaches[0].gs_est.start), 22197)
+        self.assertEqual(int(approaches[0].gs_est.stop), 22229)
+        # ...but was on the localizer
+        self.assertEqual(int(approaches[0].loc_est.start), 22177)
+        self.assertEqual(int(approaches[0].loc_est.stop), 22229)
+        # There was no runway change
+        self.assertEqual(approaches[0].runway_change, True)
+
+
+class TestMunich(unittest.TestCase):
+    '''
+    15b80862f048
+    '''
+
+    # A change in runways late on the approach.
+    @patch('analysis_engine.approaches.api')
+    def test_no_runway_change_at_munich(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = airports.munich
+        api.get_handler.return_value = get_handler
+
+        def fetch(par_name):
+            try:
+                return load(root + par_name + '.nod')
+            except:
+                return None
+        root = os.path.join(test_data_path, 'ILS_test_001_')
+        app_start = 5732 * 2
+        app_end = 6070 * 2
+
+        approaches = ApproachInformation()
+        approaches.derive(fetch('Altitude AAL'),
+                          fetch('Altitude AGL'),
+                          A('Aircraft Type', 'aeroplane'),
+                          S(name='Approach And Landing', 
+                            items=[Section(name='Approach And Landing', 
+                                           slice=slice(app_start, app_end),
+                                           start_edge=app_start, 
+                                           stop_edge=app_end)]),
+                          fetch('Heading Continuous'),
+                          fetch('Latitude Prepared'),
+                          fetch('Longitude Prepared'),
+                          fetch('ILS Localizer'),
+                          fetch('ILS Glideslope'),
+                          fetch('ILS Frequency'),
+                          A(name='AFR Landing Airport', value=None),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[]),
+                          KPV('Longitude At Touchdown', items=[]),
+                          A('Precise Positioning', False),
+                          )
+
+        self.assertEqual(approaches[0].type, 'LANDING')
+        # We approached runway 26L...
+        self.assertEqual(approaches[0].approach_runway['identifier'], '26L')
+        # ...and landed on 26L...
+        self.assertEqual(approaches[0].landing_runway['identifier'], '26L')
+        # The aircraft was established on the glidepath
+        self.assertEqual(int(approaches[0].gs_est.start), 11717)
+        self.assertEqual(int(approaches[0].gs_est.stop), 11936)
+        # ...but was on the localizer
+        self.assertEqual(int(approaches[0].loc_est.start), 11717)
+        self.assertEqual(int(approaches[0].loc_est.stop), 12050)
+        # There was no runway change
+        self.assertEqual(approaches[0].runway_change, False)
