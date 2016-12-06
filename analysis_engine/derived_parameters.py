@@ -473,7 +473,7 @@ class AltitudeAAL(DerivedParameterNode):
         Return Altitude STD Smoothed shifted relative to 0 for cases where we do not
         have a reliable Altitude Radio.
         '''
-        if land_pitch==None:
+        if land_pitch is None:
 
             # This is a takeoff case where we ideally recognise the reduction
             # in pressure at liftoff as the aircraft rotates and the static
