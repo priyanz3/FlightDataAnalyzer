@@ -3532,7 +3532,7 @@ class TestILSEstablished(unittest.TestCase):
         array = np.ma.array([1.0, 1.0, -1.0, -1.0]*3 + [0.0]*10)
         _slice = slice(2,21)
         hz = 1.0
-        result = ils_established(array, _slice, hz, duration='immediate')
+        result = ils_established(array, _slice, hz, point='immediate')
         self.assertEqual(result, 13)
 
 class TestILSGlideslopeAlign(unittest.TestCase):

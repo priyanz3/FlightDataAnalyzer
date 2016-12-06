@@ -287,11 +287,12 @@ class ApproachInformation(ApproachNode):
                     land_afr_rwy=land_afr_rwy,
                     hint='landing',
                 )
-                # if we have a frequency and are within ils capture at touchdown
+            if landing or approach_type == 'GO_AROUND':
+                # if we have a frequency and valid localiser signal at lowest point in approach
                 appr_ils_freq = None
                 if ils_freq:
                     appr_ils_freq = np.ma.round(ils_freq.array[ref_idx] or 0, 2)
-                if not precise and appr_ils_freq  and ils_loc and np.ma.abs(ils_loc.array[ref_idx]) < settings.ILS_CAPTURE:
+                if not precise and appr_ils_freq  and ils_loc and np.ma.abs(ils_loc.array[ref_idx]) < 2.5:
                     kwargs['appr_ils_freq'] = appr_ils_freq
 
             airport, landing_runway = self._lookup_airport_and_runway(**kwargs)
@@ -322,7 +323,7 @@ class ApproachInformation(ApproachNode):
                     lowest_lon=lowest_lon,
                     lowest_hdg=lowest_hdg,
                 )
-                return
+                continue
 
             #########################################################################
             ## Analysis of fixed wing approach to a runway
@@ -423,7 +424,7 @@ class ApproachInformation(ApproachNode):
                     if (approach_runway and approach_runway['localizer']['is_offset']):
                         offset_ils = True
                         # The ILS established phase ends when the deviation becomes large.
-                        loc_end = ils_established(ils_loc.array, slice(ref_idx, loc_start, -1), ils_loc.hz, duration='immediate')
+                        loc_end = ils_established(ils_loc.array, slice(ref_idx, loc_start, -1), ils_loc.hz, point='immediate')
 
                     elif approach_type in ['TOUCH_AND_GO', 'GO_AROUND']:
                         # We finish at the lowest point
@@ -431,10 +432,11 @@ class ApproachInformation(ApproachNode):
                         
                     elif runway_change:
                         # Use the end of localizer phase as this already reflects the tuned frequency.
-                        loc_end = min(loc_slice.stop, loc_end)
-                        loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
-                        if loc_end_1_dot:
-                            loc_end = loc_end_1_dot
+                        est_end = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz, point='end')
+                        loc_end = min(loc_slice.stop, loc_end, est_end or np.inf)
+                        #loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
+                        #if loc_end_1_dot:
+                            #loc_end = loc_end_1_dot
     
                     elif approach_type == 'LANDING':
                         # Just end at 2 dots where we turn off the runway

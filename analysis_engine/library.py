@@ -2982,7 +2982,7 @@ def hysteresis(array, hysteresis):
     return np.ma.array(result, mask=array.mask)
 
 
-def ils_established(array, _slice, hz, duration='established'):
+def ils_established(array, _slice, hz, point='established'):
     '''
     Helper function for ILS established computations
     :param array: ILS localizer or glideslope data array
@@ -2991,10 +2991,12 @@ def ils_established(array, _slice, hz, duration='established'):
     :type _slice: Python slice
     :param hz: frequency of the array
     :type hz: float
+    :param hz: point of interest 'established', 'immediate', 'end'
+    :type hz: float
     '''
-    if duration == 'established':
+    if point in ('established', 'end'):
         time_required = ILS_ESTABLISHED_DURATION
-    elif duration == 'immediate':
+    elif point == 'immediate':
         time_required = 1.0
 
     # When is the ILS signal within ILS_CAPTURE (0.5 dots)?
@@ -3004,11 +3006,20 @@ def ils_established(array, _slice, hz, duration='established'):
     low_rocs = np.ma.clump_unmasked(np.ma.masked_greater(np.ma.abs(ils_rate), ILS_CAPTURE_ROC))
 
     # We want both conditions to be true at the same time, so AND the two conditions
-    for capture in slices_and(captures, low_rocs):
+    capture_slices = slices_and(captures, low_rocs)
+    if point == 'end':
+        valid = slices_remove_small_gaps(np.ma.clump_unmasked(array[_slice]), time_limit=time_required,
+                                         hz=hz)
+        capture_slices = slices_and(capture_slices, valid)
+
+    for capture in capture_slices:
         # and now check that this period is longer than the required period.
         if slice_duration(capture, hz) >= time_required:
-            return _slice.start + (_slice.step or 1)*capture.start
-            break
+            if point == 'end':
+                # get index passing 1 dot
+                return index_at_value(np.ma.abs(array), 1.0, slice(_slice.start + (_slice.step or 1)*capture.stop, _slice.stop))
+            else:
+                return _slice.start + (_slice.step or 1)*capture.start
     return None
 
 
