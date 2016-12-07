@@ -2709,6 +2709,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                              'G-V',
                              'Global',
                              'CL-600',
+                             'Citation',
                              'BAE 146',
                              'ERJ-170/175',
                              'ERJ-190/195',
