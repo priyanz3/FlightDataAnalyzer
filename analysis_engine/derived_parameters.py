@@ -2338,7 +2338,7 @@ class Eng_1_FuelBurn(DerivedParameterNode):
     def derive(self, ff=P('Eng (1) Fuel Flow')):
 
         flow = repair_mask(ff.array)
-        flow = np.ma.where(flow.mask==True, 0.0, flow)
+        flow = np.ma.where(flow.mask, 0.0, flow)
         self.array = np.ma.array(integrate(flow / 3600.0, ff.frequency))
 
 
@@ -2353,7 +2353,7 @@ class Eng_2_FuelBurn(DerivedParameterNode):
     def derive(self, ff=P('Eng (2) Fuel Flow')):
 
         flow = repair_mask(ff.array)
-        flow = np.ma.where(flow.mask==True, 0.0, flow)
+        flow = np.ma.where(flow.mask, 0.0, flow)
         self.array = np.ma.array(integrate(flow / 3600.0, ff.frequency))
 
 
@@ -2368,7 +2368,7 @@ class Eng_3_FuelBurn(DerivedParameterNode):
     def derive(self, ff=P('Eng (3) Fuel Flow')):
 
         flow = repair_mask(ff.array)
-        flow = np.ma.where(flow.mask==True, 0.0, flow)
+        flow = np.ma.where(flow.mask, 0.0, flow)
         self.array = np.ma.array(integrate(flow / 3600.0, ff.frequency))
 
 
@@ -2383,7 +2383,7 @@ class Eng_4_FuelBurn(DerivedParameterNode):
     def derive(self, ff=P('Eng (4) Fuel Flow')):
 
         flow = repair_mask(ff.array)
-        flow = np.ma.where(flow.mask==True, 0.0, flow)
+        flow = np.ma.where(flow.mask, 0.0, flow)
         self.array = np.ma.array(integrate(flow / 3600.0, ff.frequency))
 
 
@@ -2611,7 +2611,7 @@ class Eng_N1Split(DerivedParameterNode):
         '''
         zeros = np_ma_masked_zeros_like(n1max.array)
         diff = n1max.array - n1min.array
-        self.array = np.ma.where(diff.mask==True, zeros, diff)
+        self.array = np.ma.where(diff.mask, zeros, diff)
 
 
 class Eng_N1MinFor5Sec(DerivedParameterNode):

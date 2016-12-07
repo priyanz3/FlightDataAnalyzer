@@ -2956,7 +2956,7 @@ def hysteresis(array, hysteresis):
     if array.mask is np.False_:
         notmasked = np.arange(length+1)
     else:
-        notmasked = np.ma.where(array.mask == False)[0]
+        notmasked = np.ma.where(~array.mask)[0]
     # The starting point for the computation is the first notmasked sample.
     old = array[notmasked[0]]
     for index in notmasked:
@@ -3403,7 +3403,7 @@ def interpolate_params(*params):
         multiplier = out_frequency / param.frequency
         offset = (param.offset * multiplier)
         # Will not create interpolation points for masked indices.
-        unmasked_indices = np.where(param.array.mask == False)[0]
+        unmasked_indices = np.where(~param.array.mask)[0]
         index_array = unmasked_indices.astype(np.float_) * multiplier + offset
         # Take only unmasked values to match size with index_array.
         data_arrays.append(param.array.data[unmasked_indices])

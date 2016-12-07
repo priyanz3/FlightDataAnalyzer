@@ -11008,8 +11008,7 @@ class MGBOilPressLowDuration(KeyPointValueNode):
         gearbox = vstack_params_where_state((mgb, 'Low Press'),
                                             (mgb1, 'Low Press'),
                                             (mgb2, 'Low Press'))
-        self.create_kpvs_where(gearbox.any(axis=0) == True,
-                               hz, phase=airborne)
+        self.create_kpvs_where(gearbox.any(axis=0), hz, phase=airborne)
 
 
 class CGBOilTempMax(KeyPointValueNode):
