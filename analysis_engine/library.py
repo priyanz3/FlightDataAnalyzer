@@ -1454,7 +1454,7 @@ def clump_multistate(array, state, _slices=[slice(None)], condition=True):
         # single slice provided
         _slices = [_slices]
 
-    if condition == True:
+    if condition:
         state_match = runs_of_ones(array == state)
     else:
         state_match = runs_of_ones(array != state)
@@ -6378,9 +6378,9 @@ def slices_from_ktis(kti_1, kti_2):
         return []
 
     # Inelegant way of ensuring we are dealing with lists of KTIs
-    if isinstance(kti_1, list) == False:
+    if not isinstance(kti_1, list):
         kti_1=[kti_1]
-    if isinstance(kti_2, list) == False:
+    if not isinstance(kti_2, list):
         kti_2=[kti_2]
 
     # Unpack the KTIs to get the indexes, and mark which were
@@ -7557,13 +7557,13 @@ def value_at_index(array, index, interpolate=True):
         high_value = array.data[high]
         # Crude handling of masked values. TODO: Must be a better way !
         if array.mask.any(): # An element is masked
-            if array.mask[low] == True:
-                if array.mask[high] == True:
+            if array.mask[low]:
+                if array.mask[high]:
                     return None
                 else:
                     return high_value
             else:
-                if array.mask[high] == True:
+                if array.mask[high]:
                     return low_value
         # If not interpolating and no mask or masked samples:
         if not interpolate:
