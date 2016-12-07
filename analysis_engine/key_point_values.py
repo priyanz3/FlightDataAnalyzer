@@ -7788,7 +7788,7 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None or phase == None:
+            if threshold is None or phase is None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7860,7 +7860,7 @@ class EngN1OverThresholdDuration(KeyPointValueNode):
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None or phase == None:
+            if threshold is None or phase is None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -7932,7 +7932,7 @@ class EngN2OverThresholdDuration(KeyPointValueNode):
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None or phase == None:
+            if threshold is None or phase is None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []
@@ -8004,7 +8004,7 @@ class EngNpOverThresholdDuration(KeyPointValueNode):
 
         # iterate over phases
         for name, phase, threshold in phase_thresholds:
-            if threshold == None or phase == None:
+            if threshold is None or phase is None:
                 # No threshold for this parameter in this phase.
                 continue
             threshold_slices = []

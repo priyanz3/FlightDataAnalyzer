@@ -259,7 +259,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         # and this avoids casting kpvs into the Atlantic.
         kpv_lat = best_lat.at(kpv.index)
         kpv_lon = best_lon.at(kpv.index)
-        if kpv_lat == None or kpv_lon == None or \
+        if kpv_lat is None or kpv_lon is None or \
            (kpv_lat == 0.0 and kpv_lon == 0.0):
             continue
 

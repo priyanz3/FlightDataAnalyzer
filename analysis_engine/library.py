@@ -2938,7 +2938,7 @@ def hysteresis(array, hysteresis):
     if np.ma.count(array) == 0: # No unmasked elements.
         return array
 
-    if hysteresis == 0.0 or hysteresis == None:
+    if hysteresis == 0.0 or hysteresis is None:
         return array
 
     if hysteresis < 0.0:
@@ -3684,9 +3684,9 @@ def slices_and(first_list, second_list):
 
             if slices_overlap(slice_1, slice_2):
                 slice_start = max(slice_1.start, slice_2.start)
-                if slice_1.stop == None:
+                if slice_1.stop is None:
                     slice_stop = slice_2.stop
-                elif slice_2.stop == None:
+                elif slice_2.stop is None:
                     slice_stop = slice_1.stop
                 else:
                     slice_stop = min(slice_1.stop, slice_2.stop)
@@ -3783,7 +3783,7 @@ def slices_or(*slice_lists):
                     # min prefers None
                     slice_start = min(input_slice.start, output_slice.start)
                     # max prefers anything but None
-                    if input_slice.stop == None or output_slice.stop == None:
+                    if input_slice.stop is None or output_slice.stop is None:
                         slice_stop = None
                     else:
                         slice_stop = max(input_slice.stop, output_slice.stop)
@@ -3979,7 +3979,7 @@ def localizer_scale(runway):
         except:
             length = None
 
-        if length == None:
+        if length is None:
             length = 8000 / METRES_TO_FEET # Typical length
 
         # Normal scaling of a localizer gives 700ft width at the threshold,
@@ -4450,12 +4450,12 @@ def blend_two_parameters(param_one, param_two, mode=None):
             b[-1] = b[-2]
         return b, 2.0 * freq, off
 
-    if param_one == None and param_two == None:
+    if param_one is None and param_two is None:
         raise ValueError('blend_two_parameters called with both parameters = None')
-    if param_one == None:
+    if param_one is None:
         return _interp(param_two.array, param_two.frequency, param_two.offset)
 
-    if param_two == None:
+    if param_two is None:
         return _interp(param_one.array, param_one.frequency, param_one.offset)
 
     assert param_one.frequency == param_two.frequency, \
@@ -5755,7 +5755,7 @@ def rms_noise(array, ignore_pc=None):
     diffs = local_diff[1:-1]
     if np.ma.count(diffs) == 0:
         return None
-    elif ignore_pc == None or ignore_pc/100.0*len(array)<1.0:
+    elif ignore_pc is None or ignore_pc/100.0*len(array)<1.0:
         to_rms = diffs
     else:
         monitor = slice(0, floor(len(diffs) * (1-ignore_pc/100.0)))
@@ -6374,7 +6374,7 @@ def slices_from_ktis(kti_1, kti_2):
     :returns: list of slices
     '''
     # If either list is void, we won't find any valid periods.
-    if kti_1==None or kti_2==None:
+    if kti_1 is None or kti_2 is None:
         return []
 
     # Inelegant way of ensuring we are dealing with lists of KTIs
@@ -7370,7 +7370,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
             try:
                 return (_slice.start or 0) + (step * diff_where[0][0])
             except IndexError:
-                if start_index==None or stop_index==None:
+                if start_index is None or stop_index is None:
                     return len(array) - 1
                 else:
                     if step==1:

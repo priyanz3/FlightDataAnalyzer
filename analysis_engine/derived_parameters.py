@@ -4980,7 +4980,7 @@ class CoordinatesSmoothed(object):
                             scan_back = slice(join_idx, this_app_slice.start, -1)
                             lat_join = first_valid_sample(lat_adj[scan_back])
                             lon_join = first_valid_sample(lon_adj[scan_back])
-                            if lat_join.index == None or lon_join.index == None:
+                            if lat_join.index is None or lon_join.index is None:
                                 lat_in = lon_in = None
                             else:
                                 join_idx -= max(lat_join.index, lon_join.index) # step back to make sure the join location is not masked.
