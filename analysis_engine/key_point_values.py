@@ -8692,19 +8692,18 @@ class APUFireWarningDuration(KeyPointValueNode):
                ('Fire APU Single Bottle System',
                 'Fire APU Dual Bottle System') in [available]
 
-    def derive(self, fire=P('APU Fire'),
+    def derive(self, fire=M('APU Fire'),
                single_bottle=M('Fire APU Single Bottle System'),
                dual_bottle=M('Fire APU Dual Bottle System')):
 
         if fire:
-            self.create_kpvs_where(fire.array == True, fire.hz)
+            self.create_kpvs_where(fire.array == 'Fire', fire.hz)
         else:
             hz = (single_bottle or dual_bottle).hz
             apu_fires = vstack_params_where_state((single_bottle, 'Fire'),
                                                   (dual_bottle, 'Fire'))
 
-            self.create_kpvs_where(apu_fires.any(axis=0) == True,
-                                   hz)
+            self.create_kpvs_where(apu_fires.any(axis=0), hz)
 
 
 ##############################################################################
