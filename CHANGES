@@ -9,6 +9,59 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.30.1
+-------
+
+ - Approach/ILS Improvements
+   - ILS Localizer signal amendment to allow for 2-source signals to select larger when discrepancy is significant.
+   - accommodate offset ILS localizers
+   - detect runway changes
+   - better support runways without ILS equipment
+   - Coordinates Smoothed revised to provide track correction for go-arounds as well as the final landing.
+   - Track calculation updated to allow for runway change case
+   - Various adjustments to Localiser and Glideslope Established criteria
+
+ - Add:
+   - KTI: DistanceToTouchdown
+   - KPV: HeightAtOffsetILSTurn
+   - KPV: HeightAtRunwayChange
+   - KPV: ATEngagedAPDisengagedOutsideClimbDuration
+   - KPV: Drift At Touchdown
+   - KPV: PitchTouchdownTo60KtsAirspeedMax --> PitchRateTouchdownTo60KtsAirspeedMax
+   - KPV: AltitudeDuringLevelFlightMin --> AltitudeDuringCruiseMin
+
+ - Fix:
+   - Derived: ILS Localizer fix frequency as not guaranteed to be 1hz
+   - Derived: AGL for flight phase fix to stop jumping from 0 to max value
+   - Derived: DistanceToLanding Fix sliceing
+   - Derived: DistanceToLanding handle masked values at touchdown
+   - Derived:  AirspeedSelectedForApproach Fix - Airspeed Selected being reset after landing
+      on low frequency parameters was affecting the values in the approach.
+   - Derived: AltAAL Fix for heli with no rad alt
+   - KTI: Touchdown: only use alt_rad start if 5 ft is found
+   - KPV: Altitude Before Level Flight When Climbing/Descending use STD smoothed instead of AAL
+   - KPV: HeadingVariationAbove80Kts handle hdg mask
+   - Phase: Takeoff: ignore early alt spikes
+
+ - Improvement:
+   - All: Fix some numpy deprecation warnings
+   - Attribute: Landing Attributes: use those detected in Approach Information 
+   - Derived: AGL for flight phase 10ft hysteresis added  to ensure level flight at low altitudes does not trigger multiple KPVs.
+   - Derived: MagneticVariation removed helicopter excemption
+   - Derived: Groundspeed Signed Pushback extended to allow for early engine start cycle during pushback.
+   - Derived: Groundspeed Signed fix for flights where engines are running throughout
+   - Derived: AltitudeRadio A318 added to overflow correction
+   - Derived: Speedbrake added Citation
+   - KTI: Eng Stop, detect if spooling down at end of data
+   - KPV: DistanceToTouchdown KPVs use new DistanceToTouchdown KTIs
+   - library: straighten_longitude ignore spikes
+   - library: straighten_overflows fix spike check
+   - library: last_valid_sample optionally remove small slices
+   - library: ground_track_precise Iteration limit extended for ground track calculation
+   - library: Track linking correction to handle rare cases where the reference track is masked at the point where the joining takes place.
+   - Splitting: added pre_file_kwargs 
+
+
 v0.29.3
 -------
 
