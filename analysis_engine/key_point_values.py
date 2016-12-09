@@ -14274,34 +14274,31 @@ class RollAtLowAltitude(KeyPointValueNode):
 
     def derive(self,
                roll=P('Roll'),
-               alt_rad=P('Altitude Radio'),
-               dlcs=S('Descent Low Climb')):
+               alt_rad=P('Altitude Radio')):
 
         ten_pc = 0.1
 
-        for dlc in dlcs:
-            # Trim this to 600ft
-            lows = np.ma.clump_unmasked(
-                np.ma.masked_outside(alt_rad.array, 50.0, 600.0))
-            for low in lows:
-                # Only compute the ratio for the short period below 600ft
-                ratio = roll.array[low] / alt_rad.array[low]
-                # We will work out bank angle periods exceeding 10% and 5 sec.
-                banks = np.ma.clump_unmasked(
-                    np.ma.masked_less(np.ma.abs(ratio), ten_pc))
-                banks = slices_remove_small_slices(banks,
-                                                   time_limit=5.0,
-                                                   hz=roll.frequency)
-                for bank in banks:
-                    # Mark the largest roll attitude exceeding the limit.
-                    peak = max_abs_value(ratio[bank])
-                    peak_roll = roll.array[low][bank][peak.index]
-                    threshold = copysign(
-                        alt_rad.array[low][bank][peak.index] * ten_pc,
-                        peak_roll)
-                    index = peak.index + low.start + bank.start
-                    value = peak_roll - threshold
-                    self.create_kpv(index, value)
+        lows = np.ma.clump_unmasked(
+            np.ma.masked_outside(alt_rad.array, 50.0, 600.0))
+        for low in lows:
+            # Only compute the ratio for the short period below 600ft
+            ratio = roll.array[low] / alt_rad.array[low]
+            # We will work out bank angle periods exceeding 10% and 5 sec.
+            banks = np.ma.clump_unmasked(
+                np.ma.masked_less(np.ma.abs(ratio), ten_pc))
+            banks = slices_remove_small_slices(banks,
+                                               time_limit=5.0,
+                                               hz=roll.frequency)
+            for bank in banks:
+                # Mark the largest roll attitude exceeding the limit.
+                peak = max_abs_value(ratio[bank])
+                peak_roll = roll.array[low][bank][peak.index]
+                threshold = copysign(
+                    alt_rad.array[low][bank][peak.index] * ten_pc,
+                    peak_roll)
+                index = peak.index + low.start + bank.start
+                value = peak_roll - threshold
+                self.create_kpv(index, value)
 
 
 class RollLeftBelow6000FtAltitudeDensityBelow60Kts(KeyPointValueNode):
