@@ -5510,7 +5510,7 @@ class ControlColumnForceMax(KeyPointValueNode):
                fast=S('Airborne')):
         self.create_kpvs_within_slices(
             force.array, fast.get_slices(),
-            max_value)
+            max_abs_value)
 
 
 class ControlWheelForceMax(KeyPointValueNode):
@@ -5524,7 +5524,7 @@ class ControlWheelForceMax(KeyPointValueNode):
                fast=S('Airborne')):
         self.create_kpvs_within_slices(
             force.array, fast.get_slices(),
-            max_value)
+            max_abs_value)
 
 """
 Compute the total travel of each control during the interval between first engine
