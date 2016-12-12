@@ -748,6 +748,57 @@ class AccelerationNormalAtTouchdown(KeyPointValueNode):
             self.create_kpv(*bump(acc_norm, touchdown))
 
 
+class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
+    '''
+    A B767 specific KPV, which returns the difference between acceleration
+    normal at touchdown and load factor threshold based on roll and weight.
+    A positive value would indicate the amount over the load factor threshold
+    and therefore a hard landing.
+    '''
+    units = ut.G
+
+    # This KPV is specific to 767 aircraft
+    @classmethod
+    def can_operate(cls, available, family=A('Family')):
+        is_b767 = family and 'B767' in family.value
+        return is_b767 and all_deps(cls, available)      
+    
+    def derive(self,
+               land_vert_acc=KPV('Acceleration Normal At Touchdown'),
+               roll=P('Roll'),
+               tdwns=KTI('Touchdown'),
+               gross_weight=KPV('Gross Weight At Touchdown'),
+               mlw=A('Maximum Landing Weight')):
+        for idx, tdwn in enumerate(tdwns):
+            # not interested in direction of roll
+            roll_tdwn = abs(value_at_index(roll.array, tdwn.index))
+            weight_threshold = mlw.value + 1133.981  # 2500LB --> 1133.981KG 
+            freq_8hz = land_vert_acc.frequency == 8.0
+            freq_16hz = land_vert_acc.frequency == 16.0
+            hard = gross_weight[idx].value <= weight_threshold
+            overweight = gross_weight[idx].value > weight_threshold
+            
+            if hard and freq_16hz:
+                ld_factor_grph = np.append(np.array([1.90, 1.90]),
+                                           np.linspace(1.90, 1.45, 5))
+            elif hard and freq_8hz:
+                ld_factor_grph = np.append(np.array([1.80, 1.80]),
+                                           np.linspace(1.80, 1.40, 5))
+            elif overweight and freq_16hz:
+                ld_factor_grph = np.append(np.array([1.55,]),
+                                           np.linspace(1.55, 1.29, 6))
+            elif overweight and freq_8hz:
+                ld_factor_grph = np.append(np.array([1.50,]),
+                                           np.linspace(1.50, 1.25, 6))
+            else:
+                continue
+            # Use roll_tdwn as the index for ld_factor_grph
+            load_factor = value_at_index(ld_factor_grph, roll_tdwn,
+                                         interpolate=True)
+            delta = land_vert_acc[idx].value - load_factor
+            self.create_kpv(tdwn.index, delta)
+
+
 class AccelerationNormalLiftoffTo35FtMax(KeyPointValueNode):
     '''
     '''

@@ -52,6 +52,7 @@ from analysis_engine.key_point_values import (
     AccelerationNormal20FtToFlareMax,
     AccelerationNormalAtLiftoff,
     AccelerationNormalAtTouchdown,
+    AccelerationNormalMinusLoadFactorThresholdAtTouchdown,
     AccelerationNormalMax,
     AccelerationNormalOffset,
     AccelerationNormalLiftoffTo35FtMax,
@@ -1614,6 +1615,90 @@ class TestAccelerationNormalAtTouchdown(unittest.TestCase, NodeTest):
             KeyPointValue(3, 4.0, 'Acceleration Normal At Touchdown', slice(None, None)),
             KeyPointValue(1, 2.0, 'Acceleration Normal At Touchdown', slice(None, None)),
         ])
+
+
+class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCase):
+    def setUp(self):
+        self.node_class = AccelerationNormalMinusLoadFactorThresholdAtTouchdown
+        self.family = A('Family', 'B767')
+        self.operational_combinations = [('Acceleration Normal At Touchdown',
+                                         'Roll', 'Touchdown',
+                                         'Gross Weight At Touchdown',
+                                         'Maximum Landing Weight')]
+        self.tdwn_idx = 4.0
+        name = 'Acceleration Normal At Touchdown'
+        self.land_vert_acc_8hz = KPV(name=name, frequency=8.0, items=[
+            KeyPointValue(index=self.tdwn_idx, value=2.0, name=name),
+        ])
+        self.land_vert_acc_16hz = KPV(name=name, frequency=16.0, items=[
+            KeyPointValue(index=self.tdwn_idx, value=2.0, name=name),
+        ])
+        name = 'Gross Weight At Touchdown'
+        self.gross_weight_under = KPV(name=name, items=[
+            KeyPointValue(index=self.tdwn_idx, value=115000, name=name),
+        ])
+        self.gross_weight_over = KPV(name=name, items=[
+            KeyPointValue(index=self.tdwn_idx, value=125000, name=name),
+        ])        
+        self.tdwns = KTI('Touchdown', items=[
+            KeyTimeInstance(index=self.tdwn_idx, name='Touchdown'),
+        ])
+        self.mlw = A('Maximum Landing Weight', 115000)
+        self.roll = np.ma.array([0.]*10)
+
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 'g')
+        self.assertEqual(
+            node.name,
+            'Acceleration Normal Minus Load Factor Threshold At Touchdown'
+        )
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations(family=self.family)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(opts, self.operational_combinations)
+
+    def _call_derive(self, roll_value, land_vert_acc, gross_weight):    
+        self.roll[self.tdwn_idx] = roll_value
+        roll = P('Roll', self.roll)
+
+        node = self.node_class()
+        node.derive(land_vert_acc=land_vert_acc, roll=roll,
+                           tdwns=self.tdwns, gross_weight=gross_weight,
+                           mlw=self.mlw)
+        self.assertEqual(len(node), 1)
+        return node
+
+    def test_derive(self):
+        # Roll 0-6, weight <= MLW+2500LB @ 16Hz
+        expected_val = [0.10, 0.10, 0.10, 0.21, 0.33, 0.44, 0.55]
+        for idx, roll in enumerate(np.arange(0.0, 7.0)):
+            node = self._call_derive(roll, self.land_vert_acc_16hz,
+                                     self.gross_weight_under)[0]
+            self.assertAlmostEqual(node.value, expected_val[idx], places=2)
+
+        # Roll 0-6, weight > MLW+2500LB @ 16Hz
+        expected_val = [0.45, 0.45, 0.50, 0.55, 0.61, 0.66, 0.71]
+        for idx, roll in enumerate(np.arange(0.0, 7.0)):
+            node = self._call_derive(roll, self.land_vert_acc_16hz,
+                                     self.gross_weight_over)[0]
+            self.assertAlmostEqual(node.value, expected_val[idx], places=2)
+
+        # Roll 0-6, weight <= MLW+2500LB @ 8Hz
+        expected_val = [0.20, 0.20, 0.20, 0.30, 0.40, 0.50, 0.60]
+        for idx, roll in enumerate(np.arange(0.0, 7.0)):
+            node = self._call_derive(roll, self.land_vert_acc_8hz,
+                                     self.gross_weight_under)[0]
+            self.assertAlmostEqual(node.value, expected_val[idx], places=2)
+
+        # Roll 0-6, weight > MLW+2500LB @ 8Hz
+        expected_val = [0.50, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75]
+        for idx, roll in enumerate(np.arange(0.0, 7.0)):
+            node = self._call_derive(roll, self.land_vert_acc_8hz,
+                                     self.gross_weight_over)[0]
+            self.assertAlmostEqual(node.value, expected_val[idx], places=2)
 
 
 class TestAccelerationNormalLiftoffTo35FtMax(unittest.TestCase, NodeTest):
