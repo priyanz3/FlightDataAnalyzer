@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from itertools import izip, izip_longest, tee
-from math import ceil, copysign, cos, floor, log, radians, sin, sqrt
+from math import ceil, copysign, cos, floor, log, radians, sin, sqrt, pow
 from operator import attrgetter, itemgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
@@ -8101,3 +8101,8 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
                          % (runway['identifier'], airport['id']))
 
     return runway
+
+
+def mb2ft(mb):
+    '''Convert millibars into feet'''
+    return (1-pow((mb/1013.25),0.190284))*145366.45

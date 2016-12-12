@@ -8034,6 +8034,13 @@ class TestWrapArray(unittest.TestCase):
         self.assertGreaterEqual(wrapped.min(), -180)
 
 
+class TestMb2Ft(unittest.TestCase):
+    def test_mb2ft(self):
+        self.assertAlmostEqual(mb2ft(1013), 6.83, places=2)
+        self.assertAlmostEqual(mb2ft(1020), -183.77, places=2)
+        self.assertAlmostEqual(mb2ft(1024), -292.21, places=2)
+
+
 if __name__ == '__main__':
     suite = unittest.TestSuite()
     suite.addTest(TestIndexAtValue('test_index_at_value_slice_beyond_top_end_of_data'))
