@@ -56,6 +56,7 @@ from analysis_engine.library import (air_track,
                                      mask_outside_slices,
                                      match_altitudes,
                                      max_value,
+                                     mb2ft,
                                      merge_masks,
                                      most_common_value,
                                      moving_average,
@@ -1227,6 +1228,37 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
         # Applying moving_window of a moving_window to avoid a large weighting/
         # window size which would skew sharp curves.
         self.array = moving_average(moving_average(self.array))
+
+
+class AltitudeQNHCalculated(DerivedParameterNode):
+    name = 'Altitude QNH Calculated'
+    units = ut.FT
+
+    @classmethod
+    def can_operate(cls, available):
+        baro = any_of(('Baro Correction (Capt)', 'Baro Correction (FO)', 
+                       'Baro Correction 1', 'Baro Correction 2', 
+                       'Baro Correction'), available)
+        return baro and 'Altitude Std' in available
+
+    def derive(self, 
+               alt_std=P('Altitude STD'),
+               baro_capt=P('Baro Correction (Capt)'), 
+               baro_fo=P('Baro Correction (FO)'),
+               baro_1=P('Baro Correction 1'),
+               baro_2=P('Baro Correction 2'),
+               baro=P('Baro Correction')):
+        baro_correction = baro or baro_capt or baro_1 or baro_fo or baro_2
+        baro_fixed = nearest_neighbour_mask_repair(baro_correction.array)
+        
+        alt_qnh = np_ma_masked_zeros_like(alt_std.array)
+        
+        for value_mb, slices in slices_of_runs(baro_fixed):
+            value_ft = mb2ft(value_mb)
+            for s in slices:
+                alt_qnh[s] = alt_std.array[s] - value_ft
+
+        self.array = np.ma.array(data=alt_qnh, mask=alt_std.array.mask)
 
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!

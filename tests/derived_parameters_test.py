@@ -25,6 +25,7 @@ from analysis_engine.library import (align,
                                      np_ma_masked_zeros,
                                      np_ma_masked_zeros_like,
                                      np_ma_ones_like,
+                                     mb2ft,
                                      unique_values)
 
 from analysis_engine.node import (
@@ -77,6 +78,7 @@ from analysis_engine.derived_parameters import (
     AltitudeAALForFlightPhases,
     AltitudeAGL,
     AltitudeDensity,
+    AltitudeQNHCalculated,
     AltitudeQNH,
     AltitudeRadio,
     AltitudeRadioOffsetRemoved,
@@ -1265,6 +1267,42 @@ class TestAltitudeForFlightPhases(unittest.TestCase):
                              mask = False)
         np.testing.assert_array_almost_equal(alt_4_ph.array, answer)
         '''
+
+
+class TestAltitudeQNHCalculated(unittest.TestCase):
+    def setUp(self):
+        self.node_class = AltitudeQNHCalculated
+
+    def test_attribute(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Altitude QNH Calculated')
+        self.assertEqual(node.units, 'ft')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        for opt in opts:
+            self.assertIn('Altitude STD', opt)
+            baro = 'Baro Correction' in opt
+            baro_capt = 'Baro Correction (Capt)' in opt
+            baro_fo = 'Baro Correction (FO)' in opt
+            baro_1 = 'Baro Correction 1' in opt
+            baro_2 = 'Baro Correction 2' in opt
+            self.assertTrue(baro or baro_capt or baro_fo or baro_1 or baro_2)        
+
+    def test_derive(self):
+        alt_std = P('Altitude STD', np.ma.array([10000]*25))
+        baro = P('Baro Correction', np.ma.array(np.arange(1000,1025)))
+
+        node = self.node_class()
+        node.derive(alt_std, None, None, None, None, baro)
+
+        expected_alt_qnh = [
+            9636, 9663, 9691, 9719, 9746, 9774, 9801, 9828, 9856, 9883,
+            9911, 9938, 9965, 9993, 10020, 10047, 10074, 10102, 10129, 10156, 
+            10183, 10210, 10238, 10265, 10292
+        ]
+        for expected, got in zip (expected_alt_qnh, node.array):
+            self.assertEqual(expected, int(got))
 
 
 class TestAltitudeQNH(unittest.TestCase, NodeTest):
