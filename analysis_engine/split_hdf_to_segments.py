@@ -978,8 +978,8 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         dest_path = os.path.join(dest_dir, dest_basename)
         logger.debug("Writing segment %d: %s", part, dest_path)
 
-        write_segment(hdf_path, segment_slice, dest_path,
-                      boundary=boundary)
+        write_segment(hdf_path, segment_slice, dest_path, boundary,
+                      submasks=('initial_states', 'padding'))
 
         # adjust fallback time to account for any padding added at start of segment
         segment_start_dt = fallback_dt - timedelta(seconds=start_padding)
