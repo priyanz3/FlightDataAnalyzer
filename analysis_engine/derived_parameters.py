@@ -5426,6 +5426,8 @@ class VerticalSpeedInertial(DerivedParameterNode):
 
         for speedy in fast:
             # Fix minor dropouts
+            if not np.ma.count(az.array[speedy.slice]):
+                continue
             az_repair = repair_mask(az.array[speedy.slice], frequency=hz)
             alt_rad_repair = repair_mask(alt_rad.array[speedy.slice], frequency=hz,
                                              repair_duration=None)
