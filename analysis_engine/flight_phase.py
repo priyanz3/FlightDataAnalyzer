@@ -1531,7 +1531,7 @@ class Landing(FlightPhaseNode):
             #  if speedy.slice.stop >= array_len: continue
 
             if (speedy.slice.stop is None or \
-                speedy.slice.stop >= len(alt_aal.array)):
+                speedy.slice.stop >= len(alt_aal.array) - 2):
                 break
 
             landing_run = speedy.slice.stop + 2
