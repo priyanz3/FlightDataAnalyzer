@@ -1453,8 +1453,8 @@ class Touchdown(KeyTimeInstanceNode):
                     if not alt or alt.array[index] < 10.0:
                         index_gog = index
 
-            if manufacturer and manufacturer.value in ('Saab') and \
-               family and family.value in ('2000'):
+            if manufacturer and manufacturer.value == 'Saab' and \
+               family and family.value == '2000':
                 # This covers aircraft with automatic flap retraction on
                 # landing but no gear on ground signal. The Saab 2000 is a
                 # case in point.
