@@ -10951,7 +10951,7 @@ class HeadingVariationAbove80KtsAirspeedDuringTakeoff(KeyPointValueNode):
                     airspeed.name, toffs.name, toff.slice)
                 continue
             spd = np.ma.masked_less(airspeed.array, 60)
-            first_spd_idx = first_valid_sample(spd[toff.slice.start:ceil(begin)])[0] + toff.slice.start
+            first_spd_idx = first_valid_sample(spd[toff.slice.start:ceil(begin) + 1])[0] + toff.slice.start
             # Pick first heading parameter with valid data in phase.
             head = first_valid_parameter(head_true, head_mag, phases=(slice(first_spd_idx, ceil(begin)),))
             if head is None:
