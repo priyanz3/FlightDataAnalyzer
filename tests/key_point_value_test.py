@@ -88,9 +88,9 @@ from analysis_engine.key_point_values import (
     Airspeed8000To10000FtMax,
     Airspeed8000To5000FtMax,
     Airspeed20FtToTouchdownMax,
-    Airspeed2NMToTouchdown,
+    Airspeed2NMToOffshoreTouchdown,
     AirspeedAbove500FtMin,
-    AirspeedAt200Ft,
+    AirspeedAt200FtDuringOffshoreApproach,
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
@@ -385,8 +385,8 @@ from analysis_engine.key_point_values import (
     GrossWeightConditionalAtTouchdown,
     GrossWeightDelta60SecondsInFlightMax,
     Groundspeed20FtToTouchdownMax,
-    Groundspeed20SecToTouchdownMax,
-    Groundspeed0_8NMToTouchdown,
+    Groundspeed20SecToOffshoreTouchdownMax,
+    Groundspeed0_8NMToOffshoreTouchdown,
     GroundspeedAtLiftoff,
     GroundspeedAtTOGA,
     GroundspeedAtTouchdown,
@@ -703,6 +703,8 @@ from analysis_engine.key_time_instances import (
     EngStart,
     EngStop,
     DistanceFromThreshold,
+    DistanceToTouchdown,
+    SecsToTouchdown,
 )
 from analysis_engine.library import (max_abs_value, max_value, min_value)
 from analysis_engine.flight_phase import Fast, RejectedTakeoff
@@ -2349,10 +2351,10 @@ class TestAirspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].value, 29)
 
 
-class TestAirspeed2NMToTouchdown(unittest.TestCase):
+class TestAirspeed2NMToOffshoreTouchdown(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Airspeed2NMToTouchdown
+        self.node_class = Airspeed2NMToOffshoreTouchdown
 
     def test_attributes(self):
         node = self.node_class()
@@ -2367,16 +2369,16 @@ class TestAirspeed2NMToTouchdown(unittest.TestCase):
         self.assertEqual(len(opts[0]), 3)
         self.assertIn('Airspeed', opts[0])
         self.assertIn('Distance To Touchdown', opts[0])
-        self.assertIn('Touchdown', opts[0])
+        self.assertIn('Offshore Touchdown', opts[0])
 
     def test_derive(self):
         air_spd = np.linspace(64, 7, 25).tolist()
         air_spd += np.linspace(84, 28, 11).tolist()
         airspeed = P('Airspeed', np.ma.array(air_spd))
-        touchdown = KTI('Touchdown', items=[KeyTimeInstance(24, 'Touchdown'),
-                                            KeyTimeInstance(35, 'Touchdown')])
+        touchdown = KTI('Offshore Touchdown', items=[KeyTimeInstance(24, 'Offshore Touchdown'),
+                                                     KeyTimeInstance(35, 'Offshore Touchdown')])
 
-        dtts = KTI('Distance To Touchdown',
+        dtts = DistanceToTouchdown('Distance To Touchdown',
                    items=[KeyTimeInstance(16, '0.8 NM To Touchdown'),
                           KeyTimeInstance(14, '1.0 NM To Touchdown'),
                           KeyTimeInstance(9, '1.5 NM To Touchdown'),
@@ -2384,7 +2386,8 @@ class TestAirspeed2NMToTouchdown(unittest.TestCase):
                           KeyTimeInstance(32, '0.8 NM To Touchdown'),
                           KeyTimeInstance(31, '1.0 NM To Touchdown'),
                           KeyTimeInstance(29, '1.5 NM To Touchdown'),
-                          KeyTimeInstance(27, '2.0 NM To Touchdown')]) 
+                          KeyTimeInstance(27, '2.0 NM To Touchdown'),
+                          KeyTimeInstance(37, '2.0 NM To Touchdown')]) 
         
         node = self.node_class()
         node.derive(airspeed, dtts, touchdown)
@@ -2421,24 +2424,18 @@ class TestAirspeedAbove500FtMin(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, 94.21, places=1)
 
 
-class TestAirspeedAt200Ft(unittest.TestCase):
+class TestAirspeedAt200FtDuringOffshoreApproach(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = AirspeedAt200Ft
+        self.node_class = AirspeedAt200FtDuringOffshoreApproach
+        self.can_operate_kwargs = {'ac_type': helicopter}
+        self.operational_combinations = [
+            ('Airspeed', 'Altitude AGL For Flight Phases', 'Approach Information', 'Offshore'),]
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Airspeed At 200 Ft')
+        self.assertEqual(node.name, 'Airspeed At 200 Ft During Offshore Approach')
         self.assertEqual(node.units, 'kt')
-
-    def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
-        self.assertEqual(opts, [])
-        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(len(opts), 1)
-        self.assertIn('Altitude AGL For Flight Phases', opts[0])
-        self.assertIn('Airspeed', opts[0])
-        self.assertIn('Approach', opts[0])
 
     def test_derive(self):
         x = np.linspace(3, 141, 17).tolist() + [140] + \
@@ -2446,15 +2443,20 @@ class TestAirspeedAt200Ft(unittest.TestCase):
             np.linspace(5, 139, 17).tolist() + [138] + \
             np.linspace(138, 0, 17).tolist()
         air_spd = P('Airspeed', x)
-        approaches = buildsections('Approach', [25,30], [60, 65])
+        approaches = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(25, 30)),
+                          ApproachItem('LANDING', slice(60, 65))])
         y = np.linspace(190, 403, 17).tolist() + \
             np.linspace(415, 20, 18).tolist() + \
             np.linspace(230, 534, 17).tolist() + \
             np.linspace(503, 50, 18).tolist()
         alt_agl = P('Altitude AGL For Flight Phases', y)
 
+        offshore = M(name='Offshore', array=np.ma.array([1]*70, dtype=int),
+                 values_mapping={0: 'Onshore', 1: 'Offshore'})
+
         node = self.node_class()
-        node.derive(air_spd, alt_agl, approaches)
+        node.derive(air_spd, alt_agl, approaches, offshore)
 
         self.assertEqual(len(node), 2)
         self.assertAlmostEqual(node[0].index, 26, places=0)
@@ -12239,13 +12241,13 @@ class TestGroundspeed20FtToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].value, 29)
 
 
-class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
+class TestGroundspeed20SecToOffshoreTouchdownMax(unittest.TestCase):
     def setUp(self):
-        self.node_class = Groundspeed20SecToTouchdownMax
+        self.node_class = Groundspeed20SecToOffshoreTouchdownMax
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Groundspeed 20 Sec To Touchdown Max')
+        self.assertEqual(node.name, 'Groundspeed 20 Sec To Offshore Touchdown Max')
         self.assertEqual(node.units, 'kt')
 
     def test_can_operate(self):
@@ -12255,7 +12257,7 @@ class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
         self.assertEqual(len(opts), 1)
         self.assertEqual(len(opts[0]), 3)
         self.assertIn('Groundspeed', opts[0])
-        self.assertIn('Touchdown', opts[0])
+        self.assertIn('Offshore Touchdown', opts[0])
         self.assertIn('Secs To Touchdown', opts[0])
 
     def test_derive(self):
@@ -12266,15 +12268,16 @@ class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
                                      50, 47, 44, 39, 32,
                                      30, 32, 31, 16,  8,
                                      8,   8,  7,  8,  8]))
-        touchdown = KTI('Touchdown', items=[KeyTimeInstance(10, 'Touchdown'),
-                                            KeyTimeInstance(25, 'Touchdown')])
-        secs_tdwn = KTI('Secs To Touchdown',
+        touchdown = KTI('Offshore Touchdown', items=[KeyTimeInstance(10, 'Offshore Touchdown'),
+                                                     KeyTimeInstance(25, 'Offshore Touchdown')])
+        secs_tdwn = SecsToTouchdown('Secs To Touchdown',
                         items=[KeyTimeInstance(1, '90 Secs To Touchdown'),
                                KeyTimeInstance(7, '30 Secs To Touchdown'),
                                KeyTimeInstance(8, '20 Secs To Touchdown'),
                                KeyTimeInstance(16, '90 Secs To Touchdown'),
                                KeyTimeInstance(22, '30 Secs To Touchdown'),
-                               KeyTimeInstance(23, '20 Secs To Touchdown')])
+                               KeyTimeInstance(23, '20 Secs To Touchdown'),
+                               KeyTimeInstance(29, '20 Secs To Touchdown')])
 
         node = self.node_class()
         node.derive(groundspeed, touchdown, secs_tdwn)
@@ -12286,14 +12289,14 @@ class TestGroundspeed20SecToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[1].value, 16)
 
 
-class TestGroundspeed0_8NMToTouchdown (unittest.TestCase):
+class TestGroundspeed0_8NMToOffshoreTouchdown (unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Groundspeed0_8NMToTouchdown
+        self.node_class = Groundspeed0_8NMToOffshoreTouchdown
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Groundspeed 0.8 NM To Touchdown')
+        self.assertEqual(node.name, 'Groundspeed 0.8 NM To Offshore Touchdown')
         self.assertEqual(node.units, 'kt')
 
     def test_can_operate(self):
@@ -12304,16 +12307,16 @@ class TestGroundspeed0_8NMToTouchdown (unittest.TestCase):
         self.assertEqual(len(opts[0]), 3)
         self.assertIn('Groundspeed', opts[0])
         self.assertIn('Distance To Touchdown', opts[0])
-        self.assertIn('Touchdown', opts[0])
+        self.assertIn('Offshore Touchdown', opts[0])
 
     def test_derive(self):
         gnd_spd = np.linspace(57, 2, 25).tolist()
         gnd_spd += np.linspace(111, 7, 11).tolist()
         groundspeed = P('Airspeed', np.ma.array(gnd_spd))
 
-        touchdown = KTI('Touchdown', items=[KeyTimeInstance(24, 'Touchdown'),
-                                            KeyTimeInstance(35, 'Touchdown')])
-        dtts = KTI('Distance To Touchdown',
+        touchdown = KTI('Offshore Touchdown', items=[KeyTimeInstance(24, 'Offshore Touchdown'),
+                                                     KeyTimeInstance(35, 'Offshore Touchdown')])
+        dtts = DistanceToTouchdown('Distance To Touchdown',
                    items=[KeyTimeInstance(16, '0.8 NM To Touchdown'),
                           KeyTimeInstance(15, '1.0 NM To Touchdown'),
                           KeyTimeInstance(14, '1.5 NM To Touchdown'),
@@ -12321,7 +12324,8 @@ class TestGroundspeed0_8NMToTouchdown (unittest.TestCase):
                           KeyTimeInstance(32, '0.8 NM To Touchdown'),
                           KeyTimeInstance(31, '1.0 NM To Touchdown'),
                           KeyTimeInstance(30, '1.5 NM To Touchdown'),
-                          KeyTimeInstance(29, '2.0 NM To Touchdown')])
+                          KeyTimeInstance(29, '2.0 NM To Touchdown'),
+                          KeyTimeInstance(37, '0.8 NM To Touchdown'),])
 
         node = self.node_class()
         node.derive(groundspeed, dtts, touchdown)

@@ -1620,9 +1620,9 @@ class Airspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
-class Airspeed2NMToTouchdown(KeyPointValueNode):
+class Airspeed2NMToOffshoreTouchdown(KeyPointValueNode):
     '''
-    Airspeed 2NM from touchdown
+    Airspeed 2NM from offshore touchdown
     '''
 
     units = ut.KT
@@ -1632,11 +1632,15 @@ class Airspeed2NMToTouchdown(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, airspeed=P('Airspeed'), dtts=P('Distance To Touchdown'),
-               touchdown=KTI('Touchdown')):
+               touchdown=KTI('Offshore Touchdown')):
 
-        indices = [d.index for d in dtts if '2.0 NM To Touchdown' in d.name]
-        for tdwn, index in zip(touchdown, indices):
-            self.create_kpv(index, value_at_index(airspeed.array, index))
+        #indices = [d.index for d in dtts if '2.0 NM To Touchdown' in d.name]
+        #for tdwn, index in zip(touchdown, indices):
+            #self.create_kpv(index, value_at_index(airspeed.array, index))
+        for tdwn in touchdown:
+            dist_to_touchdown = dtts.get_previous(tdwn.index, name='2.0 NM To Touchdown')
+            if dist_to_touchdown:
+                self.create_kpvs_at_ktis(airspeed.array, [dist_to_touchdown])
 
 
 class AirspeedAbove500FtMin(KeyPointValueNode):
@@ -1653,7 +1657,7 @@ class AirspeedAbove500FtMin(KeyPointValueNode):
                                        alt_agl.slices_above(500), min_value)
 
 
-class AirspeedAt200Ft(KeyPointValueNode):
+class AirspeedAt200FtDuringOffshoreApproach(KeyPointValueNode):
     '''
     Approach airspeed when at 200ft (helicopter only)
     '''
@@ -1662,15 +1666,19 @@ class AirspeedAt200Ft(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, air_spd=P('Airspeed'), alt_agl=P('Altitude AGL For Flight Phases'),
-               approaches=S('Approach')):
+               approaches=App('Approach Information'), offshore=M('Offshore')):
         for approach in approaches:
+            # check if landed/lowest point of approach is Offshore. May trigger incorrectly
+            # close to coast. Will be able to improve once we have implemented Rig locations
+            if value_at_index(offshore.array, approach.slice.stop, interpolate=False) == 'Onshore':
+                continue
+
             index = index_at_value(alt_agl.array, 200, approach.slice,
                                    'nearest')
             if not index:
                 continue
             value = value_at_index(air_spd.array, index)
-            if value:
-                self.create_kpv(index, value)    
+            self.create_kpv(index, value)
 
 
 class AirspeedAtTouchdown(KeyPointValueNode):
@@ -11886,9 +11894,9 @@ class Groundspeed20FtToTouchdownMax(KeyPointValueNode):
         )
 
 
-class Groundspeed20SecToTouchdownMax(KeyPointValueNode):
+class Groundspeed20SecToOffshoreTouchdownMax(KeyPointValueNode):
     '''
-    Find the maximum groundspeed 20 seconds from the point of touchdown.
+    Find the maximum groundspeed 20 seconds from the point of an offshore touchdown.
     (helicopters only)
     '''
     units = ut.KT
@@ -11896,35 +11904,46 @@ class Groundspeed20SecToTouchdownMax(KeyPointValueNode):
     can_operate = helicopter_only
     
     def derive(self, groundspeed=P('Groundspeed'),
-               touchdown=KTI('Touchdown'),
+               touchdown=KTI('Offshore Touchdown'),
                secs_tdwn=KTI('Secs To Touchdown')):
 
-        idx_to_tdwn = \
-            [s.index for s in secs_tdwn if s.name == '20 Secs To Touchdown']
-        idx_at_tdwn = [t.index for t in touchdown]
+        #idx_to_tdwn = \
+            #[s.index for s in secs_tdwn if s.name == '20 Secs To Touchdown']
+        #idx_at_tdwn = [t.index for t in touchdown]
         
-        if idx_to_tdwn and idx_at_tdwn:
-            _slice = [slice(a, b) for a, b in zip(idx_to_tdwn, idx_at_tdwn)]
-            self.create_kpvs_within_slices(groundspeed.array, _slice,
-                                           max_value)
+        #if idx_to_tdwn and idx_at_tdwn:
+            #_slice = [slice(a, b) for a, b in zip(idx_to_tdwn, idx_at_tdwn)]
+            #self.create_kpvs_within_slices(groundspeed.array, _slice,
+                                           #max_value)
+        for tdwn in touchdown:
+            secs_to_touchdown = secs_tdwn.get_previous(tdwn.index)
+            if secs_to_touchdown:
+                self.create_kpv(*max_value(groundspeed.array,
+                                           _slice=slice(secs_to_touchdown.index, tdwn.index+1),
+                                           start_edge=secs_to_touchdown.index,
+                                           stop_edge=tdwn.index))
 
 
-class Groundspeed0_8NMToTouchdown(KeyPointValueNode):
+class Groundspeed0_8NMToOffshoreTouchdown(KeyPointValueNode):
     '''
-    Groundspeed at 0.8 NM away from touchdown. (helicopters only)
+    Groundspeed at 0.8 NM away from an offshore touchdown. (helicopters only)
     '''
 
-    name = 'Groundspeed 0.8 NM To Touchdown'
+    name = 'Groundspeed 0.8 NM To Offshore Touchdown'
 
     units = ut.KT
 
     can_operate = helicopter_only
 
     def derive(self, groundspeed=P('Groundspeed'), 
-               dtts=KTI('Distance To Touchdown'), touchdown=KTI('Touchdown')):
-        indices = [d.index for d in dtts if '0.8 NM To Touchdown' in d.name]
-        for tdwn, index in zip(touchdown, indices):
-            self.create_kpv(index, value_at_index(groundspeed.array, index))
+               dtts=KTI('Distance To Touchdown'), touchdown=KTI('Offshore Touchdown')):
+        #indices = [d.index for d in dtts if '0.8 NM To Touchdown' in d.name]
+        #for tdwn, index in zip(touchdown, indices):
+        #    self.create_kpv(index, value_at_index(groundspeed.array, index))
+        for tdwn in touchdown:
+            dist_to_touchdown = dtts.get_previous(tdwn.index, name='0.8 NM To Touchdown')
+            if dist_to_touchdown:
+                self.create_kpvs_at_ktis(groundspeed.array, [dist_to_touchdown])
 
 
 class GroundspeedVacatingRunway(KeyPointValueNode):
