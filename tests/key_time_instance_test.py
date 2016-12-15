@@ -61,6 +61,8 @@ from analysis_engine.key_time_instances import (
     MovementStop,
     OffBlocks,
     OnBlocks,
+    OffshoreTouchdown,
+    OnshoreTouchdown,
     SecsToTouchdown,
     DistanceToTouchdown,
     SlatAlternateArmedSet,
@@ -936,6 +938,65 @@ class TestTouchdown(unittest.TestCase):
         tdwn = Touchdown()
         tdwn.derive(None, None, alt, alt, gog, lands)
         self.assertEqual(tdwn.get_first().index, 23292.0)
+
+
+class TestOffshoreTouchdown(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = OffshoreTouchdown
+        self.operational_combinations = [('Touchdown', 'Offshore')]
+
+    def test_derived(self):
+        offshore = M(
+            name='Offshore',
+            array=np.ma.repeat([0,1,0,1,1,0,1,0,0], 10),
+            values_mapping={0: 'Onshore', 1: 'Offshore'},
+        )
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(15, 'Touchdown'),
+                                            KeyTimeInstance(25, 'Touchdown'),
+                                            KeyTimeInstance(35, 'Touchdown'),
+                                            KeyTimeInstance(45, 'Touchdown'),
+                                            KeyTimeInstance(55, 'Touchdown'),
+                                            KeyTimeInstance(65, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(touchdown, offshore)
+
+        expected = KTI('Offshore Touchdown', items=[KeyTimeInstance(15, 'Offshore Touchdown'),
+                                                    KeyTimeInstance(35, 'Offshore Touchdown'),
+                                                    KeyTimeInstance(45, 'Offshore Touchdown'),
+                                                    KeyTimeInstance(65, 'Offshore Touchdown')])
+
+        self.assertEqual(node, expected)
+
+
+class TestOnshoreTouchdown(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = OnshoreTouchdown
+        self.operational_combinations = [('Touchdown', 'Offshore')]
+
+    def test_derived(self):
+        offshore = M(
+            name='Offshore',
+            array=np.ma.repeat([0,1,0,1,1,0,1,0,0], 10),
+            values_mapping={0: 'Onshore', 1: 'Offshore'},
+        )
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(15, 'Touchdown'),
+                                            KeyTimeInstance(25, 'Touchdown'),
+                                            KeyTimeInstance(35, 'Touchdown'),
+                                            KeyTimeInstance(45, 'Touchdown'),
+                                            KeyTimeInstance(55, 'Touchdown'),
+                                            KeyTimeInstance(65, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(touchdown, offshore)
+
+        expected = KTI('Onshore Touchdown', items=[KeyTimeInstance(25, 'Onshore Touchdown'),
+                                                    KeyTimeInstance(55, 'Onshore Touchdown'),])
+
+        self.assertEqual(node, expected)
+
 
 ##############################################################################
 # Automated Systems

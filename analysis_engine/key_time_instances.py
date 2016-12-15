@@ -1623,6 +1623,29 @@ class Touchdown(KeyTimeInstanceNode):
             plt.close()
             '''
 
+class OffshoreTouchdown(KeyTimeInstanceNode):
+    '''
+    Subset of touchdowns which occur offshore
+    '''
+
+    def derive(self, touchdowns=KTI('Touchdown'),
+               offshore=M('Offshore')):
+        for tdwn in touchdowns:
+            if value_at_index(offshore.array, tdwn.index, interpolate=False) == 'Offshore':
+                self.create_kti(tdwn.index)
+
+
+class OnshoreTouchdown(KeyTimeInstanceNode):
+    '''
+    Subset of touchdowns which occur offshore
+    '''
+
+    def derive(self, touchdowns=KTI('Touchdown'),
+               offshore=M('Offshore')):
+        for tdwn in touchdowns:
+            if value_at_index(offshore.array, tdwn.index, interpolate=False) == 'Onshore':
+                self.create_kti(tdwn.index)
+
 
 class LandingDecelerationEnd(KeyTimeInstanceNode):
     '''
