@@ -1236,19 +1236,16 @@ class AltitudeQNHCalculated(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        baro = any_of(('Baro Correction (Capt)', 'Baro Correction (FO)', 
-                       'Baro Correction 1', 'Baro Correction 2', 
+        baro = any_of(('Baro Correction (Capt)', 'Baro Correction (FO)'
                        'Baro Correction'), available)
-        return baro and 'Altitude Std' in available
+        return baro and 'Altitude STD' in available
 
     def derive(self, 
                alt_std=P('Altitude STD'),
                baro_capt=P('Baro Correction (Capt)'), 
                baro_fo=P('Baro Correction (FO)'),
-               baro_1=P('Baro Correction 1'),
-               baro_2=P('Baro Correction 2'),
                baro=P('Baro Correction')):
-        baro_correction = baro or baro_capt or baro_1 or baro_fo or baro_2
+        baro_correction = baro or baro_capt or baro_fo
         baro_fixed = nearest_neighbour_mask_repair(baro_correction.array)
         
         alt_qnh = np_ma_masked_zeros_like(alt_std.array)

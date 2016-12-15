@@ -1285,16 +1285,14 @@ class TestAltitudeQNHCalculated(unittest.TestCase):
             baro = 'Baro Correction' in opt
             baro_capt = 'Baro Correction (Capt)' in opt
             baro_fo = 'Baro Correction (FO)' in opt
-            baro_1 = 'Baro Correction 1' in opt
-            baro_2 = 'Baro Correction 2' in opt
-            self.assertTrue(baro or baro_capt or baro_fo or baro_1 or baro_2)        
+            self.assertTrue(baro or baro_capt or baro_fo)
 
     def test_derive(self):
         alt_std = P('Altitude STD', np.ma.array([10000]*25))
         baro = P('Baro Correction', np.ma.array(np.arange(1000,1025)))
 
         node = self.node_class()
-        node.derive(alt_std, None, None, None, None, baro)
+        node.derive(alt_std, None, None, baro)
 
         expected_alt_qnh = [
             9636, 9663, 9691, 9719, 9746, 9774, 9801, 9828, 9856, 9883,
