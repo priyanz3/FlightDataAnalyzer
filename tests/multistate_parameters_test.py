@@ -32,6 +32,7 @@ from analysis_engine.node import (
     S,
 )
 from analysis_engine.multistate_parameters import (
+    AllEnginesOperative,
     APEngaged,
     APChannelsEngaged,
     APLateralMode,
@@ -45,13 +46,12 @@ from analysis_engine.multistate_parameters import (
     ThrustModeSelected,
     EngBleedOpen,
     EngRunning,
-    Eng1OEI,
-    Eng2OEI,
+    Eng1OneEngineInoperative,
+    Eng2OneEngineInoperative,
     Eng1Running,
     Eng2Running,
     Eng3Running,
     Eng4Running,
-    Eng_AEO,
     Eng_AllRunning,
     Eng_AnyRunning,
     Eng_1_Fire,
@@ -59,7 +59,6 @@ from analysis_engine.multistate_parameters import (
     Eng_3_Fire,
     Eng_4_Fire,
     Eng_Fire,
-    Eng_OEI,
     Eng_Oil_Press_Warning,
     EventMarker,
     Flap,
@@ -80,6 +79,7 @@ from analysis_engine.multistate_parameters import (
     KeyVHFFO,
     MasterCaution,
     MasterWarning,
+    OneEngineInoperative,
     PackValvesOpen,
     PilotFlying,
     PitchAlternateLaw,
@@ -1128,10 +1128,10 @@ class TestEng_AnyRunning(unittest.TestCase, NodeTest):
         self.assertEqual(node.array.raw.tolist(), expected)
 
 
-class TestEng1OEI(unittest.TestCase):
+class TestEng1OneEngineInoperative(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng1OEI
+        self.node_class = Eng1OneEngineInoperative
         n2_data = [0.0]*3 + [100.0]*11 + [98.0]*3 + [100.0]*20 + [0.0]*3
         self.n2 = P(name='Eng (2) N2', array=np.ma.array(n2_data))
 
@@ -1139,17 +1139,17 @@ class TestEng1OEI(unittest.TestCase):
         self.nr = P(name='Nr', array=np.ma.array(nr_data))
 
         expected_data = [0]*14 + [1]*3 + [0]*23
-        self.expected = self.node_class(name='Eng (1) OEI', array=np.ma.array(expected_data, dtype=int),
+        self.expected = self.node_class(name='Eng (1) One Engine Inoperative', array=np.ma.array(expected_data, dtype=int),
                                         values_mapping=self.node_class.values_mapping)
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (2) N2', 'Nr')]
+        expected = [('Eng (2) N2', 'Nr', 'Autorotation')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
         node = self.node_class()
-        node.derive(self.n2, self.nr)
+        node.derive(self.n2, self.nr, S(items=[]))
 
         np.testing.assert_array_equal(node.array, self.expected.array)
 
@@ -1158,15 +1158,15 @@ class TestEng1OEI(unittest.TestCase):
         self.n2.array.mask[20:25] = True
 
         node = self.node_class()
-        node.derive(self.n2, self.nr)
+        node.derive(self.n2, self.nr, S(items=[]))
 
         np.testing.assert_array_equal(node.array, self.expected.array)
 
 
-class TestEng2OEI(unittest.TestCase):
+class TestEng2OneEngineInoperative(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng2OEI
+        self.node_class = Eng2OneEngineInoperative
         n2_data = [0.0]*3 + [100.0]*11 + [98.0]*3 + [100.0]*20 + [0.0]*3
         self.n2 = P(name='Eng (1) N2', array=np.ma.array(n2_data))
 
@@ -1174,17 +1174,17 @@ class TestEng2OEI(unittest.TestCase):
         self.nr = P(name='Nr', array=np.ma.array(nr_data))
 
         expected_data = [0]*14 + [1]*3 + [0]*23
-        self.expected = self.node_class(name='Eng (2) OEI', array=np.ma.array(expected_data, dtype=int),
+        self.expected = self.node_class(name='Eng (2) One Engine Inoperative', array=np.ma.array(expected_data, dtype=int),
                                         values_mapping=self.node_class.values_mapping)
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (1) N2', 'Nr')]
+        expected = [('Eng (1) N2', 'Nr', 'Autorotation')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
         node = self.node_class()
-        node.derive(self.n2, self.nr)
+        node.derive(self.n2, self.nr, S(items=[]))
 
         np.testing.assert_array_equal(node.array, self.expected.array)
 
@@ -1193,59 +1193,60 @@ class TestEng2OEI(unittest.TestCase):
         self.n2.array.mask[20:25] = True
 
         node = self.node_class()
-        node.derive(self.n2, self.nr)
+        node.derive(self.n2, self.nr, S(items=[]))
 
         np.testing.assert_array_equal(node.array, self.expected.array)
 
 
-class TestEng_OEI(unittest.TestCase):
+class TestOneEngineInoperative(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng_OEI
+        self.node_class = OneEngineInoperative
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (1) OEI', 'Eng (2) OEI')]
+        expected = [('Eng (1) One Engine Inoperative', 'Eng (2) One Engine Inoperative', 'Autorotation')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
         data = [0]*10 + [1]*5 + [0]*25
-        eng_1 = M(name='Eng (1) OEI', array=np.ma.array(data, dtype=int),
-                       values_mapping=Eng1OEI.values_mapping)
-        eng_2 = M(name='Eng (2) OEI', array=np.ma.array(np.roll(data, 10), dtype=int),
-                       values_mapping=Eng1OEI.values_mapping)
+        eng_1 = M(name='Eng (1) One EngineI noperative', array=np.ma.array(data, dtype=int),
+                       values_mapping=Eng1OneEngineInoperative.values_mapping)
+        eng_2 = M(name='Eng (2) One Engine Inoperative', array=np.ma.array(np.roll(data, 10), dtype=int),
+                       values_mapping=Eng2OneEngineInoperative.values_mapping)
 
         node = self.node_class()
-        node.derive(eng_1, eng_2)
+        node.derive(eng_1, eng_2, S(items=[]))
 
         expected_data = [0]*10 + [1]*5 + [0]*5 + [1]*5 + [0]*15
-        expected = self.node_class(name='Eng (*) OEI', array=np.ma.array(expected_data, dtype=int),
+        expected = self.node_class(name='One Engine Inoperative', array=np.ma.array(expected_data, dtype=int),
                        values_mapping=self.node_class.values_mapping)
         np.testing.assert_array_equal(node.array, expected.array)
 
 
-class TestEng_AEO(unittest.TestCase):
+class TestAllEnginesOperative(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = Eng_AEO
+        self.node_class = AllEnginesOperative
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations(ac_type=helicopter)
-        expected = [('Eng (*) Any Running', 'Eng (*) OEI')]
+        expected = [('Eng (*) Any Running', 'One Engine Inoperative', 'Autorotation')]
         self.assertEqual(combinations, expected)
 
     def test_derive(self):
         run_data = [0]*5 + [1]*30 + [0]*5
         oei_data = [0]*13 + [1]*3 + [0]*24
-        oei = M(name='Eng (*) OEI', array=np.ma.array(oei_data), values_mapping=Eng_OEI.values_mapping)
+        oei = M(name='One Engine Inoperative', array=np.ma.array(oei_data), values_mapping=OneEngineInoperative.values_mapping)
         any_running = M(name='Eng (*) Any Running', array=np.ma.array(run_data),
                        values_mapping=Eng_AnyRunning.values_mapping)
+        autorotation = []
 
         node = self.node_class()
-        node.derive(any_running, oei)
+        node.derive(any_running, oei, S(items=[]))
 
         expected_data = [0]*5 + [1]*8 + [0]*3 + [1]*19 + [0]*5
-        expected = self.node_class(name='Eng (*) AEO', array=np.ma.array(expected_data, dtype=int),
+        expected = self.node_class(name='All Engines Operative', array=np.ma.array(expected_data, dtype=int),
                        values_mapping=self.node_class.values_mapping)
         np.testing.assert_array_equal(node.array, expected.array)
 

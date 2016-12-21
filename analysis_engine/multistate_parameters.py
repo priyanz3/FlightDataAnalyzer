@@ -30,6 +30,7 @@ from analysis_engine.library import (
     including_transition,
     index_at_value,
     index_closest_value,
+    mask_inside_slices,
     merge_masks,
     merge_two_parameters,
     moving_average,
@@ -864,15 +865,15 @@ class Eng_AnyRunning(MultistateDerivedParameterNode, EngRunning):
 
 # Helicopters
 
-class Eng1OEI(MultistateDerivedParameterNode):
+class Eng1OneEngineInoperative(MultistateDerivedParameterNode):
     '''
     Look for at least 1% difference between Eng 2 N2 speed and the rotor speed to indicate
     Eng 1 can use OEI limits.
 
-    OEI: One Engine Inoperable
+    OEI: One Engine Inoperative
     '''
 
-    name = 'Eng (1) OEI'
+    name = 'Eng (1) One Engine Inoperative'
 
     values_mapping = {
         0: '-',
@@ -883,22 +884,25 @@ class Eng1OEI(MultistateDerivedParameterNode):
 
     def derive(self,
                eng_2_n2=P('Eng (2) N2'),
-               nr=P('Nr')):
+               nr=P('Nr'),
+               autorotation=S('Autorotation')):
 
-        delta = nr.array - eng_2_n2.array
+        nr_periods = np.ma.masked_less(nr.array, 80)
+        nr_periods = mask_inside_slices(nr_periods, autorotation.get_slices())
+        delta = nr_periods - eng_2_n2.array
         split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
         self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 
-class Eng2OEI(MultistateDerivedParameterNode):
+class Eng2OneEngineInoperative(MultistateDerivedParameterNode):
     '''
     Look for at least 1% difference between Eng 1 N2 speed and the rotor speed to indicate
     Eng 1 can use OEI limits.
 
-    OEI: One Engine Inoperable
+    OEI: One Engine Inoperative
     '''
 
-    name = 'Eng (2) OEI'
+    name = 'Eng (2) One Engine Inoperative'
 
     values_mapping = {
         0: '-',
@@ -909,21 +913,22 @@ class Eng2OEI(MultistateDerivedParameterNode):
 
     def derive(self,
                eng_1_n2=P('Eng (1) N2'),
-               nr=P('Nr')):
+               nr=P('Nr'),
+               autorotation=S('Autorotation')):
 
-        delta = nr.array - eng_1_n2.array
+        nr_periods = np.ma.masked_less(nr.array, 80)
+        nr_periods = mask_inside_slices(nr_periods, autorotation.get_slices())
+        delta = nr_periods - eng_1_n2.array
         split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
         self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 
-class Eng_OEI(MultistateDerivedParameterNode):
+class OneEngineInoperative(MultistateDerivedParameterNode):
     '''
     Any Engine is running either engine is OEI
 
-    OEI: One Engine Inoperable
+    OEI: One Engine Inoperative
     '''
-
-    name = 'Eng (*) OEI'
 
     values_mapping = {
         0: '-',
@@ -933,22 +938,24 @@ class Eng_OEI(MultistateDerivedParameterNode):
     can_operate = helicopter_only
 
     def derive(self,
-               eng_1_oei=M('Eng (1) OEI'),
-               eng_2_oei=M('Eng (2) OEI'),):
+               eng_1_oei=M('Eng (1) One Engine Inoperative'),
+               eng_2_oei=M('Eng (2) One Engine Inoperative'),
+               autorotation=S('Autorotation')):
 
-        self.array = vstack_params_where_state((eng_1_oei, 'Active'),
-                                               (eng_2_oei, 'Active')).any(axis=0)
+        oei = vstack_params_where_state((eng_1_oei, 'Active'),
+                                        (eng_2_oei, 'Active')).any(axis=0)
+        for section in autorotation:
+            oei[section.slice] = False
+        self.array = oei
 
 
-class Eng_AEO(MultistateDerivedParameterNode):
+class AllEnginesOperative(MultistateDerivedParameterNode):
     '''
     Any Engine is running neither is OEI
 
-    OEI: One Engine Inoperable
-    AEO: All Engines Operable
+    OEI: One Engine Inoperative
+    AEO: All Engines Operative
     '''
-
-    name = 'Eng (*) AEO'
 
     values_mapping = {
         0: '-',
@@ -959,8 +966,11 @@ class Eng_AEO(MultistateDerivedParameterNode):
 
     def derive(self, 
                any_running=M('Eng (*) Any Running'),
-               eng_oei=M('Eng (*) OEI')):
+               eng_oei=M('One Engine Inoperative'),
+               autorotation=S('Autorotation')):
         aeo = np.ma.logical_not(eng_oei.array == 'OEI')
+        for section in autorotation:
+            aeo[section.slice] = False
         self.array = np.ma.logical_and(any_running.array == 'Running', aeo)
 
 

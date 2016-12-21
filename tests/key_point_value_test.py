@@ -90,7 +90,7 @@ from analysis_engine.key_point_values import (
     Airspeed20FtToTouchdownMax,
     Airspeed2NMToOffshoreTouchdown,
     AirspeedAbove500FtMin,
-    AirspeedAt200FtDuringOffshoreApproach,
+    AirspeedAt200FtDuringOnshoreApproach,
     AirspeedAtAPGoAroundEngaged,
     AirspeedWhileAPHeadingEngagedMin,
     AirspeedWhileAPVerticalSpeedEngagedMin,
@@ -2424,17 +2424,17 @@ class TestAirspeedAbove500FtMin(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, 94.21, places=1)
 
 
-class TestAirspeedAt200FtDuringOffshoreApproach(unittest.TestCase, NodeTest):
+class TestAirspeedAt200FtDuringOnshoreApproach(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = AirspeedAt200FtDuringOffshoreApproach
+        self.node_class = AirspeedAt200FtDuringOnshoreApproach
         self.can_operate_kwargs = {'ac_type': helicopter}
         self.operational_combinations = [
             ('Airspeed', 'Altitude AGL For Flight Phases', 'Approach Information', 'Offshore'),]
 
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Airspeed At 200 Ft During Offshore Approach')
+        self.assertEqual(node.name, 'Airspeed At 200 Ft During Onshore Approach')
         self.assertEqual(node.units, 'kt')
 
     def test_derive(self):
@@ -2452,7 +2452,7 @@ class TestAirspeedAt200FtDuringOffshoreApproach(unittest.TestCase, NodeTest):
             np.linspace(503, 50, 18).tolist()
         alt_agl = P('Altitude AGL For Flight Phases', y)
 
-        offshore = M(name='Offshore', array=np.ma.array([1]*70, dtype=int),
+        offshore = M(name='Offshore', array=np.ma.array([0]*70, dtype=int),
                  values_mapping={0: 'Onshore', 1: 'Offshore'})
 
         node = self.node_class()

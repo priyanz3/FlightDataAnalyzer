@@ -10,14 +10,18 @@ from analysis_engine.split_hdf_to_segments import (
     _calculate_start_datetime,
     _get_normalised_split_params,
     _mask_invalid_years,
+    _segment_type_and_slice,
     append_segment_info,
     calculate_fallback_dt,
     get_dt_arrays,
     has_constant_time,
-    split_segments)
+    split_segments,
+)
 from analysis_engine.node import P, Parameter
 
 from hdfaccess.file import hdf_file
+
+from flightdatautilities.array_operations import load_compressed
 from flightdatautilities.filesystem_tools import copy_file
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -747,3 +751,23 @@ class TestSegmentInfo(unittest.TestCase):
         res = _calculate_start_datetime(hdf, dt, dt)
         # result is the exact start of the data for the timestamp (not a day before!)
         self.assertEqual(res, datetime(2012, 12, 12, 23, 59, 58, tzinfo=pytz.utc))
+
+
+class TestSegmentTypeAndSlice(unittest.TestCase):
+    
+    def test_segment_type_and_slice_1(self):
+        # Unmasked fast Airspeed at the beginning of the data which is difficult
+        # to validate should be ignored in segment type identification.
+        speed_array = load_compressed(os.path.join(test_data_path, 'segment_type_and_slice_1_speed.npz'))
+        heading_array = load_compressed(os.path.join(test_data_path, 'segment_type_and_slice_1_heading.npz'))
+        eng_arrays = load_compressed(os.path.join(test_data_path, 'segment_type_and_slice_1_eng_arrays.npz'))
+        aircraft_info = {'Aircraft Type': 'aeroplane'}
+        thresholds = {'hash_min_samples': 64, 'speed_threshold': 80, 'min_split_duration': 100, 'min_duration': 180}
+        hdf = mock.Mock()
+        hdf.superframe_present = False
+        segment_type, segment, array_start_secs = _segment_type_and_slice(
+            speed_array, 1, heading_array, 1, 0, 11824, eng_arrays, 
+            aircraft_info, thresholds, hdf)
+        self.assertEqual(segment_type, 'START_AND_STOP')
+        self.assertEqual(segment, slice(0, 11824))
+        self.assertEqual(array_start_secs, 0)

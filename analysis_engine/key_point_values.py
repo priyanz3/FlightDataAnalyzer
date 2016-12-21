@@ -1657,7 +1657,7 @@ class AirspeedAbove500FtMin(KeyPointValueNode):
                                        alt_agl.slices_above(500), min_value)
 
 
-class AirspeedAt200FtDuringOffshoreApproach(KeyPointValueNode):
+class AirspeedAt200FtDuringOnshoreApproach(KeyPointValueNode):
     '''
     Approach airspeed when at 200ft (helicopter only)
     '''
@@ -1670,7 +1670,7 @@ class AirspeedAt200FtDuringOffshoreApproach(KeyPointValueNode):
         for approach in approaches:
             # check if landed/lowest point of approach is Offshore. May trigger incorrectly
             # close to coast. Will be able to improve once we have implemented Rig locations
-            if value_at_index(offshore.array, approach.slice.stop, interpolate=False) == 'Onshore':
+            if value_at_index(offshore.array, approach.slice.stop, interpolate=False) == 'Offshore':
                 continue
 
             index = index_at_value(alt_agl.array, 200, approach.slice,
