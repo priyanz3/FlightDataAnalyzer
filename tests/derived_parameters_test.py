@@ -1280,6 +1280,7 @@ class TestAltitudeQNHCalculated(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
+        self.assertNotEqual(opts,[], 'No operational combinations')
         for opt in opts:
             self.assertIn('Altitude STD', opt)
             baro = 'Baro Correction' in opt
