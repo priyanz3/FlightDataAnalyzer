@@ -970,7 +970,7 @@ class AllEnginesOperative(MultistateDerivedParameterNode):
                autorotation=S('Autorotation')):
         aeo = np.ma.logical_not(eng_oei.array == 'OEI')
         for section in autorotation:
-            oei[section.slice] = False
+            aeo[section.slice] = False
         self.array = np.ma.logical_and(any_running.array == 'Running', aeo)
 
 
