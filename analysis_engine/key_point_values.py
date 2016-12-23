@@ -14265,7 +14265,7 @@ class RollOnDeckMax(KeyPointValueNode):
                                        max_abs_value)
 
 
-class RollCyclesDuringFinalApproach(KeyPointValueNode):
+class RollCyclesExceeding5DegDuringFinalApproach(KeyPointValueNode):
     '''
     Counts the number of cycles of roll attitude that exceed 5 deg from
     peak to peak and with a maximum cycle period of 10 seconds during the
@@ -14289,7 +14289,31 @@ class RollCyclesDuringFinalApproach(KeyPointValueNode):
             ))
 
 
-class RollCyclesDuringInitialClimb(KeyPointValueNode):
+class RollCyclesExceeding15DegDuringFinalApproach(KeyPointValueNode):
+    '''
+    Counts the number of cycles of roll attitude that exceed 15 deg from
+    peak to peak and with a maximum cycle period of 10 seconds during the
+    final approach phase.
+
+    The algorithm counts each half-cycle, so an "N" figure would give a value
+    of 1.5 cycles.
+    '''
+
+    units = ut.CYCLES
+
+    def derive(self,
+               roll=P('Roll'),
+               fin_apps=S('Final Approach')):
+
+        for fin_app in fin_apps:
+            self.create_kpv(*cycle_counter(
+                roll.array[fin_app.slice],
+                15.0, 10.0, roll.hz,
+                fin_app.slice.start,
+            ))
+
+
+class RollCyclesExceeding5DegDuringInitialClimb(KeyPointValueNode):
     '''
     Counts the number of cycles of roll attitude that exceed 5 deg from
     peak to peak and with a maximum cycle period of 10 seconds during the
@@ -14309,6 +14333,30 @@ class RollCyclesDuringInitialClimb(KeyPointValueNode):
             self.create_kpv(*cycle_counter(
                 roll.array[climb.slice],
                 5.0, 10.0, roll.hz,
+                climb.slice.start,
+            ))
+
+
+class RollCyclesExceeding15DegDuringInitialClimb(KeyPointValueNode):
+    '''
+    Counts the number of cycles of roll attitude that exceed 15 deg from
+    peak to peak and with a maximum cycle period of 10 seconds during the
+    Initial Climb phase.
+
+    The algorithm counts each half-cycle, so an "N" figure would give a value
+    of 1.5 cycles.
+    '''
+
+    units = ut.CYCLES
+
+    def derive(self,
+               roll=P('Roll'),
+               initial_climbs=S('Initial Climb')):
+
+        for climb in initial_climbs:
+            self.create_kpv(*cycle_counter(
+                roll.array[climb.slice],
+                15.0, 10.0, roll.hz,
                 climb.slice.start,
             ))
 

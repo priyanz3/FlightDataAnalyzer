@@ -566,8 +566,10 @@ from analysis_engine.key_point_values import (
     RollAtLowAltitude,
     RollBelow300FtMax,
     RollBelow500FtMax,
-    RollCyclesDuringFinalApproach,
-    RollCyclesDuringInitialClimb,
+    RollCyclesExceeding5DegDuringFinalApproach,
+    RollCyclesExceeding15DegDuringFinalApproach,
+    RollCyclesExceeding5DegDuringInitialClimb,
+    RollCyclesExceeding15DegDuringInitialClimb,
     RollCyclesNotDuringFinalApproach,
     RollLeftAbove8000FtAltitudeDensityAbove60Kts,
     RollLeftAbove6000FtAltitudeDensityBelow60Kts,
@@ -14580,10 +14582,10 @@ class TestRoll20FtToTouchdownMax(unittest.TestCase):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestRollCyclesDuringFinalApproach(unittest.TestCase, NodeTest):
+class TestRollCyclesExceeding5DegDuringFinalApproach(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = RollCyclesDuringFinalApproach
+        self.node_class = RollCyclesExceeding5DegDuringFinalApproach
         self.operational_combinations = [('Roll', 'Final Approach')]
 
     @unittest.skip('Test Not Implemented')
@@ -14591,10 +14593,32 @@ class TestRollCyclesDuringFinalApproach(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestRollCyclesDuringInitialClimb(unittest.TestCase, NodeTest):
+class TestRollCyclesExceeding15DegDuringFinalApproach(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = RollCyclesDuringInitialClimb
+        self.node_class = RollCyclesExceeding15DegDuringFinalApproach
+        self.operational_combinations = [('Roll', 'Final Approach')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestRollCyclesExceeding5DegDuringInitialClimb(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = RollCyclesExceeding5DegDuringInitialClimb
+        self.operational_combinations = [('Roll', 'Initial Climb')]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestRollCyclesExceeding15DegDuringInitialClimb(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = RollCyclesExceeding15DegDuringInitialClimb
         self.operational_combinations = [('Roll', 'Initial Climb')]
 
     @unittest.skip('Test Not Implemented')
