@@ -1089,6 +1089,25 @@ class Airspeed1000To5000FtMax(KeyPointValueNode):
         self.create_kpvs_within_slices(air_spd.array, alt_climb_sections,
                                        max_value)
 
+    
+class Airspeed5000To8000FtMax(KeyPointValueNode):
+    '''
+    Airspeed from 5000ft to 8000ft above the airfield.
+    '''
+    units = ut.KT
+
+    def derive(self, air_spd=P('Airspeed'), 
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               alt_std=P('Altitude STD Smoothed'),
+               climbs=S('Climb')):
+        for climb in climbs:
+            aal = np.ma.clump_unmasked(np.ma.masked_less(
+                alt_aal.array[climb.slice], 5000.0))
+            std = np.ma.clump_unmasked(np.ma.masked_greater(
+                alt_std.array[climb.slice], 8000.0))
+            scope = shift_slices(slices_and(aal, std), climb.slice.start)
+            self.create_kpv_from_slices(air_spd.array, scope, max_value)
+
 
 class Airspeed5000To10000FtMax(KeyPointValueNode):
     '''

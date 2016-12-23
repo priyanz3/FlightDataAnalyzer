@@ -84,6 +84,7 @@ from analysis_engine.key_point_values import (
     Airspeed500To50FtMedian,
     Airspeed500To50FtMedianMinusAirspeedSelected,
     Airspeed500To20FtMin,
+    Airspeed5000To8000FtMax,
     Airspeed5000To10000FtMax,
     Airspeed8000To10000FtMax,
     Airspeed8000To5000FtMax,
@@ -2000,6 +2001,38 @@ class TestAirspeed1000To8000FtMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertAlmostEqual(event[0].value, 112.88, 1)
         self.assertEqual(event[1].index, 80.0)
         self.assertAlmostEqual(event[1].value, 114.55, 1)
+
+
+class TestAirspeed5000To8000FtMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = Airspeed5000To8000FtMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 'kt')
+        self.assertEqual(node.name, 'Airspeed 5000 To 8000 Ft Max')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('Altitude AAL For Flight Phases', opts[0])
+        self.assertIn('Altitude STD Smoothed', opts[0])
+        self.assertIn('Climb', opts[0])
+
+    def test_derive(self):
+        testline = np.arange(0, 12.6, 0.1)
+        testwave = (np.cos(testline) * -100) + 100
+        air_spd = P('Airspeed', np.ma.array(testwave))
+        alt_aal = P('Altitude AAL For Flight Phases', np.ma.array(testwave) * 50+2000)
+        alt_std = P('Altitude STD Smoothed', np.ma.array(testwave) * 50 + 2000)
+        climb = buildsections('Climb', [3, 28], [65, 91])
+        node = self.node_class()
+        node.derive(air_spd, alt_aal, alt_std, climb)
+        self.assertEqual(node[0].index, 17)
+        self.assertAlmostEqual(node[0].value, 112.88, 1)
+        self.assertEqual(node[1].index, 80)
+        self.assertAlmostEqual(node[1].value, 114.55, 1)
 
 
 class TestAirspeed5000To10000FtMax(unittest.TestCase):
