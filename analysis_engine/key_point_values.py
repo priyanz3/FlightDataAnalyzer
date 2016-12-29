@@ -8000,7 +8000,8 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
     units = ut.SECOND
 
     @classmethod
-    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'), mods=A('Modifications')):
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'),
+                    mods=A('Modifications'), ac_type=A('Aircraft Type')):
         try:
             at.get_engine_map(eng_series.value, eng_type.value, mods.value)
         except KeyError:
@@ -8008,7 +8009,7 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
                         eng_series.value, eng_type.value, mods.value)
             return False
 
-        return any_of((
+        base = any_of((
             'Eng (1) Torque',
             'Eng (2) Torque',
             'Eng (3) Torque',
@@ -8018,6 +8019,11 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
             'Maximum Continuous Power',
             'Go Around 5 Min Rating',
         ), available)
+
+        # Additional requirement for Helicopters only
+        heli_additions = False if ac_type == helicopter and 'All Engines Operative' not in available else True
+
+        return base and heli_additions
 
     def derive(self,
                eng1=M('Eng (1) Torque'),
@@ -8029,7 +8035,8 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
                go_around=S('Go Around 5 Min Rating'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
-               mods=A('Modifications')):
+               mods=A('Modifications'),
+               all_eng=M('All Engines Operative')):
 
         eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
         # Lookup takeoff/mcp values
@@ -8060,6 +8067,89 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
             phase_slices = slices_remove_small_slices(phase_slices, 2, eng1.hz)
             phase_slices = slices_remove_overlaps(phase_slices)
             phase_slices = slices_remove_small_gaps(phase_slices, 3, eng1.hz)
+            # Helicopters only
+            if all_eng:
+                phase_slices = slices_and(runs_of_ones(all_eng.array == 'AEO'), phase_slices)
+            # Remove overlapping slices keeping longer
+            self.create_kpvs_from_slice_durations(
+                phase_slices, self.frequency, period=name)
+
+
+class EngTorqueOverThresholdWithOneEngineInoperativeDuration(KeyPointValueNode):
+    '''
+    Measures the duration Torque is over the Takeoff/MCP power rating
+    '''
+
+    NAME_FORMAT = 'Eng Torque Over %(period)s With One Engine Inoperative Duration'
+    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available, eng_series=A('Engine Series'), eng_type=A('Engine Type'),
+                    mods=A('Modifications'), ac_type=A('Aircraft Type')):
+        if ac_type != helicopter:
+            return False
+        try:
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        except KeyError:
+            cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
+                        eng_series.value, eng_type.value, mods.value)
+            return False
+
+        return any_of((
+            'Eng (1) Torque',
+            'Eng (2) Torque',
+            'Eng (3) Torque',
+            'Eng (4) Torque'
+        ), available) and any_of((
+            'Takeoff 5 Min Rating',
+            'Maximum Continuous Power',
+            'Go Around 5 Min Rating',
+        ), available) and 'One Engine Inoperative' in available
+
+    def derive(self,
+               eng1=M('Eng (1) Torque'),
+               eng2=M('Eng (2) Torque'),
+               eng3=M('Eng (3) Torque'),
+               eng4=M('Eng (4) Torque'),
+               takeoff=S('Takeoff 5 Min Rating'),
+               mcp=S('Maximum Continuous Power'),
+               go_around=S('Go Around 5 Min Rating'),
+               eng_series=A('Engine Series'),
+               eng_type=A('Engine Type'),
+               mods=A('Modifications'),
+               one_eng=M('One Engine Inopterative')):
+
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+        # Lookup takeoff/mcp values
+        mcp_value = eng_thresholds.get('Torque', {}).get('mcp')
+        takeoff_value = eng_thresholds.get('Torque', {}).get('takeoff')
+
+        phase_thresholds = [
+            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
+            (self.NAME_VALUES['period'][1], mcp, mcp_value),
+            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
+        ]
+
+        engines = [e for e in (eng1, eng2, eng3, eng4) if e]
+
+        # iterate over phases
+        for name, phase, threshold in phase_thresholds:
+            if threshold is None or phase is None:
+                # No threshold for this parameter in this phase.
+                continue
+            threshold_slices = []
+            # iterate over engines
+            for eng in engines:
+                # create slices where eng above thresold
+                threshold_slices += slices_above(eng.array, threshold)[1]
+            # Only interested in exceedances within period.
+            # Brief exceedances and gaps are removed to reduce KPV count.
+            phase_slices = slices_and(phase.get_slices(), threshold_slices)
+            phase_slices = slices_remove_small_slices(phase_slices, 2, eng1.hz)
+            phase_slices = slices_remove_overlaps(phase_slices)
+            phase_slices = slices_remove_small_gaps(phase_slices, 3, eng1.hz)
+            phase_slices = slices_and(runs_of_ones(one_eng.array == 'OEI'), phase_slices)
             # Remove overlapping slices keeping longer
             self.create_kpvs_from_slice_durations(
                 phase_slices, self.frequency, period=name)
