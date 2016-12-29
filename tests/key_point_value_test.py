@@ -343,7 +343,9 @@ from analysis_engine.key_point_values import (
     EngTorque500To50FtMin,
     EngTorqueDuringGoAround5MinRatingMax,
     EngTorqueDuringMaximumContinuousPowerMax,
+    EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax,
     EngTorqueDuringTakeoff5MinRatingMax,
+    EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax,
     EngTorqueDuringTaxiMax,
     EngTorqueFor5SecDuringGoAround5MinRatingMax,
     EngTorqueFor5SecDuringMaximumContinuousPowerMax,
@@ -9780,16 +9782,78 @@ class TestEngTorqueDuringTaxiMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestEngTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestEngTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngTorqueDuringTakeoff5MinRatingMax
         self.operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating')]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
+    def test_can_operate_heli(self):
+        operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating', 'All Engines Operative')]
+        kwargs = {'ac_type': helicopter}
+        combinations = map(set, self.node_class.get_operational_combinations(**kwargs))
+        for combination in map(set, operational_combinations):
+            self.assertIn(combination, combinations)
+
     def test_derive(self):
-        self.assertTrue(False, msg='Test Not Implemented')
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+        ratings = buildsection('Takeoff 5 Min Rating', 1, 28)
+
+        node = self.node_class()
+        node.derive(eng, ratings, None)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 27)
+        self.assertEqual(node[0].value, 75)
+
+    def test_derive_heli(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+
+        ratings = buildsection('Takeoff 5 Min Rating', 1, 28)
+        all_eng = M('All Engines Operative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'AEO'})
+
+        node = self.node_class()
+        node.derive(eng, ratings, all_eng)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 11)
+        self.assertEqual(node[0].value, 73)
+
+
+class TestEngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating', 'One Engine Inoperative')]
+        self.can_operate_kwargs = {'ac_type': helicopter}
+        self.function = max_value
+
+    def test_derive_heli(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+
+        rating = buildsection('Takeoff 5 Min Rating', 1, 28)
+        one_eng = M('One Engine Inoperative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'OEI'})
+
+        node = self.node_class()
+        node.derive(eng, rating, one_eng)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 11)
+        self.assertEqual(node[0].value, 73)
 
 
 class TestEngFor5SecTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
@@ -9830,12 +9894,78 @@ class TestEngTorqueFor5SecDuringGoAround5MinRatingMax(unittest.TestCase, CreateK
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestEngTorqueMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestEngTorqueMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = EngTorqueDuringMaximumContinuousPowerMax
         self.operational_combinations = [('Eng (*) Torque Max', 'Maximum Continuous Power')]
+        self.can_operate_kwargs = {'ac_type': aeroplane}
         self.function = max_value
+
+    def test_can_operate_heli(self):
+        operational_combinations = [('Eng (*) Torque Max', 'Maximum Continuous Power', 'All Engines Operative')]
+        kwargs = {'ac_type': helicopter}
+        combinations = map(set, self.node_class.get_operational_combinations(**kwargs))
+        for combination in map(set, operational_combinations):
+            self.assertIn(combination, combinations)
+
+    def test_derive(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+        mcp = buildsection('Maximum Continuous Power', 1, 28)
+
+        node = self.node_class()
+        node.derive(eng, mcp, None)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 27)
+        self.assertEqual(node[0].value, 75)
+
+    def test_derive_heli(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+
+        mcp = buildsection('Maximum Continuous Power', 1, 28)
+        all_eng = M('All Engines Operative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'AEO'})
+
+        node = self.node_class()
+        node.derive(eng, mcp, all_eng)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 11)
+        self.assertEqual(node[0].value, 73)
+
+
+class TestEngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Maximum Continuous Power', 'One Engine Inoperative')]
+        self.can_operate_kwargs = {'ac_type': helicopter}
+        self.function = max_value
+
+    def test_derive_heli(self):
+        eng = P('Eng (*) Torque Max', np.ma.array([
+            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
+            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
+            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
+        ]))
+
+        mcp = buildsection('Maximum Continuous Power', 1, 28)
+        one_eng = M('One Engine Inoperative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'OEI'})
+
+        node = self.node_class()
+        node.derive(eng, mcp, one_eng)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 11)
+        self.assertEqual(node[0].value, 73)
 
 
 class TestEngTorqueFor5SecMaximumContinuousPowerMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):

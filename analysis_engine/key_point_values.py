@@ -10231,11 +10231,38 @@ class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
 
     units = ut.PERCENT
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        heli = ac_type == helicopter and all_of(('Eng (*) Torque Max', 'Takeoff 5 Min Rating', 'All Engines Operative'), available)
+        aero = ac_type == aeroplane and all_of(('Eng (*) Torque Max', 'Takeoff 5 Min Rating'), available)
+
+        return heli or aero
+
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
-               ratings=S('Takeoff 5 Min Rating')):
+               ratings=S('Takeoff 5 Min Rating'),
+               all_eng=M('All Engines Operative')):
+        phases = ratings.get_slices()
+        if all_eng:
+            phases = slices_and(runs_of_ones(all_eng.array == 'AEO'), phases)
+        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
-        self.create_kpvs_within_slices(eng_trq_max.array, ratings, max_value)
+
+class EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               ratings=S('Takeoff 5 Min Rating'),
+               one_eng=M('One Engine Inoperative')):
+
+        phases = slices_and(runs_of_ones(one_eng.array == 'OEI'), ratings.get_slices())
+        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
 
 class EngTorqueFor5SecDuringTakeoff5MinRatingMax(KeyPointValueNode):
@@ -10314,11 +10341,38 @@ class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
     units = ut.PERCENT
 
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        heli = ac_type == helicopter and all_of(('Eng (*) Torque Max', 'Maximum Continuous Power', 'All Engines Operative'), available)
+        aero = ac_type == aeroplane and all_of(('Eng (*) Torque Max', 'Maximum Continuous Power'), available)
+
+        return heli or aero
+
     def derive(self,
                eng_trq_max=P('Eng (*) Torque Max'),
-               mcp=S('Maximum Continuous Power')):
+               mcp=S('Maximum Continuous Power'),
+               all_eng=M('All Engines Operative')):
+        phases = mcp.get_slices()
+        if all_eng:
+            phases = slices_and(runs_of_ones(all_eng.array == 'AEO'), phases)
+        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
-        self.create_kpvs_within_slices(eng_trq_max.array, mcp, max_value)
+
+class EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               mcp=S('Maximum Continuous Power'),
+               one_eng=M('One Engine Inoperative')):
+
+        phases = slices_and(runs_of_ones(one_eng.array == 'OEI'), mcp.get_slices())
+        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
 
 class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
