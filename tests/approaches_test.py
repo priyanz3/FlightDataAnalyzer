@@ -410,8 +410,10 @@ class TestApproachInformation(unittest.TestCase):
         self.assertEqual(approaches[0].loc_est, slice(5,19,None))
 
 
+    # This test was "test_ils_localizer_established_not_below_1000ft" but revised requirement made it permissable to establish
+    # below 1000ft AAL.
     @patch('analysis_engine.approaches.api')
-    def test_ils_localizer_established_not_below_1000ft(self, api):
+    def test_ils_localizer_established_below_1000ft(self, api):
 
         get_handler = Mock()
         get_handler.get_nearest_airport.return_value = self.gatwick
@@ -435,7 +437,7 @@ class TestApproachInformation(unittest.TestCase):
                           A('Precise Positioning', True),
                           )
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
-        self.assertEqual(approaches[0].loc_est, slice(20,38.5,None))
+        self.assertEqual(approaches[0].loc_est, slice(22,38.5,None))
 
 
     #@patch('analysis_engine.api_handler.FileHandler.get_nearest_airport')

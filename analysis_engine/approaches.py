@@ -413,18 +413,11 @@ class ApproachInformation(ApproachNode):
 
                 if loc_estab:
                     
-                    # We will consider the aircraft established at 1000ft come what may.
-                    ils_alt_1000 = index_at_value(alt_aal.array, 1000.0, _slice=scan_back) 
-                    if ils_alt_1000:
-                        loc_start = min(loc_estab, ils_alt_1000)
-                    else:
-                        loc_start = loc_estab
-                        
                     # Refine the end of the localizer established phase...
                     if (approach_runway and approach_runway['localizer']['is_offset']):
                         offset_ils = True
                         # The ILS established phase ends when the deviation becomes large.
-                        loc_end = ils_established(ils_loc.array, slice(ref_idx, loc_start, -1), ils_loc.hz, point='immediate')
+                        loc_end = ils_established(ils_loc.array, slice(ref_idx, loc_estab, -1), ils_loc.hz, point='immediate')
 
                     elif approach_type in ['TOUCH_AND_GO', 'GO_AROUND']:
                         # We finish at the lowest point
@@ -432,11 +425,8 @@ class ApproachInformation(ApproachNode):
                         
                     elif runway_change:
                         # Use the end of localizer phase as this already reflects the tuned frequency.
-                        est_end = ils_established(ils_loc.array, slice(loc_start, ref_idx), ils_loc.hz, point='end')
+                        est_end = ils_established(ils_loc.array, slice(loc_estab, ref_idx), ils_loc.hz, point='end')
                         loc_end = min(loc_slice.stop, loc_end, est_end or np.inf)
-                        #loc_end_1_dot = index_at_value(np.ma.abs(ils_loc.array), 1.0, _slice=slice(loc_slice.stop, loc_start, -1))
-                        #if loc_end_1_dot:
-                            #loc_end = loc_end_1_dot
     
                     elif approach_type == 'LANDING':
                         # Just end at 2 dots where we turn off the runway
@@ -444,7 +434,7 @@ class ApproachInformation(ApproachNode):
                         if loc_end_2_dots:
                             loc_end = loc_end_2_dots
                         
-                    loc_est = slice(loc_start, loc_end+1)
+                    loc_est = slice(loc_estab, loc_end+1)
 
             #######################################################################
             ## Identification of the period established on the glideslope
@@ -457,7 +447,7 @@ class ApproachInformation(ApproachNode):
                 # The range to scan for the glideslope starts with localizer capture and ends at
                 # 200ft or the minimum height point for a go-around or the end of 
                 # localizer established, if either is earlier.
-                ils_gs_start = loc_start
+                ils_gs_start = loc_estab
                 ils_gs_200 = index_at_value(alt.array, 200.0, _slice=slice(loc_end, ils_gs_start, -1))
                 # The expression "ils_gs_200 or np.inf" caters for the case where the aircraft did not pass
                 # through 200ft, so the result is None, in which case any other value is left to be the minimum.
