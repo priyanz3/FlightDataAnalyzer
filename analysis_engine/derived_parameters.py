@@ -5792,6 +5792,58 @@ class Roll(DerivedParameterNode):
             '''
 
 
+class RollSmoothed(DerivedParameterNode):
+
+    align = False
+    
+    @classmethod
+    def can_operate(cls, available):
+        return 'Roll' in available
+    
+    def derive(self,
+               source_A=P('Roll'),
+               source_B=P('Roll (1)'),
+               source_C=P('Roll (2)'),
+               ):
+
+        sources = [source_A, source_B, source_C]
+
+        self.offset = 0.0
+        self.frequency = 4.0
+
+        self.array = blend_parameters(sources,
+                                      offset=self.offset,
+                                      frequency=self.frequency,
+                                      small_slice_duration=10,
+                                      mode='cubic')
+
+
+class PitchSmoothed(DerivedParameterNode):
+
+    align = False
+
+    @classmethod
+    def can_operate(cls, available):
+        return 'Pitch' in available
+    
+    def derive(self,
+               source_A=P('Pitch'),
+               source_B=P('Pitch (1)'),
+               source_C=P('Pitch (2)'),
+               ):
+
+        sources = [source_A, source_B, source_C]
+
+        self.offset = 0.0
+        self.frequency = 4.0
+
+        self.array = blend_parameters(sources,
+                                      offset=self.offset,
+                                      frequency=self.frequency,
+                                      small_slice_duration=10,
+                                      mode='cubic')
+
+
 class RollRate(DerivedParameterNode):
     '''
     The computational principles here are similar to Pitch Rate; see commentary
