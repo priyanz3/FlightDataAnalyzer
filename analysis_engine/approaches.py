@@ -349,7 +349,10 @@ class ApproachInformation(ApproachNode):
                 if not precise:
                     runway_kwargs['hint'] = kwargs.get('hint', 'approach')
                 approach_runway = nearest_runway(airport, lowest_hdg, **runway_kwargs)
-                if all((approach_runway, landing_runway)) and approach_runway['id'] != landing_runway['id']:
+                # Have we have identified runways for both conditions that are both different and parallel?
+                if all((approach_runway, landing_runway)) \
+                   and approach_runway['id'] != landing_runway['id'] \
+                   and approach_runway['identifier'][:2] == landing_runway['identifier'][:2]:
                     runway_change = True
             else:
                 # Without a frequency source, we just have to hope any localizer signal is for this runway!
