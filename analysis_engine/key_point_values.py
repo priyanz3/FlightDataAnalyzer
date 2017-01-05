@@ -15222,6 +15222,18 @@ class CruiseSpeedLowDuration(KeyPointValueNode):
         self.create_kpvs_where(spd.array == 'Low', spd.frequency, airborne)
 
 
+class DegradedPerformanceCautionDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Degraded Performance Caution' is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, caution=M('Degraded Performance Caution'),
+               airborne=S('Airborne')):
+        self.create_kpvs_where(caution.array == 'Caution',
+                               caution.frequency, airborne)
+
+
 ##############################################################################
 # Tail Clearance
 

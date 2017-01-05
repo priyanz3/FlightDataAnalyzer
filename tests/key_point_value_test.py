@@ -481,6 +481,7 @@ from analysis_engine.key_point_values import (
     OverspeedDuration,
     StallFaultCautionDuration,
     CruiseSpeedLowDuration,
+    DegradedPerformanceCautionDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -16108,6 +16109,16 @@ class TestCruiseSpeedLowDuration(unittest.TestCase, CreateKPVsWhereTest):
         self.phase_name = 'Airborne'
         self.node_class = CruiseSpeedLowDuration
         self.values_mapping = {0: '-', 1: 'Low'}
+        self.basic_setup()
+
+
+class TestDegradedPerformanceCautionDuration(unittest.TestCase,
+                                             CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Degraded Performance Caution'
+        self.phase_name = 'Airborne'
+        self.node_class = DegradedPerformanceCautionDuration
+        self.values_mapping = {0: '-', 1: 'Caution'}
         self.basic_setup()
 
 
