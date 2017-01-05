@@ -15212,6 +15212,16 @@ class StallFaultCautionDuration(KeyPointValueNode):
         self.create_kpvs_from_slice_durations(runs_of_ones(comb_air), self.hz)
 
 
+class CruiseSpeedLowDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Cruise Speed Low' warning is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, spd=M('Cruise Speed Low'), airborne=S('Airborne')):
+        self.create_kpvs_where(spd.array == 'Low', spd.frequency, airborne)
+
+
 ##############################################################################
 # Tail Clearance
 

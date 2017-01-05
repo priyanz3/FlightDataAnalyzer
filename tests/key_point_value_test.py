@@ -480,6 +480,7 @@ from analysis_engine.key_point_values import (
     MasterWarningDuringTakeoffDuration,
     OverspeedDuration,
     StallFaultCautionDuration,
+    CruiseSpeedLowDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -16099,6 +16100,15 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(node[0].value, 6)
         self.assertEqual(node[1].index, 30)
         self.assertEqual(node[1].value, 5)
+
+
+class TestCruiseSpeedLowDuration(unittest.TestCase, CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Cruise Speed Low'
+        self.phase_name = 'Airborne'
+        self.node_class = CruiseSpeedLowDuration
+        self.values_mapping = {0: '-', 1: 'Low'}
+        self.basic_setup()
 
 
 ##############################################################################
