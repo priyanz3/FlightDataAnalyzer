@@ -482,6 +482,7 @@ from analysis_engine.key_point_values import (
     StallFaultCautionDuration,
     CruiseSpeedLowDuration,
     DegradedPerformanceCautionDuration,
+    AirspeedIncreaseAlertDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -16119,6 +16120,16 @@ class TestDegradedPerformanceCautionDuration(unittest.TestCase,
         self.phase_name = 'Airborne'
         self.node_class = DegradedPerformanceCautionDuration
         self.values_mapping = {0: '-', 1: 'Caution'}
+        self.basic_setup()
+
+
+class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
+                                        CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Airspeed Increase Alert'
+        self.phase_name = 'Airborne'
+        self.node_class = AirspeedIncreaseAlertDuration
+        self.values_mapping = {0: '-', 1: 'Alert'}
         self.basic_setup()
 
 

@@ -15234,6 +15234,18 @@ class DegradedPerformanceCautionDuration(KeyPointValueNode):
                                caution.frequency, airborne)
 
 
+class AirspeedIncreaseAlertDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Airspeed Increase Alert' is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, alert=M('Airspeed Increase Alert'),
+               airborne=S('Airborne')):
+        self.create_kpvs_where(alert.array == 'Alert', alert.frequency,
+                               airborne)
+
+
 ##############################################################################
 # Tail Clearance
 
