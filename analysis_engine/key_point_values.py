@@ -4740,6 +4740,35 @@ class AltitudeAtLastFlapChangeBeforeTouchdown(KeyPointValueNode):
                 self.create_kpv(last_index, alt_last)
 
 
+class AltitudeAtLastFlapSetToBeforeTouchdown(KeyPointValueNode):
+    '''
+    Records the Altitude when the Flap position is last set to 15 and 35
+    degrees.
+    '''
+
+    NAME_FORMAT = 'Altitude At Last Flap Set To %(flap)d Before Touchdown'
+    NAME_VALUES = {'flap': [15, 35]}
+
+    units = ut.FT
+
+    def derive(self, alt_aal=P('Altitude AAL'), flap=P('Flap'),
+               tdwns=KTI('Touchdown')):
+        last_tdwn = 0
+        for tdwn in tdwns:
+            for flap_pos in self.NAME_VALUES['flap']:
+                flap_slices = slices_and(
+                    [slice(last_tdwn, tdwn.index), ],
+                    slices_between(flap.array, flap_pos-1, flap_pos+1)[1]
+                )
+                if not flap_slices:
+                    continue
+                flap_start = flap_slices[-1].start
+                self.create_kpv(flap_start,
+                                value_at_index(alt_aal.array, flap_start),
+                                replace_values={'flap':flap_pos})
+            last_tdwn = tdwn.index + 1
+
+
 class AltitudeAtFirstFlapRetractionDuringGoAround(KeyPointValueNode):
     '''
     Go Around Flap Retracted pinpoints the flap retraction instance within the
@@ -15182,6 +15211,40 @@ class StallFaultCautionDuration(KeyPointValueNode):
         comb_air = mask_outside_slices(stall_fault_caution,
                                        airborne.get_slices())
         self.create_kpvs_from_slice_durations(runs_of_ones(comb_air), self.hz)
+
+
+class CruiseSpeedLowDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Cruise Speed Low' warning is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, spd=M('Cruise Speed Low'), airborne=S('Airborne')):
+        self.create_kpvs_where(spd.array == 'Low', spd.frequency, airborne)
+
+
+class DegradedPerformanceCautionDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Degraded Performance Caution' is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, caution=M('Degraded Performance Caution'),
+               airborne=S('Airborne')):
+        self.create_kpvs_where(caution.array == 'Caution',
+                               caution.frequency, airborne)
+
+
+class AirspeedIncreaseAlertDuration(KeyPointValueNode):
+    '''
+    Duration in which the 'Airspeed Increase Alert' is raised.
+    '''
+    units = ut.SECOND
+
+    def derive(self, alert=M('Airspeed Increase Alert'),
+               airborne=S('Airborne')):
+        self.create_kpvs_where(alert.array == 'Alert', alert.frequency,
+                               airborne)
 
 
 ##############################################################################

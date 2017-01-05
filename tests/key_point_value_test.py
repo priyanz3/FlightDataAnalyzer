@@ -187,6 +187,7 @@ from analysis_engine.key_point_values import (
     AltitudeAtGearUpSelectionDuringGoAround,
     AltitudeAtLastAPDisengagedDuringApproach,
     AltitudeAtLastFlapChangeBeforeTouchdown,
+    AltitudeAtLastFlapSetToBeforeTouchdown,
     AltitudeAtLastFlapRetraction,
     AltitudeAtMachMax,
     AltitudeDensityMax,
@@ -479,6 +480,9 @@ from analysis_engine.key_point_values import (
     MasterWarningDuringTakeoffDuration,
     OverspeedDuration,
     StallFaultCautionDuration,
+    CruiseSpeedLowDuration,
+    DegradedPerformanceCautionDuration,
+    AirspeedIncreaseAlertDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -5710,6 +5714,43 @@ class TestAltitudeAtLastFlapChangeBeforeTouchdown(unittest.TestCase, NodeTest):
         self.assertEqual(node, KPV(name=name, items=[
             KeyPointValue(index=6.0, value=400.0, name=name),
         ]))
+
+
+class TestAltitudeAtLastFlapSetToBeforeTouchdown(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = AltitudeAtLastFlapSetToBeforeTouchdown
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Altitude AAL', opts[0])
+        self.assertIn('Flap', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        alt_aal=P('Altitude AAL', np.ma.array(np.linspace(1000, 0, 30)))
+        flap=P('Flap', np.ma.array([
+            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
+            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
+            0, 15, 15, 15, 35, 35, 35, 35, 15, 15
+        ]))
+        tdwns=KTI('Touchdown', items=[KeyTimeInstance(name='Touchdown',
+                                                      index=27),])
+
+        node = self.node_class()
+        node.derive(alt_aal, flap, tdwns)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].value, 275.86, places=2)
+        self.assertEqual(node[0].index, 21)
+        self.assertEqual(node[0].name,
+                         'Altitude At Last Flap Set To 15 Before Touchdown')
+        self.assertAlmostEqual(node[1].value, 172.41, places=2)
+        self.assertEqual(node[1].index, 24)
+        self.assertEqual(node[1].name,
+                         'Altitude At Last Flap Set To 35 Before Touchdown')
 
 
 class TestAltitudeAtFirstFlapRetractionDuringGoAround(unittest.TestCase, NodeTest):
@@ -16061,6 +16102,35 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(node[0].value, 6)
         self.assertEqual(node[1].index, 30)
         self.assertEqual(node[1].value, 5)
+
+
+class TestCruiseSpeedLowDuration(unittest.TestCase, CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Cruise Speed Low'
+        self.phase_name = 'Airborne'
+        self.node_class = CruiseSpeedLowDuration
+        self.values_mapping = {0: '-', 1: 'Low'}
+        self.basic_setup()
+
+
+class TestDegradedPerformanceCautionDuration(unittest.TestCase,
+                                             CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Degraded Performance Caution'
+        self.phase_name = 'Airborne'
+        self.node_class = DegradedPerformanceCautionDuration
+        self.values_mapping = {0: '-', 1: 'Caution'}
+        self.basic_setup()
+
+
+class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
+                                        CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Airspeed Increase Alert'
+        self.phase_name = 'Airborne'
+        self.node_class = AirspeedIncreaseAlertDuration
+        self.values_mapping = {0: '-', 1: 'Alert'}
+        self.basic_setup()
 
 
 ##############################################################################
