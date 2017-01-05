@@ -302,7 +302,7 @@ class TestApproachAndLanding(unittest.TestCase):
         # No Go-arounds detected
         gas = KTI(items=[])
         app = ApproachAndLanding()
-        app.derive(aeroplane, Parameter('Altitude AAL For Flight Phases', alt), None, None, None)
+        app.derive(aeroplane, Parameter('Altitude AAL For Flight Phases', alt, 0.5), None, None, None)
         self.assertEqual(app.get_slices(), [slice(4.0, 9)])
 
     def test_approach_and_landing_aircraft_go_around_below_1500ft(self):
@@ -346,7 +346,6 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_ldg[2].slice.stop, 7171, places=0)
         self.assertAlmostEqual(app_ldg[3].slice.start, 10362, places=0)
         self.assertAlmostEqual(app_ldg[3].slice.stop, 10750, places=0)
-
 
     def test_approach_and_landing_aircraft_with_go_around_and_climbout_atr42_data(self):
         alt_aal = load(os.path.join(test_data_path,
@@ -438,14 +437,33 @@ class TestApproachAndLanding(unittest.TestCase):
         self.assertAlmostEqual(app_lands[1].start, 29173, places=0)
         self.assertAlmostEqual(app_lands[1].stop, 29726, places=0)
 
+    def test_approach_and_landing_aircraft_brief_alt_dip(self):
+        '''
+        Section is not created for brief altitude dip (2 samples).
+        '''
+        level_flights = buildsections('Level Flight', (1656, 1982), (2144, 2276), (3040, 3198), (3328, 3572), (4972, 6004), (6716, 7716))
+        lands = buildsections('Landing', (2039, 2591), (6345, 6654), (8137, 8212))
+        alt_aal = P('Altitude AAL', load_compressed(os.path.join(test_data_path, 'ApproachAndLanding_alt_aal_2.npz')), 2)
+        node = ApproachAndLanding()
+        node.derive(aeroplane, alt_aal, level_flights, None, lands)
+        self.assertEqual(len(node), 3)
+        self.assertAlmostEqual(node[0].slice.start, 4156, places=0)
+        self.assertAlmostEqual(node[0].slice.stop, 4732, places=0)
+        self.assertAlmostEqual(node[1].slice.start, 6004, places=0)
+        self.assertAlmostEqual(node[1].slice.stop, 6359, places=0)
+        self.assertAlmostEqual(node[2].slice.start, 7716, places=0)
+        self.assertAlmostEqual(node[2].slice.stop, 8213, places=0)
+
     def test_approach_and_landing_helicopter(self):
         apps = buildsection('Approach', 2, 5)
         lands = buildsection('Landing', 4, 7)
-        node=ApproachAndLanding()
+        node = ApproachAndLanding()
         node.derive(helicopter, None, None, apps, lands)
         self.assertEqual(len(node), 1)
         self.assertEqual(node.get_slices()[0].start, 2)
         self.assertEqual(node.get_slices()[0].stop, 10) # land phase stop + 2 samples
+
+
 
 
 class TestApproach(unittest.TestCase):

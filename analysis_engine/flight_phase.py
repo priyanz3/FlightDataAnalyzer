@@ -375,11 +375,11 @@ class ApproachAndLanding(FlightPhaseNode):
         # Prepare to extract the slices
         level_flights = level_flights.get_slices() if level_flights else None
 
-        low_alt_slices = find_low_alts(
+        low_alt_slices = slices_remove_small_slices(find_low_alts(
             alt_aal.array, alt_aal.frequency, 3000,
             stop_alt=0,
             level_flights=level_flights,
-            cycle_size=500.0)
+            cycle_size=500.0), 5, alt_aal.hz)
 
         for low_alt in low_alt_slices:
             if not alt_aal.array[low_alt.start]:
