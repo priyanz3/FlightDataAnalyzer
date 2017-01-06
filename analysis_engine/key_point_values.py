@@ -4742,12 +4742,12 @@ class AltitudeAtLastFlapChangeBeforeTouchdown(KeyPointValueNode):
 
 class AltitudeAtLastFlapSetToBeforeTouchdown(KeyPointValueNode):
     '''
-    Records the Altitude when the Flap position is last set to 15 and 35
-    degrees.
+    Records the Altitude when the Flap position is last set to 15, 30 and 35
+    degrees before touchdown.
     '''
 
     NAME_FORMAT = 'Altitude At Last Flap Set To %(flap)d Before Touchdown'
-    NAME_VALUES = {'flap': [15, 35]}
+    NAME_VALUES = {'flap': [15, 30, 35]}
 
     units = ut.FT
 

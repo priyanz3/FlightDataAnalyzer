@@ -5734,7 +5734,7 @@ class TestAltitudeAtLastFlapSetToBeforeTouchdown(unittest.TestCase):
         flap=P('Flap', np.ma.array([
             0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
             0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
-            0, 15, 15, 15, 35, 35, 35, 35, 15, 15
+            0, 15, 15, 15, 30, 35, 35, 35, 15, 15
         ]))
         tdwns=KTI('Touchdown', items=[KeyTimeInstance(name='Touchdown',
                                                       index=27),])
@@ -5742,7 +5742,7 @@ class TestAltitudeAtLastFlapSetToBeforeTouchdown(unittest.TestCase):
         node = self.node_class()
         node.derive(alt_aal, flap, tdwns)
 
-        self.assertEqual(len(node), 2)
+        self.assertEqual(len(node), 3)
         self.assertAlmostEqual(node[0].value, 275.86, places=2)
         self.assertEqual(node[0].index, 21)
         self.assertEqual(node[0].name,
@@ -5750,7 +5750,11 @@ class TestAltitudeAtLastFlapSetToBeforeTouchdown(unittest.TestCase):
         self.assertAlmostEqual(node[1].value, 172.41, places=2)
         self.assertEqual(node[1].index, 24)
         self.assertEqual(node[1].name,
-                         'Altitude At Last Flap Set To 35 Before Touchdown')
+                         'Altitude At Last Flap Set To 30 Before Touchdown')
+        self.assertAlmostEqual(node[2].value, 137.93, places=2)
+        self.assertEqual(node[2].index, 25)
+        self.assertEqual(node[2].name,
+                         'Altitude At Last Flap Set To 35 Before Touchdown')       
 
 
 class TestAltitudeAtFirstFlapRetractionDuringGoAround(unittest.TestCase, NodeTest):
