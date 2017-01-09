@@ -8105,13 +8105,13 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
                 phase_slices, self.frequency, period=name)
 
 
-class EngTorqueOverThresholdWithOneEngineInoperativeDuration(KeyPointValueNode):
+class EngTorqueLimitExceedanceWithOneEngineInoperativeDuration(KeyPointValueNode):
     '''
-    Measures the duration Torque is over the Takeoff/MCP power rating
+    Measures the duration of a Torque exceedance taken from engine lookup tables.
+    
+    Note: only true exceedances (value and duration) are measured.
     '''
 
-    NAME_FORMAT = 'Eng Torque Over %(period)s With One Engine Inoperative Duration'
-    NAME_VALUES = {'period': ['Takeoff Power', 'MCP', 'Go Around Power']}
     units = ut.SECOND
 
     @classmethod
@@ -8120,7 +8120,7 @@ class EngTorqueOverThresholdWithOneEngineInoperativeDuration(KeyPointValueNode):
         if ac_type != helicopter:
             return False
         try:
-            at.get_engine_map(eng_series.value, eng_type.value, mods.value)
+            at.get_engine_map(eng_series.value, eng_type.value, mods.value, restriction='single')
         except KeyError:
             cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
                         eng_series.value, eng_type.value, mods.value)
@@ -8131,10 +8131,6 @@ class EngTorqueOverThresholdWithOneEngineInoperativeDuration(KeyPointValueNode):
             'Eng (2) Torque',
             'Eng (3) Torque',
             'Eng (4) Torque'
-        ), available) and any_of((
-            'Takeoff 5 Min Rating',
-            'Maximum Continuous Power',
-            'Go Around 5 Min Rating',
         ), available) and 'One Engine Inoperative' in available
 
     def derive(self,
@@ -8142,47 +8138,50 @@ class EngTorqueOverThresholdWithOneEngineInoperativeDuration(KeyPointValueNode):
                eng2=M('Eng (2) Torque'),
                eng3=M('Eng (3) Torque'),
                eng4=M('Eng (4) Torque'),
-               takeoff=S('Takeoff 5 Min Rating'),
-               mcp=S('Maximum Continuous Power'),
-               go_around=S('Go Around 5 Min Rating'),
+               one_eng=M('One Engine Inoperative'),
                eng_series=A('Engine Series'),
                eng_type=A('Engine Type'),
-               mods=A('Modifications'),
-               one_eng=M('One Engine Inopterative')):
+               mods=A('Modifications')):
 
-        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value)
-        # Lookup takeoff/mcp values
-        mcp_value = eng_thresholds.get('Torque', {}).get('mcp')
-        takeoff_value = eng_thresholds.get('Torque', {}).get('takeoff')
+        # Lookup Thresholds
+        eng_thresholds = at.get_engine_map(eng_series.value, eng_type.value, mods.value, restriction='single')
+        torq_thresholds = eng_thresholds.get('Torque', {})
 
-        phase_thresholds = [
-            (self.NAME_VALUES['period'][0], takeoff, takeoff_value),
-            (self.NAME_VALUES['period'][1], mcp, mcp_value),
-            (self.NAME_VALUES['period'][2], go_around, takeoff_value)
-        ]
-
+        oei_phases = runs_of_ones(one_eng.array == 'OEI')
         engines = [e for e in (eng1, eng2, eng3, eng4) if e]
 
-        # iterate over phases
-        for name, phase, threshold in phase_thresholds:
-            if threshold is None or phase is None:
-                # No threshold for this parameter in this phase.
+        order = ('continuous', 'low', 'hi', 'transient')
+
+        prev_threshold = torq_thresholds.get('continuous')
+        for name in order:
+            if not torq_thresholds.get(name):
+                # No threshold for name
                 continue
+
+            duration, threshold = torq_thresholds[name]
+            if not duration or threshold == prev_threshold:
+                # No duration or threshold is the same as previous
+                prev_threshold = threshold
+                continue
+
             threshold_slices = []
             # iterate over engines
             for eng in engines:
-                # create slices where eng above thresold
-                threshold_slices += slices_above(eng.array, threshold)[1]
-            # Only interested in exceedances within period.
-            # Brief exceedances and gaps are removed to reduce KPV count.
-            phase_slices = slices_and(phase.get_slices(), threshold_slices)
-            phase_slices = slices_remove_small_slices(phase_slices, 2, eng1.hz)
+                threshold_slices += slices_between(eng.array, prev_threshold, threshold)[1]
+
+            prev_threshold = threshold
+
+            if not threshold_slices:
+                # No threshold exceedances
+                continue
+
+            phase_slices = slices_and(threshold_slices, oei_phases)
+            # Brief exceedances and overlaps are removed to reduce KPV count.
             phase_slices = slices_remove_overlaps(phase_slices)
-            phase_slices = slices_remove_small_gaps(phase_slices, 3, eng1.hz)
-            phase_slices = slices_and(runs_of_ones(one_eng.array == 'OEI'), phase_slices)
-            # Remove overlapping slices keeping longer
-            self.create_kpvs_from_slice_durations(
-                phase_slices, self.frequency, period=name)
+            phase_slices = slices_remove_small_slices(phase_slices, duration, eng.hz)
+            if phase_slices:
+                self.info("Creating Torque OEI kpvs for '%s'", name)
+                self.create_kpvs_from_slice_durations(phase_slices, self.frequency)
 
 
 ##############################################################################
