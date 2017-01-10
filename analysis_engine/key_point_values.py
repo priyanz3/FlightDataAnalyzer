@@ -10344,6 +10344,23 @@ class EngTorqueDuringTaxiMax(KeyPointValueNode):
         self.create_kpv_from_slices(eng_trq_max.array, taxiing, max_value)
 
 
+class EngTorqueWithOneEngineInoperativeMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.PERCENT
+
+    can_operate = helicopter_only
+
+    def derive(self,
+               eng_trq_max=P('Eng (*) Torque Max'),
+               airborne=S('Airborne'),
+               one_eng=M('One Engine Inoperative')):
+
+        phases = slices_and(runs_of_ones(one_eng.array == 'OEI'), airborne.get_slices())
+        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
+
+
 class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
     '''
     '''
@@ -10364,23 +10381,6 @@ class EngTorqueDuringTakeoff5MinRatingMax(KeyPointValueNode):
         phases = ratings.get_slices()
         if all_eng:
             phases = slices_and(runs_of_ones(all_eng.array == 'AEO'), phases)
-        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
-
-
-class EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax(KeyPointValueNode):
-    '''
-    '''
-
-    units = ut.PERCENT
-
-    can_operate = helicopter_only
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque Max'),
-               ratings=S('Takeoff 5 Min Rating'),
-               one_eng=M('One Engine Inoperative')):
-
-        phases = slices_and(runs_of_ones(one_eng.array == 'OEI'), ratings.get_slices())
         self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
 
@@ -10474,23 +10474,6 @@ class EngTorqueDuringMaximumContinuousPowerMax(KeyPointValueNode):
         phases = mcp.get_slices()
         if all_eng:
             phases = slices_and(runs_of_ones(all_eng.array == 'AEO'), phases)
-        self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
-
-
-class EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax(KeyPointValueNode):
-    '''
-    '''
-
-    units = ut.PERCENT
-
-    can_operate = helicopter_only
-
-    def derive(self,
-               eng_trq_max=P('Eng (*) Torque Max'),
-               mcp=S('Maximum Continuous Power'),
-               one_eng=M('One Engine Inoperative')):
-
-        phases = slices_and(runs_of_ones(one_eng.array == 'OEI'), mcp.get_slices())
         self.create_kpvs_within_slices(eng_trq_max.array, phases, max_value)
 
 
