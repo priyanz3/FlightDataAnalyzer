@@ -15,7 +15,7 @@ from flightdatautilities.geometry import midpoint
 
 from hdfaccess.parameter import MappedArray
 
-from analysis_engine.library import align, median_value
+from analysis_engine.library import align, median_value, any_of
 from analysis_engine.node import (
     A, App, ApproachItem, KPV, KTI, load, M, P, KeyPointValue,
     MultistateDerivedParameterNode,
@@ -187,7 +187,7 @@ from analysis_engine.key_point_values import (
     AltitudeAtGearUpSelectionDuringGoAround,
     AltitudeAtLastAPDisengagedDuringApproach,
     AltitudeAtLastFlapChangeBeforeTouchdown,
-    AltitudeAtLastFlapSetToBeforeTouchdown,
+    AltitudeAtLastFlapSelectionBeforeTouchdown,
     AltitudeAtLastFlapRetraction,
     AltitudeAtMachMax,
     AltitudeDensityMax,
@@ -5715,45 +5715,75 @@ class TestAltitudeAtLastFlapChangeBeforeTouchdown(unittest.TestCase, NodeTest):
         ]))
 
 
-class TestAltitudeAtLastFlapSetToBeforeTouchdown(unittest.TestCase):
-
+class TestAltitudeAtLastFlapSelectionBeforeTouchdown(unittest.TestCase):
     def setUp(self):
-        self.node_class = AltitudeAtLastFlapSetToBeforeTouchdown
+        self.node_class = AltitudeAtLastFlapSelectionBeforeTouchdown
+        self.alt_aal=P('Altitude AAL', np.ma.array(np.linspace(1000, 0, 30)))
+        self.tdwns=KTI('Touchdown', items=[KeyTimeInstance(name='Touchdown',
+                                                           index=27),])
+        # Flap Lever - expecting 3 KPVs from this parameter, 15, 30 and 35.
+        flap_array = np.ma.array([
+            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
+            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
+            0, 15, 15, 15, 30, 35, 35, 15, 15, 15
+        ])
+        flap_mapping = {int(f): str(f) for f in np.ma.unique(flap_array)}
+        self.flap = M('Flap Lever', flap_array, values_mapping=flap_mapping)
+
+        # Synth Lever - expecting 2 KPVs from this parameter, 15 and 35. 
+        synth_array = np.ma.array([
+            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
+            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
+            0, 15, 15, 15, 35, 35, 35, 30, 30, 30
+        ])
+        synth_mapping = {int(f): 'Lever %s' % i for i, f in enumerate(
+            np.ma.unique(synth_array))}
+        self.synth = M('Flap Lever (Synthetic)', synth_array,
+                       values_mapping=synth_mapping)
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
-        self.assertEqual(len(opts), 1)
-        self.assertEqual(len(opts[0]), 3)
-        self.assertIn('Altitude AAL', opts[0])
-        self.assertIn('Flap', opts[0])
-        self.assertIn('Touchdown', opts[0])
+        self.assertEqual(len(opts), 3)
+        for opt in opts:
+            self.assertIn('Altitude AAL', opt)
+            self.assertIn('Touchdown', opt)
+            self.assertTrue(any_of(['Flap Lever', 'Flap Lever (Synthetic)'],
+                                   opt))
 
     def test_derive(self):
-        alt_aal=P('Altitude AAL', np.ma.array(np.linspace(1000, 0, 30)))
-        flap=P('Flap', np.ma.array([
-            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
-            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
-            0, 15, 15, 15, 30, 35, 35, 35, 15, 15
-        ]))
-        tdwns=KTI('Touchdown', items=[KeyTimeInstance(name='Touchdown',
-                                                      index=27),])
-
         node = self.node_class()
-        node.derive(alt_aal, flap, tdwns)
+        node.derive(self.alt_aal, self.flap, self.synth, self.tdwns)
 
         self.assertEqual(len(node), 3)
         self.assertAlmostEqual(node[0].value, 275.86, places=2)
         self.assertEqual(node[0].index, 21)
         self.assertEqual(node[0].name,
-                         'Altitude At Last Flap Set To 15 Before Touchdown')
+                         'Altitude At Last Flap 15 Selection Before Touchdown')
         self.assertAlmostEqual(node[1].value, 172.41, places=2)
         self.assertEqual(node[1].index, 24)
         self.assertEqual(node[1].name,
-                         'Altitude At Last Flap Set To 30 Before Touchdown')
+                         'Altitude At Last Flap 30 Selection Before Touchdown')
         self.assertAlmostEqual(node[2].value, 137.93, places=2)
         self.assertEqual(node[2].index, 25)
         self.assertEqual(node[2].name,
-                         'Altitude At Last Flap Set To 35 Before Touchdown')       
+                         'Altitude At Last Flap 35 Selection Before Touchdown')
+
+    def test_derive_synth_only(self):
+        '''
+        Shouldn't a KPV for 30 deg as flap lever goes down from 35 to 30 deg
+        '''
+        node = self.node_class()
+        node.derive(self.alt_aal, None, self.synth, self.tdwns)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].value, 275.86, places=2)
+        self.assertEqual(node[0].index, 21)
+        self.assertEqual(node[0].name,
+                         'Altitude At Last Flap 15 Selection Before Touchdown')
+        self.assertAlmostEqual(node[1].value, 172.41, places=2)
+        self.assertEqual(node[1].index, 24)
+        self.assertEqual(node[1].name,
+                         'Altitude At Last Flap 35 Selection Before Touchdown')
 
 
 class TestAltitudeAtFirstFlapRetractionDuringGoAround(unittest.TestCase, NodeTest):

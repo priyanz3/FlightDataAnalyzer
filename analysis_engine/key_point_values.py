@@ -4740,32 +4740,47 @@ class AltitudeAtLastFlapChangeBeforeTouchdown(KeyPointValueNode):
                 self.create_kpv(last_index, alt_last)
 
 
-class AltitudeAtLastFlapSetToBeforeTouchdown(KeyPointValueNode):
+class AltitudeAtLastFlapSelectionBeforeTouchdown(KeyPointValueNode):
     '''
     Records the Altitude when the Flap position is last set to 15, 30 and 35
     degrees before touchdown.
     '''
 
-    NAME_FORMAT = 'Altitude At Last Flap Set To %(flap)d Before Touchdown'
+    NAME_FORMAT = 'Altitude At Last Flap %(flap)d Selection Before Touchdown'
     NAME_VALUES = {'flap': [15, 30, 35]}
 
     units = ut.FT
 
-    def derive(self, alt_aal=P('Altitude AAL'), flap=P('Flap'),
+    @classmethod
+    def can_operate(cls, available):
+        return any_of(('Flap Lever', 'Flap Lever (Synthetic)'), available) \
+            and all_of(('Altitude AAL', 'Touchdown'), available)
+
+    def derive(self, alt_aal=P('Altitude AAL'),
+               flap_lever=M('Flap Lever'),
+               flap_synth=M('Flap Lever (Synthetic)'),
                tdwns=KTI('Touchdown')):
+
+        flap = flap_lever or flap_synth
+
         last_tdwn = 0
         for tdwn in tdwns:
             for flap_pos in self.NAME_VALUES['flap']:
                 flap_slices = slices_and(
                     [slice(last_tdwn, tdwn.index), ],
-                    slices_between(flap.array, flap_pos-1, flap_pos+1)[1]
+                    slices_between(flap.array.raw, flap_pos-1, flap_pos+1)[1]
                 )
                 if not flap_slices:
                     continue
-                flap_start = flap_slices[-1].start
-                self.create_kpv(flap_start,
-                                value_at_index(alt_aal.array, flap_start),
-                                replace_values={'flap':flap_pos})
+                #for flap_slice in flap_slices:
+                for flap_slice in reversed(flap_slices):
+                    flap_start = flap_slice.start
+                    if flap.array[flap_start-1] < flap.array[flap_start]:
+                        self.create_kpv(flap_start,
+                                        value_at_index(alt_aal.array,
+                                                       flap_start),
+                                        replace_values={'flap':flap_pos})
+                        break
             last_tdwn = tdwn.index + 1
 
 
