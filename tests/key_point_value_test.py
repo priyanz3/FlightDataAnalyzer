@@ -675,6 +675,7 @@ from analysis_engine.key_point_values import (
     TerrainClearanceAbove3000FtMin,
     ThrottleCyclesDuringFinalApproach,
     ThrottleLeverAtLiftoff,
+    ThrottleLeverVariationAbove80KtToTakeoff,
     ThrottleReductionToTouchdownDuration,
     ThrustAsymmetryDuringApproachDuration,
     ThrustAsymmetryDuringApproachMax,
@@ -17450,6 +17451,41 @@ class TestThrottleLeverAtLiftoff(unittest.TestCase, CreateKPVsAtKTIsTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestThrottleLeverVariationAbove80KtToTakeoff(unittest.TestCase, NodeTest):
+    def setUp(self):
+        self.node_class = ThrottleLeverVariationAbove80KtToTakeoff
+        self.operational_combinations = [(
+            'Throttle Levers',
+            'Airspeed',
+            'Takeoff Roll Or Rejected Takeoff',
+        )]
+
+    def test_derive(self):
+        '''
+        Three takeoffs, 1st is 4 degree increase, 2nd has no change and
+        3rd is -4 degree decrease.
+        '''
+        t_array = [0, 0, 24, 24, 66] + [66]*25 + [70]*25 + [47]*5 + \
+            [0, 0, 24, 24, 66] + [66]*50 + [47]*5 + \
+            [0, 0, 24, 24, 66] + [66]*25 + [62]*25 + [47]*5
+        levers = P('Throttle Lever', np.ma.array(t_array))   
+        a_array = ([0.]*5 + np.linspace(0, 170, 50).tolist() + [170.]*5)*3
+        airspeed = P('Airspeed', np.ma.array(a_array))
+        takeoff = buildsections('Takeoff Roll Or Rejected Takeoff',
+                                [2, 54], [62, 114], [122, 174])
+
+        node = self.node_class()
+        node.derive(levers, airspeed, takeoff)
+
+        self.assertEqual(len(node), 3)
+        self.assertAlmostEqual(node[0].index, 30, 0)
+        self.assertAlmostEqual(node[0].value, 4, 0)
+        self.assertAlmostEqual(node[1].index, 88, 0)
+        self.assertAlmostEqual(node[1].value, 0, 0)
+        self.assertAlmostEqual(node[2].index, 150, 0)
+        self.assertAlmostEqual(node[2].value, -4, 0)
 
 
 ##############################################################################

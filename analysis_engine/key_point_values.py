@@ -16315,6 +16315,25 @@ class ThrottleLeverAtLiftoff(KeyPointValueNode):
         self.create_kpvs_at_ktis(levers.array, liftoffs)
 
 
+class ThrottleLeverVariationAbove80KtToTakeoff(KeyPointValueNode):
+    '''
+    KPV indicating any throttle lever variation during the takeoff phase as
+    airspeed is increases above 80 Kt. The value will by the delta between
+    throttle lever change and the throttle lever at 80 Kt airspeed.
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self, levers=P('Throttle Levers'), speed=P('Airspeed'),
+               takeoffs=S('Takeoff Roll Or Rejected Takeoff')):
+        for takeoff in takeoffs:
+            index_80kt = index_at_value(speed.array, 80, takeoff.slice)
+            lever_80kt = value_at_index(levers.array, index_80kt)
+            index, value = max_abs_value(levers.array - lever_80kt,
+                                         slice(index_80kt, takeoff.slice.stop))
+            self.create_kpv(index, value)
+
+
 ##############################################################################
 # Thrust Asymmetry
 
