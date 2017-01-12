@@ -1653,9 +1653,6 @@ class Airspeed2NMToOffshoreTouchdown(KeyPointValueNode):
     def derive(self, airspeed=P('Airspeed'), dtts=P('Distance To Touchdown'),
                touchdown=KTI('Offshore Touchdown')):
 
-        #indices = [d.index for d in dtts if '2.0 NM To Touchdown' in d.name]
-        #for tdwn, index in zip(touchdown, indices):
-            #self.create_kpv(index, value_at_index(airspeed.array, index))
         for tdwn in touchdown:
             dist_to_touchdown = dtts.get_previous(tdwn.index, name='2.0 NM To Touchdown')
             if dist_to_touchdown:
@@ -10507,44 +10504,23 @@ class EngTorqueFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
         self.create_kpvs_within_slices(array, ratings, max_value)
 
 
-class EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax(
-    KeyPointValueNode):
+class EngTorqueAbove100KtsMax(KeyPointValueNode):
     '''
-    Maximum engine torque during maximum continuous power phases where the
-    indicate airspeed is below 100 kts. (helicopter only)
+    Maximum engine torque where the indicate airspeed is above 100 kts. (helicopter only)
+    
+    Some Helicopters have Torque restictions above 100 kts to limit flight control loads
+    at high speed thereby preserving dynamic component replacement times.
+    (taken from S92 type certificate)
     '''
 
-    name = 'Eng Torque During Maximum Continuous Power Airspeed Below '\
-        '100 Kts Max'
+    name = 'Eng Torque Above 100 Kts Max'
 
     units = ut.PERCENT
 
     can_operate = helicopter_only
 
-    def derive(self, eng=P('Eng (*) Torque Max'),
-               mcp=S('Maximum Continuous Power'), air_spd=P('Airspeed')):
-        slices = slices_and(mcp.get_slices(), air_spd.slices_below(100))
-        self.create_kpvs_within_slices(eng.array, slices, max_value)
-
-
-class EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax(
-    KeyPointValueNode):
-    '''
-    Maximum engine torque during maximum continuous power phases where the
-    indicate airspeed is above 100 kts. (helicopter only)
-    '''
-
-    name = 'Eng Torque During Maximum Continuous Power Airspeed Above 100 '\
-        'Kts Max'
-
-    units = ut.PERCENT
-
-    can_operate = helicopter_only
-
-    def derive(self, eng=P('Eng (*) Torque Max'),
-               mcp=S('Maximum Continuous Power'), air_spd=P('Airspeed')):
-        slices = slices_and(mcp.get_slices(), air_spd.slices_above(100))
-        self.create_kpvs_within_slices(eng.array, slices, max_value)
+    def derive(self, eng=P('Eng (*) Torque Max'), air_spd=P('Airspeed')):
+        self.create_kpvs_within_slices(eng.array, air_spd.slices_above(100), max_value)
 
 
 class EngTorque500To50FtMax(KeyPointValueNode):
