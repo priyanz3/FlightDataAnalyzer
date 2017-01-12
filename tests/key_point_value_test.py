@@ -13634,20 +13634,21 @@ class TestPitchOnGroundMin(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Pitch',  'Grounded', 'On Deck')])
+        self.assertEqual(opts, [('Pitch', 'Collective', 'Grounded', 'On Deck')])
 
     def test_derive(self,):
         pitch = P(
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         grounded = SectionNode(name, items=[section, section2])
         on_deck = buildsection('On Deck', 11, 99)
         node = self.node_class()
-        node.derive(pitch, grounded, on_deck)
+        node.derive(pitch, coll, grounded, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 0)
         self.assertEqual(node[0].value, 0)
@@ -13659,13 +13660,14 @@ class TestPitchOnGroundMin(unittest.TestCase):
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'Grounded'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         grounded = SectionNode(name, items=[section, section2])
         on_deck = buildsection('On Deck', 5, 99)
         node = self.node_class()
-        node.derive(pitch, grounded, on_deck)
+        node.derive(pitch, coll, grounded, on_deck)
         self.assertEqual(len(node), 1)
 
 
@@ -13676,19 +13678,20 @@ class TestPitchOnDeckMin(unittest.TestCase):
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Pitch', 'On Deck')])
+        self.assertEqual(opts, [('Pitch', 'Collective', 'On Deck')])
 
     def test_derive(self,):
         pitch = P(
             name='Pitch',
             array=np.ma.array([0, 0, 2, 4, 7, 6, 4, 3, -1, 0]),
         )
+        coll = P('Collective', np.ma.array([10.0]*10))
         name = 'On Deck'
         section = Section(name, slice(0, 3), 0, 2.5)
         section2 = Section(name, slice(8, 9), 8, 10)
         on_deck = SectionNode(name, items=[section, section2])
         node = self.node_class()
-        node.derive(pitch, on_deck)
+        node.derive(pitch, coll, on_deck)
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 0)
         self.assertEqual(node[0].value, 0)
@@ -15096,11 +15099,12 @@ class TestRollOnGroundMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll',  'Grounded', 'On Deck')])
+        self.assertEqual(opts, [('Roll', 'Collective', 'Grounded', 'On Deck')])
 
     def test_derive(self,):
         x = np.linspace(0, 10, 100)
         roll = P('Roll', x*np.sin(x))
+        coll = P('Collective', np.ma.array([10.0]*100))
         name = 'Grounded'
         section = Section(name, slice(10, 50), 10, 50)
         grounded = SectionNode(name, items=[section])
@@ -15109,7 +15113,7 @@ class TestRollOnGroundMax(unittest.TestCase):
         on_deck = SectionNode(name, items=[section])
 
         node = self.node_class()
-        node.derive(roll, grounded, on_deck)
+        node.derive(roll, coll, grounded, on_deck)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 49)
@@ -15118,6 +15122,7 @@ class TestRollOnGroundMax(unittest.TestCase):
     def test_not_on_deck(self,):
         x = np.linspace(0, 10, 100)
         roll = P('Roll', -x*np.sin(x))
+        coll = P('Collective', np.ma.array([10.0]*100))
         name = 'Grounded'
         section = Section(name, slice(10, 50), 10, 50)
         grounded = SectionNode(name, items=[section])
@@ -15126,7 +15131,7 @@ class TestRollOnGroundMax(unittest.TestCase):
         on_deck = SectionNode(name, items=[section])
 
         node = self.node_class()
-        node.derive(roll, grounded, on_deck)
+        node.derive(roll, coll, grounded, on_deck)
 
         self.assertEqual(len(node), 0)
 
@@ -15138,17 +15143,18 @@ class TestRollOnDeckMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Roll',  'On Deck')])
+        self.assertEqual(opts, [('Roll', 'Collective', 'On Deck')])
 
     def test_derive(self,):
         x = np.linspace(0, 10, 100)
         roll = P('Roll', x*np.sin(x))
+        coll = P('Collective', np.ma.array([10.0]*100))
         name = 'On Deck'
         section = Section(name, slice(10, 50), 10, 50)
         on_deck = SectionNode(name, items=[section])
 
         node = self.node_class()
-        node.derive(roll, on_deck)
+        node.derive(roll, coll, on_deck)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 49)

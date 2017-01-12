@@ -13320,8 +13320,10 @@ class PitchOnGroundMin(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, pitch=P('Pitch'), grounded=S('Grounded'), on_deck=S('On Deck')):
-        my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
+    def derive(self, pitch=P('Pitch'), coll=P('Collective'), grounded=S('Grounded'), on_deck=S('On Deck')):
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(on_deck.get_slices(), low_coll)
+        my_slices = slices_and_not(grounded.get_slices(), my_slices)
         self.create_kpvs_within_slices(pitch.array,
                                        my_slices,
                                        min_value)
@@ -13334,9 +13336,11 @@ class PitchOnDeckMin(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, pitch=P('Pitch'), on_deck=S('On Deck')):
+    def derive(self, pitch=P('Pitch'), coll=P('Collective'), on_deck=S('On Deck')):
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(pitch.array,
-                                       on_deck.get_slices(),
+                                       my_slices,
                                        min_value)
 
 
@@ -14387,8 +14391,10 @@ class RollOnGroundMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), grounded=S('Grounded'), on_deck=S('On Deck')):
+    def derive(self, roll=P('Roll'), coll=P('Collective'), grounded=S('Grounded'), on_deck=S('On Deck')):
         my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(my_slices, low_coll)
         self.create_kpvs_within_slices(roll.array,
                                        my_slices,
                                        max_abs_value)
@@ -14403,10 +14409,12 @@ class RollOnDeckMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, roll=P('Roll'), on_deck=S('On Deck')):
+    def derive(self, roll=P('Roll'), coll=P('Collective'), on_deck=S('On Deck')):
 
+        _, low_coll = slices_below(coll.array, 40.0)
+        my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(roll.array,
-                                       on_deck.get_slices(),
+                                       my_slices,
                                        max_abs_value)
 
 
