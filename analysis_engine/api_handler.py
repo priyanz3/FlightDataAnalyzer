@@ -190,7 +190,10 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
         url = '%(base_url)s/api/airport/nearest/' % {
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
         }
-        params = {'ll': '%f,%f' % (latitude, longitude)}
+        # Note: Only need three decimal places as sufficiently accurate.
+        #       Also more opportunity for caching similar responses.
+        #       See https://gis.stackexchange.com/a/8674 for details.
+        params = {'ll': '%.3f,%.3f' % (latitude, longitude)}
         return self.request(url, params=params)
 
 

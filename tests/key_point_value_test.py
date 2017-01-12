@@ -15,7 +15,7 @@ from flightdatautilities.geometry import midpoint
 
 from hdfaccess.parameter import MappedArray
 
-from analysis_engine.library import align, median_value
+from analysis_engine.library import align, median_value, any_of
 from analysis_engine.node import (
     A, App, ApproachItem, KPV, KTI, load, M, P, KeyPointValue,
     MultistateDerivedParameterNode,
@@ -187,6 +187,7 @@ from analysis_engine.key_point_values import (
     AltitudeAtGearUpSelectionDuringGoAround,
     AltitudeAtLastAPDisengagedDuringApproach,
     AltitudeAtLastFlapChangeBeforeTouchdown,
+    AltitudeAtLastFlapSelectionBeforeTouchdown,
     AltitudeAtLastFlapRetraction,
     AltitudeAtMachMax,
     AltitudeDensityMax,
@@ -343,9 +344,7 @@ from analysis_engine.key_point_values import (
     EngTorque500To50FtMin,
     EngTorqueDuringGoAround5MinRatingMax,
     EngTorqueDuringMaximumContinuousPowerMax,
-    EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax,
     EngTorqueDuringTakeoff5MinRatingMax,
-    EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax,
     EngTorqueDuringTaxiMax,
     EngTorqueFor5SecDuringGoAround5MinRatingMax,
     EngTorqueFor5SecDuringMaximumContinuousPowerMax,
@@ -353,8 +352,9 @@ from analysis_engine.key_point_values import (
     EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax,
     EngTorqueFor5SecDuringTakeoff5MinRatingMax,
     EngTorqueOverThresholdDuration,
-    EngTorqueOverThresholdWithOneEngineInoperativeDuration,
+    EngTorqueLimitExceedanceWithOneEngineInoperativeDuration,
     EngTorqueWhileDescendingMax,
+    EngTorqueWithOneEngineInoperativeMax,
     EngTorque7FtToTouchdownMax,
     EngVibAMax,
     EngVibBMax,
@@ -479,6 +479,9 @@ from analysis_engine.key_point_values import (
     MasterWarningDuringTakeoffDuration,
     OverspeedDuration,
     StallFaultCautionDuration,
+    CruiseSpeedLowDuration,
+    DegradedPerformanceCautionDuration,
+    AirspeedIncreaseAlertDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -5712,6 +5715,77 @@ class TestAltitudeAtLastFlapChangeBeforeTouchdown(unittest.TestCase, NodeTest):
         ]))
 
 
+class TestAltitudeAtLastFlapSelectionBeforeTouchdown(unittest.TestCase):
+    def setUp(self):
+        self.node_class = AltitudeAtLastFlapSelectionBeforeTouchdown
+        self.alt_aal=P('Altitude AAL', np.ma.array(np.linspace(1000, 0, 30)))
+        self.tdwns=KTI('Touchdown', items=[KeyTimeInstance(name='Touchdown',
+                                                           index=27),])
+        # Flap Lever - expecting 3 KPVs from this parameter, 15, 30 and 35.
+        flap_array = np.ma.array([
+            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
+            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
+            0, 15, 15, 15, 30, 35, 35, 15, 15, 15
+        ])
+        flap_mapping = {int(f): str(f) for f in np.ma.unique(flap_array)}
+        self.flap = M('Flap Lever', flap_array, values_mapping=flap_mapping)
+
+        # Synth Lever - expecting 2 KPVs from this parameter, 15 and 35. 
+        synth_array = np.ma.array([
+            0, 5, 15, 15, 15, 0, 0, 0, 0, 0,
+            0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
+            0, 15, 15, 15, 35, 35, 35, 30, 30, 30
+        ])
+        synth_mapping = {int(f): 'Lever %s' % i for i, f in enumerate(
+            np.ma.unique(synth_array))}
+        self.synth = M('Flap Lever (Synthetic)', synth_array,
+                       values_mapping=synth_mapping)
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3)
+        for opt in opts:
+            self.assertIn('Altitude AAL', opt)
+            self.assertIn('Touchdown', opt)
+            self.assertTrue(any_of(['Flap Lever', 'Flap Lever (Synthetic)'],
+                                   opt))
+
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(self.alt_aal, self.flap, self.synth, self.tdwns)
+
+        self.assertEqual(len(node), 3)
+        self.assertAlmostEqual(node[0].value, 275.86, places=2)
+        self.assertEqual(node[0].index, 21)
+        self.assertEqual(node[0].name,
+                         'Altitude At Last Flap 15 Selection Before Touchdown')
+        self.assertAlmostEqual(node[1].value, 172.41, places=2)
+        self.assertEqual(node[1].index, 24)
+        self.assertEqual(node[1].name,
+                         'Altitude At Last Flap 30 Selection Before Touchdown')
+        self.assertAlmostEqual(node[2].value, 137.93, places=2)
+        self.assertEqual(node[2].index, 25)
+        self.assertEqual(node[2].name,
+                         'Altitude At Last Flap 35 Selection Before Touchdown')
+
+    def test_derive_synth_only(self):
+        '''
+        Shouldn't a KPV for 30 deg as flap lever goes down from 35 to 30 deg
+        '''
+        node = self.node_class()
+        node.derive(self.alt_aal, None, self.synth, self.tdwns)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].value, 275.86, places=2)
+        self.assertEqual(node[0].index, 21)
+        self.assertEqual(node[0].name,
+                         'Altitude At Last Flap 15 Selection Before Touchdown')
+        self.assertAlmostEqual(node[1].value, 172.41, places=2)
+        self.assertEqual(node[1].index, 24)
+        self.assertEqual(node[1].name,
+                         'Altitude At Last Flap 35 Selection Before Touchdown')
+
+
 class TestAltitudeAtFirstFlapRetractionDuringGoAround(unittest.TestCase, NodeTest):
 
     def setUp(self):
@@ -8113,9 +8187,9 @@ class TestEngTorqueOverThresholdDuration(unittest.TestCase):
         self.assertEqual(node, expected)
 
 
-class TestEngTorqueOverThresholdWithOneEngineInoperativeDuration(unittest.TestCase):
+class TestEngTorqueLimitExceedanceWithOneEngineInoperativeDuration(unittest.TestCase):
     def setUp(self):
-        self.node_class = EngTorqueOverThresholdWithOneEngineInoperativeDuration
+        self.node_class = EngTorqueLimitExceedanceWithOneEngineInoperativeDuration
         self.mods = A('Modifications', [])
         self.engine_type = A('Engine Type', 'PW124B')
         self.engine_series = A('Engine Series', 'PW100')
@@ -8123,14 +8197,16 @@ class TestEngTorqueOverThresholdWithOneEngineInoperativeDuration(unittest.TestCa
         self.engine_series = A('Engine Series', 'PW100')
         self.engine_thresholds = {
             'Torque': {
-                'takeoff': 95,
-                'mcp':     90
+                'continuous': (None, 85),
+                'low':        ( 120, 85),
+                'hi':         (   8, 95),
+                'transient':  (   3, 100)
             },
         }
 
     @patch('analysis_engine.key_point_values.at')
     def test_can_operate(self, lookup_table):
-        nodes = ('Eng (1) Torque', 'Takeoff 5 Min Rating', 'One Engine Inoperative')
+        nodes = ('Eng (1) Torque', 'One Engine Inoperative')
         kwargs = {
             'eng_series': self.engine_series,
             'eng_type': self.engine_type,
@@ -8149,25 +8225,24 @@ class TestEngTorqueOverThresholdWithOneEngineInoperativeDuration(unittest.TestCa
 
         lookup_table.get_engine_map.return_value = self.engine_thresholds
 
-        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -2))
+        array = np.ma.array(range(75, 115, 2) + [115] * 5 + range(115, 60, -1))
         # use two arrays the same to ensure only one KPV created.
         eng1 = P('Eng (1) Torque', array=array)
         eng2 = P('Eng (2) Torque', array=array)
-        takeoff = buildsection('Takeoff 5 Min Rating', 5, 25)
-        mcp = buildsection('Maximum Continuous Power', 5, 25)
-        all_eng = M('One Engine Inoperable', np.ma.array([0]*15 + [1]*38), values_mapping={0:'-', 1:'OEI'})
+        all_eng = M('One Engine Inoperable', np.ma.array([0]*31 + [1]*49), values_mapping={0:'-', 1:'OEI'})
 
         node = self.node_class()
-        node.derive(eng1, eng2, None, None, takeoff, mcp, None, self.engine_series, self.engine_type, self.mods, all_eng)
+        node.derive(eng1, eng2, None, None, all_eng, self.engine_series, self.engine_type, self.mods)
 
+        node_name = 'Eng Torque Limit Exceedance With One Engine Inoperative Duration'
         expected = KPV(
-            'Eng Torque Over Threshold Duration',
+            node_name,
             items=[KeyPointValue(
-                index=15.0, value=10.0,
-                name='Eng Torque Over Takeoff Power With One Engine Inoperative Duration'),
+                index=46.0, value=9.0,
+                name=node_name),
                    KeyPointValue(
-                index=15.0, value=10.0,
-                name='Eng Torque Over MCP With One Engine Inoperative Duration')]
+                index=41.0, value=4.0,
+                name=node_name)]
         )
 
         self.assertEqual(node, expected)
@@ -9936,32 +10011,6 @@ class TestEngTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, NodeTest):
         self.assertEqual(node[0].value, 73)
 
 
-class TestEngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = EngTorqueDuringTakeoff5MinRatingWithOneEngineInoperativeMax
-        self.operational_combinations = [('Eng (*) Torque Max', 'Takeoff 5 Min Rating', 'One Engine Inoperative')]
-        self.can_operate_kwargs = {'ac_type': helicopter}
-        self.function = max_value
-
-    def test_derive_heli(self):
-        eng = P('Eng (*) Torque Max', np.ma.array([
-            70, 70, 70, 70, 70, 70, 70, 70, 68, 72,
-            67, 73, 66, 59, 60, 58, 45, 60, 40, 49,
-            36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
-        ]))
-
-        rating = buildsection('Takeoff 5 Min Rating', 1, 28)
-        one_eng = M('One Engine Inoperative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'OEI'})
-
-        node = self.node_class()
-        node.derive(eng, rating, one_eng)
-
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 11)
-        self.assertEqual(node[0].value, 73)
-
-
 class TestEngFor5SecTorqueDuringTakeoff5MinRatingMax(unittest.TestCase, CreateKPVsWithinSlicesSecondWindowTest):
 
     def setUp(self):
@@ -10048,11 +10097,11 @@ class TestEngTorqueMaximumContinuousPowerMax(unittest.TestCase, NodeTest):
         self.assertEqual(node[0].value, 73)
 
 
-class TestEngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax(unittest.TestCase, NodeTest):
+class TestEngTorqueWithOneEngineInoperativeMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
-        self.node_class = EngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax
-        self.operational_combinations = [('Eng (*) Torque Max', 'Maximum Continuous Power', 'One Engine Inoperative')]
+        self.node_class = EngTorqueWithOneEngineInoperativeMax
+        self.operational_combinations = [('Eng (*) Torque Max', 'Airborne', 'One Engine Inoperative')]
         self.can_operate_kwargs = {'ac_type': helicopter}
         self.function = max_value
 
@@ -10063,11 +10112,11 @@ class TestEngTorqueDuringMaximumContinuousPowerWithOneEngineInoperativeMax(unitt
             36, 44, 23, 40, 50, 37, 70, 75, 17, 17,
         ]))
 
-        mcp = buildsection('Maximum Continuous Power', 1, 28)
+        airs = buildsection('Airborne', 1, 28)
         one_eng = M('One Engine Inoperative', np.ma.array([1]*14 + [0]*16), values_mapping={0:'-', 1:'OEI'})
 
         node = self.node_class()
-        node.derive(eng, mcp, one_eng)
+        node.derive(eng, airs, one_eng)
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 11)
@@ -16061,6 +16110,35 @@ class TestStallFaultCautionDuration(unittest.TestCase):
         self.assertEqual(node[0].value, 6)
         self.assertEqual(node[1].index, 30)
         self.assertEqual(node[1].value, 5)
+
+
+class TestCruiseSpeedLowDuration(unittest.TestCase, CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Cruise Speed Low'
+        self.phase_name = 'Airborne'
+        self.node_class = CruiseSpeedLowDuration
+        self.values_mapping = {0: '-', 1: 'Low'}
+        self.basic_setup()
+
+
+class TestDegradedPerformanceCautionDuration(unittest.TestCase,
+                                             CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Degraded Performance Caution'
+        self.phase_name = 'Airborne'
+        self.node_class = DegradedPerformanceCautionDuration
+        self.values_mapping = {0: '-', 1: 'Caution'}
+        self.basic_setup()
+
+
+class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
+                                        CreateKPVsWhereTest):
+    def setUp(self):
+        self.param_name = 'Airspeed Increase Alert'
+        self.phase_name = 'Airborne'
+        self.node_class = AirspeedIncreaseAlertDuration
+        self.values_mapping = {0: '-', 1: 'Alert'}
+        self.basic_setup()
 
 
 ##############################################################################

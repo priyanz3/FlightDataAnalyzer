@@ -1454,7 +1454,7 @@ def clump_multistate(array, state, _slices=[slice(None)], condition=True):
         # single slice provided
         _slices = [_slices]
 
-    if condition == True:
+    if condition:
         state_match = runs_of_ones(array == state)
     else:
         state_match = runs_of_ones(array != state)
@@ -2938,7 +2938,7 @@ def hysteresis(array, hysteresis):
     if np.ma.count(array) == 0: # No unmasked elements.
         return array
 
-    if hysteresis == 0.0 or hysteresis == None:
+    if hysteresis == 0.0 or hysteresis is None:
         return array
 
     if hysteresis < 0.0:
@@ -2956,7 +2956,7 @@ def hysteresis(array, hysteresis):
     if array.mask is np.False_:
         notmasked = np.arange(length+1)
     else:
-        notmasked = np.ma.where(array.mask == False)[0]
+        notmasked = np.ma.where(~array.mask)[0]
     # The starting point for the computation is the first notmasked sample.
     old = array[notmasked[0]]
     for index in notmasked:
@@ -3403,7 +3403,7 @@ def interpolate_params(*params):
         multiplier = out_frequency / param.frequency
         offset = (param.offset * multiplier)
         # Will not create interpolation points for masked indices.
-        unmasked_indices = np.where(param.array.mask == False)[0]
+        unmasked_indices = np.where(~param.array.mask)[0]
         index_array = unmasked_indices.astype(np.float_) * multiplier + offset
         # Take only unmasked values to match size with index_array.
         data_arrays.append(param.array.data[unmasked_indices])
@@ -3684,9 +3684,9 @@ def slices_and(first_list, second_list):
 
             if slices_overlap(slice_1, slice_2):
                 slice_start = max(slice_1.start, slice_2.start)
-                if slice_1.stop == None:
+                if slice_1.stop is None:
                     slice_stop = slice_2.stop
-                elif slice_2.stop == None:
+                elif slice_2.stop is None:
                     slice_stop = slice_1.stop
                 else:
                     slice_stop = min(slice_1.stop, slice_2.stop)
@@ -3783,7 +3783,7 @@ def slices_or(*slice_lists):
                     # min prefers None
                     slice_start = min(input_slice.start, output_slice.start)
                     # max prefers anything but None
-                    if input_slice.stop == None or output_slice.stop == None:
+                    if input_slice.stop is None or output_slice.stop is None:
                         slice_stop = None
                     else:
                         slice_stop = max(input_slice.stop, output_slice.stop)
@@ -3979,7 +3979,7 @@ def localizer_scale(runway):
         except:
             length = None
 
-        if length == None:
+        if length is None:
             length = 8000 / METRES_TO_FEET # Typical length
 
         # Normal scaling of a localizer gives 700ft width at the threshold,
@@ -4450,12 +4450,12 @@ def blend_two_parameters(param_one, param_two, mode=None):
             b[-1] = b[-2]
         return b, 2.0 * freq, off
 
-    if param_one == None and param_two == None:
+    if param_one is None and param_two is None:
         raise ValueError('blend_two_parameters called with both parameters = None')
-    if param_one == None:
+    if param_one is None:
         return _interp(param_two.array, param_two.frequency, param_two.offset)
 
-    if param_two == None:
+    if param_two is None:
         return _interp(param_one.array, param_one.frequency, param_one.offset)
 
     assert param_one.frequency == param_two.frequency, \
@@ -5755,7 +5755,7 @@ def rms_noise(array, ignore_pc=None):
     diffs = local_diff[1:-1]
     if np.ma.count(diffs) == 0:
         return None
-    elif ignore_pc == None or ignore_pc/100.0*len(array)<1.0:
+    elif ignore_pc is None or ignore_pc/100.0*len(array)<1.0:
         to_rms = diffs
     else:
         monitor = slice(0, floor(len(diffs) * (1-ignore_pc/100.0)))
@@ -6374,13 +6374,13 @@ def slices_from_ktis(kti_1, kti_2):
     :returns: list of slices
     '''
     # If either list is void, we won't find any valid periods.
-    if kti_1==None or kti_2==None:
+    if kti_1 is None or kti_2 is None:
         return []
 
     # Inelegant way of ensuring we are dealing with lists of KTIs
-    if isinstance(kti_1, list) == False:
+    if not isinstance(kti_1, list):
         kti_1=[kti_1]
-    if isinstance(kti_2, list) == False:
+    if not isinstance(kti_2, list):
         kti_2=[kti_2]
 
     # Unpack the KTIs to get the indexes, and mark which were
@@ -7370,7 +7370,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
             try:
                 return (_slice.start or 0) + (step * diff_where[0][0])
             except IndexError:
-                if start_index==None or stop_index==None:
+                if start_index is None or stop_index is None:
                     return len(array) - 1
                 else:
                     if step==1:
@@ -7557,13 +7557,13 @@ def value_at_index(array, index, interpolate=True):
         high_value = array.data[high]
         # Crude handling of masked values. TODO: Must be a better way !
         if array.mask.any(): # An element is masked
-            if array.mask[low] == True:
-                if array.mask[high] == True:
+            if array.mask[low]:
+                if array.mask[high]:
                     return None
                 else:
                     return high_value
             else:
-                if array.mask[high] == True:
+                if array.mask[high]:
                     return low_value
         # If not interpolating and no mask or masked samples:
         if not interpolate:
