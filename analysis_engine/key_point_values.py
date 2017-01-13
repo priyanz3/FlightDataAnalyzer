@@ -17362,7 +17362,7 @@ class TrainingModeDuration(KeyPointValueNode):
 
 ##############################################################################
 # Hover height
-class HoverHeightMax(KeyPointValueNode):
+class HoverHeightOnshoreMax(KeyPointValueNode):
     '''
     Maximum hover height, to monitor for safe hover operation.
     '''
@@ -17371,8 +17371,23 @@ class HoverHeightMax(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, rad_alt=P('Altitude Radio'), hover=S('Hover')):
-        self.create_kpvs_within_slices(rad_alt.array, hover.get_slices(), max_value)
+    def derive(self, rad_alt=P('Altitude Radio'), offshore=M('Offshore'), hover=S('Hover')):
+        phases = slices_and(runs_of_ones(offshore.array == 'Onshore'), hover.get_slices())
+        self.create_kpvs_within_slices(rad_alt.array, phases, max_value)
+
+
+class HoverHeightOffshoreMax(KeyPointValueNode):
+    '''
+    Maximum hover height, to monitor for safe hover operation.
+    '''
+
+    units = ut.FT
+
+    can_operate = helicopter_only
+
+    def derive(self, rad_alt=P('Altitude Radio'), offshore=M('Offshore'), hover=S('Hover')):
+        phases = slices_and(runs_of_ones(offshore.array == 'Offshore'), hover.get_slices())
+        self.create_kpvs_within_slices(rad_alt.array, phases, max_value)
 
 
 ##############################################################################
