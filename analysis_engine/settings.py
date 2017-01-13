@@ -535,7 +535,8 @@ TAKEOFF_PERIOD = 5.0
 # Conditions for transition calculation.
 ROTOR_TRANSITION_ALTITUDE = 300 # ft
 ROTOR_TRANSITION_SPEED_LOW = 40 # kts
-ROTOR_TRANSITION_SPEED_HIGH = 80 # kts
+ROTOR_TRANSITION_SPEED_HIGH = 60 # kts
+# ROTOR_TRANSITION_SPEED_HIGH reduced from 80kts to allow for lower speed climbs from S76
 
 
 ##############################################################################
