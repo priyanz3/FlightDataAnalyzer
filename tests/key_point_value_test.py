@@ -417,7 +417,7 @@ from analysis_engine.key_point_values import (
     HeadingDeviationFromRunwayAt50FtDuringLanding,
     HeadingDeviationFromRunwayAtTOGADuringTakeoff,
     HeadingDeviationFromRunwayDuringLandingRoll,
-    HeadingDeviation1_5NMTo1_0NMFromTouchdownMax,
+    HeadingVariation1_5NMTo1_0NMFromTouchdownMax,
     HeadingDuringLanding,
     HeadingDuringTakeoff,
     HeadingRateWhileAirborneMax,
@@ -11238,10 +11238,10 @@ class TestHeadingDeviationFromRunwayDuringLandingRoll(unittest.TestCase, NodeTes
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestHeadingDeviation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
+class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = HeadingDeviation1_5NMTo1_0NMFromTouchdownMax
+        self.node_class = HeadingVariation1_5NMTo1_0NMFromTouchdownMax
 
     def test_attributes(self):
         node = self.node_class()
@@ -11279,16 +11279,16 @@ class TestHeadingDeviation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
                           KeyTimeInstance(37, '0.8 NM To Touchdown'),
                           KeyTimeInstance(38, '1.0 NM To Touchdown'),
                           KeyTimeInstance(27, '1.5 NM To Touchdown'),
-                          KeyTimeInstance(28, '2.0 NM To Touchdown')])        
+                          KeyTimeInstance(28, '2.0 NM To Touchdown')])
 
         node = self.node_class()
         node.derive(heading, dtts)
 
         self.assertEqual(len(node), 2)
-        self.assertEqual(node[0].index, 4)
-        self.assertEqual(node[0].value, 3)
-        self.assertEqual(node[1].index, 36)
-        self.assertEqual(node[1].value, -2)
+        self.assertEqual(node[0].index, 13)
+        self.assertEqual(node[0].value, 11)
+        self.assertEqual(node[1].index, 38)
+        self.assertEqual(node[1].value, 7)
 
 
 class TestHeadingVariation300To50Ft(unittest.TestCase):

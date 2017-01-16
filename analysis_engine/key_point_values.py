@@ -11251,9 +11251,9 @@ class HeadingDeviationFromRunwayDuringLandingRoll(KeyPointValueNode):
         self.create_kpv_from_slices(dev, [final_landing], max_abs_value)
 
 
-class HeadingDeviation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
+class HeadingVariation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
     '''
-    Maximum heading deviation 1.5 to 1.0 NM from touchdown. (helicopter only)
+    Maximum heading variation (PTP) 1.5 to 1.0 NM from touchdown. (helicopter only)
     '''
 
     units = ut.DEGREE
@@ -11266,10 +11266,11 @@ class HeadingDeviation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
                dtts=P('Distance To Touchdown')):
         start_idx = [d.index for d in dtts if '1.5 NM To Touchdown' in d.name]
         stop_idx = [d.index for d in dtts if '1.0 NM To Touchdown' in d.name]
-        slices = [slice(start, stop) for start, stop in zip(start_idx, 
+        slices = [slice(start, stop) for start, stop in zip(start_idx,
                                                             stop_idx)]
-        heading_delta = np.diff(heading.array % 360)
-        self.create_kpvs_within_slices(heading_delta, slices, max_abs_value)
+        for phase in slices:
+            heading_delta = np.ma.ptp(heading.array[phase])
+            self.create_kpv(phase.stop, heading_delta)
 
 
 class HeadingVariation300To50Ft(KeyPointValueNode):
