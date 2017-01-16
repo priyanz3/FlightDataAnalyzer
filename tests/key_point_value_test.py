@@ -11273,7 +11273,7 @@ class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
             -205, -207, -209, -211, -211, -210, -211, -211
         ]))
 
-        dtts = KTI('Distance To Touchdown',
+        dtts = DistanceToTouchdown('Distance To Touchdown',
                    items=[KeyTimeInstance(4, '0.8 NM To Touchdown'),
                           KeyTimeInstance(13, '1.0 NM To Touchdown'),
                           KeyTimeInstance(3, '1.5 NM To Touchdown'),
@@ -11290,7 +11290,7 @@ class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
         self.assertEqual(node[0].index, 13)
         self.assertEqual(node[0].value, 11)
         self.assertEqual(node[1].index, 38)
-        self.assertEqual(node[1].value, 7)
+        self.assertEqual(node[1].value, 9)
 
 
 class TestHeadingVariation300To50Ft(unittest.TestCase):

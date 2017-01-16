@@ -11272,14 +11272,13 @@ class HeadingVariation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, heading=P('Heading Continuous'),
-               dtts=P('Distance To Touchdown')):
-        start_idx = [d.index for d in dtts if '1.5 NM To Touchdown' in d.name]
-        stop_idx = [d.index for d in dtts if '1.0 NM To Touchdown' in d.name]
-        slices = [slice(start, stop) for start, stop in zip(start_idx,
-                                                            stop_idx)]
+               dtts=KPV('Distance To Touchdown')):
+        start_ktis = dtts.get_ordered_by_index(name='1.5 NM To Touchdown')
+        stop_ktis = dtts.get_ordered_by_index(name='1.0 NM To Touchdown')
+        slices = slices_from_ktis(start_ktis, stop_ktis)
         for phase in slices:
             heading_delta = np.ma.ptp(heading.array[phase])
-            self.create_kpv(phase.stop, heading_delta)
+            self.create_kpv(phase.stop-1, heading_delta)
 
 
 class HeadingVariation300To50Ft(KeyPointValueNode):
