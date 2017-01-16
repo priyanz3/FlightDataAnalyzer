@@ -675,7 +675,7 @@ from analysis_engine.key_point_values import (
     TerrainClearanceAbove3000FtMin,
     ThrottleCyclesDuringFinalApproach,
     ThrottleLeverAtLiftoff,
-    ThrottleLeverVariationAbove80KtToTakeoff,
+    ThrottleLeverVariationAbove80KtsToTakeoff,
     ThrottleReductionToTouchdownDuration,
     ThrustAsymmetryDuringApproachDuration,
     ThrustAsymmetryDuringApproachMax,
@@ -17404,9 +17404,9 @@ class TestThrottleLeverAtLiftoff(unittest.TestCase, CreateKPVsAtKTIsTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestThrottleLeverVariationAbove80KtToTakeoff(unittest.TestCase, NodeTest):
+class TestThrottleLeverVariationAbove80KtsToTakeoff(unittest.TestCase, NodeTest):
     def setUp(self):
-        self.node_class = ThrottleLeverVariationAbove80KtToTakeoff
+        self.node_class = ThrottleLeverVariationAbove80KtsToTakeoff
         self.operational_combinations = [(
             'Throttle Levers',
             'Airspeed',

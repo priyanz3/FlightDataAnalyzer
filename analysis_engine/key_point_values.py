@@ -16299,7 +16299,7 @@ class ThrottleLeverAtLiftoff(KeyPointValueNode):
         self.create_kpvs_at_ktis(levers.array, liftoffs)
 
 
-class ThrottleLeverVariationAbove80KtToTakeoff(KeyPointValueNode):
+class ThrottleLeverVariationAbove80KtsToTakeoff(KeyPointValueNode):
     '''
     KPV indicating any throttle lever variation during the takeoff phase as
     airspeed is increases above 80 Kt. The value will by the delta between
