@@ -80,13 +80,14 @@ class APEngaged(MultistateDerivedParameterNode):
                ap1=M('AP (1) Engaged'),
                ap2=M('AP (2) Engaged'),
                ap3=M('AP (3) Engaged')):
+
         stacked = vstack_params_where_state(
             (ap1, 'Engaged'),
             (ap2, 'Engaged'),
             (ap3, 'Engaged'),
         )
         self.array = stacked.any(axis=0)
-        self.offset = offset_select('mean', [ap1, ap2, ap3])
+        self.array.mask = stacked.mask.any(axis=0)
 
 
 class APChannelsEngaged(MultistateDerivedParameterNode):
