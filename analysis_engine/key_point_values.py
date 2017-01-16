@@ -5113,6 +5113,8 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
     only when the autopilot is engaged in CMD.
 
     FCTM B737NG - AFDS guidelines 1.35
+    
+    Uses custom 300fpm climb criteria
     '''
 
     name = 'AT Engaged AP Disengaged Outside Climb Duration'
@@ -5127,7 +5129,7 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
     def derive(self,
                at_engaged=M('AT Engaged'),
                ap_engaged=M('AP Engaged'),
-               climbing=S('Climbing'),
+               vert_spd=P('Vertical Speed For Flight Phases'),
                airborne=S('Airborne'),
                takeoff=S('Takeoff')):
         '''
@@ -5137,7 +5139,14 @@ class ATEngagedAPDisengagedOutsideClimbDuration(KeyPointValueNode):
             (at_engaged, 'Engaged'),
             (ap_engaged, '-'),
         ).all(axis=0)
-        not_climbing = slices_and_not(airborne.get_slices(), slices_or(climbing.get_slices() +
+        climbs = []
+        for air in airborne:
+            climbing = np.ma.masked_less(vert_spd.array[air.slice], 300) # Custom climbing criteria for this KPV
+            climbing_slices = slices_remove_small_gaps(
+                np.ma.clump_unmasked(climbing), time_limit=30.0, hz=vert_spd.hz)
+            climbs.extend(shift_slices(climbing_slices, air.slice.start))
+
+        not_climbing = slices_and_not(airborne.get_slices(), slices_or(climbs +
                                                                         takeoff.get_slices()))
         phases = slices_and(runs_of_ones(condition), not_climbing)
         self.create_kpvs_from_slice_durations(phases, self.frequency)

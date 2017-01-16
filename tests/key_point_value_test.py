@@ -4763,17 +4763,18 @@ class TestATEngagedAPDisengagedOutsideClimbDuration(unittest.TestCase, NodeTest)
 
     def setUp(self):
         self.node_class = ATEngagedAPDisengagedOutsideClimbDuration
-        self.operational_combinations = [('AT Engaged', 'AP Engaged', 'Climbing', 'Airborne', 'Takeoff')]
+        self.operational_combinations = [('AT Engaged', 'AP Engaged', 'Vertical Speed For Flight Phases', 'Airborne', 'Takeoff')]
         self.can_operate_kwargs = {'ac_family': A('Family', value='B737 NG')}
 
     def test_derive(self):
         at_engaged = M('AT Engaged', array=np.ma.array([1]*40), values_mapping={0: '-', 1: 'Engaged'})
         ap_engaged = M('AP Engaged', array=np.ma.array([1]*5+ [0]*30 + [1]*5), values_mapping={0: '-', 1: 'Engaged'})
         airs = buildsection('Airborne', 1, 39)
-        climbs = buildsection('Climbing', 1, 10)
+        vert = P('Vertical Speed For Flight Phases', array=np.ma.array([350]*10 + [250]*30))
+        #climbs = buildsection('Climbing', 1, 10)
 
         node = self.node_class()
-        node.derive(at_engaged, ap_engaged, climbs, airs)
+        node.derive(at_engaged, ap_engaged, vert, airs)
 
         name = 'AT Engaged AP Disengaged Outside Climb Duration'
         expected = KPV(name=name, items=[
@@ -4788,11 +4789,12 @@ class TestATEngagedAPDisengagedOutsideClimbDuration(unittest.TestCase, NodeTest)
         at_engaged = M('AT Engaged', array=np.ma.array([1]*40), values_mapping={0: '-', 1: 'Engaged'})
         ap_engaged = M('AP Engaged', array=np.ma.array([1]*5+ [0]*30 + [1]*5), values_mapping={0: '-', 1: 'Engaged'})
         airs = buildsection('Airborne', 5, 39)
-        climbs = buildsection('Climbing', 6, 10)
+        vert = P('Vertical Speed For Flight Phases', array=np.ma.array([250]*5 + [350]*5 + [250]*30))
+        #climbs = buildsection('Climbing', 6, 10)
         toff = buildsection('Takeoff', 0, 7)
 
         node = self.node_class()
-        node.derive(at_engaged, ap_engaged, climbs, airs, toff)
+        node.derive(at_engaged, ap_engaged, vert, airs, toff)
 
         name = 'AT Engaged AP Disengaged Outside Climb Duration'
         expected = KPV(name=name, items=[
