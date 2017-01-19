@@ -429,7 +429,8 @@ class ApproachInformation(ApproachNode):
                     elif runway_change:
                         # Use the end of localizer phase as this already reflects the tuned frequency.
                         est_end = ils_established(ils_loc.array, slice(loc_estab, ref_idx), ils_loc.hz, point='end')
-                        loc_end = min(loc_slice.stop, loc_end, est_end or np.inf)
+                        # Make sure we dont end up with a negative slice i.e. end before we are established.
+                        loc_end = min([x for x in (loc_slice.stop, loc_end, est_end or np.inf) if x > loc_estab])
     
                     elif approach_type == 'LANDING':
                         # Just end at 2 dots where we turn off the runway
