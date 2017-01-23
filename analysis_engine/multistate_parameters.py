@@ -223,7 +223,8 @@ class APVerticalMode(MultistateDerivedParameterNode):
                altitude_capture_mode=M('Altitude Capture Mode'),
                altitude_mode=M('Altitude Mode'),
                expedite_climb_mode=M('Expedite Climb Mode'),
-               expedite_descent_mode=M('Expedite Descent Mode')):
+               expedite_descent_mode=M('Expedite Descent Mode'),
+               vert_spd_engaged=M('Vertical Speed Engaged')):
         parameter = next(p for p in (climb_mode_active,
                                      longitudinal_mode_selected,
                                      ils_glideslope_capture_active,
@@ -235,13 +236,16 @@ class APVerticalMode(MultistateDerivedParameterNode):
                                      altitude_capture_mode,
                                      altitude_mode,
                                      expedite_climb_mode,
-                                     expedite_descent_mode) if p)
+                                     expedite_descent_mode,
+                                     vert_spd_engaged) if p)
         self.array = np_ma_zeros_like(parameter.array)
 
         if at_active:
             self.array[at_active.array == 'Activated'] = 'DES'
         if climb_mode_active:
             self.array[climb_mode_active.array == 'Activated'] = 'CLB'
+        if vert_spd_engaged:
+            self.array[vert_spd_engaged.array == 'Engaged'] = 'V/S'
         if longitudinal_mode_selected:
             states = longitudinal_mode_selected.state.keys()
             if 'Climb Mode Active' in states:
