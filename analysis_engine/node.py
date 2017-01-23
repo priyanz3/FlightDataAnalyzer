@@ -676,6 +676,8 @@ class DerivedParameterNode(Node):
         # Ensure that we copy attributes required for multi-states:
         if hasattr(self, 'values_mapping'):
             aligned_param.values_mapping = self.values_mapping
+        if hasattr(self, 'state'):
+            aligned_param.state = self.state
 
         self.set_cache(cache_key, aligned_param)
 
