@@ -296,7 +296,7 @@ class TestAPVerticalMode(unittest.TestCase):
         node = APVerticalMode()
         node.derive(
             None, None, longitudinal_mode_selected, None, None, None, None, None,
-            None, None, None, None)
+            None, None, None, None, None)
         self.assertTrue(
             all(node.array ==
                 ['-', '-',
@@ -374,7 +374,7 @@ class TestAPVerticalMode(unittest.TestCase):
                     ils_glideslope_capture_active, ils_glideslope_active,
                     flare_mode, open_climb_mode, open_descent_mode,
                     altitude_capture_mode, altitude_mode,
-                    expedite_climb_mode, expedite_descent_mode)
+                    expedite_climb_mode, expedite_descent_mode, None)
         self.assertTrue(
             all(node.array ==
                 ['-', '-',
