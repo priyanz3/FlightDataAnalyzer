@@ -2693,7 +2693,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
 
         elif family_name == 'B777':
             self.array = self.derive_from_handle(handle.array, deployed=10,
-                                                 armed=0, mask_below_armed=True)
+                                                 armed=1)
 
         elif family_name == 'B787':
             self.array = self.b787_speedbrake(handle)
