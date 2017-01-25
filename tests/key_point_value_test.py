@@ -417,7 +417,7 @@ from analysis_engine.key_point_values import (
     HeadingDeviationFromRunwayAt50FtDuringLanding,
     HeadingDeviationFromRunwayAtTOGADuringTakeoff,
     HeadingDeviationFromRunwayDuringLandingRoll,
-    HeadingVariation1_5NMTo1_0NMFromTouchdownMax,
+    HeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax,
     HeadingDuringLanding,
     HeadingDuringTakeoff,
     HeadingRateWhileAirborneMax,
@@ -11240,10 +11240,10 @@ class TestHeadingDeviationFromRunwayDuringLandingRoll(unittest.TestCase, NodeTes
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
+class TestHeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = HeadingVariation1_5NMTo1_0NMFromTouchdownMax
+        self.node_class = HeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax
 
     def test_attributes(self):
         node = self.node_class()
@@ -11258,9 +11258,10 @@ class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
         self.assertEqual(len(opts), 1)
-        self.assertEqual(len(opts[0]), 2)
+        self.assertEqual(len(opts[0]), 3)
         self.assertIn('Heading Continuous', opts[0])
         self.assertIn('Distance To Touchdown', opts[0])
+        self.assertIn('Offshore Touchdown', opts[0])
 
 
     def test_derive(self):
@@ -11283,8 +11284,13 @@ class TestHeadingVariation1_5NMTo1_0NMToTouchdownMax(unittest.TestCase):
                           KeyTimeInstance(27, '1.5 NM To Touchdown'),
                           KeyTimeInstance(28, '2.0 NM To Touchdown')])
 
+        tdwns = KTI(name='Offshore Touchdown', items=[
+            KeyTimeInstance(index=20, name='Offshore Touchdown'),
+            KeyTimeInstance(index=45, name='Offshore Touchdown'),
+            ])
+
         node = self.node_class()
-        node.derive(heading, dtts)
+        node.derive(heading, dtts, tdwns)
 
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 13)

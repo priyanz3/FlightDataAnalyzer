@@ -11260,7 +11260,7 @@ class HeadingDeviationFromRunwayDuringLandingRoll(KeyPointValueNode):
         self.create_kpv_from_slices(dev, [final_landing], max_abs_value)
 
 
-class HeadingVariation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
+class HeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax(KeyPointValueNode):
     '''
     Maximum heading variation (PTP) 1.5 to 1.0 NM from touchdown. (helicopter only)
     '''
@@ -11272,13 +11272,15 @@ class HeadingVariation1_5NMTo1_0NMFromTouchdownMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, heading=P('Heading Continuous'),
-               dtts=KTI('Distance To Touchdown')):
-        start_ktis = dtts.get_ordered_by_index(name='1.5 NM To Touchdown')
-        stop_ktis = dtts.get_ordered_by_index(name='1.0 NM To Touchdown')
-        slices = slices_from_ktis(start_ktis, stop_ktis)
-        for phase in slices:
-            heading_delta = np.ma.ptp(heading.array[phase])
-            self.create_kpv(phase.stop-1, heading_delta)
+               dtts=KTI('Distance To Touchdown'),
+               offshore_twn=KTI('Offshore Touchdown')):
+        for tdwn in offshore_twn:
+            start_kti = dtts.get_previous(tdwn.index, name='1.5 NM To Touchdown')
+            stop_kti = dtts.get_previous(tdwn.index, name='1.0 NM To Touchdown')
+            if start_kti and stop_kti:
+                phase = slice(start_kti.index, stop_kti.index+1)
+                heading_delta = np.ma.ptp(heading.array[phase])
+                self.create_kpv(phase.stop-1, heading_delta)
 
 
 class HeadingVariation300To50Ft(KeyPointValueNode):
