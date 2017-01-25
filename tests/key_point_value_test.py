@@ -11249,7 +11249,7 @@ class TestHeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax(unittest.TestCase
         node = self.node_class()
         self.assertEqual(
             node.name,
-            'Heading Variation 1.5 NM To 1.0 NM From Touchdown Max'
+            'Heading Variation 1.5 NM To 1.0 NM From Offshore Touchdown Max'
         )
         self.assertEqual(node.units, 'deg')
 

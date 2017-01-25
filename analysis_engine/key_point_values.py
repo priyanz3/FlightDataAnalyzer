@@ -11267,7 +11267,7 @@ class HeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    name = 'Heading Variation 1.5 NM To 1.0 NM From Touchdown Max'
+    name = 'Heading Variation 1.5 NM To 1.0 NM From Offshore Touchdown Max'
 
     can_operate = helicopter_only
 
