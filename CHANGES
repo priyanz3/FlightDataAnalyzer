@@ -9,12 +9,89 @@ You can view the differences in tagged versions as follows:
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
 
+v0.31.1
+-------
+
+ - Improvements:
+   - Approaches:
+     - Revised to permit localizer established to occur below 1000ft AAL
+     - Runway change now check that the two runways are parallel
+     - Fix for negative localiser established phases
+   - Onshore/Offshore: (Helicopter only) Currently in profiles due to libary requrements
+     - Renamed:
+       - KPV: Airspeed2NMToTouchdown --> Airspeed2NMToOffshoreTouchdown
+       - KPV: AirspeedAt200Ft --> AirspeedAt200FtDuringOnshoreApproach
+       - KPV: Groundspeed20SecToTouchdownMax --> Groundspeed20SecToOffshoreTouchdownMax
+       - KPV: Groundspeed0_8NMToTouchdown --> Groundspeed0_8NMToOffshoreTouchdown
+       - KPV: HeadingDeviation1_5NMTo1_0NMFromTouchdownMax --> HeadingVariation1_5NMTo1_0NMFromOffshoreTouchdownMax
+     - Added:
+       - KPV: HoverHeightDuringOnshoreTakeoffMax
+       - KPV: HoverHeightDuringOffshoreTakeoffMax
+       - KTI: Onshore/Offshore Touchdown
+     - Removed:
+       - KPV: HoverHeightMax
+   - Engine (Helicopter) OEI/AEO, renames and improvements
+     - Renamed:
+       - Multistate: Eng1OEI --> Eng1OneEngineInoperative
+       - Multistate: Eng2OEI --> Eng2OneEngineInoperative
+       - Multistate: Eng_OEI --> OneEngineInoperative
+       - Multistate: Eng_AEO --> AllEnginesOperative
+     - Added:
+       - KPV: EngTorqueWithOneEngineInoperativeMax
+       - KPV: EngTorqueLimitExceedanceWithOneEngineInoperativeDuration
+       - KPV: EngTorqueAbove100KtsMax
+     - Removed:
+       - KPV: EngTorqueDuringMaximumContinuousPowerAirspeedBelow100KtsMax
+       - KPV: EngTorqueDuringMaximumContinuousPowerAirspeedAbove100KtsMax
+   - Roll Cycle:
+     - Renamed:
+       - KPV: RollCyclesDuringFinalApproach --> RollCyclesExceeding5DegDuringFinalApproach
+       - KPV: RollCyclesDuringInitialClimb --> RollCyclesExceeding5DegDuringInitialClimb
+     - Added:
+       - KPV: RollCyclesExceeding15DegDuringFinalApproach
+       - KPV: RollCyclesExceeding15DegDuringInitialClimb
+   - Cleanup:
+     - comparison to None should use is instead of ==
+     - redundant comparisons to boolean in if statement
+     - simplify array comparisons to boolean
+
+ - Fix:
+   - Derived: AAL Helicopter handle multiple GoG section in dip
+   - KPV: HeadingVariationAbove80Kts: handle rapid airspeed 
+   - KPV: Control Column/Wheel Force Max KPV use max_abs_value
+   - KPV: Helicopter Pitch/Roll on ground/deck added <40% collective condition where missing
+   - KPV: AT Engaged AP disengaged use custom 300fpm climb criteria
+   - KTI: Touchdown: fix Saab 2000 attr comparison
+   - Multidtate: APVertMode: added Vertical Speed Engaged optional dependancy 
+   - Multistate: SpeedbrakeSelected: B777 correct armed when between 0 and 1
+   - Multistate APEngaged: keep or'd mask
+   - Node: Multistate: Pass state attribute to aligned param during alignment 
+   - Phase: ApproachAndLanding: exclude small alt dips
+   - Phase: Landing: avoid indexing past end of data
+   - Phase: TransitionHoverToFlight: decreaded upper rotor tansition speed to allow for slower climbs
+   - Split: Only write Converter submasks
+
+ - Add:
+   - Derived: Altitude QNH Calculated
+   - Derived: Pitch Smoothed
+   - Derived: Roll Smoothed
+   - KPV: Acceleration Normal Minus Load Factor Threshold At Touchdown
+   - KPV: Airspeed 5000 To 8000 Ft Max
+   - KPV: Altitude At Last Flap Selection Before Touchdown
+   - KPV: Cruise Speed Low
+   - KPV: Degraded Performance Caution
+   - KPV: Airspeed Increase Alert
+   - KPV: Throttle Lever Variation Above 80 Kts To Takeoff
+   - Library: mb2ft: convert millibars into feet
+
+ - Remove:
+   - KPV: Roll At Low Altitude (duplicate)
+
 v0.30.2
+-------
 
  - FIX: Speedbrakes for Citation
 
-
--------
 
 v0.30.1
 -------
