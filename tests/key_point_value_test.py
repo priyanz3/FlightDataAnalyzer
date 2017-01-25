@@ -433,8 +433,8 @@ from analysis_engine.key_point_values import (
     HeightLoss35To1000Ft,
     HeightLossLiftoffTo35Ft,
     HeightMinsToTouchdown,
-    HoverHeightOffshoreMax,
-    HoverHeightOnshoreMax,
+    HoverHeightDuringOffshoreTakeoffMax,
+    HoverHeightDuringOnshoreTakeoffMax,
     IANFinalApproachCourseDeviationMax,
     IANGlidepathDeviationMax,
     ILSFrequencyDuringApproach,
@@ -18616,55 +18616,53 @@ class TestTrainingModeDuration(unittest.TestCase):
         self.assertEqual(node[1].value, 2)
         self.assertEqual(node[1].index, 7)
 
-class TestHoverHeightOnshoreMax(unittest.TestCase):
+class TestHoverHeightDuringOnshoreTakeoffMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = HoverHeightOnshoreMax
+        self.node_class = HoverHeightDuringOnshoreTakeoffMax
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, ([('Altitude Radio', 'Offshore', 'Hover',)]))
+        self.assertEqual(opts, ([('Altitude Radio', 'Offshore', 'Hover', 'Takeoff')]))
 
     def test_derive(self):
         alt=P('Altitude Radio', np.ma.array(data=[2,3,4,5,3,3,4,3,2,7,8.0],
                                             mask=[0,0,0,1,0,0,0,0,0,0,0]))
         offshore = M(name='Offshore', array=np.ma.array([0]*12, dtype=int),
                          values_mapping={0: 'Onshore', 1: 'Offshore'})
-        hover=buildsections('Hover', [2, 6], [7, 10])
+        toff = buildsection('Takeoff', 5, 8)
+        hover=buildsections('Hover', [2, 4], [7, 10])
         node=self.node_class()
-        node.derive(alt, offshore, hover)
-        self.assertEqual(len(node),2)
-        self.assertEqual(node[0].index, 2)
-        self.assertEqual(node[0].value, 4)
-        self.assertEqual(node[1].index, 9)
-        self.assertEqual(node[1].value, 7)
+        node.derive(alt, offshore, hover, toff)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 9)
+        self.assertEqual(node[0].value, 7)
 
-class TestHoverHeightOffshoreMax(unittest.TestCase):
+class TestHoverHeightDuringOffshoreTakeoffMax(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = HoverHeightOffshoreMax
+        self.node_class = HoverHeightDuringOffshoreTakeoffMax
 
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(
             ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, ([('Altitude Radio', 'Offshore', 'Hover',)]))
+        self.assertEqual(opts, ([('Altitude Radio', 'Offshore', 'Hover', 'Takeoff')]))
 
     def test_derive(self):
         alt=P('Altitude Radio', np.ma.array(data=[2,3,4,5,3,3,4,3,2,7,8.0],
                                             mask=[0,0,0,1,0,0,0,0,0,0,0]))
         offshore = M(name='Offshore', array=np.ma.array([1]*12, dtype=int),
                          values_mapping={0: 'Onshore', 1: 'Offshore'})
-        hover=buildsections('Hover', [2, 6], [7, 10])
+        toff = buildsection('Takeoff', 5, 8)
+        hover=buildsections('Hover', [2, 4], [7, 10])
         node=self.node_class()
-        node.derive(alt, offshore, hover)
-        self.assertEqual(len(node),2)
-        self.assertEqual(node[0].index, 2)
-        self.assertEqual(node[0].value, 4)
-        self.assertEqual(node[1].index, 9)
-        self.assertEqual(node[1].value, 7)
+        node.derive(alt, offshore, hover, toff)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 9)
+        self.assertEqual(node[0].value, 7)
 
 
 class TestDriftAtTouchdown(unittest.TestCase):
