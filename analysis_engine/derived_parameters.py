@@ -5808,9 +5808,10 @@ class RollSmoothed(DerivedParameterNode):
                ):
 
         sources = [source_A, source_B, source_C]
+        max_freq = max([s.frequency for s in sources if s])
 
         self.offset = 0.0
-        self.frequency = 4.0
+        self.frequency = max([4.0, max_freq])
 
         self.array = blend_parameters(sources,
                                       offset=self.offset,
@@ -5834,9 +5835,10 @@ class PitchSmoothed(DerivedParameterNode):
                ):
 
         sources = [source_A, source_B, source_C]
+        max_freq = max([s.frequency for s in sources if s])
 
         self.offset = 0.0
-        self.frequency = 4.0
+        self.frequency = max([4.0, max_freq])
 
         self.array = blend_parameters(sources,
                                       offset=self.offset,
