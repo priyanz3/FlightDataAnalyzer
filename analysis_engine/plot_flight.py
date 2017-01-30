@@ -232,7 +232,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
                       alt_mode=altitude_mode,
                       visible=best)
             add_track(kml, coord_config['track'] + ' On Ground', lat, lon,
-                      coord_config['colour'],)
+                      coord_config['colour'], visible=best)
             if best:
                 best_lat = derived_param_from_hdf(lat).get_aligned(one_hz)
                 best_lon = derived_param_from_hdf(lon).get_aligned(one_hz)
