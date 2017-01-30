@@ -174,7 +174,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
             {'lat': 'Latitude Prepared',
              'lon': 'Longitude Prepared',
              'track': 'Prepared',
-             'colour': 'A11EB3'},
+             'colour': 'ffA11EB3'},
             {'lat': 'Latitude',
              'lon': 'Longitude',
              'track': 'Recorded',
@@ -229,9 +229,10 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
             best = not best_lat or not best_lon
             add_track(kml, coord_config['track'], lat, lon,
                       coord_config['colour'], alt_param=alt,
-                      alt_mode=altitude_mode)
+                      alt_mode=altitude_mode,
+                      visible=best)
             add_track(kml, coord_config['track'] + ' On Ground', lat, lon,
-                      coord_config['colour'])
+                      coord_config['colour'],)
             if best:
                 best_lat = derived_param_from_hdf(lat).get_aligned(one_hz)
                 best_lon = derived_param_from_hdf(lon).get_aligned(one_hz)
