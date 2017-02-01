@@ -846,17 +846,17 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
             overweight = gross_weight[idx].value > weight_threshold
 
             if hard and freq_16hz:
-                ld_factor_grph = np.append(np.array([1.90, 1.90]),
-                                           np.linspace(1.90, 1.45, 5))
+                ld_factor_grph = np.ma.append(np.array([1.90, 1.90]),
+                                              np.linspace(1.90, 1.45, 5))
             elif hard and freq_8hz:
-                ld_factor_grph = np.append(np.array([1.80, 1.80]),
-                                           np.linspace(1.80, 1.40, 5))
+                ld_factor_grph = np.ma.append(np.array([1.80, 1.80]),
+                                              np.linspace(1.80, 1.40, 5))
             elif overweight and freq_16hz:
-                ld_factor_grph = np.append(np.array([1.55,]),
-                                           np.linspace(1.55, 1.29, 6))
+                ld_factor_grph = np.ma.append(np.array([1.55,]),
+                                              np.linspace(1.55, 1.29, 6))
             elif overweight and freq_8hz:
-                ld_factor_grph = np.append(np.array([1.50,]),
-                                           np.linspace(1.50, 1.25, 6))
+                ld_factor_grph = np.ma.append(np.array([1.50,]),
+                                              np.linspace(1.50, 1.25, 6))
             else:
                 continue
             # Use roll_tdwn as the index for ld_factor_grph
