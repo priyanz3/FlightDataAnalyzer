@@ -44,8 +44,9 @@ logger = logging.getLogger(name=__name__)
 
 # KPV / KTI names not to display as markers
 SKIP_KPVS = []
+KEEP_KPVS = ['ILS Frequency During Approach']
 SKIP_KTIS = ['Transmit']
-KEEP_KTIS = ['Touchdown']
+KEEP_KTIS = ['Takeoff Start','Liftoff', 'Touchdown', 'Localizer Established Start', 'Localizer Established End', 'Glideslope Established End']
 
 class TypedWriter(object):
     """
@@ -240,7 +241,10 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
     # Add KTIs.
     for kti in kti_list:
         kti_point_values = {'name': kti.name}
-        if kti.name in SKIP_KTIS:
+        
+        if not KEEP_KTIS and kti.name in SKIP_KTIS:
+            continue
+        elif kti.name not in KEEP_KTIS:
             continue
         
         altitude = alt.at(kti.index) if plot_altitude else None
@@ -263,7 +267,9 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
            (kpv_lat == 0.0 and kpv_lon == 0.0):
             continue
 
-        if kpv.name in SKIP_KPVS:
+        if not KEEP_KPVS and kti.name in SKIP_KPVS:
+            continue
+        elif kti.name not in KEEP_KPVS:
             continue
         
         style = simplekml.Style()
