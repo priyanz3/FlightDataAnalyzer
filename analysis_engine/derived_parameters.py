@@ -1231,8 +1231,10 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
         self.array = moving_average(moving_average(self.array))
 
 
-class AltitudeQNHCalculated(DerivedParameterNode):
-    name = 'Altitude QNH Calculated'
+#class AltitudeQNHCalculated(DerivedParameterNode):
+class AltitudeQNH(DerivedParameterNode):
+    #name = 'Altitude QNH Calculated'
+    name = 'Altitude QNH'
     units = ut.FT
 
     @classmethod
@@ -1260,12 +1262,13 @@ class AltitudeQNHCalculated(DerivedParameterNode):
 
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
-class AltitudeQNH(DerivedParameterNode):
+#class AltitudeQNH(DerivedParameterNode):
+class AltitudeVisualization(DerivedParameterNode):
     '''
     This altitude is above mean sea level. From the takeoff airfield to the
-    highest altitude above airfield, the altitude QNH is referenced to the
-    takeoff airfield elevation, and from that point onwards it is referenced
-    to the landing airfield elevation.
+    highest altitude above airfield, the altitude Visualization is referenced
+    to the takeoff airfield elevation, and from that point onwards it is
+    referenced to the landing airfield elevation.
 
     If we can only determine the takeoff elevation, the landing elevation
     will using the same value as the error will be the difference in pressure
@@ -1277,7 +1280,7 @@ class AltitudeQNH(DerivedParameterNode):
     we use the Altitude AAL parameter.
     '''
 
-    name = 'Altitude QNH'
+    name = 'Altitude Visualization'
     units = ut.FT
 
     @classmethod
@@ -5808,9 +5811,10 @@ class RollSmoothed(DerivedParameterNode):
                ):
 
         sources = [source_A, source_B, source_C]
+        max_freq = max([s.frequency for s in sources if s])
 
         self.offset = 0.0
-        self.frequency = 4.0
+        self.frequency = max([4.0, max_freq])
 
         self.array = blend_parameters(sources,
                                       offset=self.offset,
@@ -5834,9 +5838,10 @@ class PitchSmoothed(DerivedParameterNode):
                ):
 
         sources = [source_A, source_B, source_C]
+        max_freq = max([s.frequency for s in sources if s])
 
         self.offset = 0.0
-        self.frequency = 4.0
+        self.frequency = max([4.0, max_freq])
 
         self.array = blend_parameters(sources,
                                       offset=self.offset,

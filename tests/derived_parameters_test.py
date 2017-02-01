@@ -78,8 +78,8 @@ from analysis_engine.derived_parameters import (
     AltitudeAALForFlightPhases,
     AltitudeAGL,
     AltitudeDensity,
-    AltitudeQNHCalculated,
     AltitudeQNH,
+    AltitudeVisualization,
     AltitudeRadio,
     AltitudeRadioOffsetRemoved,
     AltitudeSTDSmoothed,
@@ -1269,13 +1269,13 @@ class TestAltitudeForFlightPhases(unittest.TestCase):
         '''
 
 
-class TestAltitudeQNHCalculated(unittest.TestCase):
+class TestAltitudeQNH(unittest.TestCase):
     def setUp(self):
-        self.node_class = AltitudeQNHCalculated
+        self.node_class = AltitudeQNH
 
     def test_attribute(self):
         node = self.node_class()
-        self.assertEqual(node.name, 'Altitude QNH Calculated')
+        self.assertEqual(node.name, 'Altitude QNH')
         self.assertEqual(node.units, 'ft')
 
     def test_can_operate(self):
@@ -1304,9 +1304,9 @@ class TestAltitudeQNHCalculated(unittest.TestCase):
             self.assertEqual(expected, int(got))
 
 
-class TestAltitudeQNH(unittest.TestCase, NodeTest):
+class TestAltitudeVisualization(unittest.TestCase, NodeTest):
     def setUp(self):
-        self.node_class = AltitudeQNH
+        self.node_class = AltitudeVisualization
         self.operational_combinations = [
             ('Altitude AAL', ),
             ('Altitude AAL', 'Altitude STD Smoothed'),

@@ -2,6 +2,7 @@
 
 import numpy as np
 import operator
+import re
 
 from collections import defaultdict
 from copy import deepcopy
@@ -757,39 +758,105 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
     '''
     units = ut.G
 
+    @classmethod
+    def get_landing_weight(cls, series=None, model=None, mods=None):
+        '''
+        From the tamplate LMX000 (Maint.) Landing weight high at touchdown
+        Series       Model          Modification                     Weight(KG)
+        B757-200     (F),(PF)       MOD Aircraft Line Numbers 1-209       89992
+        B757-200     (PCF)          MOD Aircraft Line Numbers 1-209       89811
+        B757-200     (F),(PF),(PCF) None                                  95254
+        B757-200     None           MOD Aircraft Line Numbers 210         95254
+                                    and above
+        B757-200     None           None                                  89992
+        B757-300     None           None                                 101605
+        B767-200     None           Post TC                              136078
+        B767-25E     None           Freighter Conversion                 126098
+        B767-200     None           Freighter Conversion                 128367
+        B767-200     None           None                                 123377
+        B767-300     None           Freighter Conversion                 147871
+        B767-300     None           None                                 145149
+        B767-400     (ER)           None                                 158757
+        Return the weight in KG when match is found else None
+        '''
+        re_series = re.match(r'^B7[65]7-[234][05][0E]', series)
+        if not re_series:
+            return None
+        re_model = re.search(r'\((F|PF|PCF|ER)\)$', model)
+        model_ending = re_model.group() if re_model else None
+
+        if 'B757-200' in series and model_ending in ['(F)', '(PF)'] and \
+           'MOD Aircraft Line Numbers 1-209' in mods:
+            return 89992
+        elif 'B757-200' in series and model_ending in '(PCF)' and \
+             'MOD Aircraft Line Numbers 1-209' in mods:
+            return 89811
+        elif 'B757-200' in series and model_ending in ['(F)', '(PF)', '(PCF)']:
+            return 95254
+        elif 'B757-200' in series and \
+             'MOD Aircraft Line Numbers 210 and above' in mods:
+            return 95254
+        elif 'B757-200' in series:
+            return 89992
+        elif 'B757-300' in series:
+            return 101605
+        elif 'B767-200' in series and 'Post TC' in mods:
+            return 136078
+        elif 'B767-25E' in series and 'Freighter Conversion' in mods:
+            return 126098
+        elif 'B767-200' in series and 'Freighter Conversion' in mods:
+            return 128367
+        elif 'B767-200' in series:
+            return 123377
+        elif 'B767-300' in series and 'Freighter Conversion' in mods:
+            return 147871
+        elif 'B767-300' in series:
+            return 145149
+        elif 'B767-400' in series and model_ending in '(ER)':
+            return 158757
+        else:
+            return None
+
     # This KPV is specific to 767 aircraft
     @classmethod
-    def can_operate(cls, available, family=A('Family')):
-        is_b767 = family and 'B767' in family.value
-        return is_b767 and all_deps(cls, available)      
-    
+    def can_operate(cls, available, model=A('Model'), series=A('Series'),
+                    mods=A('Modifications')):
+        ac_weight = cls.get_landing_weight(series.value, model.value,
+                                           mods.value)
+        return ac_weight and all_deps(cls, available)
+
     def derive(self,
                land_vert_acc=KPV('Acceleration Normal At Touchdown'),
                roll=P('Roll'),
                tdwns=KTI('Touchdown'),
                gross_weight=KPV('Gross Weight At Touchdown'),
-               mlw=A('Maximum Landing Weight')):
+               model=A('Model'),
+               series=A('Series'),
+               mods=A('Modifications')):
+        mlw = self.get_landing_weight(series.value, model.value, mods.value)
+        if not mlw:
+            return
+        weight_threshold = mlw + 1133.981  # 2500LB --> 1133.981KG
+        freq_8hz = land_vert_acc.frequency == 8.0
+        freq_16hz = land_vert_acc.frequency == 16.0
         for idx, tdwn in enumerate(tdwns):
             # not interested in direction of roll
             roll_tdwn = abs(value_at_index(roll.array, tdwn.index))
-            weight_threshold = mlw.value + 1133.981  # 2500LB --> 1133.981KG 
-            freq_8hz = land_vert_acc.frequency == 8.0
-            freq_16hz = land_vert_acc.frequency == 16.0
             hard = gross_weight[idx].value <= weight_threshold
             overweight = gross_weight[idx].value > weight_threshold
-            
+
             if hard and freq_16hz:
-                ld_factor_grph = np.append(np.array([1.90, 1.90]),
-                                           np.linspace(1.90, 1.45, 5))
+                ld_factor_grph = np.ma.append(np.array([1.90, 1.90]),
+                                              np.linspace(1.90, 1.45, 5))
             elif hard and freq_8hz:
-                ld_factor_grph = np.append(np.array([1.80, 1.80]),
-                                           np.linspace(1.80, 1.40, 5))
+                ld_factor_grph = np.ma.append(np.array([1.80, 1.80]),
+                                              np.linspace(1.80, 1.40, 5))
             elif overweight and freq_16hz:
-                ld_factor_grph = np.append(np.array([1.55,]),
-                                           np.linspace(1.55, 1.29, 6))
+                ld_factor_grph = np.ma.append(np.array([1.55,]),
+                                              np.linspace(1.55, 1.29, 6))
             elif overweight and freq_8hz:
-                ld_factor_grph = np.append(np.array([1.50,]),
-                                           np.linspace(1.50, 1.25, 6))
+                ld_factor_grph = np.ma.append(np.array([1.50,]),
+                                              np.linspace(1.50, 1.25, 6))
             else:
                 continue
             # Use roll_tdwn as the index for ld_factor_grph

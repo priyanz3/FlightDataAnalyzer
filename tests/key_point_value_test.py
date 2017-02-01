@@ -1632,11 +1632,17 @@ class TestAccelerationNormalAtTouchdown(unittest.TestCase, NodeTest):
 class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCase):
     def setUp(self):
         self.node_class = AccelerationNormalMinusLoadFactorThresholdAtTouchdown
-        self.family = A('Family', 'B767')
+        # The following series, model & mods should return 128367KG
+        self.model = A('Model', 'B767-232(F)')
+        self.series = A('Series', 'B767-200')
+        self.mods = A('Modifications', ['Freighter Conversion',])
+
         self.operational_combinations = [('Acceleration Normal At Touchdown',
                                          'Roll', 'Touchdown',
                                          'Gross Weight At Touchdown',
-                                         'Maximum Landing Weight')]
+                                         'Model',
+                                         'Series',
+                                         'Modifications')]
         self.tdwn_idx = 4.0
         name = 'Acceleration Normal At Touchdown'
         self.land_vert_acc_8hz = KPV(name=name, frequency=8.0, items=[
@@ -1647,17 +1653,23 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
         ])
         name = 'Gross Weight At Touchdown'
         self.gross_weight_under = KPV(name=name, items=[
-            KeyPointValue(index=self.tdwn_idx, value=115000, name=name),
+            KeyPointValue(index=self.tdwn_idx, value=128367, name=name),
         ])
         self.gross_weight_over = KPV(name=name, items=[
-            KeyPointValue(index=self.tdwn_idx, value=125000, name=name),
-        ])        
+            KeyPointValue(index=self.tdwn_idx, value=138367, name=name),
+        ])
         self.tdwns = KTI('Touchdown', items=[
             KeyTimeInstance(index=self.tdwn_idx, name='Touchdown'),
         ])
-        self.mlw = A('Maximum Landing Weight', 115000)
         self.roll = np.ma.array([0.]*10)
 
+    def test_get_landing_weight(self):
+        node = self.node_class()
+        self.assertEqual(
+            node.get_landing_weight(self.series.value, self.model.value,
+                                    self.mods.value),
+            128367
+        )
 
     def test_attributes(self):
         node = self.node_class()
@@ -1668,18 +1680,20 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
         )
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations(family=self.family)
+        opts = self.node_class.get_operational_combinations(
+            model=self.model, series=self.series, mods=self.mods)
         self.assertEqual(len(opts), 1)
         self.assertEqual(opts, self.operational_combinations)
 
-    def _call_derive(self, roll_value, land_vert_acc, gross_weight):    
+    def _call_derive(self, roll_value, land_vert_acc, gross_weight):
         self.roll[self.tdwn_idx] = roll_value
         roll = P('Roll', self.roll)
 
         node = self.node_class()
         node.derive(land_vert_acc=land_vert_acc, roll=roll,
                            tdwns=self.tdwns, gross_weight=gross_weight,
-                           mlw=self.mlw)
+                           series=self.series, model=self.model,
+                           mods=self.mods)
         self.assertEqual(len(node), 1)
         return node
 
