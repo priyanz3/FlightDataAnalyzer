@@ -1640,6 +1640,7 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
         self.operational_combinations = [('Acceleration Normal At Touchdown',
                                          'Roll', 'Touchdown',
                                          'Gross Weight At Touchdown',
+                                         'Gross Weight',
                                          'Model',
                                          'Series',
                                          'Modifications')]
@@ -1691,8 +1692,8 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
 
         node = self.node_class()
         node.derive(land_vert_acc=land_vert_acc, roll=roll,
-                           tdwns=self.tdwns, gross_weight=gross_weight,
-                           series=self.series, model=self.model,
+                           tdwns=self.tdwns, gw_kpv=gross_weight,
+                           gw=None, series=self.series, model=self.model,
                            mods=self.mods)
         self.assertEqual(len(node), 1)
         return node

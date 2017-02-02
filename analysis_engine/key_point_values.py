@@ -829,26 +829,39 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
                land_vert_acc=KPV('Acceleration Normal At Touchdown'),
                roll=P('Roll'),
                tdwns=KTI('Touchdown'),
-               gross_weight=KPV('Gross Weight At Touchdown'),
+               gw_kpv=KPV('Gross Weight At Touchdown'),
+               gw = P('Gross Weight'),
                model=A('Model'),
                series=A('Series'),
                mods=A('Modifications')):
         mlw = self.get_landing_weight(series.value, model.value, mods.value)
         if not mlw:
+            self.warning("Cannot determine landing weight. series:'%s' "
+                         "model:'%s' mods:'%s'" % series.value, model.value,
+                         mods.value)
             return
+            
         weight_threshold = mlw + 1133.981  # 2500LB --> 1133.981KG
         freq_8hz = land_vert_acc.frequency == 8.0
         freq_16hz = land_vert_acc.frequency == 16.0
         for idx, tdwn in enumerate(tdwns):
             # not interested in direction of roll
             roll_tdwn = abs(value_at_index(roll.array, tdwn.index))
-            hard = gross_weight[idx].value <= weight_threshold
-            overweight = gross_weight[idx].value > weight_threshold
 
-            if hard and freq_16hz:
+            gw_value = [k.value for k in gw_kpv if k.index == tdwn.index]
+            if not gw_value:
+                self.warning("No 'Gross Weight At Touchdown' KPV, using "
+                             "'Gross Weight' parameter at this touchdown "
+                             "index.")
+                weight = value_at_index(gw.array, tdwn.index)
+            else:
+                weight = gw_value[0]
+
+            overweight = weight > weight_threshold
+            if not overweight and freq_16hz:
                 ld_factor_grph = np.ma.append(np.array([1.90, 1.90]),
                                               np.linspace(1.90, 1.45, 5))
-            elif hard and freq_8hz:
+            elif not overweight and freq_8hz:
                 ld_factor_grph = np.ma.append(np.array([1.80, 1.80]),
                                               np.linspace(1.80, 1.40, 5))
             elif overweight and freq_16hz:
