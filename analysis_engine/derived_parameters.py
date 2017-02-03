@@ -5799,7 +5799,8 @@ class Roll(DerivedParameterNode):
 class RollSmoothed(DerivedParameterNode):
 
     align = False
-    
+    units = ut.DEGREE
+
     @classmethod
     def can_operate(cls, available):
         return 'Roll' in available
@@ -5826,6 +5827,7 @@ class RollSmoothed(DerivedParameterNode):
 class PitchSmoothed(DerivedParameterNode):
 
     align = False
+    units = ut.DEGREE
 
     @classmethod
     def can_operate(cls, available):
