@@ -2912,15 +2912,15 @@ class TestFuelQtyAux(unittest.TestCase):
         self.assertEquals(len(opts), 3)
 
     def test_derive(self):
-        fq1 = np.ma.array([40,30,20,10])
-        fq2 = np.ma.array([10,20,30,40])
+        fq1 = P('Fuel Qty (Aux) (1)', np.ma.array([40,30,20,10]))
+        fq2 = P('Fuel Qty (Aux) (2)', np.ma.array([10,20,30,40]))
 
         dfq = self.node_class()
         dfq.derive(fq1, None)
-        assert_array_equal(dfq.array, fq1)
+        assert_array_equal(dfq.array, fq1.array)
 
         dfq.derive(None, fq2)
-        assert_array_equal(dfq.array, fq2)
+        assert_array_equal(dfq.array, fq2.array)
 
         dfq.derive(fq1, fq2)
         assert_array_equal(dfq.array, np.ma.array([50,50,50,50]))

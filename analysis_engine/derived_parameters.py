@@ -3687,12 +3687,15 @@ class FuelQtyC(DerivedParameterNode):
                fuel_qty_c_2=P('Fuel Qty (C) (2)'),
                fuel_qty_c_3=P('Fuel Qty (C) (3)'),
                fuel_qty_c_4=P('Fuel Qty (C) (4)')):
-        # Sum all the available measurements! Masked values are maintained as
-        # all tanks must be reading valid values to be summed together. Fuel in
-        # both tanks but a masked value in one should not result in half the
-        # measured fuel quantity!
-        stacked_params = vstack_params(fuel_qty_c_1, fuel_qty_c_2,
-                                       fuel_qty_c_3, fuel_qty_c_4)
+        # Sum all the available measurements!
+        #  Repair masks to cover data spikes we dont want Fuel Qty dropping by the value of a tank.
+        #  count arinc as 0 as instances of arinc have only been found when tanks are missing/not installed.
+        #  5 mins chosen as individual Fuel Qty tank params are often 1/64hz
+        params = (fuel_qty_c_1, fuel_qty_c_2, fuel_qty_c_3, fuel_qty_c_4)
+        repair_kwargs = {'repair_duration':500, 'raise_entirely_masked':False}
+
+        repaired_arrays = [repair_mask(p.array, frequency=p.frequency, **repair_kwargs) for p in params if p is not None]
+        stacked_params = np.ma.vstack(repaired_arrays)
         self.array = np.ma.sum(stacked_params, axis=0)
 
 
@@ -3711,12 +3714,15 @@ class FuelQtyL(DerivedParameterNode):
                fuel_qty_l_3=P('Fuel Qty (L) (3)'),
                fuel_qty_l_4=P('Fuel Qty (L) (4)'),
                fuel_qty_l_5=P('Fuel Qty (L) (5)')):
-        # Sum all the available measurements! Masked values are maintained as
-        # all tanks must be reading valid values to be summed together. Fuel in
-        # both tanks but a masked value in one should not result in half the
-        # measured fuel quantity!
-        stacked_params = vstack_params(fuel_qty_l_1, fuel_qty_l_2,
-                                       fuel_qty_l_3, fuel_qty_l_4, fuel_qty_l_5)
+        # Sum all the available measurements!
+        #  Repair masks to cover data spikes we dont want Fuel Qty dropping by the value of a tank.
+        #  count arinc as 0 as instances of arinc have only been found when tanks are missing/not installed.
+        #  5 mins chosen as individual Fuel Qty tank params are often 1/64hz
+        params = (fuel_qty_l_1, fuel_qty_l_2,fuel_qty_l_3, fuel_qty_l_4, fuel_qty_l_5)
+        repair_kwargs = {'repair_duration':500, 'raise_entirely_masked':False}
+
+        repaired_arrays = [repair_mask(p.array, frequency=p.frequency, **repair_kwargs) for p in params if p is not None]
+        stacked_params = np.ma.vstack(repaired_arrays)
         self.array = np.ma.sum(stacked_params, axis=0)
 
 
@@ -3735,12 +3741,15 @@ class FuelQtyR(DerivedParameterNode):
                fuel_qty_r_3=P('Fuel Qty (R) (3)'),
                fuel_qty_r_4=P('Fuel Qty (R) (4)'),
                fuel_qty_r_5=P('Fuel Qty (R) (5)')):
-        # Sum all the available measurements! Masked values are maintained as
-        # all tanks must be reading valid values to be summed together. Fuel in
-        # both tanks but a masked value in one should not result in half the
-        # measured fuel quantity!
-        stacked_params = vstack_params(fuel_qty_r_1, fuel_qty_r_2,
-                                       fuel_qty_r_3, fuel_qty_r_4, fuel_qty_r_5)
+        # Sum all the available measurements!
+        #  Repair masks to cover data spikes we dont want Fuel Qty dropping by the value of a tank.
+        #  count arinc as 0 as instances of arinc have only been found when tanks are missing/not installed.
+        #  5 mins chosen as individual Fuel Qty tank params are often 1/64hz
+        params = (fuel_qty_r_1, fuel_qty_r_2, fuel_qty_r_3, fuel_qty_r_4, fuel_qty_r_5)
+        repair_kwargs = {'repair_duration':500, 'raise_entirely_masked':False}
+
+        repaired_arrays = [repair_mask(p.array, frequency=p.frequency, **repair_kwargs) for p in params if p is not None]
+        stacked_params = np.ma.vstack(repaired_arrays)
         self.array = np.ma.sum(stacked_params, axis=0)
 
 
@@ -3758,7 +3767,15 @@ class FuelQtyAux(DerivedParameterNode):
     def derive(self, 
                fuel_qty_1=P('Fuel Qty (Aux) (1)'),
                fuel_qty_2=P('Fuel Qty (Aux) (2)')):
-        stacked_params = vstack_params(fuel_qty_1, fuel_qty_2)
+        # Sum all the available measurements!
+        #  Repair masks to cover data spikes we dont want Fuel Qty dropping by the value of a tank.
+        #  count arinc as 0 as instances of arinc have only been found when tanks are missing/not installed.
+        #  5 mins chosen as individual Fuel Qty tank params are often 1/64hz
+        params = (fuel_qty_1, fuel_qty_2)
+        repair_kwargs = {'repair_duration':500, 'raise_entirely_masked':False}
+
+        repaired_arrays = [repair_mask(p.array, frequency=p.frequency, **repair_kwargs) for p in params if p is not None]
+        stacked_params = np.ma.vstack(repaired_arrays)
         self.array = np.ma.sum(stacked_params, axis=0)
 
 
