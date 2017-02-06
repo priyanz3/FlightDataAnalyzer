@@ -1280,8 +1280,6 @@ class AltitudeVisualization(object):
     we use the Altitude AAL parameter.
     '''
 
-    units = ut.FT
-
     def _calculate_alt(self,
                        alt_aal,
                        alt_std=None,
@@ -1362,10 +1360,12 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisual
     If we are unable to determine either the takeoff or landing elevations,
     we use the Altitude AAL parameter.
     '''
-    
+
+    units = ut.FT
+
     @classmethod
     def can_operate(cls, available):
-        return 'Altitude AAL' in available    
+        return 'Altitude AAL' in available
 
     def derive(self,
                alt_aal=P('Altitude AAL'),
@@ -1399,7 +1399,9 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode, AltitudeVis
     This altitude is above airodrome level, but excludes the jump in Altitude
     AAL by blending with Altitude STD in the Cruise.
     '''
-    
+
+    units = ut.FT
+
     @classmethod
     def can_operate(cls, available):
         return 'Altitude AAL' in available    
