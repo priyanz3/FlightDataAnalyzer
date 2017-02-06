@@ -1263,7 +1263,7 @@ class AltitudeQNH(DerivedParameterNode):
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
 #class AltitudeQNH(DerivedParameterNode):
-class AltitudeVisualization(DerivedParameterNode):
+class AltitudeVisualization(object):
     '''
     This altitude is above mean sea level. From the takeoff airfield to the
     highest altitude above airfield, the altitude Visualization is referenced
@@ -1280,38 +1280,15 @@ class AltitudeVisualization(DerivedParameterNode):
     we use the Altitude AAL parameter.
     '''
 
-    name = 'Altitude Visualization'
     units = ut.FT
 
-    @classmethod
-    def can_operate(cls, available):
-
-        return 'Altitude AAL' in available
-
-    def derive(self,
-               alt_aal=P('Altitude AAL'),
-               alt_std=P('Altitude STD Smoothed'),
-               l_apt=A('FDR Landing Airport'),
-               t_apt=A('FDR Takeoff Airport'),
-               climbs=S('Climb'),
-               descends=S('Descent')):
-
-        # Attempt to determine elevations at takeoff and landing:
-        t_elev = t_apt.value.get('elevation') if t_apt else None
-        l_elev = l_apt.value.get('elevation') if l_apt else None
-
-        if t_elev is None or l_elev is None:
-            self.warning('No takeoff or landing elevation, using Altitude AAL.')
-            self.array = np.ma.copy(alt_aal.array)
-            return
-        elif t_elev is None:
-            self.warning('No takeoff elevation, using %d ft from landing airport.', l_elev)
-            t_elev = l_elev
-        elif l_elev is None:
-            self.warning("No landing elevation, using %d ft from takeoff airport.", t_elev)
-            l_elev = t_elev
-        else:
-            pass
+    def _calculate_alt(self,
+                       alt_aal,
+                       alt_std=None,
+                       climbs=None,
+                       descends=None,
+                       l_elev=0,
+                       t_elev=0):
 
         # We adjust the height during the climb and descent so that the cruise is at pressure altitudes.
 
@@ -1347,8 +1324,7 @@ class AltitudeVisualization(DerivedParameterNode):
         cruise_start = first_climb.stop if climbs else 0
         cruise_stop = last_descent.stop + 1 if descends else len(alt_std.array)
         alt_qnh[cruise_start:cruise_stop] = alt_std.array[cruise_start:cruise_stop]
-
-        self.array = np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
+        return np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
 
     @classmethod
     def _qnh_adjust(cls, aal, std, elev, mode):
@@ -1365,6 +1341,76 @@ class AltitudeVisualization(DerivedParameterNode):
                              'implies incorrect altimeter scaling.' %
                              (std[0], elev, press_offset))
         return np.linspace(elev, std[-1] - aal[-1], num=len(aal))
+
+
+
+# TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
+#class AltitudeQNH(DerivedParameterNode):
+class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisualization):
+    '''
+    This altitude is above mean sea level. From the takeoff airfield to the
+    highest altitude above airfield, the altitude Visualization is referenced
+    to the takeoff airfield elevation, and from that point onwards it is
+    referenced to the landing airfield elevation.
+
+    If we can only determine the takeoff elevation, the landing elevation
+    will using the same value as the error will be the difference in pressure
+    altitude between the takeoff and landing airports on the day which is
+    likely to be less than forcing it to 0. Therefore landing elevation is
+    used if the takeoff elevation cannot be determined.
+
+    If we are unable to determine either the takeoff or landing elevations,
+    we use the Altitude AAL parameter.
+    '''
+    
+    @classmethod
+    def can_operate(cls, available):
+        return 'Altitude AAL' in available    
+
+    def derive(self,
+               alt_aal=P('Altitude AAL'),
+               alt_std=P('Altitude STD Smoothed'),
+               l_apt=A('FDR Landing Airport'),
+               t_apt=A('FDR Takeoff Airport'),
+               climbs=S('Climb'),
+               descends=S('Descent')):
+
+        # Attempt to determine elevations at takeoff and landing:
+        t_elev = t_apt.value.get('elevation') if t_apt else None
+        l_elev = l_apt.value.get('elevation') if l_apt else None
+
+        if t_elev is None and l_elev is not None:
+            self.warning('No takeoff elevation, using %d ft from landing airport.', l_elev)
+            t_elev = l_elev
+        elif l_elev is None and t_elev is not None:
+            self.warning("No landing elevation, using %d ft from takeoff airport.", t_elev)
+            l_elev = t_elev
+        else:
+            pass
+        
+        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends,
+                                         l_elev or 0, t_elev or 0)
+
+
+# TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
+#class AltitudeQNH(DerivedParameterNode):
+class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode, AltitudeVisualization):
+    '''
+    This altitude is above airodrome level, but excludes the jump in Altitude
+    AAL by blending with Altitude STD in the Cruise.
+    '''
+    
+    @classmethod
+    def can_operate(cls, available):
+        return 'Altitude AAL' in available    
+
+    def derive(self,
+               alt_aal=P('Altitude AAL'),
+               alt_std=P('Altitude STD Smoothed'),
+               climbs=S('Climb'),
+               descends=S('Descent')):
+
+        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends)
 
 
 '''

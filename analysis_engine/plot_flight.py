@@ -185,7 +185,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
              'track': 'Coarse',
              'colour': 'ff0000ff'},
         )
-        altitude_absolute_params = ('Altitude Visualization', 'Altitude STD',
+        altitude_absolute_params = ('Altitude Visualization With Ground Offset', 'Altitude STD',
                                     'Altitude AAL')
         altitude_relative_params = ('Altitude Radio',)
         # Check latitude and longitude pair exist.
