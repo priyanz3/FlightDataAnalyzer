@@ -1824,7 +1824,9 @@ class SidestickAngleCapt(DerivedParameterNode):
                pitch_capt=M('Sidestick Pitch (Capt)'),
                roll_capt=M('Sidestick Roll (Capt)')):
 
-        self.array = np.ma.sqrt(pitch_capt.array ** 2 + roll_capt.array ** 2)
+        pitch_repaired = repair_mask(pitch_capt.array, pitch_capt.frequency)
+        roll_repaired = repair_mask(roll_capt.array, roll_capt.frequency)
+        self.array = np.ma.sqrt(pitch_repaired ** 2 + roll_repaired ** 2)
 
 
 class SidestickAngleFO(DerivedParameterNode):
@@ -1848,7 +1850,9 @@ class SidestickAngleFO(DerivedParameterNode):
                pitch_fo=M('Sidestick Pitch (FO)'),
                roll_fo=M('Sidestick Roll (FO)')):
 
-        self.array = np.ma.sqrt(pitch_fo.array ** 2 + roll_fo.array ** 2)
+        pitch_repaired = repair_mask(pitch_fo.array, pitch_fo.frequency)
+        roll_repaired = repair_mask(roll_fo.array, roll_fo.frequency)
+        self.array = np.ma.sqrt(pitch_repaired ** 2 + roll_repaired ** 2)
 
 
 class DistanceToLanding(DerivedParameterNode):
