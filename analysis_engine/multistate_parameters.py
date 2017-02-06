@@ -2855,7 +2855,10 @@ class StableApproach(MultistateDerivedParameterNode):
         repair = lambda ar, ap, method='interpolate': repair_mask(
             ar[ap], raise_entirely_masked=False, method=method)
 
-        for approach, phase in zip(apps, phases):
+        for approach in apps:
+            # lookup descent from approach, dont zip as not guanenteed to have the same
+            # number of descents and approaches
+            phase = phases.get_first(containing_index=approach.slice.start)
             # use Combined descent phase slice as it contains the data from
             # top of descent to touchdown (approach starts and finishes later)
             approach.slice = phase.slice
