@@ -108,7 +108,7 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         np.ma.clump_unmasked(speed_array), 2, speed_frequency)
     # remove small slices to find 'consistent' valid data
     unmasked_slices = slices_remove_small_slices(
-        unmasked_slices, 25, speed_frequency)
+        unmasked_slices, 40, speed_frequency)
 
     if unmasked_slices:
         # Check speed
