@@ -6756,15 +6756,23 @@ class SpeedbrakeHandle(DerivedParameterNode):
         return any_of((
             'Speedbrake Handle (L)',
             'Speedbrake Handle (R)',
-            'Speedbrake Handle (C)'
+            'Speedbrake Handle (C)',
+            'Speedbrake Handle (1)',
+            'Speedbrake Handle (2)',
+            'Speedbrake Handle (3)',
+            'Speedbrake Handle (4)',
         ), available)
 
     def derive(self,
                sbh_l=P('Speedbrake Handle (L)'),
                sbh_r=P('Speedbrake Handle (R)'),
-               sbh_c=P('Speedbrake Handle (C)')):
+               sbh_c=P('Speedbrake Handle (C)'),
+               sbh_1=P('Speedbrake Handle (1)'),
+               sbh_2=P('Speedbrake Handle (2)'),
+               sbh_3=P('Speedbrake Handle (3)'),
+               sbh_4=P('Speedbrake Handle (4)')):
 
-        available = [par for par in [sbh_l, sbh_r, sbh_c] if par]
+        available = [par for par in [sbh_l, sbh_r, sbh_c, sbh_1, sbh_2, sbh_3, sbh_4] if par]
         if len(available) > 1:
             self.array = blend_parameters(
                 available, self.offset, self.frequency)
