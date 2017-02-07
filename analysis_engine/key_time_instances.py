@@ -1432,11 +1432,14 @@ class Touchdown(KeyTimeInstanceNode):
         dt_pre = 10.0  # Seconds to scan before estimate.
         dt_post = 3.0  # Seconds to scan after estimate.
         hz = alt.frequency
-        index_gog = index_wheel_touch = index_brake = index_decel = None
-        index_dax = index_z = index_az = index_daz = None
-        peak_ax = peak_az = delta = 0.0
 
         for land in lands:
+
+            # initialise within loop as we dont want to carry indexes into the next landing
+            index_gog = index_wheel_touch = index_brake = index_decel = None
+            index_dax = index_z = index_az = index_daz = None
+            peak_ax = peak_az = delta = 0.0
+
             # We have to have an altitude signal, so this forms an initial
             # estimate of the touchdown point.
             index_alt = index_at_value(alt.array, 0.0, land.slice)
