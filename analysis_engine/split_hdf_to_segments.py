@@ -452,7 +452,7 @@ def split_segments(hdf, aircraft_info):
             aircraft_info, thresholds, hdf)]
 
     # suppress transient changes in speed around 80 kts
-    slow_slices = slices_remove_small_slices(np.ma.clump_masked(slow_array))
+    slow_slices = slices_remove_small_slices(np.ma.clump_masked(slow_array), 10, speed.frequency)
 
     rate_of_turn = _rate_of_turn(heading)
 
