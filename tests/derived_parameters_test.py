@@ -1447,12 +1447,6 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
         self.assertEqual(alt_qnh.array[36], 0.0)
         self.assertEqual(alt_qnh.array[22], 15000.0)  # Cruise at STD
 
-    def test_trap_alt_difference(self):
-        climbs = buildsection('Climb', 7, 19)
-        descents = buildsection('Descent', 24, 32)
-        alt_qnh = self.node_class()
-        self.assertRaises(ValueError, alt_qnh.derive, self.alt_aal_2, self.alt_std, climbs, descents)
-
 
 class TestAltitudeRadio(unittest.TestCase):
     """

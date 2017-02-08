@@ -1325,19 +1325,24 @@ class AltitudeVisualization(object):
         return np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
 
     @classmethod
-    def _qnh_adjust(cls, aal, std, elev, mode):
-        if mode == 'climb':
-            datum = CLIMB_THRESHOLD
-        elif mode == 'descent':
-            datum = LANDING_THRESHOLD_HEIGHT
-        else:
-            raise ValueError('Unrecognised mode in %s._qnh_adjust()' % cls.__name__)
-        press_offset = std[0] - elev - datum
-        if abs(press_offset) > 4000.0 and elev is not 0:
-            raise ValueError('Excessive difference between pressure altitude '
-                             '(%.1f) and airport elevation (%.1f) of %.1f '
-                             'implies incorrect altimeter scaling.' %
-                             (std[0], elev, press_offset))
+    def _qnh_adjust(cls, aal, std, elev, mode, pressure_offset):
+        if pressure_offset:
+            if mode == 'climb':
+                datum = CLIMB_THRESHOLD
+            elif mode == 'descent':
+                datum = LANDING_THRESHOLD_HEIGHT
+            else:
+                raise ValueError('Unrecognised mode in %s._qnh_adjust()'
+                                 % cls.__name__)
+        
+            press_offset = std[0] - elev - datum
+            if abs(press_offset) > 4000.0 and elev is not 0:
+                raise ValueError(
+                    'Excessive difference between pressure altitude '
+                    '(%.1f) and airport elevation (%.1f) of %.1f '
+                    'implies incorrect altimeter scaling.' %
+                    (std[0], elev, press_offset)
+                )
         return np.linspace(elev, std[-1] - aal[-1], num=len(aal))
 
 
