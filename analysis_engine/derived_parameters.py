@@ -1333,7 +1333,7 @@ class AltitudeVisualization(object):
         else:
             raise ValueError('Unrecognised mode in %s._qnh_adjust()' % cls.__name__)
         press_offset = std[0] - elev - datum
-        if abs(press_offset) > 4000.0:
+        if abs(press_offset) > 4000.0 and elev is not 0:
             raise ValueError('Excessive difference between pressure altitude '
                              '(%.1f) and airport elevation (%.1f) of %.1f '
                              'implies incorrect altimeter scaling.' %
