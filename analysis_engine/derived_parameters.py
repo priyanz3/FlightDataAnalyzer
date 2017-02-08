@@ -8258,7 +8258,7 @@ class AirspeedMinusV2(DerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
 
-        return (all_of(('Airspeed', 'Liftoff', 'Climb Start', ), available) and
+        return (all_of(('Airspeed', 'Liftoff', 'Climb Start', 'Grounded'), available) and
                 any_of(('V2 At Liftoff', 'Airspeed Selected At Liftoff', 'V2 Lookup At Liftoff'), available))
 
     def derive(self,
@@ -8267,7 +8267,8 @@ class AirspeedMinusV2(DerivedParameterNode):
                airspeed_selected=KPV('Airspeed Selected At Liftoff'),
                v2_lookup=KPV('V2 Lookup At Liftoff'),
                liftoffs=KTI('Liftoff'),
-               climb_starts=KTI('Climb Start')):
+               climb_starts=KTI('Climb Start'),
+               grounded=S('Grounded')):
 
         # Prepare a zeroed, masked array based on the airspeed:
         self.array = np_ma_masked_zeros_like(airspeed.array)
@@ -8276,17 +8277,23 @@ class AirspeedMinusV2(DerivedParameterNode):
         # Due to issues with how data is recorded, use five superframes before
         # liftoff until the start of the climb:
         starts = deepcopy(liftoffs)
+        phases = []
         for start in starts:
-            start.index = max(start.index - 5 * 64 * self.hz, 0)
-        phases = slices_from_ktis(starts, climb_starts)
+            ground = grounded.get_previous(start.index, use='start')
+            search_start = max(start.index - 5 * 64 * self.hz, 0)
+            # Avoid touchdown at touch and go which should be relative to vref/vapp
+            start_index = max(search_start, ground.slice.start + 1 if ground else 0)
+            stop_index = climb_starts.get_next(start.index).index
+            phases.append((search_start, start_index, stop_index))
 
         v2 = v2_recorded or airspeed_selected or v2_lookup
         if not v2:
             return
 
-        for phase in phases:
-            my_v2 = v2.get_last(within_slice=phase)
+        for search_start, start_index, stop_index in phases:
+            my_v2 = v2.get_last(within_slice=slice(search_start, stop_index+1))
             if my_v2 is not None and my_v2.value is not None:
+                phase = slice(start_index, stop_index+1)
                 self.array[phase] = airspeed.array[phase] - my_v2.value
 
 
