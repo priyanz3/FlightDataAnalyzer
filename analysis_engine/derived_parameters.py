@@ -1286,7 +1286,8 @@ class AltitudeVisualization(object):
                        climbs=None,
                        descends=None,
                        l_elev=0,
-                       t_elev=0):
+                       t_elev=0,
+                       pressure_offset=True):
 
         # We adjust the height during the climb and descent so that the cruise is at pressure altitudes.
 
@@ -1299,7 +1300,7 @@ class AltitudeVisualization(object):
             first_climb = slice(climbs[0].slice.start, climbs[0].slice.stop + 1)
             adjust_up = self._qnh_adjust(alt_aal.array[first_climb],
                                          alt_std.array[first_climb],
-                                         t_elev, 'climb')
+                                         t_elev, 'climb', pressure_offset)
             # Before first climb
             alt_qnh[:first_climb.start] = alt_aal.array[:first_climb.start] + t_elev
 
@@ -1311,7 +1312,7 @@ class AltitudeVisualization(object):
             last_descent = slice(descends[-1].slice.stop + 1, descends[-1].slice.start, -1)
             adjust_down = self._qnh_adjust(alt_aal.array[last_descent],
                                            alt_std.array[last_descent],
-                                           l_elev, 'descent')
+                                           l_elev, 'descent', pressure_offset)
             # Last descent adjusted
             alt_qnh[last_descent] = alt_aal.array[last_descent] + adjust_down
 
@@ -1417,7 +1418,8 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode, AltitudeVis
                climbs=S('Climb'),
                descends=S('Descent')):
 
-        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends)
+        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends, 
+                                         pressure_offset=False)
 
 
 '''
