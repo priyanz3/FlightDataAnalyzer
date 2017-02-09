@@ -13463,14 +13463,12 @@ class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     units = ut.DEGREE_S
 
     def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
-               touchdown=KTI('Touchdown')):
-        tdwn_idx = touchdown.get_first().index
-        _slice = slice(
-            tdwn_idx,
-            index_at_value(airspeed.array, 60,
-                           slice(tdwn_idx, None), endpoint='nearest')
-        )
-        self.create_kpvs_within_slices(pitchrate.array, [_slice,], max_value)
+               touchdowns=KTI('Touchdown')):
+        for tdwn in touchdowns:
+            stop = index_at_value(airspeed.array.data, 60, 
+                                  slice(tdwn.index, None), endpoint='nearest')
+            self.create_kpv(*max_value(pitchrate.array,
+                                       slice(tdwn.index, stop)))
 
 
 ##############################################################################
