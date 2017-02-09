@@ -593,6 +593,7 @@ from analysis_engine.key_point_values import (
     RotorSpeedDuringMaximumContinuousPowerMin,
     RotorSpeed36To49Duration,
     RotorSpeed56To67Duration,
+    RotorSpeedAt6PercentCollectiveDuringEngStart,
     RotorSpeedWhileAirborneMax,
     RotorSpeedWhileAirborneMin,
     RotorSpeedWithRotorBrakeAppliedMax,
@@ -15788,6 +15789,51 @@ class TestRotorSpeed56To67Duration(unittest.TestCase):
         self.assertEqual(node[0].index, 5)
         self.assertEqual(node[1].value, 2)
         self.assertEqual(node[1].index, 10)
+
+
+class TestRotorSpeedAt6PercentCollectiveDuringEngStart(unittest.TestCase):
+    def setUp(self):
+        self.node_class = RotorSpeedAt6PercentCollectiveDuringEngStart
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(
+            node.name,
+            'Rotor Speed At 6 Percent Collective During Eng Start'
+        )
+        self.assertEqual(node.units, '%')
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(
+            ac_type=helicopter, family=A('Family', 'S92'))
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Nr', opts[0])
+
+    def test_derive(self):
+        nr = P('Nr', np.ma.array([
+            0, 0, 0, 0, 0, 0, 0.2, 0, 0.5, 0.5,
+            0.8, 0.8, 0.8, 1, 1.2, 1.5, 1.8, 2.2, 2.5, 3,
+            3.5, 4, 4.2, 4.8, 5.2, 6, 6.5, 7.5, 8.5, 9.5,
+            10.2, 11.2, 12, 13, 14, 15, 15.8, 16.5, 17.5, 18.2, 19,
+        ]))
+        collective = P('Collective', np.ma.array([
+            61.5, 61.25, 61.25, 61.38, 61.5, 61.38, 61.38, 61.38, 61.25, 61.5,
+            61.38, 61.38, 61.25, 61.3, 61.38, 61.25, 61.5, 61.38, 61.38, 61.38,
+            61.5, 61.5, 61.5, 61.25, 61.38, 60.62, 55.5, 52.62, 43.88, 35.75,
+            25.38, 14.38, 4.5, 3.88, 4, 4.38, 4.25, 4, 4.12, 4, 4,
+        ]))
+        firsts = KTI('First Eng Fuel Flow Start', items=[
+            KeyTimeInstance(2, 'First Eng Fuel Flow Start'),
+        ])
+
+        node = self.node_class()
+        node.derive(nr, collective, firsts)
+
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].index, 31.85, places=2)
+        self.assertAlmostEqual(node[0].value, 11.88, places=2)
 
 
 ##############################################################################

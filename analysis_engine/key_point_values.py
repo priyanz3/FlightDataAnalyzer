@@ -14983,6 +14983,30 @@ class RotorSpeed56To67Duration(KeyPointValueNode):
     def derive(self, nr=P('Nr')):
         self.create_kpvs_from_slice_durations(
             slices_between(nr.array, 56, 67)[1], nr.frequency)
+        
+class RotorSpeedAt6PercentCollectiveDuringEngStart(KeyPointValueNode):
+    '''
+    During the engines starting the collective the needs to be high, but as the
+    rotor speed starts to increase the colective needs to be lowered. This KPV
+    records the value Nr when the collective is fully lowered (<6% collective).
+    '''
+
+    units = ut.PERCENT
+
+    @classmethod
+    # This KPV is specific to the S92 helicopter
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_s92 = ac_type == helicopter and family and family.value == 'S92'
+        return is_s92 and all_deps(cls, available)
+
+    def derive(self, nr=P('Nr'), collective=P('Collective'),
+               firsts=KTI('First Eng Fuel Flow Start')):
+        for first in firsts:
+            index = index_at_value(collective.array, 6,
+                                         slice(first.index,None))
+            value = value_at_index(nr.array, index)
+            self.create_kpv(index, value)
 
 
 ##############################################################################
