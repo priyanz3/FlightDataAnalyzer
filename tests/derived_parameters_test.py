@@ -1398,10 +1398,7 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
         self.operational_combinations = [
             ('Altitude AAL', ),
             ('Altitude AAL', 'Altitude STD Smoothed'),
-            ('Altitude AAL', 'Altitude STD Smoothed'),
-            ('Altitude AAL', 'Altitude STD Smoothed'),
-            ('Altitude AAL', 'Altitude STD Smoothed'),
-            ('Altitude AAL', 'Altitude STD Smoothed', 'Climb', 'Descent'),
+            ('Altitude AAL', 'Altitude STD Smoothed', 'Cruise'),
         ]
         data = [np.ma.arange(0, 1000, step=30)]
         data.append(data[0][::-1] + 50)
@@ -1439,13 +1436,12 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
         self.assertEqual(alt_qnh.frequency, self.alt_aal_1.frequency)
 
     def test_alt_std_adjustment(self):
-        climbs = buildsection('Climb', 7, 19)
-        descents = buildsection('Descent', 24, 34)
+        cruise = buildsection('Cruise', 19, 24)
         alt_qnh = self.node_class()
-        alt_qnh.derive(self.alt_aal_2, self.alt_std, climbs, descents)
+        alt_qnh.derive(self.alt_aal_2, self.alt_std, cruise)
         self.assertEqual(alt_qnh.array[2], 0.0)
         self.assertEqual(alt_qnh.array[36], 0.0)
-        self.assertEqual(alt_qnh.array[22], 15000.0)  # Cruise at STD
+        self.assertEqual(alt_qnh.array[22], 11600.0)  # Cruise at STD
 
 
 class TestAltitudeRadio(unittest.TestCase):

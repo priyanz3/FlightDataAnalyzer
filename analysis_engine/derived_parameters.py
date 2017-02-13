@@ -1286,8 +1286,7 @@ class AltitudeVisualization(object):
                        climbs=None,
                        descends=None,
                        l_elev=0,
-                       t_elev=0,
-                       pressure_offset=True):
+                       t_elev=0):
 
         # We adjust the height during the climb and descent so that the cruise is at pressure altitudes.
 
@@ -1300,7 +1299,7 @@ class AltitudeVisualization(object):
             first_climb = slice(climbs[0].slice.start, climbs[0].slice.stop + 1)
             adjust_up = self._qnh_adjust(alt_aal.array[first_climb],
                                          alt_std.array[first_climb],
-                                         t_elev, 'climb', pressure_offset)
+                                         t_elev, 'climb')
             # Before first climb
             alt_qnh[:first_climb.start] = alt_aal.array[:first_climb.start] + t_elev
 
@@ -1312,7 +1311,7 @@ class AltitudeVisualization(object):
             last_descent = slice(descends[-1].slice.stop + 1, descends[-1].slice.start, -1)
             adjust_down = self._qnh_adjust(alt_aal.array[last_descent],
                                            alt_std.array[last_descent],
-                                           l_elev, 'descent', pressure_offset)
+                                           l_elev, 'descent')
             # Last descent adjusted
             alt_qnh[last_descent] = alt_aal.array[last_descent] + adjust_down
 
@@ -1326,25 +1325,24 @@ class AltitudeVisualization(object):
         return np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
 
     @classmethod
-    def _qnh_adjust(cls, aal, std, elev, mode, pressure_offset):
-        if pressure_offset:
-            if mode == 'climb':
-                datum = CLIMB_THRESHOLD
-            elif mode == 'descent':
-                datum = LANDING_THRESHOLD_HEIGHT
-            else:
-                raise ValueError('Unrecognised mode in %s._qnh_adjust()'
-                                 % cls.__name__)
-        
-            press_offset = std[0] - elev - datum
-            if abs(press_offset) > 4000.0 and elev is not 0:
-                raise ValueError(
-                    'Excessive difference between pressure altitude '
-                    '(%.1f) and airport elevation (%.1f) of %.1f '
-                    'implies incorrect altimeter scaling.' %
-                    (std[0], elev, press_offset)
-                )
-        return np.linspace(elev, std[-1] - aal[-1], num=len(aal))
+    def _qnh_adjust(cls, aal, std, elev, mode):
+        if mode == 'climb':
+            datum = CLIMB_THRESHOLD
+        elif mode == 'descent':
+            datum = LANDING_THRESHOLD_HEIGHT
+        else:
+            raise ValueError('Unrecognised mode in %s._qnh_adjust()'
+                             % cls.__name__)
+    
+        press_offset = std[0] - elev - datum
+        if abs(press_offset) > 4000.0:
+            raise ValueError(
+                'Excessive difference between pressure altitude '
+                '(%.1f) and airport elevation (%.1f) of %.1f '
+                'implies incorrect altimeter scaling.' %
+                (std[0], elev, press_offset)
+            )
+        return np.linspace(elev, std[-1] - aal[-1], num=len(aal)) 
 
 
 
@@ -1400,7 +1398,7 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisual
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
 #class AltitudeQNH(DerivedParameterNode):
-class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode, AltitudeVisualization):
+class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
     '''
     This altitude is above airodrome level, but excludes the jump in Altitude
     AAL by blending with Altitude STD in the Cruise.
@@ -1415,11 +1413,19 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode, AltitudeVis
     def derive(self,
                alt_aal=P('Altitude AAL'),
                alt_std=P('Altitude STD Smoothed'),
-               climbs=S('Climb'),
-               descends=S('Descent')):
-
-        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends, 
-                                         pressure_offset=False)
+               cruise=S('Cruise')):
+        alt_qnh = np_ma_masked_zeros_like(alt_aal.array)
+        
+        start_idx = cruise.get_first().slice.start
+        start_offset = alt_std.array[start_idx] - alt_aal.array[start_idx]
+        stop_idx = cruise.get_last().slice.stop
+        stop_offset = alt_std.array[stop_idx] - alt_aal.array[stop_idx]
+        
+        alt_qnh[:start_idx] = alt_aal.array[:start_idx]
+        alt_qnh[stop_idx:] = alt_aal.array[stop_idx:]
+        alt_qnh[start_idx:stop_idx] = alt_std.array[start_idx:stop_idx] - \
+            np.linspace(start_offset, stop_offset, stop_idx - start_idx)
+        self.array = alt_qnh
 
 
 '''
