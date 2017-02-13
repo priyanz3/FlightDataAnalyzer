@@ -3899,8 +3899,8 @@ class TestHeadingRate(unittest.TestCase):
 
     def test_sample_long_gentle_turn(self):
         # Sample taken from a long circling hold pattern
-        head_cont = P(array=np.ma.array(
-            np.load(os.path.join(test_data_path, 'heading_continuous_in_hold.npy'))), frequency=2)
+        path = os.path.join(test_data_path, 'heading_continuous_in_hold.npz')
+        head_cont = P(array=np.ma.array(load_compressed(path)), frequency=2)
         rot = HeadingRate()
         rot.get_derived((head_cont,))
         np.testing.assert_allclose(rot.array[50:1150],

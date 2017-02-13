@@ -472,12 +472,12 @@ class TestSplitSegments(unittest.TestCase):
         hdf.reliable_frame_counter = False
 
         arrays = {
-            'Eng (1) N1': np.load(os.path.join(
-                test_data_path, 'split_segments_eng_1_n1_slowslice.npy')),
-            'Eng (2) N1': np.load(os.path.join(
-                test_data_path, 'split_segments_eng_2_n1_slowslice.npy')),
-            'Groundspeed': np.load(os.path.join(
-                test_data_path, 'split_segments_groundspeed_slowslice.npy'))
+            'Eng (1) N1': load_compressed(os.path.join(
+                test_data_path, 'split_segments_eng_1_n1_slowslice.npz')),
+            'Eng (2) N1': load_compressed(os.path.join(
+                test_data_path, 'split_segments_eng_2_n1_slowslice.npz')),
+            'Groundspeed': load_compressed(os.path.join(
+                test_data_path, 'split_segments_groundspeed_slowslice.npz'))
         }
 
         def hdf_getitem(self, key, **kwargs):
@@ -503,7 +503,7 @@ class mocked_hdf(object):
             self.airspeed = np.ma.array(range(10, 20) * 5)
         else:
             self.airspeed = np.ma.array(
-                np.load(os.path.join(test_data_path, 'airspeed_sample.npy')))
+                load_compressed(os.path.join(test_data_path, 'airspeed_sample.npz')))
         self.duration = len(self.airspeed)
         return self
 

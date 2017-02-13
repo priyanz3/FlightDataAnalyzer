@@ -78,10 +78,10 @@ class TestAirTrack(unittest.TestCase):
         self.assertEqual(lon, None)
 
     def test_air_track_masked_end(self):
-        spd = np.ma.load(open(os.path.join(test_data_path,
-                                           'air_track_spd.npy')))
-        hdg = np.ma.load(open(os.path.join(test_data_path,
-                                           'air_track_hdg.npy')))
+        spd = load_compressed(
+            os.path.join(test_data_path, 'air_track_spd.npz'))
+        hdg = load_compressed(
+            os.path.join(test_data_path, 'air_track_hdg.npz'))
         alt = np_ma_ones_like(hdg)
         alt[0] = 0.0
         alt[-1] = 0.0
@@ -1817,21 +1817,21 @@ class TestCalculateTimebase(unittest.TestCase):
         self.assertEqual(start_dt, datetime(self.last_year,12,25,23,0,0, tzinfo=pytz.utc))
 
     def test_real_data_params_2_digit_year(self):
-        years = np.load(os.path.join(test_data_path, 'year.npy'))
-        months = np.load(os.path.join(test_data_path, 'month.npy'))
-        days = np.load(os.path.join(test_data_path, 'day.npy'))
-        hours = np.load(os.path.join(test_data_path, 'hour.npy'))
-        mins = np.load(os.path.join(test_data_path, 'minute.npy'))
-        secs = np.load(os.path.join(test_data_path, 'second.npy'))
+        years = load_compressed(os.path.join(test_data_path, 'year.npz'))
+        months = load_compressed(os.path.join(test_data_path, 'month.npz'))
+        days = load_compressed(os.path.join(test_data_path, 'day.npz'))
+        hours = load_compressed(os.path.join(test_data_path, 'hour.npz'))
+        mins = load_compressed(os.path.join(test_data_path, 'minute.npz'))
+        secs = load_compressed(os.path.join(test_data_path, 'second.npz'))
         start_dt = calculate_timebase(years, months, days, hours, mins, secs)
         self.assertEqual(start_dt, datetime(2011, 12, 30, 8, 20, 36, tzinfo=pytz.utc))
 
     def test_real_data_params_no_year(self):
-        months = np.load(os.path.join(test_data_path, 'month.npy'))
-        days = np.load(os.path.join(test_data_path, 'day.npy'))
-        hours = np.load(os.path.join(test_data_path, 'hour.npy'))
-        mins = np.load(os.path.join(test_data_path, 'minute.npy'))
-        secs = np.load(os.path.join(test_data_path, 'second.npy'))
+        months = load_compressed(os.path.join(test_data_path, 'month.npz'))
+        days = load_compressed(os.path.join(test_data_path, 'day.npz'))
+        hours = load_compressed(os.path.join(test_data_path, 'hour.npz'))
+        mins = load_compressed(os.path.join(test_data_path, 'minute.npz'))
+        secs = load_compressed(os.path.join(test_data_path, 'second.npz'))
         years = np.array([2012]*len(months)) # fixed year
         start_dt = calculate_timebase(years, months, days, hours, mins, secs)
         self.assertEqual(start_dt, datetime(2012, 12, 30, 8, 20, 36, tzinfo=pytz.utc))
@@ -6587,8 +6587,8 @@ class TestStepValues(unittest.TestCase):
         self.assertEqual(find_edges(res), [4.5, 38.5, 119.5, 173.5, 238.5, 278.5])
 
     def test_step_values_masked_end(self):
-        array = np.ma.load(os.path.join(test_data_path,
-                                        'step_values_flap_masked_end.npy'))
+        array = load_compressed(
+            os.path.join(test_data_path, 'step_values_flap_masked_end.npz'))
         # unsorted steps matches original input during process flight.
         steps = [0, 1, 2, 5, 40, 10, 15, 25, 30]
         res = step_values(array, steps, step_at='move_start')
@@ -7368,15 +7368,16 @@ class TestLevelOffIndex(unittest.TestCase):
         self.assertEqual(level_off_index(np.ma.repeat(array, 2), 1, 6, 2), 20)
 
     def test_level_off_index_eng_n3(self):
-        array = np.ma.load(os.path.join(test_data_path, 'eng_n3.npy'))
+        array = load_compressed(
+            os.path.join(test_data_path, 'eng_n3.npz'))
         index = level_off_index(array, 1, 10, 1, _slice=slice(60, 750))
         self.assertEqual(index, 100)
         index = level_off_index(array, 1, 10, 1, _slice=slice(3625, None))
         self.assertEqual(index, 3674)
 
     def test_level_off_masked(self):
-        array = np.ma.load(os.path.join(test_data_path,
-                                        'level_off_index_eng_n3.npy'))
+        array = load_compressed(
+            os.path.join(test_data_path, 'level_off_index_eng_n3.npz'))
         index = level_off_index(array, 1, 10, 1)
         self.assertEqual(index, 28)
 
@@ -7516,7 +7517,7 @@ class TestSecondWindow(unittest.TestCase):
     @unittest.skip('Not Implemented')
     def test_three_second_window(self):
         self.assertTrue(False)
-        amv2 = np.ma.load('...airspeed_minus_v2.npy')
+        amv2 = load_compressed('...airspeed_minus_v2.npz')
         ma_test.assert_masked_array_almost_equal (
             sample_window(amv2, 3),
             [10, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 2, 2, 4, 6, 8, 10, 12, 14, 16])

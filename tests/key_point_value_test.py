@@ -16238,9 +16238,9 @@ class TestTailClearanceDuringApproachMin(unittest.TestCase, NodeTest):
     def test_derive(self):
         # XXX: The BDUTerrain test files are missing from the repository?
         test_data_dir = os.path.join(test_data_path, 'BDUTerrain')
-        alt_aal_array = np.ma.masked_array(np.load(os.path.join(test_data_dir, 'alt_aal.npy')))
-        alt_radio_array = np.ma.masked_array(np.load(os.path.join(test_data_dir, 'alt_radio.npy')))
-        dtl_array = np.ma.masked_array(np.load(os.path.join(test_data_dir, 'dtl.npy')))
+        alt_aal_array = np.ma.masked_array(load_compressed(os.path.join(test_data_dir, 'alt_aal.npz')))
+        alt_radio_array = np.ma.masked_array(load_compressed(os.path.join(test_data_dir, 'alt_radio.npz')))
+        dtl_array = np.ma.masked_array(load_compressed(os.path.join(test_data_dir, 'dtl.npz')))
         alt_aal = P(array=alt_aal_array, frequency=8)
         alt_radio = P(array=alt_radio_array, frequency=0.5)
         dtl = P(array=dtl_array, frequency=0.25)
