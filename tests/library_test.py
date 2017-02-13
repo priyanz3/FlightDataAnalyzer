@@ -14,6 +14,7 @@ import os
 import pytz
 import types
 import unittest
+import yaml
 
 from datetime import datetime
 from math import sqrt
@@ -7585,8 +7586,8 @@ class TestNearestRunway(unittest.TestCase):
     '''
     Tests for Nearest Runway
     '''
-    from .airports import airports
-    _airports = airports
+    airports = yaml.load(open(os.path.join(test_data_path, 'airports.yaml'), 'rb'))
+    _airports = airports['airports']
     _expected = {
         '001': {
             'id': 10816,

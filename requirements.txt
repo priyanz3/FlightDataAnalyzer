@@ -9,3 +9,4 @@ pytz
 scipy
 simplejson
 simplekml
+pyyaml

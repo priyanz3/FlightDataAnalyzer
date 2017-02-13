@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import unittest
+import yaml
 
 from mock import call, Mock, patch
 
@@ -12,27 +13,30 @@ from analysis_engine.node import (
     A, ApproachItem, aeroplane, helicopter, KPV, KeyPointValue, P, S, Section,
     load)
 
-from . import airports
 
-test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                              'test_data', 'approaches')
+test_data_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), 'test_data')
+approaches_path = os.path.join(test_data_path, 'approaches')
+
+airports = yaml.load(open(os.path.join(test_data_path, 'airports.yaml'), 'rb'))
+
 
 class TestIsHeliport(unittest.TestCase):
 
     def test_is_heliport(self):
-        self.assertFalse(is_heliport(aeroplane, airports.gatwick, airports.gatwick['runways'][0]))
+        self.assertFalse(is_heliport(aeroplane, airports['gatwick'], airports['gatwick']['runways'][0]))
         self.assertTrue(is_heliport(helicopter, None, None))
         helipad = {'identifier':'H', 'strip': {'length': 0}}
         heliport = {'name':'Vangard helipad', 'runways':[helipad]}
         self.assertTrue(is_heliport(helicopter, heliport, helipad))
         self.assertTrue(is_heliport(helicopter, {}, helipad))
-        self.assertFalse(is_heliport(helicopter, airports.gatwick, airports.gatwick['runways'][0]))
+        self.assertFalse(is_heliport(helicopter, airports['gatwick'], airports['gatwick']['runways'][0]))
 
 class TestApproachInformation(unittest.TestCase):
 
     def setUp(self):
         self.node_class = ApproachInformation
-        self.gatwick = airports.gatwick
+        self.gatwick = airports['gatwick']
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations()
@@ -604,7 +608,7 @@ class TestAlicante(unittest.TestCase):
     def test_no_ils(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.alicante
+        get_handler.get_nearest_airport.return_value = airports['alicante']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -612,9 +616,9 @@ class TestAlicante(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10091047_')
+        root = os.path.join(approaches_path, 'ILS_test_10091047_')
         app_start = 13261*2 # 13261 taken from CSV output file, but AppInfo runs at 2Hz.
-        app_end = 13535*2        
+        app_end = 13535*2
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
@@ -649,7 +653,7 @@ class TestBardufoss(unittest.TestCase):
     def test_slightly_offset_localizer(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.bardufoss
+        get_handler.get_nearest_airport.return_value = airports['bardufoss']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -657,7 +661,7 @@ class TestBardufoss(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None 
-        root = os.path.join(test_data_path, 'ILS_test_9928419_')
+        root = os.path.join(approaches_path, 'ILS_test_9928419_')
         app_start = 11352
         app_end = 11800  
 
@@ -698,7 +702,7 @@ class TestBodo(unittest.TestCase):
     def test_offset_localizer(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.bodo
+        get_handler.get_nearest_airport.return_value = airports['bodo']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -706,9 +710,9 @@ class TestBodo(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None 
-        root = os.path.join(test_data_path, 'ILS_test_10076024_')
+        root = os.path.join(approaches_path, 'ILS_test_10076024_')
         app_start = 8780
-        app_end = 8861        
+        app_end = 8861
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
@@ -748,7 +752,7 @@ class TestChania(unittest.TestCase):
     def test_no_ils(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.chania
+        get_handler.get_nearest_airport.return_value = airports['chania']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -756,7 +760,7 @@ class TestChania(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_9936188_')
+        root = os.path.join(approaches_path, 'ILS_test_9936188_')
         app_start = 12029*2 # 13261 taken from CSV output file, but AppInfo runs at 2Hz.
         app_end = 12324*2        
 
@@ -795,7 +799,7 @@ class TestDallasFortWorth(unittest.TestCase):
     def test_runway_change_at_DFW(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.dallas_fort_worth
+        get_handler.get_nearest_airport.return_value = airports['dallas_fort_worth']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -803,7 +807,7 @@ class TestDallasFortWorth(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_9821340_')
+        root = os.path.join(approaches_path, 'ILS_test_9821340_')
         app_start = 3187 * 2
         app_end = 3542 * 2
 
@@ -849,7 +853,7 @@ class TestFortWorth(unittest.TestCase):
     def test_ils_corrected_data(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.fort_worth
+        get_handler.get_nearest_airport.return_value = airports['fort_worth']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -857,7 +861,7 @@ class TestFortWorth(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_9094175_')
+        root = os.path.join(approaches_path, 'ILS_test_9094175_')
         app_start = 17834
         app_end = 18218     
 
@@ -900,7 +904,7 @@ class TestHerat(unittest.TestCase):
 
         get_handler = Mock()
         get_handler.get_nearest_airport.side_effect = api.NotFoundError()
-        get_handler.get_airport.return_value = airports.herat
+        get_handler.get_airport.return_value = airports['herat']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -908,7 +912,7 @@ class TestHerat(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10411379_')
+        root = os.path.join(approaches_path, 'ILS_test_10411379_')
         app_start = 10792.6
         app_end = 11329.0    
 
@@ -947,7 +951,7 @@ class TestKirkenes(unittest.TestCase):
     def test_ils_on_reciprocal_runway(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.kirkenes
+        get_handler.get_nearest_airport.return_value = airports['kirkenes']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -955,7 +959,7 @@ class TestKirkenes(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10066360_')
+        root = os.path.join(approaches_path, 'ILS_test_10066360_')
         app_start = 13803.5
         app_end = 14246.0    
 
@@ -995,7 +999,7 @@ class TestScatsta(unittest.TestCase):
     def test_no_ils_glidepath(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.scatsta
+        get_handler.get_nearest_airport.return_value = airports['scatsta']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1003,7 +1007,7 @@ class TestScatsta(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10174453_')
+        root = os.path.join(approaches_path, 'ILS_test_10174453_')
         app_start = 6996.0
         app_end = 7327.0  
 
@@ -1044,7 +1048,7 @@ class TestSirSeretseKhama(unittest.TestCase):
     def test_late_turn_and_glideslope_established(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.sir_seretse_khama
+        get_handler.get_nearest_airport.return_value = airports['sir_seretse_khama']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1052,7 +1056,7 @@ class TestSirSeretseKhama(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10089954_')
+        root = os.path.join(approaches_path, 'ILS_test_10089954_')
         app_start = 8256
         app_end = 8942
         
@@ -1094,7 +1098,7 @@ class TestWashingtonNational(unittest.TestCase):
     def test_huge_offset(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.washington_national
+        get_handler.get_nearest_airport.return_value = airports['washington_national']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1102,7 +1106,7 @@ class TestWashingtonNational(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10260422_')
+        root = os.path.join(approaches_path, 'ILS_test_10260422_')
         app_start = 8284
         app_end = 8832
         
@@ -1143,7 +1147,7 @@ class TestZaventem(unittest.TestCase):
     def test_go_around_and_landing(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.zaventem
+        get_handler.get_nearest_airport.return_value = airports['zaventem']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1151,7 +1155,7 @@ class TestZaventem(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10180313_')
+        root = os.path.join(approaches_path, 'ILS_test_10180313_')
         app_start = 11754
         app_end = 12346
         
@@ -1200,7 +1204,7 @@ class TestBarcelona(unittest.TestCase):
     def test_no_runway_change_at_barcelona(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.barcelona
+        get_handler.get_nearest_airport.return_value = airports['barcelona']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1208,7 +1212,7 @@ class TestBarcelona(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_004_')
+        root = os.path.join(approaches_path, 'ILS_test_004_')
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
@@ -1277,7 +1281,7 @@ class TestNice(unittest.TestCase):
     def test__no_runway_change_at_nice(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.nice
+        get_handler.get_nearest_airport.return_value = airports['nice']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1285,7 +1289,7 @@ class TestNice(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_003_')
+        root = os.path.join(approaches_path, 'ILS_test_003_')
         app_start = 3312 * 2
         app_end = 3606 * 2
 
@@ -1336,7 +1340,7 @@ class TestGranCanaria(unittest.TestCase):
     def test_no_runway_change_at_gran_canaria(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.gran_canaria
+        get_handler.get_nearest_airport.return_value = airports['gran_canaria']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1344,7 +1348,7 @@ class TestGranCanaria(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_002_')
+        root = os.path.join(approaches_path, 'ILS_test_002_')
         app_start = 10949 * 2
         app_end = 11318 * 2
 
@@ -1395,7 +1399,7 @@ class TestMunich(unittest.TestCase):
     def test_no_runway_change_at_munich(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.munich
+        get_handler.get_nearest_airport.return_value = airports['munich']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1403,7 +1407,7 @@ class TestMunich(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_001_')
+        root = os.path.join(approaches_path, 'ILS_test_001_')
         app_start = 5732 * 2
         app_end = 6070 * 2
 
@@ -1455,7 +1459,7 @@ class TestNewDelhi(unittest.TestCase):
     def test_no_runway_change_at_new_delhi(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports.new_delhi
+        get_handler.get_nearest_airport.return_value = airports['new_delhi']
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1463,7 +1467,7 @@ class TestNewDelhi(unittest.TestCase):
                 return load(root + par_name + '.nod')
             except:
                 return None
-        root = os.path.join(test_data_path, 'ILS_test_10839725_')
+        root = os.path.join(approaches_path, 'ILS_test_10839725_')
         app_start = 10841
         app_end = 11675
 
