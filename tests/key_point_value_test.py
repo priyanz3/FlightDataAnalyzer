@@ -1682,8 +1682,6 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
         )
 
     def test_get_landing_weight(self):
-       
-        #node = self.node_class()
         ac_variations=[
             [self.series.value, self.model.value, self.mods.value, 128367],
             ['B757-200', 'B757-236(F)', 'MOD Aircraft Line Numbers 1-209', 89992],
