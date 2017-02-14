@@ -895,6 +895,10 @@ class AccelerationNormalLiftoffTo35FtMax(KeyPointValueNode):
         slices = []
         for liftoff in liftoffs:
             takeoff = takeoffs.get(containing_index=liftoff.index)
+            if not takeoff:
+                self.warning('Liftoff not found within Takeoff phase. '
+                             'Altitude data may be missing/invalid at Takeoff.')
+                continue
             slices.append(slice(liftoff.index, takeoff[0].stop_edge))
         self.create_kpvs_within_slices(acc_norm.array, slices, max_value)
 
