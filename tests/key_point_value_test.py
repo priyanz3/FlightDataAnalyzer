@@ -1674,14 +1674,38 @@ class TestAccelerationNormalMinusLoadFactorThresholdAtTouchdown(unittest.TestCas
             KeyTimeInstance(index=self.tdwn_idx, name='Touchdown'),
         ])
         self.roll = np.ma.array([0.]*10)
+        
+    def _test_landing_weight(self, series, model, mods, weight):
+        self.assertEqual(
+            self.node_class.get_landing_weight(series, model, mods),
+            weight
+        )
 
     def test_get_landing_weight(self):
-        node = self.node_class()
-        self.assertEqual(
-            node.get_landing_weight(self.series.value, self.model.value,
-                                    self.mods.value),
-            128367
-        )
+       
+        #node = self.node_class()
+        ac_variations=[
+            [self.series.value, self.model.value, self.mods.value, 128367],
+            ['B757-200', 'B757-236(F)', 'MOD Aircraft Line Numbers 1-209', 89992],
+            ['B757-200', 'B757-24A(PF)', 'MOD Aircraft Line Numbers 1-209', 89992],
+            ['B757-200', 'B757-200(PCF)', 'MOD Aircraft Line Numbers 1-209', 89811],
+            ['B757-200', 'B757-233(F)', 'N/A', 95254],
+            ['B757-200', 'B757-24A(PF)', 'N/A', 95254],
+            ['B757-200', 'B757-236(PCF)', 'N/A', 95254],
+            ['B757-200', 'N/A', 'MOD Aircraft Line Numbers 210 and above', 95254],
+            ['B757-200', 'N/A', 'N/A', 89992],
+            ['B757-300', 'N/A', 'N/A', 101605],
+            ['B767-200', 'N/A', 'Post TC', 136078],
+            ['B767-25E', 'N/A', 'Freighter Conversion', 126098],
+            ['B767-200', 'N/A', 'Freighter Conversion', 128367],
+            ['B767-200', 'N/A', 'N/A', 123377],
+            ['B767-300', 'N/A', 'Freighter Conversion', 147871],
+            ['B767-300', 'N/A', 'N/A', 145149],
+            ['B767-400', '(ER)', 'N/A', 158757],
+            ['N/A', 'N/A', 'N/A', None],
+        ]
+        for aircraft in ac_variations:
+            self._test_landing_weight(*aircraft)
 
     def test_attributes(self):
         node = self.node_class()
