@@ -788,7 +788,7 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
         if 'B757-200' in series and model_ending in ['(F)', '(PF)'] and \
            'MOD Aircraft Line Numbers 1-209' in mods:
             return 89992
-        elif 'B757-200' in series and model_ending in '(PCF)' and \
+        elif 'B757-200' in series and model_ending in ['(PCF)',] and \
              'MOD Aircraft Line Numbers 1-209' in mods:
             return 89811
         elif 'B757-200' in series and model_ending in ['(F)', '(PF)', '(PCF)']:
@@ -812,7 +812,7 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
             return 147871
         elif 'B767-300' in series:
             return 145149
-        elif 'B767-400' in series and model_ending in '(ER)':
+        elif 'B767-400' in series and model_ending in ['(ER)',]:
             return 158757
         else:
             return None
