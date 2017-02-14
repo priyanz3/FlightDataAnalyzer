@@ -1262,93 +1262,7 @@ class AltitudeQNH(DerivedParameterNode):
 
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
-#class AltitudeQNH(DerivedParameterNode):
-class AltitudeVisualization(object):
-    '''
-    This altitude is above mean sea level. From the takeoff airfield to the
-    highest altitude above airfield, the altitude Visualization is referenced
-    to the takeoff airfield elevation, and from that point onwards it is
-    referenced to the landing airfield elevation.
-
-    If we can only determine the takeoff elevation, the landing elevation
-    will using the same value as the error will be the difference in pressure
-    altitude between the takeoff and landing airports on the day which is
-    likely to be less than forcing it to 0. Therefore landing elevation is
-    used if the takeoff elevation cannot be determined.
-
-    If we are unable to determine either the takeoff or landing elevations,
-    we use the Altitude AAL parameter.
-    '''
-
-    def _calculate_alt(self,
-                       alt_aal,
-                       alt_std=None,
-                       climbs=None,
-                       descends=None,
-                       l_elev=0,
-                       t_elev=0):
-
-        # We adjust the height during the climb and descent so that the cruise is at pressure altitudes.
-
-        # TODO: Improvement would be to adjust to half the difference if the cruise is below 10,000ft
-
-        alt_qnh = np_ma_masked_zeros_like(alt_aal.array)
-
-        if climbs:
-            # Climb phase adjustment
-            first_climb = slice(climbs[0].slice.start, climbs[0].slice.stop + 1)
-            adjust_up = self._qnh_adjust(alt_aal.array[first_climb],
-                                         alt_std.array[first_climb],
-                                         t_elev, 'climb')
-            # Before first climb
-            alt_qnh[:first_climb.start] = alt_aal.array[:first_climb.start] + t_elev
-
-            # First climb adjusted
-            alt_qnh[first_climb] = alt_aal.array[first_climb] + adjust_up
-
-        if descends:
-            # Descent phase adjustment
-            last_descent = slice(descends[-1].slice.stop + 1, descends[-1].slice.start, -1)
-            adjust_down = self._qnh_adjust(alt_aal.array[last_descent],
-                                           alt_std.array[last_descent],
-                                           l_elev, 'descent')
-            # Last descent adjusted
-            alt_qnh[last_descent] = alt_aal.array[last_descent] + adjust_down
-
-            # After last descent
-            alt_qnh[last_descent.start:] = alt_aal.array[last_descent.start:] + l_elev
-
-        # Use pressure altitude in the cruise
-        cruise_start = first_climb.stop if climbs else 0
-        cruise_stop = last_descent.stop + 1 if descends else len(alt_std.array)
-        alt_qnh[cruise_start:cruise_stop] = alt_std.array[cruise_start:cruise_stop]
-        return np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
-
-    @classmethod
-    def _qnh_adjust(cls, aal, std, elev, mode):
-        if mode == 'climb':
-            datum = CLIMB_THRESHOLD
-        elif mode == 'descent':
-            datum = LANDING_THRESHOLD_HEIGHT
-        else:
-            raise ValueError('Unrecognised mode in %s._qnh_adjust()'
-                             % cls.__name__)
-    
-        press_offset = std[0] - elev - datum
-        if abs(press_offset) > 4000.0:
-            raise ValueError(
-                'Excessive difference between pressure altitude '
-                '(%.1f) and airport elevation (%.1f) of %.1f '
-                'implies incorrect altimeter scaling.' %
-                (std[0], elev, press_offset)
-            )
-        return np.linspace(elev, std[-1] - aal[-1], num=len(aal)) 
-
-
-
-# TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
-#class AltitudeQNH(DerivedParameterNode):
-class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisualization):
+class AltitudeVisualizationWithGroundOffset(DerivedParameterNode):
     '''
     This altitude is above mean sea level. From the takeoff airfield to the
     highest altitude above airfield, the altitude Visualization is referenced
@@ -1371,6 +1285,26 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisual
     def can_operate(cls, available):
         return 'Altitude AAL' in available
 
+    @classmethod
+    def _qnh_adjust(cls, aal, std, elev, mode):
+        if mode == 'climb':
+            datum = CLIMB_THRESHOLD
+        elif mode == 'descent':
+            datum = LANDING_THRESHOLD_HEIGHT
+        else:
+            raise ValueError('Unrecognised mode in %s._qnh_adjust()'
+                             % cls.__name__)
+
+        press_offset = std[0] - elev - datum
+        if abs(press_offset) > 4000.0:
+            raise ValueError(
+                'Excessive difference between pressure altitude '
+                '(%.1f) and airport elevation (%.1f) of %.1f '
+                'implies incorrect altimeter scaling.' %
+                (std[0], elev, press_offset)
+            )
+        return np.linspace(elev, std[-1] - aal[-1], num=len(aal)) 
+
     def derive(self,
                alt_aal=P('Altitude AAL'),
                alt_std=P('Altitude STD Smoothed'),
@@ -1392,12 +1326,47 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode, AltitudeVisual
         else:
             pass
         
-        self.array = self._calculate_alt(alt_aal, alt_std, climbs, descends,
-                                         l_elev or 0, t_elev or 0)
+        # We adjust the height during the climb and descent so that the cruise is at pressure altitudes.
+
+        # TODO: Improvement would be to adjust to half the difference if the cruise is below 10,000ft
+
+        alt_qnh = np_ma_masked_zeros_like(alt_aal.array)
+
+        if climbs:
+            # Climb phase adjustment
+            t_elev = t_elev or 0
+            first_climb = slice(climbs[0].slice.start, climbs[0].slice.stop + 1)
+            adjust_up = self._qnh_adjust(alt_aal.array[first_climb],
+                                         alt_std.array[first_climb],
+                                         t_elev, 'climb')
+            # Before first climb
+            alt_qnh[:first_climb.start] = alt_aal.array[:first_climb.start] + t_elev
+
+            # First climb adjusted
+            alt_qnh[first_climb] = alt_aal.array[first_climb] + adjust_up
+
+        if descends:
+            # Descent phase adjustment
+            l_elev = l_elev or 0
+            last_descent = slice(descends[-1].slice.stop + 1, descends[-1].slice.start, -1)
+            adjust_down = self._qnh_adjust(alt_aal.array[last_descent],
+                                           alt_std.array[last_descent],
+                                           l_elev, 'descent')
+            # Last descent adjusted
+            alt_qnh[last_descent] = alt_aal.array[last_descent] + adjust_down
+
+            # After last descent
+            alt_qnh[last_descent.start:] = alt_aal.array[last_descent.start:] + l_elev
+
+        # Use pressure altitude in the cruise
+        cruise_start = first_climb.stop if climbs else 0
+        cruise_stop = last_descent.stop + 1 if descends else len(alt_std.array)
+        alt_qnh[cruise_start:cruise_stop] = alt_std.array[cruise_start:cruise_stop]
+
+        self.array = np.ma.array(data=alt_qnh, mask=alt_aal.array.mask)
 
 
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
-#class AltitudeQNH(DerivedParameterNode):
 class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
     '''
     This altitude is above airodrome level, but excludes the jump in Altitude
