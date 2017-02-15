@@ -17,7 +17,7 @@ from analysis_engine.split_hdf_to_segments import (
     has_constant_time,
     split_segments,
 )
-from analysis_engine.node import P, Parameter
+from analysis_engine.node import M, P, Parameter
 
 from hdfaccess.file import hdf_file
 
@@ -114,6 +114,8 @@ class TestSplitSegments(unittest.TestCase):
         hdf = mock.Mock()
         hdf.get = mock.Mock()
         hdf.get.return_value = None
+        hdf.__contains__ = mock.Mock()
+        hdf.__contains__.return_value = False
         hdf.reliable_frame_counter = False
         hdf.duration = 50
 
@@ -131,6 +133,11 @@ class TestSplitSegments(unittest.TestCase):
             elif key == 'Eng (1) N1' and eng_array is not None:
                 return Parameter('Eng (1) N1', array=eng_array,
                                  frequency=eng_frequency)
+            elif key == 'Segment Split':
+                seg_split = M('Segment Split', array=np.ma.zeros(len(heading_array), dtype=int),
+                                 frequency=heading_frequency, values_mapping={0: "-", 1: "Split"})
+                seg_split.array[390/heading_frequency] = "Split"
+                return seg_split
             else:
                 raise KeyError
         hdf.__getitem__ = hdf_getitem
@@ -247,6 +254,19 @@ class TestSplitSegments(unittest.TestCase):
         self.assertEqual(segment_type, 'START_AND_STOP')
         self.assertEqual(segment_slice.start, 395)
         self.assertEqual(segment_slice.stop, airspeed_secs)
+
+        # Split Segment Split
+        hdf.__contains__.return_value = True
+        segment_tuples = split_segments(hdf, {})
+        segment_type, segment_slice, start_padding = segment_tuples[0]
+        self.assertEqual(segment_type, 'START_AND_STOP')
+        self.assertEqual(segment_slice.start, 0)
+        self.assertEqual(segment_slice.stop, 390)
+        segment_type, segment_slice, start_padding = segment_tuples[1]
+        self.assertEqual(segment_type, 'START_AND_STOP')
+        self.assertEqual(segment_slice.start, 390)
+        self.assertEqual(segment_slice.stop, airspeed_secs)
+        hdf.__contains__.return_value = False
 
         # Same split conditions, but does not split on jumping DFC because
         # reliable_frame_counter is False.

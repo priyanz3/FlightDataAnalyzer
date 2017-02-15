@@ -408,6 +408,7 @@ def split_segments(hdf, aircraft_info):
     TODO: Use L3UQAR num power ups for difficult cases?
     '''
 
+    segments = []
     speed, thresholds = _get_speed_parameter(hdf, aircraft_info)
 
     # Look for heading first
@@ -435,6 +436,36 @@ def split_segments(hdf, aircraft_info):
             aircraft_info, thresholds, hdf)]
 
     speed_secs = len(speed_array) / speed.frequency
+
+    # if Segment Split parameter is in hdf file someone has already done the hard work for us
+    if 'Segment Split' in hdf:
+        seg_split = hdf['Segment Split']
+        split_flags = np.ma.where(seg_split.array == 'Split')
+        start = 0
+
+        if split_flags:
+            for split_idx in split_flags[0]:
+                split_idx = split_idx / seg_split.frequency
+                segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                        heading.array, heading.frequency,
+                                                        start, split_idx, eng_arrays,
+                                                        aircraft_info, thresholds, hdf))
+                start = split_idx
+                logger.info("Split Flag found at at index '%d'.", split_idx)
+            # Add remaining data to a segment.
+            segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                    heading.array, heading.frequency,
+                                                    start, speed_secs, eng_arrays,
+                                                    aircraft_info, thresholds, hdf))
+        else:
+            # if no split flags use whole file.
+            logger.info("'Segment Split' found but no Splits found, using whole file.")
+            segments.append(_segment_type_and_slice(speed_array, speed.frequency,
+                                                    heading.array, heading.frequency,
+                                                    start, speed_secs, eng_arrays,
+                                                    aircraft_info, thresholds, hdf))
+        return segments
+
     slow_array = np.ma.masked_less_equal(speed_array,
                                          thresholds['speed_threshold'])
 
@@ -476,7 +507,6 @@ def split_segments(hdf, aircraft_info):
                     "'reliable_frame_counter' is False.")
         dfc = None
 
-    segments = []
     start = 0
     last_fast_index = None
     for slow_slice in slow_slices:
