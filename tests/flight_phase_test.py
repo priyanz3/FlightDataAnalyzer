@@ -2106,6 +2106,18 @@ class TestTakeoff(unittest.TestCase):
         expected = buildsection('Takeoff', 1.5, 9.125)
         self.assertEqual(takeoff.get_slices(), expected.get_slices())
 
+    def test_takeoff_basic_short(self):
+        head = np.ma.array([ 0,0,10,20,20,20,20,20,20,20,20])
+        alt_aal = np.ma.array([0,0,0,0,0,0,0,0,10,30,70])
+        phase_fast = buildsection('Fast', 6.5, 16.5)
+        takeoff = Takeoff()
+        takeoff.derive(aeroplane,
+                       P('Heading Continuous', np.ma.concatenate((head, head[::-1]))),
+                       P('Altitude AAL For Flight Phases', np.ma.concatenate((alt_aal, alt_aal[::-1]))),
+                       phase_fast)
+        expected = buildsection('Takeoff', 1.5, 9.125)
+        self.assertEqual(takeoff.get_slices(), expected.get_slices())
+
     def test_takeoff_with_zero_slices(self):
         '''
         A zero slice was causing the derive method to raise an exception.
