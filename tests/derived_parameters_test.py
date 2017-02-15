@@ -1434,7 +1434,7 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
         self.assertEqual(alt_qnh.frequency, self.alt_aal_1.frequency)
 
     def test_alt_std_adjustment(self):
-        cruise = buildsection('Cruise', 19, 24)
+        cruise = buildsection('Cruise', 19, 25)
         alt_qnh = self.node_class()
         alt_qnh.derive(self.alt_aal_2, self.alt_std, cruise)
         self.assertEqual(alt_qnh.array[2], 0.0)

@@ -71,11 +71,16 @@ class BottomOfDescent(KeyTimeInstanceNode):
     '''
     Bottom of a descent phase, which may be a go-around, touch and go or landing.
     '''
-    def derive(self, ccd=S('Climb Cruise Descent')):
+    def derive(self, alt_std=P('Altitude STD Smoothed'),
+               ccd=S('Climb Cruise Descent')):
         for ccd_phase in ccd:
-            end = ccd_phase.slice.stop
-            if end:
-                self.create_kti(end)
+            ccd_slice = ccd_phase.slice
+            # If this slice ended in mid-cruise, the ccd slice will end in
+            # None if passed in directly or be the duration if using cached
+            # params from process flight
+            if ccd_slice.stop is None or ccd_slice.stop == len(alt_std.array):
+                continue
+            self.create_kti(ccd_slice.stop)
 
 
 # TODO: Determine an altitude peak per climb.
@@ -777,8 +782,10 @@ class TopOfDescent(KeyTimeInstanceNode):
                ccd=S('Climb Cruise Descent')):
         for ccd_phase in ccd:
             ccd_slice = ccd_phase.slice
-            # If this slice ended in mid-cruise, the ccd slice will end in None.
-            if ccd_slice.stop is None:
+            # If this slice ended in mid-cruise, the ccd slice will end in
+            # None if passed in directly or be the duration if using cached
+            # params from process flight
+            if ccd_slice.stop is None or ccd_slice.stop == len(alt_std.array):
                 continue
             try:
                 n_tod = find_toc_tod(alt_std.array, ccd_slice, self.frequency, mode='tod')
@@ -1186,7 +1193,9 @@ class Liftoff(KeyTimeInstanceNode):
     '''
 
     @classmethod
-    def can_operate(cls, available):
+    def can_operate(cls, available, seg_type=A('Segment Type')):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'MID_FLIGHT', 'STOP_ONLY'):
+            return False
         return 'Airborne' in available
 
     def derive(self,
@@ -1399,9 +1408,11 @@ class Touchdown(KeyTimeInstanceNode):
     # List the minimum acceptable parameters here
 
     @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+    def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if ac_type and ac_type.value == 'helicopter':
             return 'Airborne' in available
+        elif seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'MID_FLIGHT', 'START_ONLY'):
+            return False
         else:
             return all_of(('Altitude AAL', 'Landing'), available)
 

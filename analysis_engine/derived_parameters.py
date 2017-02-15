@@ -1383,7 +1383,7 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
         
         start_idx = cruise.get_first().slice.start
         start_offset = alt_std.array[start_idx] - alt_aal.array[start_idx]
-        stop_idx = cruise.get_last().slice.stop
+        stop_idx = cruise.get_last().slice.stop - 1
         stop_offset = alt_std.array[stop_idx] - alt_aal.array[stop_idx]
         
         alt_qnh[:start_idx] = alt_aal.array[:start_idx]

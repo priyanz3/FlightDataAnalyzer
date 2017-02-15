@@ -132,7 +132,7 @@ class TestBottomOfDescent(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             BottomOfDescent.get_operational_combinations(),
-            [('Climb Cruise Descent',)],
+            [('Altitude STD Smoothed', 'Climb Cruise Descent',)],
         )
 
     def test_bottom_of_descent_basic(self):
@@ -145,16 +145,18 @@ class TestBottomOfDescent(unittest.TestCase):
         #duration = A('HDF Duration', 63)
         ccd.derive(alt_std, airs)
         bod = BottomOfDescent()
-        bod.derive(ccd)
+        bod.derive(alt_std, ccd)
         expected = [KeyTimeInstance(index=62, name='Bottom Of Descent')]
         self.assertEqual(bod, expected)
 
     def test_bottom_of_descent_complex(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         #airs = buildsections('Airborne', [896, 1654], [1688, 2055])
         ccds = buildsections('Climb Cruise Descent', [897, 1253], [1291, 1651], [1689, 2054])
         #duration = A('HDF Duration', 3000)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         self.assertEqual(len(bod), 3)
         self.assertEqual(bod[0].index, 1254)
 
@@ -164,23 +166,29 @@ class TestBottomOfDescent(unittest.TestCase):
         self.assertEqual(bod, expected)
 
     def test_bod_ccd_only(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, 1253)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         self.assertEqual(len(bod), 1)
         self.assertEqual(bod[0].index, 1254)
 
     def test_bod_end(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, 2000)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         expected = [KeyTimeInstance(index=2001, name='Bottom Of Descent')]
         self.assertEqual(bod, expected)
 
     def test_bod_end_none(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, None)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         expected = []
         self.assertEqual(bod, expected)
 

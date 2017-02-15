@@ -1906,6 +1906,8 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
 
     if mode == 'tod':
         # The first part is where the point of interest lies
+        if section_2.start == mid_index:
+            return np.ma.argmax(alt_data)
         section_4 = slice(section_2.start, mid_index)
     else:
         # we need to scan the second part of this half.
