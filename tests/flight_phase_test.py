@@ -1304,7 +1304,7 @@ class TestDescent(unittest.TestCase):
         tod = TopOfDescent()
         tod.derive(alt, ccd)
         bod = BottomOfDescent()
-        bod.derive(ccd)
+        bod.derive(alt, ccd)
 
         descent_phase = Descent()
         descent_phase.derive(tod, bod)
@@ -1719,7 +1719,7 @@ class TestLanding(unittest.TestCase):
 
     def test_landing_aeroplane_basic(self):
         head = np.ma.array([20]*8+[10,0])
-        alt_aal = np.ma.array([80,40,20,5]+[0]*6)
+        alt_aal = np.ma.array([100,80,60,40,20]+[0]*6)
         phase_fast = buildsection('Fast', 0, 5)
         landing = Landing()
         landing.derive(aeroplane,
@@ -1727,12 +1727,12 @@ class TestLanding(unittest.TestCase):
                        P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast,
                        None)
-        expected = buildsection('Landing', 0.75, 9)
+        expected = buildsection('Landing', 2.5, 9)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
     def test_landing_aeroplane_turnoff(self):
         head = np.ma.array([20]*15+range(20,0,-2))
-        alt_aal = np.ma.array([80,40,20,5]+[0]*26)
+        alt_aal = np.ma.array([100,80,60,40,20]+[0]*26)
         phase_fast = buildsection('Fast',0,5)
         landing = Landing()
         landing.derive(aeroplane,
@@ -1740,12 +1740,12 @@ class TestLanding(unittest.TestCase):
                        P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast,
                        None)
-        expected = buildsection('Landing', 0.75, 24)
+        expected = buildsection('Landing', 2.5, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
     def test_landing_aeroplane_turnoff_left(self):
         head = np.ma.array([20]*15+range(20,0,-2))*-1.0
-        alt_aal = np.ma.array([80,40,20,5]+[0]*26)
+        alt_aal = np.ma.array([100,80,60,40,20]+[0]*26)
         phase_fast = buildsection('Fast', 0, 5)
         landing = Landing()
         landing.derive(aeroplane,
@@ -1753,7 +1753,7 @@ class TestLanding(unittest.TestCase):
                        P('Altitude AAL For Flight Phases', alt_aal),
                        phase_fast,
                        None)
-        expected = buildsection('Landing', 0.75, 24)
+        expected = buildsection('Landing', 2.5, 24)
         self.assertEqual(landing.get_slices(), expected.get_slices())
 
     def test_landing_aeroplane_with_multiple_fast(self):
@@ -2560,15 +2560,16 @@ class TestTakeoff5MinRating(unittest.TestCase):
         self.prop = A('Engine Propulsion', value='PROP')
 
     def test_can_operate(self):
-        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion'), eng_type=self.prop))
-        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start',), eng_type=self.jet))
+        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion', 'HDF Duration'), eng_type=self.prop))
+        self.assertTrue(self.node_class.can_operate(('Takeoff Acceleration Start', 'HDF Duration'), eng_type=self.jet))
         self.assertTrue(self.node_class.can_operate(('Liftoff', 'HDF Duration'), ac_type=helicopter))
 
     def test_derive_basic_jet(self):
         toffs = KTI('Takeoff Acceleration Start',
                     items=[KeyTimeInstance(index=100)])
+        duration = A('HDF Duration', value=1200)
         node = Takeoff5MinRating()
-        node.derive(toffs, eng_type=self.jet)
+        node.derive(toffs, None, None, duration, eng_type=self.jet)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 100)
         self.assertEqual(node[0].slice.stop, 400)
@@ -2578,10 +2579,11 @@ class TestTakeoff5MinRating(unittest.TestCase):
                     items=[KeyTimeInstance(index=20)])
         lifts = KTI('Liftoff',
                     items=[KeyTimeInstance(index=40)])
+        duration = A('HDF Duration', value=189)
         array = np.ma.array([71]*20 + [68, 65, 80, 90] + [101]*60 + list(range(101, 84, -4)) + [86]*100)
         eng_np = P('Eng (*) Np Avg', array=array)
         node = Takeoff5MinRating()
-        node.derive(toffs, lifts, eng_np, eng_type=self.prop)
+        node.derive(toffs, lifts, eng_np, duration, eng_type=self.prop)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].slice.start, 20)
         self.assertEqual(node[0].slice.stop, 89)
