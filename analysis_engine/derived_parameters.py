@@ -1375,10 +1375,6 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
 
     units = ut.FT
 
-    @classmethod
-    def can_operate(cls, available):
-        return 'Altitude AAL' in available    
-
     def derive(self,
                alt_aal=P('Altitude AAL'),
                alt_std=P('Altitude STD Smoothed'),
