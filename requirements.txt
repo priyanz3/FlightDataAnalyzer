@@ -1,12 +1,14 @@
 flightdatautilities
+future
 geomag>=0.9
 hdfaccess
 matplotlib
 networkx>=1.7
 numpy>=1.9.1
+pyyaml
 python-dateutil
 pytz
 scipy
 simplejson
 simplekml
-pyyaml
+six

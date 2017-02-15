@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import numpy as np
 import geomag
 
@@ -9,6 +11,7 @@ from math import radians
 from scipy import interp
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.signal import medfilt
+from past.builtins import basestring
 
 from flightdatautilities import aircrafttables as at, units as ut
 
@@ -100,26 +103,28 @@ from analysis_engine.library import (air_track,
                                      vstack_params,
                                      vstack_params_sw)
 
-from settings import (AIRSPEED_THRESHOLD,
-                      ALTITUDE_AAL_TRANS_ALT,
-                      ALTITUDE_AGL_SMOOTHING,
-                      ALTITUDE_AGL_TRANS_ALT,
-                      ALTITUDE_RADIO_OFFSET_LIMIT,
-                      AZ_WASHOUT_TC,
-                      BOUNCED_LANDING_THRESHOLD,
-                      CLIMB_THRESHOLD,
-                      FEET_PER_NM,
-                      HYSTERESIS_FPIAS,
-                      HYSTERESIS_FPROC,
-                      GRAVITY_IMPERIAL,
-                      GRAVITY_METRIC,
-                      KTS_TO_FPS,
-                      KTS_TO_MPS,
-                      LANDING_THRESHOLD_HEIGHT,
-                      METRES_TO_FEET,
-                      METRES_TO_NM,
-                      MIN_VALID_FUEL,
-                      VERTICAL_SPEED_LAG_TC)
+from analysis_engine.settings import (
+    AIRSPEED_THRESHOLD,
+    ALTITUDE_AAL_TRANS_ALT,
+    ALTITUDE_AGL_SMOOTHING,
+    ALTITUDE_AGL_TRANS_ALT,
+    ALTITUDE_RADIO_OFFSET_LIMIT,
+    AZ_WASHOUT_TC,
+    BOUNCED_LANDING_THRESHOLD,
+    CLIMB_THRESHOLD,
+    FEET_PER_NM,
+    HYSTERESIS_FPIAS,
+    HYSTERESIS_FPROC,
+    GRAVITY_IMPERIAL,
+    GRAVITY_METRIC,
+    KTS_TO_FPS,
+    KTS_TO_MPS,
+    LANDING_THRESHOLD_HEIGHT,
+    METRES_TO_FEET,
+    METRES_TO_NM,
+    MIN_VALID_FUEL,
+    VERTICAL_SPEED_LAG_TC,
+)
 
 # There is no numpy masked array function for radians, so we just multiply thus:
 deg2rad = radians(1.0)
@@ -3918,8 +3923,8 @@ class GrossWeightSmoothed(DerivedParameterNode):
 
             # Test that the resulting array is sensible compared with Gross Weight.
             where_array = np.ma.where(self.array)[0]
-            test_index = where_array[len(where_array) / 2]
-            #test_index = len(gw_nonzero) / 2
+            test_index = where_array[len(where_array) // 2]
+            #test_index = len(gw_nonzero) // 2
             test_difference = \
                 abs(gw.array[test_index] - self.array[test_index]) > 1000
             if test_difference > 1000: # Q: Is 1000 too large?
@@ -4879,7 +4884,7 @@ class CoordinatesSmoothed(object):
                     lon_adj[:toff_slice.start] = lon_adj[toff_slice.start]
 
             else:
-                print 'Cannot smooth taxi out'
+                print('Cannot smooth taxi out')
 
         #-----------------------------------------------------------------------
         # Use ILS track for approach and landings in all localizer approches

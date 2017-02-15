@@ -1,4 +1,7 @@
+from __future__ import print_function
+
 import numpy as np
+import six
 
 from math import ceil, floor
 
@@ -7,6 +10,7 @@ from analysis_engine.library import (
     all_of,
     any_of,
     coreg,
+    _dist,
     find_edges_on_state_change,
     find_toc_tod,
     first_valid_sample,
@@ -37,7 +41,7 @@ from analysis_engine.node import (
 
 from flightdatautilities import units as ut
 
-from settings import (
+from analysis_engine.settings import (
     CLIMB_THRESHOLD,
     HYSTERESIS_ENG_START_STOP,
     CORE_START_SPEED,
@@ -819,7 +823,7 @@ class FlapLeverSet(KeyTimeInstanceNode):
 
         flap = flap_lever or flap_synth
         # TODO: Simplify when we've dealt with KTI node refactoring...
-        for _, state in sorted(flap.values_mapping.iteritems()):
+        for _, state in sorted(six.iteritems(flap.values_mapping)):
             self.create_ktis_on_state_change(state, flap.array, name='flap',
                                              change='entering')
 
@@ -1281,7 +1285,7 @@ class Liftoff(KeyTimeInstanceNode):
             # Plotting process to view the results in an easy manner.
             import matplotlib.pyplot as plt
             name = 'Liftoff Plot %s, %d' %(frame.value, index_air)
-            print name
+            print(name)
             dt_pre = 5
             hz = self.frequency
             timebase=np.linspace(-dt_pre*hz, dt_pre*hz, 2*dt_pre*hz+1)
@@ -1320,7 +1324,7 @@ class Liftoff(KeyTimeInstanceNode):
             plt.grid()
             plt.ylim(-10,30)
             filename = name
-            print name
+            print(name)
             # Two lines to quickly make this work.
             import os
             WORKING_DIR = tempfile.gettempdir()
@@ -1478,7 +1482,7 @@ class Touchdown(KeyTimeInstanceNode):
                 if flap_change_idx:
                     index_gog = int(flap_change_idx) + land.slice.start
 
-            index_ref = min([x for x in index_alt, index_gog if x is not None])
+            index_ref = min([x for x in (index_alt, index_gog) if x is not None])
 
             # With an estimate from the height and perhaps gear switch, set
             # up a period to scan across for accelerometer based
@@ -1566,7 +1570,7 @@ class Touchdown(KeyTimeInstanceNode):
 
             # Pick the first of the two normal accelerometer measures to
             # avoid triggering a touchdown from a single faulty sensor:
-            index_z_list = [x for x in index_az, index_daz if x is not None]
+            index_z_list = [x for x in (index_az, index_daz) if x is not None]
             if index_z_list:
                 index_z = min(index_z_list)
 
@@ -1626,7 +1630,7 @@ class Touchdown(KeyTimeInstanceNode):
             plt.title(name)
             plt.grid()
             filename = 'One-ax-Touchdown-%s' % os.path.basename(self._h.file_path) if getattr(self, '_h', None) else 'Plot'
-            print name
+            print(name)
             WORKING_DIR = tempfile.gettempdir()
             output_dir = os.path.join(WORKING_DIR, 'Touchdown_graphs')
             if not os.path.exists(output_dir):
@@ -2046,8 +2050,6 @@ class DistanceFromLocationMixin(object):
         assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
 
         # We can only handle single liftoffs or touchdowns at this time:
-        from library import _dist
-
         lat_array = lat.array
         lon_array = lon.array
         if repair_mask:

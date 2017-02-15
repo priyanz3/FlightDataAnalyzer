@@ -84,3 +84,8 @@ class HTTPHandlerTest(unittest.TestCase):
     @unittest.skip('Not implemented yet.')
     def test_get_nearest_airport(self):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main()
+

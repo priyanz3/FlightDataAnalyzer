@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import math
-import logging
+from __future__ import print_function
 
+import logging
+import math
 import numpy as np
+import six
 
 from pprint import pformat
 
@@ -48,7 +50,7 @@ from analysis_engine.library import (
     step_values,
     vstack_params_where_state,
 )
-from settings import (
+from analysis_engine.settings import (
     AUTOROTATION_SPLIT,
     MIN_CORE_RUNNING,
     MIN_FAN_RUNNING,
@@ -432,7 +434,7 @@ class Configuration(MultistateDerivedParameterNode):
         angles = at.get_conf_angles(model.value, series.value, family.value)
         self.array = MappedArray(np_ma_masked_zeros_like(flap.array, dtype=np.short),
                                  values_mapping=self.values_mapping)
-        for (state, (s, f, a)) in angles.iteritems():
+        for (state, (s, f, a)) in six.iteritems(angles):
             condition = (flap.array == f)
             if s is not None:
                 condition &= (slat.array == s)
@@ -484,7 +486,7 @@ class Daylight(MultistateDerivedParameterNode):
         # Set default to 'Day'
         array_len = duration.value * self.frequency
         self.array = np.ma.ones(array_len)
-        for step in xrange(int(array_len)):
+        for step in range(int(array_len)):
             curr_dt = datetime_of_index(start_datetime.value, step, 1)
             lat = latitude.array[step]
             lon = longitude.array[step]
@@ -1191,7 +1193,7 @@ class FlapIncludingTransition(MultistateDerivedParameterNode):
             # will vary between frames
             array = MappedArray(np_ma_masked_zeros_like(flap.array),
                                  values_mapping=self.values_mapping)
-            for value, state in self.values_mapping.iteritems():
+            for value, state in six.iteritems(self.values_mapping):
                 array[flap.array == state] = state
             self.array = array
 
@@ -1295,7 +1297,7 @@ class FlapLeverSynthetic(MultistateDerivedParameterNode):
                                  values_mapping=self.values_mapping)
 
         # Update the destination array according to the mappings:
-        for (state, (s, f, a)) in angles.iteritems():
+        for (state, (s, f, a)) in six.iteritems(angles):
             condition = (flap.array == str(f))
             if s is not None:
                 condition &= (slat.array == str(s))
@@ -2992,7 +2994,7 @@ class StableApproach(MultistateDerivedParameterNode):
             if runway:
                 gs_angle = runway.get('glideslope', {}).get('angle')
                 # offset ILS Localizer or offset approach without ILS (IAN approach)
-                if gs_angle > 3:
+                if gs_angle is not None and gs_angle > 3:
                     STABLE_VERTICAL_SPEED_MIN = -1500
             stable_vert = (vertical_speed >= STABLE_VERTICAL_SPEED_MIN) & (vertical_speed <= STABLE_VERTICAL_SPEED_MAX)
             # extend the stability at the end of the altitude threshold through to landing

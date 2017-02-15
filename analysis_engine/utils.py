@@ -1,12 +1,16 @@
+from __future__ import print_function
+
 import argparse
 import logging
 import os
 import re
 import simplejson
+import six
 import zipfile
 
 from collections import defaultdict
 from inspect import getargspec, isclass, ismodule
+from past.builtins import basestring
 
 from hdfaccess.file import hdf_file
 from hdfaccess.utils import strip_hdf
@@ -96,15 +100,15 @@ def open_node_container(zip_path):
             match = re.match('^(?P<flight_pk>\d+) - (?P<node_name>[-\w\d\s\*()%\[\]]+).nod$', filename)
             if not match:
                 if not re.match('^(?P<flight_pk>\d+)\.json$', filename):
-                    print "Skipping invalid filename '%s'" % filename
+                    print("Skipping invalid filename '%s'" % filename)
                 continue
 
             groupdict = match.groupdict()
             flight_filenames[groupdict['flight_pk']][groupdict['node_name']] = filename
 
-        for flight_pk, node_filenames in flight_filenames.iteritems():
+        for flight_pk, node_filenames in six.iteritems(flight_filenames):
             nodes = {}
-            for node_name, filename in node_filenames.iteritems():
+            for node_name, filename in six.iteritems(node_filenames):
                 nodes[node_name] = loads(zip_file.read(filename))
 
             json_filename = '%s.json' % flight_pk
@@ -176,7 +180,7 @@ def get_derived_nodes(modules):
         # parameter is defined, regardless of what its value is, we end up
         # loading "A.B.C"
         ##abstract_nodes = ['Node', 'Derived Parameter Node', 'Key Point Value Node', 'Flight Phase Node'
-        ##print 'importing', name
+        ##print('importing', name)
         if not ismodule(module):
             module = __import__(module, globals(), locals(), [''])
         for c in vars(module).values():
@@ -238,7 +242,7 @@ def _get_names(module_locations, fetch_names=True, fetch_dependencies=False,
     '''
     nodes = get_derived_nodes(module_locations)
     names = []
-    for name, node in nodes.iteritems():
+    for name, node in six.iteritems(nodes):
         if filter_nodes and name not in filter_nodes:
             continue
         if fetch_names:
@@ -360,11 +364,11 @@ if __name__ == '__main__':
         output_parameters = derived_trimmer(args.input_file_path, args.nodes,
                                             args.output_file_path)
         if output_parameters:
-            print 'The following parameters are in the output hdf file:'
+            print('The following parameters are in the output hdf file:')
             for name in output_parameters:
-                print ' * %s' % name
+                print(' * %s' % name)
         else:
-            print 'No matching parameters were found in the hdf file.'
+            print('No matching parameters were found in the hdf file.')
     elif args.command == 'list':
         kwargs = {}
         if args.filter_nodes:
@@ -372,6 +376,6 @@ if __name__ == '__main__':
         modules = list(settings.NODE_MODULES)
         if args.additional_modules:
             modules += args.additional_modules
-        print _get_names(modules, **kwargs)
+        print(_get_names(modules, **kwargs))
     else:
         parser.error("'%s' is not a known command." % args.command)

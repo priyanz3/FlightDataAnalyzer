@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import os
 import logging
 import pytz
@@ -688,7 +690,7 @@ def get_dt_arrays(hdf, fallback_dt, validation_dt):
 
     if fallback_dt:
         fallback_dts = []
-        for secs in xrange(0, int(hdf.duration)):
+        for secs in range(0, int(hdf.duration)):
             fallback_dts.append(fallback_dt + timedelta(seconds=secs))
 
     onehz = P(frequency=1)
@@ -982,10 +984,12 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         validate_aircraft(aircraft_info, hdf)
 
         # now we know the Aircraft is correct, go and do the PRE FILE ANALYSIS
-        if hooks.PRE_FILE_ANALYSIS:
+        hook = hooks.PRE_FILE_ANALYSIS
+        if hook:
             logger.debug("Performing PRE_FILE_ANALYSIS action '%s' with options: %s",
-                         hooks.PRE_FILE_ANALYSIS.func_name, pre_file_kwargs)
-            hooks.PRE_FILE_ANALYSIS(hdf, aircraft_info, **pre_file_kwargs)
+                         getattr(hook, 'func_name', getattr(hook, '__name__')),
+                         pre_file_kwargs)
+            hook(hdf, aircraft_info, **pre_file_kwargs)
         else:
             logger.info("No PRE_FILE_ANALYSIS actions to perform")
 
@@ -1091,11 +1095,10 @@ def main():
     args, parser = parse_cmdline()
 
     if not args.quiet:
-        print 'FlightDataSplitter (c) Copyright 2013 Flight Data Services, ' \
-            'Ltd.'
-        print '  - Powered by POLARIS'
-        print '  - http://www.flightdatacommunity.com'
-        print
+        print('FlightDataSplitter (c) Copyright 2013 Flight Data Services, Ltd.')
+        print('  - Powered by POLARIS')
+        print('  - http://www.flightdatacommunity.com')
+        print()
 
     import os
     from analysis_engine.utils import get_aircraft_info

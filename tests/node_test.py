@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import mock
 import numpy as np
 import os
@@ -5,6 +7,7 @@ import unittest
 
 from datetime import datetime
 from inspect import ArgSpec
+from past.builtins import cmp
 from random import shuffle
 
 from analysis_engine.library import min_value, max_value
@@ -1963,12 +1966,12 @@ class TestDerivedParameterNode(unittest.TestCase):
         node.array = np.ma.arange(5000)
         node.dump(dest)
         from flightdatautilities.filesystem_tools import pretty_size
-        print pretty_size(os.path.getsize(dest))
+        print(pretty_size(os.path.getsize(dest)))
         self.assertLess(os.path.getsize(dest), 10000)
         os.remove(dest)
 
         node.dump(dest, compress=False)
-        print pretty_size(os.path.getsize(dest))
+        print(pretty_size(os.path.getsize(dest)))
         self.assertGreater(os.path.getsize(dest), 20000)
         os.remove(dest)
 
@@ -2069,7 +2072,7 @@ class TestMultistateDerivedParameterNode(unittest.TestCase):
     def test_saving_to_hdf(self):
         # created mapped array
         mapping = {0:'zero', 2:'two', 3:'three'}
-        array = np.ma.array(range(5)+range(5), mask=[1,1,1,0,0,0,0,0,1,1])
+        array = np.ma.array(list(range(5))+list(range(5)), mask=[1,1,1,0,0,0,0,0,1,1])
         multi_p = MultistateDerivedParameterNode('multi', array, values_mapping=mapping)
         multi_p.array[0] = 'three'
         # save array to hdf and close

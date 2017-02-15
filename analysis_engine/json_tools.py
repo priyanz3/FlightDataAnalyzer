@@ -1,7 +1,8 @@
 import collections
+import dateutil.parser
 import pytz
 import simplejson as json
-import dateutil.parser
+import six
 
 from datetime import datetime
 
@@ -43,10 +44,10 @@ def node_to_jsondict(node):
     compare values.
     """
     if hasattr(node, 'todict'):
-        # recordtypes and Attributes
+        # Attributes
         d = node.todict()
     elif hasattr(node, '_asdict'):
-        # nametuples
+        # recordtypes and nametuples
         d = node._asdict()
     else:
         raise TypeError('Object does not support conversion to dictionary')
@@ -184,9 +185,9 @@ def process_flight_to_nodes(pf_results):
     
     params = {}
     
-    for node_type, nodes in pf_results.iteritems():
+    for node_type, nodes in six.iteritems(pf_results):
         
-        for node_name, items in nodes.iteritems():
+        for node_name, items in six.iteritems(nodes):
             try:
                 node_cls = derived_nodes[node_name]
             except KeyError:

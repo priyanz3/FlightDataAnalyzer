@@ -603,7 +603,7 @@ class Climb(FlightPhaseNode):
             closest_toc = None
             for this_toc in toc_list:
                 if (eot < this_toc and
-                    (this_toc < closest_toc
+                    ((closest_toc and this_toc < closest_toc)
                      or
                      closest_toc is None)):
                     closest_toc = this_toc
