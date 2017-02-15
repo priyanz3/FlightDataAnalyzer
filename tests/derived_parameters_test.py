@@ -1396,8 +1396,6 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = AltitudeVisualizationWithoutGroundOffset
         self.operational_combinations = [
-            ('Altitude AAL', ),
-            ('Altitude AAL', 'Altitude STD Smoothed'),
             ('Altitude AAL', 'Altitude STD Smoothed', 'Cruise'),
         ]
         data = [np.ma.arange(0, 1000, step=30)]
