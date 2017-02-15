@@ -164,22 +164,22 @@ def recordtype(typename, field_names, default=NO_DEFAULT, rename=False,
 
     # Create and fill-in the class template.
     argtxt = ', '.join(all_field_names)
-    quoted_argtxt = ', '.join(repr(name) for name in all_field_names)
+    quoted_argtxt = ', '.join([repr(name) for name in all_field_names])
     initargs = ', '.join(fields.without_defaults +
                          ['{0}={1}'.format(name, _default_name(name))
                           for name, default in fields.with_defaults])
-    reprtxt = ', '.join('{0}={{{0}}}'.format(f) for f in all_field_names)
-    dicttxt = ', '.join('{0!r}:self.{0}'.format(f) for f in all_field_names)
+    reprtxt = ', '.join(['{0}={{{0}}}'.format(f) for f in all_field_names])
+    dicttxt = ', '.join(['{0!r}:self.{0}'.format(f) for f in all_field_names])
 
     # These values change depending on whether or not we have any fields.
     if all_field_names:
-        inittxt = '; '.join('self.{0}={0}'.format(f) for f in all_field_names)
-        eqtxt = 'and ' + ' and '.join('self.{0}==other.{0}'.format(f)
-                                      for f in all_field_names)
-        itertxt = '; '.join('yield self.{0}'.format(f)
-                            for f in all_field_names)
-        tupletxt = '(' + ', '.join('self.{0}'.format(f)
-                                   for f in all_field_names) + ')'
+        inittxt = '; '.join(['self.{0}={0}'.format(f) for f in all_field_names])
+        eqtxt = 'and ' + ' and '.join(['self.{0}==other.{0}'.format(f)
+                                       for f in all_field_names])
+        itertxt = '; '.join(['yield self.{0}'.format(f)
+                             for f in all_field_names])
+        tupletxt = '(' + ', '.join(['self.{0}'.format(f)
+                                    for f in all_field_names]) + ')'
         getstate = 'return ' + tupletxt
         setstate = tupletxt + ' = state'
     else:
