@@ -253,7 +253,7 @@ class FlightNumber(FlightAttributeNode):
         # Ignore masked values
         compressed_array = array.compressed()
         _, minvalue = min_value(compressed_array)
-        if minvalue < 0:
+        if minvalue is None or minvalue < 0:
             self.warning(
                 "'%s' only supports unsigned (positive) values > 0, "
                 "but none were found. Cannot determine flight number",
