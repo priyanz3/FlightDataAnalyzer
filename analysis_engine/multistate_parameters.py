@@ -2860,7 +2860,7 @@ class StableApproach(MultistateDerivedParameterNode):
         for approach in apps:
             # lookup descent from approach, dont zip as not guanenteed to have the same
             # number of descents and approaches
-            phase = phases.get_first(containing_index=approach.slice.start)
+            phase = phases.get_last(within_slice=approach.slice, within_use='any')
             # use Combined descent phase slice as it contains the data from
             # top of descent to touchdown (approach starts and finishes later)
             approach.slice = phase.slice
