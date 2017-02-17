@@ -13,6 +13,7 @@ import re
 import six
 
 from abc import ABCMeta
+from builtins import object
 from collections import namedtuple, Iterable, OrderedDict
 from functools import total_ordering
 from itertools import product
@@ -2209,7 +2210,7 @@ class FlightAttributeNode(Node):
         '''
         return self.name
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         Set the boolean value of the object depending on it's attriubute
         content.
@@ -2526,7 +2527,7 @@ class Attribute(object):
         '''
         return 'Attribute(%r, %s)' % (self.name, pprint.pformat(self.value))
 
-    def __nonzero__(self):
+    def __bool__(self):
         '''
         Set the boolean value of the object depending on it's attriubute
         content.

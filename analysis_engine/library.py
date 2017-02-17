@@ -7350,7 +7350,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
             # Rescan the data to find the last point where the array data is
             # closing.
             diff = np.ma.ediff1d(array[_slice])
-            if _slice.step >= 0:
+            if _slice.step is not None and _slice.step >= 0:
                 start_index = _slice.start
                 stop_index = _slice.stop
             else:

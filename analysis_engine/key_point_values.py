@@ -6463,7 +6463,8 @@ class HeadingTrueDuringTakeoff(KeyPointValueNode):
                 # median result is rounded as
                 # -1.42108547152020037174224853515625E-14 == 360.0
                 # which is an invalid value for Heading
-                self.create_kpv(index, float(round(value, 8)) % 360.0)
+                if not np.ma.is_masked(value):
+                    self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
 
 class HeadingDuringLanding(KeyPointValueNode):
@@ -6512,7 +6513,7 @@ class HeadingDuringLanding(KeyPointValueNode):
         elif ac_type and ac_type.value == 'helicopter':
             for land_helo in land_helos:
                 index = land_helo.slice.start
-                self.create_kpv(index,  float(round(hdg.array[index], 8)) % 360.0)
+                self.create_kpv(index, float(round(hdg.array[index], 8)) % 360.0)
 
 
 class HeadingTrueDuringLanding(KeyPointValueNode):
