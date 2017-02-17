@@ -7919,7 +7919,7 @@ def _press2alt_isothermal(Pmb):
 ##### TODO: Add memoize caching... Currently breaks tests!
 ####from flightdatautilities.cache import memoize
 ####@memoize
-def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None):
+def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None, _em=None):
     '''
     Fetch a lookup table by name for the specified aircraft.
 
@@ -7939,10 +7939,12 @@ def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None):
     :type _et: Attribute
     :param _es: the engine series attribute.
     :type _es: Attribute
+    :param _em: the engine manufacturer attribute.
+    :type _em: Attribute
     :returns: the instantiated velocity speed table.
     :rtype: VelocitySpeed or None
     '''
-    attributes = (_am, _as, _af, _et, _es)
+    attributes = (_am, _as, _af, _et, _es, _em)
     attributes = [(a.value if a else None) for a in attributes]
     try:
         _vs = at.get_vspeed_map(*attributes)()

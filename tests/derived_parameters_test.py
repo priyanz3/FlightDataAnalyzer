@@ -49,8 +49,6 @@ from analysis_engine.derived_parameters import (
     #ILSGlideslope,
     #ILSLocalizer,
     #ILSLocalizerRange,
-    #V2,
-    #V2Lookup,
     AOA,
     AccelerationAcrossTrack,
     AccelerationAlongTrack,
@@ -61,19 +59,6 @@ from analysis_engine.derived_parameters import (
     Aileron,
     AimingPointRange,
     AircraftEnergy,
-    AirspeedMinusAirspeedSelectedFor3Sec,
-    AirspeedMinusFlapManoeuvreSpeed,
-    AirspeedMinusFlapManoeuvreSpeedFor3Sec,
-    AirspeedMinusMinimumAirspeed,
-    AirspeedMinusMinimumAirspeedFor3Sec,
-    AirspeedMinusV2,
-    AirspeedMinusV2For3Sec,
-    AirspeedMinusVapp,
-    AirspeedMinusVappFor3Sec,
-    AirspeedMinusVref,
-    AirspeedMinusVrefFor3Sec,
-    AirspeedRelative,
-    AirspeedRelativeFor3Sec,
     AirspeedSelected,
     AirspeedSelectedForApproaches,
     AirspeedTrue,
@@ -148,7 +133,6 @@ from analysis_engine.derived_parameters import (
     Eng_VibN3Max,
     Eng_VibNpMax,
     FlapAngle,
-    FlapManoeuvreSpeed,
     MGBOilTemp,
     MGBOilPress,
     FuelQty,
@@ -172,11 +156,9 @@ from analysis_engine.derived_parameters import (
     LatitudeSmoothed,
     LongitudePrepared,
     LongitudeSmoothed,
-    MMOLookup,
     Mach,
     MagneticVariation,
     MagneticVariationFromRunway,
-    MinimumAirspeed,
     Nr,
     Pitch,
     PotentialEnergy,
@@ -204,14 +186,9 @@ from analysis_engine.derived_parameters import (
     TrackTrue,
     TrackTrueContinuous,
     Turbulence,
-    VMOLookup,
-    Vapp,
-    VappLookup,
     VerticalSpeed,
     VerticalSpeedForFlightPhases,
     VerticalSpeedInertial,
-    Vref,
-    VrefLookup,
     WheelSpeed,
     WheelSpeedLeft,
     WheelSpeedRight,
@@ -219,6 +196,33 @@ from analysis_engine.derived_parameters import (
     WindDirection,
     WindDirectionTrue,
     ZeroFuelWeight,
+    # Velocity Speeds:
+    AirspeedMinusFlapManoeuvreSpeed,
+    AirspeedMinusFlapManoeuvreSpeedFor3Sec,
+    AirspeedMinusMinimumAirspeed,
+    AirspeedMinusMinimumAirspeedFor3Sec,
+    AirspeedMinusV2,
+    AirspeedMinusV2For3Sec,
+    AirspeedMinusVapp,
+    AirspeedMinusVappFor3Sec,
+    AirspeedMinusVref,
+    AirspeedMinusVrefFor3Sec,
+    AirspeedRelative,
+    AirspeedRelativeFor3Sec,
+    FlapManoeuvreSpeed,
+    GreenDotSpeed,
+    MinFlapRetractionSpeed,
+    MinSlatRetractionSpeed,
+    MMOLookup,
+    MinimumAirspeed,
+    #V2,
+    #V2Lookup,
+    Vapp,
+    VappLookup,
+    Vref,
+    VrefLookup,
+    VLS,
+    VMOLookup,
 )
 
 
@@ -6949,6 +6953,66 @@ class TestMMOLookup(unittest.TestCase, NodeTest):
         # expected[0] = np.ma.masked
         expected[expected == 0] = np.ma.masked
         ma_test.assert_masked_array_equal(node.array, expected)
+
+
+########################################
+# Minimum Slat Retraction Speed (VS/V4)
+
+
+class TestMinSlatRetractionSpeed(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = MinSlatRetractionSpeed
+        self.operational_combinations = []  # FIXME
+
+    @unittest.skip('Test not implemented.')
+    def test_derive__basic(self):
+        pass
+
+
+########################################
+# Minimum Flap Retraction Speed (VF/V3)
+
+
+class TestMinFlapRetractionSpeed(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = MinFlapRetractionSpeed
+        self.operational_combinations = []  # FIXME
+
+    @unittest.skip('Test not implemented.')
+    def test_derive__basic(self):
+        pass
+
+
+########################################
+# Green Dot Speed (VGREENDOT)
+
+
+class TestGreenDotSpeed(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = GreenDotSpeed
+        self.operational_combinations = []  # FIXME
+
+    @unittest.skip('Test not implemented.')
+    def test_derive__basic(self):
+        pass
+
+
+########################################
+# Lowest Selectable Speed (VLS)
+
+
+class TestVLS(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = VLS
+        self.operational_combinations = []  # FIXME
+
+    @unittest.skip('Test not implemented.')
+    def test_derive__basic(self):
+        pass
 
 
 ########################################
