@@ -251,7 +251,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         elif kti.name not in KEEP_KTIS:
             continue
         
-        altitude = alt.at(kti.index) if plot_altitude else None
+        altitude = alt.at(kti.index) if alt else None
         kti_point_values['altitudemode'] = altitude_mode
         if altitude:
             kti_point_values['coords'] = ((kti.longitude, kti.latitude, altitude),)
@@ -279,7 +279,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         style = simplekml.Style()
         style.iconstyle.color = simplekml.Color.red
         kpv_point_values = {'name': '%s (%.3f)' % (kpv.name, kpv.value)}
-        altitude = alt.at(kpv.index) if plot_altitude else None
+        altitude = alt.at(kpv.index) if alt else None
         kpv_point_values['altitudemode'] = altitude_mode
         if altitude:
             kpv_point_values['coords'] = ((kpv_lon, kpv_lat, altitude),)
