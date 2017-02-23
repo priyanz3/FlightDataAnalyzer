@@ -379,6 +379,7 @@ class ApproachInformation(ApproachNode):
 
             if np.ma.is_masked(appr_ils_freq):
                 loc_slice = None
+                appr_ils_freq = None
             else:
                 if appr_ils_freq and loc_slice:
                     if appr_ils_freq != approach_runway['localizer']['frequency']/1000.0:
