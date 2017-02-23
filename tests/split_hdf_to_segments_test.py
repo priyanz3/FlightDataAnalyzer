@@ -314,7 +314,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice, start_padding = segment_tuples[0]
-        self.assertEqual(segment_type, 'GROUND_ONLY')
+        self.assertEqual(segment_type, 'START_ONLY')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
 
@@ -335,7 +335,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice, start_padding = segment_tuples[0]
-        self.assertEqual(segment_type, 'GROUND_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
+        self.assertEqual(segment_type, 'START_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
         # Unmasked single flight less than 3 minutes.
