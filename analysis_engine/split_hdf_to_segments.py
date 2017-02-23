@@ -150,11 +150,7 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         logger.debug("Aircraft did not move.")
         segment_type = 'NO_MOVEMENT'
         # e.g. hanger tests, esp. if speed changes!
-    elif not fast_for_long:
-        logger.debug("speed was below threshold.")
-        segment_type = 'GROUND_ONLY'  # e.g. RTO, re-positioning A/C
-        #Q: report a go_fast?
-    elif slow_start and slow_stop:
+    elif slow_start and slow_stop and fast_for_long:
         logger.debug(
             "speed started below threshold, rose above and stopped below.")
         segment_type = 'START_AND_STOP'
@@ -164,6 +160,10 @@ def _segment_type_and_slice(speed_array, speed_frequency,
     elif slow_stop:
         logger.debug("speed started above threshold and stopped below.")
         segment_type = 'STOP_ONLY'
+    elif not fast_for_long:
+        logger.debug("speed was below threshold.")
+        segment_type = 'GROUND_ONLY'  # e.g. RTO, re-positioning A/C
+        #Q: report a go_fast?
     else:
         logger.debug("speed started and stopped above threshold.")
         segment_type = 'MID_FLIGHT'
