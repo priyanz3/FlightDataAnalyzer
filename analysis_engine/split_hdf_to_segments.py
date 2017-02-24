@@ -154,10 +154,10 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         logger.debug(
             "speed started below threshold, rose above and stopped below.")
         segment_type = 'START_AND_STOP'
-    elif slow_start:
+    elif slow_start and threshold_exceedance:
         logger.debug("speed started below threshold and stopped above.")
         segment_type = 'START_ONLY'
-    elif slow_stop:
+    elif slow_stop and threshold_exceedance:
         logger.debug("speed started above threshold and stopped below.")
         segment_type = 'STOP_ONLY'
     elif not fast_for_long:

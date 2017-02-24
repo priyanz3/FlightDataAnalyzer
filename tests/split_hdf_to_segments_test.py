@@ -314,7 +314,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice, start_padding = segment_tuples[0]
-        self.assertEqual(segment_type, 'START_ONLY')
+        self.assertEqual(segment_type, 'GROUND_ONLY')
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
 
