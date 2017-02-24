@@ -5263,8 +5263,9 @@ class MagneticVariation(DerivedParameterNode):
         mag_vars = repair_mask(np.ma.array(mag_vars),
                                repair_duration=None,
                                extrapolate=True)
-        interpolator = InterpolatedUnivariateSpline(
-            np.arange(0, len(lat.array), mag_var_frequency), mag_vars)
+        m = np.arange(0, len(lat.array), mag_var_frequency)
+        k = min(len(m)-1,3) # ensure k is not bigger than len of m as this can occur during RTO segments
+        interpolator = InterpolatedUnivariateSpline(m, mag_vars, k=k)
         interpolation_length = (len(mag_vars) - 1) * mag_var_frequency
         array = np_ma_masked_zeros_like(lat.array)
         array[:interpolation_length] = \
