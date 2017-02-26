@@ -2800,7 +2800,28 @@ class TestLastValidSample(unittest.TestCase):
         result = last_valid_sample(np.ma.array(data=[11,12,13,14],mask=[0,0,0,1]))
         self.assertEqual(result, (2,13))
 
+class TestGroundspeedFromPosition(unittest.TestCase):
+    def test_north(self):
+        # A degree of latitude is 60 nautical miles.
+        # Travelling 1/60th of a degree in 60 seconds is one nautical mile a minute = 60 knots
+        lat = P(name='Latitude', array=np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False)), frequency=1.0)
+        lon = P(name='Longitude', array=np_ma_zeros_like(lat.array), frequency=1.0)
+        result = groundspeed_from_position(lat, lon)
+        # Arbitrarily pick one point to check
+        self.assertAlmostEqual(result[3], 60.0, places = 0)
+        # and make sure the values are all practically the same
+        self.assertAlmostEqual(np.ptp(result), 0.0)
 
+    def test_east(self):
+        # A degree of longitude at 60 North is 30 nautical miles.
+        lon = P(name='Longitude', array=np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False)),  frequency=1.0)
+        lat = P(name='Latitude', array=np_ma_ones_like(lon.array)*40.0, frequency=1.0)
+        result = groundspeed_from_position(lat, lon)
+        # Arbitrarily pick one point to check
+        self.assertAlmostEqual(result[3], 30.0, places = 0)
+        # and make sure the values are all practically the same
+        self.assertAlmostEqual(np.ptp(result), 0.0)
+        
 class TestGroundTrack(unittest.TestCase):
     def test_ground_track_basic(self):
         gspd = np.ma.array([60,60,60,60,60,60,60])
@@ -2915,9 +2936,13 @@ class TestGroundTrackPrecise(unittest.TestCase):
         with open(duration_test_data_path, 'rb') as csvfile:
             self.reader = csv.DictReader(csvfile)
             for row in self.reader:
+                # Sources to use from the recorded data file...
+                # Latitude and Longitude should be prepared values
+                # Heading should be Heading True Continuous
+                # Groundspeed should be Groundspeed Signed
                 lat_data.append(float(row['Latitude']))
                 lon_data.append(float(row['Longitude']))
-                hdg_data.append(float(row['Heading_True_Continuous']))
+                hdg_data.append(float(row['Heading']))
                 gspd_data.append(float(row['Groundspeed']))
             self.lat = np.ma.array(lat_data)
             self.lat[230:232] = np.ma.masked
@@ -2927,8 +2952,8 @@ class TestGroundTrackPrecise(unittest.TestCase):
             self.gspd = np.ma.array(gspd_data)
 
     def test_ppgt_basic(self):
-        la, lo, wt = ground_track_precise(self.lat, self.lon, self.gspd,
-                                          self.hdg, 1.0, 'landing')
+        la, lo, pts = ground_track_precise(self.lat, self.lon, self.gspd,
+                                           self.hdg, 1.0, 'takeoff')
 
         # Meaningless thresholds at this time as the algorithm is being rewritten soon.
         self.assertLess(wt, 100000)

@@ -39,6 +39,7 @@ from analysis_engine.library import (air_track,
                                      first_order_washout,
                                      ground_track,
                                      ground_track_precise,
+                                     groundspeed_from_position,
                                      heading_diff,
                                      hysteresis,
                                      integrate,
@@ -3972,14 +3973,7 @@ class Groundspeed(DerivedParameterNode):
             Made frame dependent to avoid inadvertant use of this code
             where a groundspeed signal may be available under a different name.
             '''
-            deg_to_metres = 1852*60 # 1852 m/nm & 60 nm/deg latitude
-            dlat = rate_of_change(lat, 2.0) * deg_to_metres
-            # There is no masked array cos function, but the mask will be
-            # carried forward as part of the latitude array anyway.
-            dlon = rate_of_change(lon, 2.0) * deg_to_metres *\
-                np.cos(np.radians(lat.array.data))
-
-            gs = np.ma.sqrt(dlat*dlat+dlon*dlon) / 0.514 # kn per m/s
+            gs = groundspeed_from_position(lat, lon)
 
             # In some data segments, e.g. ground runs, the data is all masked, so don't create a derived parameter.
             if np.ma.count(gs):
