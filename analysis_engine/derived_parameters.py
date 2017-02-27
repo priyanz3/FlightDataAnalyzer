@@ -1321,8 +1321,12 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode):
         # Attempt to determine elevations at takeoff and landing:
         t_elev = t_apt.value.get('elevation') if t_apt else None
         l_elev = l_apt.value.get('elevation') if l_apt else None
-
-        if t_elev is None and l_elev is not None:
+        
+        if t_elev is None or l_elev is None:
+            self.warning('No takeoff or landing elevation, using Altitude AAL.')
+            self.array = np.ma.copy(alt_aal.array)
+            return
+        elif t_elev is None and l_elev is not None:
             self.warning('No takeoff elevation, using %d ft from landing airport.', l_elev)
             t_elev = l_elev
         elif l_elev is None and t_elev is not None:
