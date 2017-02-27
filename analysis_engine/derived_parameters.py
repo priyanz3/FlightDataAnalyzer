@@ -4897,8 +4897,9 @@ class CoordinatesSmoothed(object):
             if not runway:
                 continue
 
-            # We only refine the approach track if the aircraft lands off the localizer based approach.
-            if approach.loc_est and is_index_within_slice(tdwn_index, approach.loc_est):
+            # We only refine the approach track if the aircraft lands off the localizer based approach
+            # and the localizer is on the runway centreline.
+            if approach.loc_est and is_index_within_slice(tdwn_index, approach.loc_est) and not approach.offset_ils:
                 this_loc_slice = approach.loc_est
 
                 # Adjust the ils data to be degrees from the reference point.
