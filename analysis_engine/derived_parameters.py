@@ -3622,8 +3622,9 @@ class FuelQty(DerivedParameterNode):
                fuel_qty_tail=P('Fuel Qty (Tail)'),
                fuel_qty_stab=P('Fuel Qty (Stab)')):
         params = []
-        for param in (fuel_qty_l, fuel_qty_c, fuel_qty_r,  fuel_qty_trim,
-                      fuel_qty_aux, fuel_qty_tail, fuel_qty_stab):
+        deps = (fuel_qty_l, fuel_qty_c, fuel_qty_r,  fuel_qty_trim,
+                      fuel_qty_aux, fuel_qty_tail, fuel_qty_stab)
+        for param in deps:
             if not param or np.ma.count(param.array)/float(len(param.array))<MIN_VALID_FUEL:
                 continue
             # Repair array masks to ensure that the summed values are not too small
@@ -3650,6 +3651,7 @@ class FuelQty(DerivedParameterNode):
         except:
             # In the case where params are all invalid or empty, return an
             # empty array like the last (inherently recorded) array.
+            param = first_valid_parameter(*deps)
             self.array = np_ma_masked_zeros_like(param.array)
             self.offset = 0.0
 
