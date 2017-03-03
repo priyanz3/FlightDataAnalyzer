@@ -5206,8 +5206,6 @@ class Mach(DerivedParameterNode):
     data is recorded.
     '''
 
-    can_operate = aeroplane_only
-
     units = ut.MACH
 
     def derive(self, cas=P('Airspeed'), alt=P('Altitude STD Smoothed')):
