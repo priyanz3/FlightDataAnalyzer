@@ -21,6 +21,7 @@ from analysis_engine.node import A, aeroplane, ApproachNode, KPV, KTI, P, S, hel
 from analysis_engine.library import (ils_established,
                                      index_at_value,
                                      is_index_within_slice,
+                                     latitudes_and_longitudes,
                                      nearest_neighbour_mask_repair,
                                      runs_of_ones,
                                      peak_curvature,
@@ -260,6 +261,17 @@ class ApproachInformation(ApproachNode):
             if lat and lon and ref_idx:
                 lowest_lat = lat.array[ref_idx] or None
                 lowest_lon = lon.array[ref_idx] or None
+                if approach_type == 'GO_AROUND':
+                    # Doing a go-around, we extrapolate to the threshold
+                    # in case we abort the approach abeam a different airport,
+                    # using the rule of three miles per thousand feet.
+                    distance = np.ma.array([alt_aal.array[ref_idx] * (3/1000.0) * settings.METRES_TO_NM])
+                    bearing = np.ma.array([lowest_hdg])
+                    reference = {'latitude': lowest_lat, 'longitude': lowest_lon}
+                    lat_ga, lon_ga = latitudes_and_longitudes(bearing, distance, reference)
+                    lowest_lat = lat_ga[0]
+                    lowest_lon = lon_ga[0]
+                    
             if lat_land and lon_land and not (lowest_lat and lowest_lon):
                 # use lat/lon at landing if values at ref_idx are masked
                 # only interested in landing within approach slice.
