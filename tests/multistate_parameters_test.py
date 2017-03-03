@@ -107,6 +107,7 @@ from analysis_engine.multistate_parameters import (
     TCASFailure,
     TCASRA,
     ThrustReversers,
+    RotorBrakeEngaged,
 )
 
 ##############################################################################
@@ -3655,3 +3656,64 @@ class TestSpeedControl(unittest.TestCase, NodeTest):
             values_mapping={0: 'Manual', 1: 'Auto'},
         )
         assert_array_equal(node.array, expected.array)
+
+
+class TestRotorBrakeEngaged(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorBrakeEngaged
+        self.values_mapping = {1: 'Engaged', 0: '-'}
+        self.brk1 = M('Rotor Brake (1) Engaged',
+                      np.ma.array(data=[0,0,1,1,0,0]),
+                      values_mapping=self.values_mapping)
+        self.brk2 = M('Rotor Brake (2) Engaged',
+                      np.ma.array(data=[0,0,0,1,1,0]),
+                      values_mapping=self.values_mapping)
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        for opt in opts:
+            brk1 = 'Rotor Brake (1) Engaged' in opt
+            brk2 = 'Rotor Brake (2) Engaged' in opt
+            self.assertTrue(brk1 or brk2)
+
+    def test_brk1(self):
+        brk1 = self.brk1
+        brk2 = None
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,1,1,0,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)
+        
+    def test_brk2(self):
+        brk1 = None
+        brk2 = self.brk2
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,0,1,1,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)
+
+    def test_both_brakes(self):
+        brk1 = self.brk1
+        brk2 = self.brk2
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,1,1,1,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)

@@ -3449,3 +3449,25 @@ class SpeedControl(MultistateDerivedParameterNode):
             (sc1a, 'Auto'), (sc1m, 'Auto'),
             (sc2a, 'Auto'), (sc2m, 'Auto'),
         ).any(axis=0).astype(np.int)
+
+
+class RotorBrakeEngaged(MultistateDerivedParameterNode):
+    ''' Discrete parameter describing when any rotor brake is engaged. '''
+
+    values_mapping = {0: '-', 1: 'Engaged'}
+
+    @classmethod
+    def can_operate(cls, available, ac_type=A('Aircraft Type')):
+        return any_of(cls.get_dependency_names(), available) and \
+               ac_type == helicopter
+
+    def derive(self,
+               brk1=M('Rotor Brake (1) Engaged'),
+               brk2=M('Rotor Brake (2) Engaged')):
+
+        stacked = vstack_params_where_state(
+            (brk1, 'Engaged'),
+            (brk2, 'Engaged'),
+        )
+        self.array = stacked.any(axis=0)
+        self.array.mask = stacked.mask.any(axis=0)
