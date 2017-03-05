@@ -3986,6 +3986,9 @@ class Groundspeed(DerivedParameterNode):
 
 class GroundspeedSigned(DerivedParameterNode):
     '''
+    Adds a negative sign to the pushback movement off the gate to improve ground track computations.
+    
+    Also checks the taxi groundspeeds against the recorded position data.
     '''
 
     units = ut.KT
@@ -3997,7 +4000,11 @@ class GroundspeedSigned(DerivedParameterNode):
 
     def derive(self,
                gspd=P('Groundspeed'),
-               power=P('Eng (*) Any Running')):
+               power=P('Eng (*) Any Running'),
+               taxis=S('Taxiing'),
+               lat=P('Latitude Prepared'),
+               lon=P('Longitude Prepared'),
+               ):
 
         self.array = gspd.array
         # Ignore the pushback, when the aircraft can have a groundspeed
@@ -4014,6 +4021,13 @@ class GroundspeedSigned(DerivedParameterNode):
                 self.array[pushbacks[0].start:end_stationary]*=(-1.0)
             else:
                 self.array[pushbacks[0]]*=(-1.0)
+        
+        # We will also check the taxi speeds against the groundspeed, as some aircraft overreport
+        # the speed on the ground. Note we are not altering the in-flight data here.
+        for taxi in taxis:
+            tx = taxi.slice
+            gsp = groundspeed_from_position(lat.array[tx], lon.array[tx], lat.frequency)
+            self.array[tx] = np.ma.minimum(gspd.array[tx], gsp)
 
 
 class FlapAngle(DerivedParameterNode):
