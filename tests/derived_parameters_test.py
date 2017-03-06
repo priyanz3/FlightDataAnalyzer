@@ -3181,14 +3181,21 @@ class TestGroundspeedSigned(unittest.TestCase):
         self.node_class = GroundspeedSigned
 
     def test_can_operate(self):
-        self.assertFalse(GroundspeedSigned.can_operate([], ac_type=aeroplane))
-        self.assertTrue(GroundspeedSigned.can_operate(['Groundspeed', 'Eng (*) Any Running'], ac_type=aeroplane))
+        self.assertTrue(GroundspeedSigned.can_operate(['Groundspeed', 'Eng (*) Any Running',
+                                                       'Aircraft Type', 'Precise Positioning', 'Taxiing', 
+                                                       'Latitude Prepared', 'Longitude Prepared']))
+        
 
     def test_basic(self):
         gspd = P('Groundspeed', np.ma.array([1.0]*30))
         running = P('Eng (*) Any Running', np.ma.array([0]*15+[1]*15))
+        ac_type = A(name='Aircraft Type', value = 'aeroplane')
+        precision = A(name='Precise Positioning', value = False)
+        taxiing = buildsection('Taxiing', 0, 15)
+        lat = P('Latitude Prepared', np.ma.array([0.0]*30))
+        lon = P('Longitude Prepared', np.ma.array([0.0]*30))
         gs = GroundspeedSigned()
-        gs.derive(gspd, running)
+        gs.derive(gspd, running, precision, taxiing, lat, lon)
         assert_equal(gs.array[4], -1.0)
         assert_equal(gs.array[24], 1.0)
         
@@ -3207,6 +3214,45 @@ class TestGroundspeedSigned(unittest.TestCase):
         gs = GroundspeedSigned()
         gs.derive(gspd, running)
         assert_equal(gs.array, gspd.array)
+
+    def test_scaling_correction(self):
+        lat_data=[]
+        lon_data=[]
+        hdg_data=[]
+        gspd_data=[]
+        this_test_data_path = os.path.join(test_data_path,
+                                           'Groundspeed_test_data_Entebbe.csv')
+        with open(this_test_data_path, 'rb') as csvfile:
+            self.reader = csv.DictReader(csvfile)
+            for row in self.reader:
+                lat_data.append(float(row['Latitude']))
+                lon_data.append(float(row['Longitude']))
+                gspd_data.append(float(row['Groundspeed']))
+        gspd = P('Groundspeed', gspd_data)
+        taxiing = buildsection('Taxiing', 0, len(lat_data))
+        ac_type = A(name='Aircraft Type', value = 'aeroplane')
+        precision = A(name='Precise Positioning', value = True)
+        lat = P('Latitude Prepared', lat_data)
+        lon = P('Longitude Prepared', lon_data)
+        running=P('Eng (*) Any Running', np_ma_ones_like(lat.array))
+        gs = GroundspeedSigned()
+        gs.derive(gspd, running, ac_type, precision, taxiing, lat, lon)
+        # This case reported a groundspeed exceedance of over 60kt (ref 11151421)
+        self.assertGreater(np.max(gspd_data), 40)
+        # but the real speed was about 32kt
+        self.assertLess(np.max(gs.array), 40)
+        # and check the aircraft type
+        ac_type = A(name='Aircraft Type', value = 'balloon')
+        gspd = P('Groundspeed', gspd_data)
+        gs.derive(gspd, running, ac_type, precision, taxiing, lat, lon)
+        self.assertGreater(np.max(gs.array), 60)
+        # and check not precise positioning
+        ac_type = A(name='Aircraft Type', value = 'aeroplane')
+        gspd = P('Groundspeed', gspd_data)
+        precision = A(name='Precise Positioning', value = False)
+        gs.derive(gspd, running, ac_type, precision, taxiing, lat, lon)
+        self.assertGreater(np.max(gs.array), 60)
+      
 
 class TestGroundspeedAlongTrack(unittest.TestCase):
 

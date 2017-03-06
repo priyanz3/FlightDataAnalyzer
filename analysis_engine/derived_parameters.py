@@ -3993,14 +3993,11 @@ class GroundspeedSigned(DerivedParameterNode):
 
     units = ut.KT
 
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type == aeroplane:
-            return all_of(('Groundspeed', 'Eng (*) Any Running'), available)
-
     def derive(self,
                gspd=P('Groundspeed'),
                power=P('Eng (*) Any Running'),
+               ac_type=A('Aircraft Type'),
+               precise=A('Precise Positioning'),
                taxis=S('Taxiing'),
                lat=P('Latitude Prepared'),
                lon=P('Longitude Prepared'),
@@ -4009,8 +4006,8 @@ class GroundspeedSigned(DerivedParameterNode):
         self.array = gspd.array
         # Ignore the pushback, when the aircraft can have a groundspeed
         # recorded, but in effect it's negative.
-        own_power = np.ma.masked_less(power.array, 1)
-        pushbacks = slices_remove_small_slices(np.ma.clump_masked(own_power))
+        no_power = np.ma.clump_masked(np.ma.masked_less(power.array, 1))
+        pushbacks = slices_remove_small_slices(no_power)
         if pushbacks:
             # We sometimes see engines started while the aircraft is being pushed back, so
             # we scan forwards for the faster movement forward and back to find the end of 
@@ -4022,12 +4019,13 @@ class GroundspeedSigned(DerivedParameterNode):
             else:
                 self.array[pushbacks[0]]*=(-1.0)
         
-        # We will also check the taxi speeds against the groundspeed, as some aircraft overreport
-        # the speed on the ground. Note we are not altering the in-flight data here.
-        for taxi in taxis:
-            tx = taxi.slice
-            gsp = groundspeed_from_position(lat.array[tx], lon.array[tx], lat.frequency)
-            self.array[tx] = np.ma.minimum(gspd.array[tx], gsp)
+        if ac_type == aeroplane and precise.value:
+            # We will also check the taxi speeds against the groundspeed, as some aircraft overreport
+            # the speed on the ground. Note we are not altering the in-flight data here.
+            for taxi in taxis:
+                tx = taxi.slice
+                gsp = groundspeed_from_position(lat.array[tx], lon.array[tx], lat.frequency)
+                self.array[tx] = np.ma.minimum(gspd.array[tx], gsp)
 
 
 class FlapAngle(DerivedParameterNode):
