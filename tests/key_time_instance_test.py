@@ -132,7 +132,7 @@ class TestBottomOfDescent(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(
             BottomOfDescent.get_operational_combinations(),
-            [('Climb Cruise Descent',)],
+            [('Altitude STD Smoothed', 'Climb Cruise Descent',)],
         )
 
     def test_bottom_of_descent_basic(self):
@@ -145,16 +145,18 @@ class TestBottomOfDescent(unittest.TestCase):
         #duration = A('HDF Duration', 63)
         ccd.derive(alt_std, airs)
         bod = BottomOfDescent()
-        bod.derive(ccd)
+        bod.derive(alt_std, ccd)
         expected = [KeyTimeInstance(index=62, name='Bottom Of Descent')]
         self.assertEqual(bod, expected)
 
     def test_bottom_of_descent_complex(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         #airs = buildsections('Airborne', [896, 1654], [1688, 2055])
         ccds = buildsections('Climb Cruise Descent', [897, 1253], [1291, 1651], [1689, 2054])
         #duration = A('HDF Duration', 3000)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         self.assertEqual(len(bod), 3)
         self.assertEqual(bod[0].index, 1254)
 
@@ -164,23 +166,29 @@ class TestBottomOfDescent(unittest.TestCase):
         self.assertEqual(bod, expected)
 
     def test_bod_ccd_only(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, 1253)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         self.assertEqual(len(bod), 1)
         self.assertEqual(bod[0].index, 1254)
 
     def test_bod_end(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, 2000)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         expected = [KeyTimeInstance(index=2001, name='Bottom Of Descent')]
         self.assertEqual(bod, expected)
 
     def test_bod_end_none(self):
+        testwave = np.cos(np.arange(3.2, 9.6, 0.1)) * (2500) + 2560
+        alt_std = Parameter('Altitude STD Smoothed', np.ma.array(testwave))
         ccds = buildsection('Climb Cruise Descent', 897, None)
         bod = BottomOfDescent()
-        bod.derive(ccds)
+        bod.derive(alt_std, ccds)
         expected = []
         self.assertEqual(bod, expected)
 
@@ -381,9 +389,9 @@ class TestGoAround(unittest.TestCase):
     def test_go_around_basic(self):
         dlc = [Section('Descent Low Climb',slice(10,18),10,18)]
         alt = Parameter('Altitude AAL',
-                        np.ma.array(range(0,4000,500)+\
-                                    range(4000,0,-500)+\
-                                    range(0,1000,501)))
+                        np.ma.array(list(range(0,4000,500))+
+                                    list(range(4000,0,-500))+
+                                    list(range(0,1000,501))))
         goa = GoAround()
         # Pretend we are flying over flat ground, so the altitudes are equal.
         goa.derive(dlc,alt,alt)
@@ -426,9 +434,9 @@ class TestGoAround(unittest.TestCase):
         # This tests that the go-around works without a radio altimeter.
         dlc = [Section('Descent Low Climb',slice(10,18),10,18)]
         alt = Parameter('Altitude AAL',\
-                        np.ma.array(range(0,4000,500)+\
-                                    range(4000,0,-500)+\
-                                    range(0,1000,501)))
+                        np.ma.array(list(range(0,4000,500))+
+                                    list(range(4000,0,-500))+
+                                    list(range(0,1000,501))))
         goa = GoAround()
         # Pretend we are flying over flat ground, so the altitudes are equal.
         goa.derive(dlc,alt,None)
@@ -467,8 +475,8 @@ class TestAltitudeInApproach(unittest.TestCase):
         approaches = S('Approach', items=[Section('a', slice(4, 7)),
                                                       Section('b', slice(10, 20))])
         alt_aal = P('Altitude AAL',
-                    np.ma.masked_array(range(1950, 0, -200) + \
-                                       range(1950, 0, -200)))
+                    np.ma.masked_array(list(range(1950, 0, -200)) +
+                                       list(range(1950, 0, -200))))
         altitude_in_approach = AltitudeInApproach()
         altitude_in_approach.derive(approaches, alt_aal)
         self.assertEqual(list(altitude_in_approach),
@@ -491,8 +499,8 @@ class TestAltitudeInFinalApproach(unittest.TestCase):
                        items=[Section('a', slice(2, 7)),
                               Section('b', slice(10, 20))])
         alt_aal = P('Altitude AAL',
-                    np.ma.masked_array(range(950, 0, -100) + \
-                                       range(950, 0, -100)))
+                    np.ma.masked_array(list(range(950, 0, -100)) +
+                                       list(range(950, 0, -100))))
         altitude_in_approach = AltitudeInFinalApproach()
         altitude_in_approach.derive(approaches, alt_aal)
 
@@ -778,7 +786,7 @@ class TestTakeoffTurnOntoRunway(unittest.TestCase):
 
     def test_takeoff_turn_onto_runway_curved(self):
         instance = TakeoffTurnOntoRunway()
-        head = P('Heading Continuous',np.ma.array(range(20)+[20]*70))
+        head = P('Heading Continuous',np.ma.array(list(range(20))+[20]*70))
         fast = buildsection('Fast',40,90)
         takeoff = buildsection('Takeoff',4,75)
         instance.derive(head, takeoff, fast)
@@ -835,7 +843,7 @@ class TestTopOfClimb(unittest.TestCase):
         self.assertEqual(opts, expected)
 
     def test_top_of_climb_basic(self):
-        alt_data = np.ma.array(range(0,800,100)+[800]*5+range(800,0,-100))
+        alt_data = np.ma.array(list(range(0,800,100))+[800]*5+list(range(800,0,-100)))
         alt = Parameter('Altitude STD Smoothed', np.ma.array(alt_data))
         phase = TopOfClimb()
         in_air = buildsection('Climb Cruise Descent',0,len(alt.array))
@@ -854,7 +862,7 @@ class TestTopOfClimb(unittest.TestCase):
         self.assertEqual(len(phase),0)
 
     def test_top_of_climb_truncated_end(self):
-        alt_data = np.ma.array(range(0,800,100)+[800]*5)
+        alt_data = np.ma.array(list(range(0,800,100))+[800]*5)
         alt = Parameter('Altitude STD Smoothed', np.ma.array(alt_data))
         phase = TopOfClimb()
         in_air = buildsection('Climb Cruise Descent',0,len(alt.array))
@@ -873,7 +881,7 @@ class TestTopOfDescent(unittest.TestCase):
         self.assertEqual(opts, expected)
 
     def test_top_of_descent_basic(self):
-        alt_data = np.ma.array(range(0,800,100)+[800]*5+range(800,0,-100))
+        alt_data = np.ma.array(list(range(0,800,100))+[800]*5+list(range(800,0,-100)))
         alt = Parameter('Altitude STD Smoothed', np.ma.array(alt_data))
         phase = TopOfDescent()
         in_air = buildsection('Climb Cruise Descent',0,len(alt.array))
@@ -892,7 +900,7 @@ class TestTopOfDescent(unittest.TestCase):
         self.assertEqual(len(phase),1)
 
     def test_top_of_descent_truncated_end(self):
-        alt_data = np.ma.array(range(0,800,100)+[800]*5)
+        alt_data = np.ma.array(list(range(0,800,100))+[800]*5)
         alt = Parameter('Altitude STD Smoothed', np.ma.array(alt_data))
         phase = TopOfDescent()
         in_air = buildsection('Climb Cruise Descent',0,len(alt.array)-1)
@@ -1247,7 +1255,7 @@ class TestEngStop(unittest.TestCase):
     def test_basic__running_at_end_of_data(self):
         eng1 = Parameter(
             'Eng (1) N2', np.ma.array(
-                data=range(60, 0, -10) + [0]*5 + range(0, 90, 10) + [99, 99]),
+                data=list(range(60, 0, -10)) + [0]*5 + list(range(0, 90, 10)) + [99, 99]),
             frequency=1 / 64.0)
         eng_start = EngStart(name='Eng Start', items=[
             KeyTimeInstance(14.5*64, 'Eng (1) Start'),
@@ -2036,7 +2044,7 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
         apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
         airs = buildsection('Airborne', 0, 9000)
         # 300 NM at 30 sec per NM
-        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        dist = list(range(6000,4000,-1))+list(range(4000,6000))+list(range(6000,-30,-1))
         test = np.ma.array(dist[::-1]) # Copied from landing case  :o)
         lat = P('Latitude', [0.0]*(len(test)))
         lon = P('Longitude', test/(30.0*60))
@@ -2050,7 +2058,7 @@ class TestDistanceFromTakeoffAirport(unittest.TestCase):
         apt = A(name='FDR Takeoff Airport', value={'latitude': 0.0, 'longitude': 0.0})
         airs = buildsection('Airborne', 0, 9000)
         # 300 NM at 30 sec per NM
-        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        dist = list(range(6000,4000,-1))+list(range(4000,6000))+list(range(6000,-30,-1))
         test = np.ma.array(dist[::-1]) # Copied from landing case  :o)
         lat = P('Latitude', [0.0]*(len(test)))
         lat.array[4520:4530] = np.ma.masked
@@ -2086,7 +2094,7 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
         apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
         airs = buildsection('Airborne', 0, 9000)
         # 300 NM at 30 sec per NM
-        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        dist = list(range(6000,4000,-1))+list(range(4000,6000))+list(range(6000,-30,-1))
         test = np.ma.array(dist)
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', test/(30.0*60))
@@ -2100,7 +2108,7 @@ class TestDistanceFromLandingAirport(unittest.TestCase):
         apt = A(name='FDR Landing Airport', value={'latitude': 0.0, 'longitude': 0.0})
         airs = buildsection('Airborne', 0, 9000)
         # 300 NM at 30 sec per NM
-        dist = range(6000,4000,-1)+range(4000,6000)+range(6000,-30,-1)
+        dist = list(range(6000,4000,-1))+list(range(4000,6000))+list(range(6000,-30,-1))
         test = np.ma.array(dist)
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         # mask a few samples
@@ -2166,7 +2174,7 @@ class TestDistanceFromThreshold(unittest.TestCase):
             'end': {'latitude': 0, 'longitude': -0.03},
         })
         airs = buildsection('Airborne', 30, 230)
-        test = np.ma.array(range(0,129)+range(128,-1,-1))
+        test = np.ma.array(list(range(0,129))+list(range(128,-1,-1)))
         # 3 NM to zero in 96 samples
         lat = P('Latitude', [0.0]*(len(test))) # On equator
         lon = P('Longitude', (test-32)/(32.0*60))

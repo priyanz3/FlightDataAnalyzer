@@ -98,7 +98,7 @@ class TestAirTrack(unittest.TestCase):
 
 class TestIsPower2(unittest.TestCase):
     def test_is_power2(self):
-        self.assertEqual([i for i in xrange(2000) if is_power2(i)],
+        self.assertEqual([i for i in range(2000) if is_power2(i)],
                          [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
         self.assertFalse(is_power2(-2))
         self.assertFalse(is_power2(2.2))
@@ -833,7 +833,7 @@ class TestAlign(unittest.TestCase):
         master = P(array=np.ma.arange(1024), frequency=8)
         slave = P(array=np.ma.array([0, 512]), frequency=1/64.0)
         result = align(slave, master)
-        expected = range(0, 512) + [0]*512
+        expected = list(range(0, 512)) + [0]*512
         np.testing.assert_array_equal(result.data,expected)
 
 
@@ -843,7 +843,7 @@ class TestAlign(unittest.TestCase):
         slave = P(array=np.ma.array([100, 104, 108, 112]),
                   frequency = 1/32.0)
         result = align(slave, master)
-        expected_data = range(100, 112) + [0] * 4
+        expected_data = list(range(100, 112)) + [0] * 4
         expected = np.ma.array(data=expected_data,
                                mask=[0]*12+[1]*4)
         assert_array_almost_equal(result, expected)
@@ -871,7 +871,7 @@ class TestAlign(unittest.TestCase):
         slave = P(frequency=1.0/64, offset=0.0,
                    array=np.ma.array([1, 65, 129, 193], dtype=float))
         result = align(slave, onehz)
-        expected = np.ma.array(range(1, 193) + [0] * 64)
+        expected = np.ma.array(list(range(1, 193)) + [0] * 64)
         np.testing.assert_array_equal(result.data, expected)
 
     def test_align_fully_masked_array(self):
@@ -1747,12 +1747,12 @@ class TestCalculateTimebase(unittest.TestCase):
         years = [None] * 6 + [0] * 19  # 6 sec offset
         months = [None] * 5 + [12] * 20
         days = [None] * 4 + [24] * 5 + [25] * 16
-        hours = [None] * 3 + [23] * 7 + [00] * 15
-        mins = [None] * 2 + [59] * 10 + [01] * 13
-        secs = [None] * 1 + range(55, 60) + range(19)  # 6th second in next hr
+        hours = [None] * 3 + [23] * 7 + [0] * 15
+        mins = [None] * 2 + [59] * 10 + [1] * 13
+        secs = [None] * 1 + list(range(55, 60)) + list(range(19))  # 6th second in next hr
         start_dt = calculate_timebase(years, months, days, hours, mins, secs)
 
-        #>>> datetime(2020,12,25,00,01,19) - timedelta(seconds=25)
+        #>>> datetime(2020,12,25,0,1,19) - timedelta(seconds=25)
         #datetime.datetime(2020, 12, 25, 0, 0, 50)
         self.assertEqual(start_dt, datetime(2000, 12, 25, 0, 0, 54, tzinfo=pytz.utc))
 
@@ -1762,12 +1762,12 @@ class TestCalculateTimebase(unittest.TestCase):
         years = [self.last_year] * 15 + [2999] * 10
         months = [None] * 5 + [12] * 20
         days = [None] * 4 + [24] * 5 + [25] * 16
-        hours = [None] * 3 + [23] * 7 + [00] * 15
-        mins = [None] * 2 + [59] * 10 + [01] * 13
-        secs = [None] * 1 + range(55, 60) + range(19)  # 6th second in next hr
+        hours = [None] * 3 + [23] * 7 + [0] * 15
+        mins = [None] * 2 + [59] * 10 + [1] * 13
+        secs = [None] * 1 + list(range(55, 60)) + list(range(19))  # 6th second in next hr
         start_dt = calculate_timebase(years, months, days, hours, mins, secs)
 
-        #>>> datetime(2020,12,25,00,01,19) - timedelta(seconds=25)
+        #>>> datetime(2020,12,25,0,1,19) - timedelta(seconds=25)
         #datetime.datetime(2020, 12, 25, 0, 0, 50)
         self.assertEqual(start_dt, datetime(self.last_year, 12, 24, 23, 58, 54, tzinfo=pytz.utc))
 
@@ -1776,12 +1776,12 @@ class TestCalculateTimebase(unittest.TestCase):
         years = [None] * 6 + [self.last_year] * 19  # 6 sec offset
         months = [None] * 5 + [12] * 20
         days = [None] * 4 + [24] * 5 + [25] * 16
-        hours = [None] * 3 + [23] * 7 + [00] * 15
-        mins = [None] * 2 + [59] * 10 + [01] * 13
-        secs = [None] * 1 + range(55, 60) + range(19)  # 6th second in next hr
+        hours = [None] * 3 + [23] * 7 + [0] * 15
+        mins = [None] * 2 + [59] * 10 + [1] * 13
+        secs = [None] * 1 + list(range(55, 60)) + list(range(19))  # 6th second in next hr
         start_dt = calculate_timebase(years, months, days, hours, mins, secs)
 
-        #>>> datetime(2020,12,25,00,01,19) - timedelta(seconds=25)
+        #>>> datetime(2020,12,25,0,1,19) - timedelta(seconds=25)
         #datetime.datetime(2020, 12, 25, 0, 0, 50)
         self.assertEqual(start_dt, datetime(self.last_year, 12, 25, 0, 0, 54, tzinfo=pytz.utc))
 
@@ -1789,9 +1789,9 @@ class TestCalculateTimebase(unittest.TestCase):
         years = [None] * 25
         months = [None] * 25
         days = [None] * 4 + [24] * 5 + [25] * 16
-        hours = [None] * 3 + [23] * 7 + [00] * 15
-        mins = [None] * 2 + [59] * 10 + [01] * 13
-        secs = [None] * 1 + range(55, 60) + range(19)  # 6th second in next hr
+        hours = [None] * 3 + [23] * 7 + [0] * 15
+        mins = [None] * 2 + [59] * 10 + [1] * 13
+        secs = [None] * 1 + list(range(55, 60)) + list(range(19))  # 6th second in next hr
         self.assertRaises(InvalidDatetime, calculate_timebase, years, months, days, hours, mins, secs)
 
     def test_uneven_length_arrays(self):
@@ -1800,9 +1800,9 @@ class TestCalculateTimebase(unittest.TestCase):
         years = [None] * 1 + [2020] * 10  # uneven
         months = [None] * 5 + [12] * 20
         days = [None] * 4 + [24] * 5 + [25] * 16
-        hours = [None] * 3 + [23] * 7 + [00] * 1 # uneven
-        mins = [None] * 2 + [59] * 10 + [01] * 13
-        secs = [None] * 1 + range(55, 60) + range(19)
+        hours = [None] * 3 + [23] * 7 + [0] * 1 # uneven
+        mins = [None] * 2 + [59] * 10 + [1] * 13
+        secs = [None] * 1 + list(range(55, 60)) + list(range(19))
         self.assertRaises(ValueError, calculate_timebase,
                           years, months, days, hours, mins, secs)
 
@@ -3067,7 +3067,7 @@ class TestHysteresis(unittest.TestCase):
         from timeit import Timer
         timer = Timer(self.using_large_data)
         time = min(timer.repeat(1, 1))
-        print "Time taken %s secs" % time
+        print("Time taken %s secs" % time)
         self.assertLess(time, 0.1, msg="Took too long")
 
     def using_large_data(self):
@@ -3458,15 +3458,15 @@ class TestIndexOfDatetime(unittest.TestCase):
 
 class TestInterleave(unittest.TestCase):
     def test_interleave(self):
-        param1 = P('A1',np.ma.array(range(4),dtype=float),1,0.2)
-        param2 = P('A2',np.ma.array(range(4),dtype=float)+10,1,0.7)
+        param1 = P('A1',np.ma.arange(4, dtype=float),1,0.2)
+        param2 = P('A2',np.ma.arange(4, dtype=float)+10,1,0.7)
         result = interleave(param1, param2)
         np.testing.assert_array_equal(result.data,[0,10,1,11,2,12,3,13])
         np.testing.assert_array_equal(result.mask, False)
 
     def test_merge_alternage_sensors_mask(self):
-        param1 = P('A1',np.ma.array(range(4),dtype=float),1,0.2)
-        param2 = P('A2',np.ma.array(range(4),dtype=float)+10,1,0.7)
+        param1 = P('A1',np.ma.arange(4, dtype=float),1,0.2)
+        param2 = P('A2',np.ma.arange(4, dtype=float)+10,1,0.7)
         param1.array[1] = np.ma.masked
         param2.array[2] = np.ma.masked
         result = interleave(param1, param2)
@@ -3828,7 +3828,7 @@ class TestMatchAltitudes(unittest.TestCase):
 
 class TestMaxValue(unittest.TestCase):
     def test_max_value(self):
-        array = np.ma.array(range(50,100) + range(100,50,-1))
+        array = np.ma.array(list(range(50,100)) + list(range(100,50,-1)))
         i, v = max_value(array)
         self.assertEqual(i, 50)
         self.assertEqual(v, 100)
@@ -3903,7 +3903,7 @@ class TestAverageValue(unittest.TestCase):
 
 class TestMedianValue(unittest.TestCase):
     def test_median_value(self):
-        array = np.ma.array(range(6) + range(4))
+        array = np.ma.array(list(range(6)) + list(range(4)))
         self.assertEqual(median_value(array), Value(5, 2))
 
         array = np.ma.arange(30)
@@ -3912,7 +3912,7 @@ class TestMedianValue(unittest.TestCase):
 
 class TestMaxAbsValue(unittest.TestCase):
     def test_max_abs_value(self):
-        array = np.ma.array(range(-20,30) + range(10,-41, -1) + range(10))
+        array = np.ma.array(list(range(-20,30)) + list(range(10,-41, -1)) + list(range(10)))
         self.assertEqual(max_abs_value(array), (100, -40))
         array = array*-1.0
         self.assertEqual(max_abs_value(array), (100, 40))
@@ -3997,7 +3997,7 @@ class TestMergeTwoParameters(unittest.TestCase):
 
 class TestMinValue(unittest.TestCase):
     def test_min_value(self):
-        array = np.ma.array(range(50,100) + range(100,50,-1))
+        array = np.ma.array(list(range(50,100)) + list(range(100,50,-1)))
         i, v = min_value(array)
         self.assertEqual(i, 0)
         self.assertEqual(v, 50)
@@ -4746,14 +4746,14 @@ class TestPeakCurvature(unittest.TestCase):
 
     def test_peak_curvature_convex_big_concave(self):
         # Tests for identification of the convex section with a larger concave angle in the same data segment.
-        array = np.ma.array([0]*40+range(40)+range(40,-60,-10))*(-1.0)
+        array = np.ma.array([0]*40+list(range(40))+list(range(40,-60,-10)))*(-1.0)
         pc = peak_curvature(array, curve_sense='Convex')
         self.assertGreaterEqual(pc,35)
         self.assertLessEqual(pc,45)
 
     def test_peak_curvature_concave_big_convex(self):
         # See above !
-        array = np.ma.array([0]*40+range(40)+range(40,-60,-10))
+        array = np.ma.array([0]*40+list(range(40))+list(range(40,-60,-10)))
         pc = peak_curvature(array, curve_sense='Concave')
         self.assertGreaterEqual(pc,35)
         self.assertLessEqual(pc,45)
@@ -5083,7 +5083,8 @@ class TestRoundToNearest(unittest.TestCase):
                          [45]*5 + [50]*2)
 
     def test_round_to_nearest_with_mask(self):
-        array = np.ma.array(range(20), mask=[True]*10 + [False]*10)
+        array = np.ma.arange(20)
+        array.mask = [True]*10 + [False]*10
         res = round_to_nearest(array, 5)
         self.assertEqual(list(np.ma.filled(res, fill_value=-1)),
                          [-1]*10 + [10,10,10,15,15,15,15,15,20,20])
@@ -6428,12 +6429,12 @@ class TestStepValues(unittest.TestCase):
     from analysis_engine.plot_flight import plot_parameter; plot_parameter(array); plot_parameter(stepped)
 
     # useful for compressing results:
-    print compress_iter_repr(stepped, int)
+    print(compress_iter_repr(stepped, int))
     '''
 
     def test_step_values(self):
         # borrowed from TestSlat
-        array = np.ma.array(range(25) + range(-5,0))
+        array = np.ma.array(list(range(25)) + list(range(-5,0)))
         array[1] = np.ma.masked
         array = step_values(array, ( 0, 16, 20, 23))
         self.assertEqual(len(array), 30)
@@ -7462,7 +7463,7 @@ class TestSecondWindow(unittest.TestCase):
 
     def test_three_second_window_incrementing_large(self):
         mask = [True] * 6 + [False] * 10 + [True] * 4 + [False] * 5 + [True] * 5
-        array = np.ma.array(np.ma.arange(0, 30, 1), mask=mask)
+        array = np.ma.array(np.arange(0, 30, 1), mask=mask)
         expected_mask = [True] * 6 + [False] * 4 + [True] * 20
         ma_test.assert_masked_array_almost_equal(
             second_window(array, 2, 3),

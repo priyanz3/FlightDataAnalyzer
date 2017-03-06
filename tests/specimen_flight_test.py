@@ -93,71 +93,67 @@ class TestProcessSpecimenFlight(unittest.TestCase):
         
         # TODO: Change asserts for floating points to 1 decimal place
         #       (many asserts?).
-        self.assertItemsEqual(approaches, ApproachNode(
-            'Approach Information',
-            items=[
-                ApproachItem(
-                    'LANDING',
-                    slice(2036.0, 2323.0, None),
-                    airport={
-                        'code': {'icao': 'ENGM', 'iata': 'OSL'},
-                        'distance': 1582.789862070702,
-                        'elevation': 689,
-                        'id': 2461,
-                        'latitude': 60.1939,
-                        'location': {'city': 'Oslo', 'country': 'Norway'},
-                        'longitude': 11.1004,
-                        'magnetic_variation': 'E001226 0106',
-                        'name': 'Oslo Gardermoen',
-                    },
-                    landing_runway={
-                        'start': {
-                            'elevation': 650,
-                            'latitude': 60.185019,
-                            'longitude': 11.073491,
-                        },
-                        'end': {
-                            'elevation': 682,
-                            'latitude': 60.216092,
-                            'longitude': 11.091397,
-                        },
-                        'magnetic_heading': 13.7,
-                        'strip': {
-                            'id': 4076,
-                            'length': 11811,
-                            'surface': 'ASP',
-                            'width': 147,
-                        },
-                        'localizer': {
-                            'beam_width': 4.5,
-                            'elevation': 686,
-                            'frequency': 110300.0,
-                            'heading': 16,
-                            'latitude': 60.219775,
-                            'longitude': 11.093536,
-                        },
-                        'identifier': '01L',
-                        'id': 8151,
-                        'glideslope': {
-                            'angle': 3.0,
-                            'elevation': 669,
-                            'latitude': 60.186858,
-                            'longitude': 11.072234,
-                            'threshold_distance': 943,
-                        },
-                    },
-                    gs_est=slice(2038, 2235, None),
-                    loc_est=slice(2037, 2318, None),
-                    ils_freq=None,
-                    turnoff=2297.671875,
-                    lowest_lat=60.18765449523926,
-                    lowest_lon=11.074669361114502,
-                    lowest_hdg=16.875,
-                ),
-            ]
+        self.assertEqual(len(approaches), 1)
+        self.assertEqual(approaches[0], ApproachItem(
+            'LANDING',
+            slice(2036.0, 2323.0, None),
+            airport={
+                'code': {'icao': 'ENGM', 'iata': 'OSL'},
+                'distance': 1582.789862070702,
+                'elevation': 689,
+                'id': 2461,
+                'latitude': 60.1939,
+                'location': {'city': 'Oslo', 'country': 'Norway'},
+                'longitude': 11.1004,
+                'magnetic_variation': 'E001226 0106',
+                'name': 'Oslo Gardermoen',
+            },
+            landing_runway={
+                'start': {
+                    'elevation': 650,
+                    'latitude': 60.185019,
+                    'longitude': 11.073491,
+                },
+                'end': {
+                    'elevation': 682,
+                    'latitude': 60.216092,
+                    'longitude': 11.091397,
+                },
+                'magnetic_heading': 13.7,
+                'strip': {
+                    'id': 4076,
+                    'length': 11811,
+                    'surface': 'ASP',
+                    'width': 147,
+                },
+                'localizer': {
+                    'beam_width': 4.5,
+                    'elevation': 686,
+                    'frequency': 110300.0,
+                    'heading': 16,
+                    'latitude': 60.219775,
+                    'longitude': 11.093536,
+                },
+                'identifier': '01L',
+                'id': 8151,
+                'glideslope': {
+                    'angle': 3.0,
+                    'elevation': 669,
+                    'latitude': 60.186858,
+                    'longitude': 11.072234,
+                    'threshold_distance': 943,
+                },
+            },
+            gs_est=slice(2038, 2235, None),
+            loc_est=slice(2037, 2318, None),
+            ils_freq=None,
+            turnoff=2297.671875,
+            lowest_lat=60.18765449523926,
+            lowest_lon=11.074669361114502,
+            lowest_hdg=16.875,
         ))
 
-        self.assertItemsEqual(attributes, [
+        self.assertEqual(attributes, [
             Attribute('FDR Takeoff Airport', {
                 'code': {'iata': 'KRS', 'icao': 'ENCN'},
                 'distance': 44.95628388633336,

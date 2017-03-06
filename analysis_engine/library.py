@@ -1,30 +1,38 @@
 # -*- coding: utf-8 -*-
 # vim:et:ft=python:nowrap:sts=4:sw=4:ts=4
 ##############################################################################
+
+from __future__ import print_function
+
 import itertools
 import logging
-import pytz
-import numpy as np
 import math
+import numpy as np
+import pytz
+import six
 
 from collections import defaultdict, OrderedDict, namedtuple
 from copy import copy, deepcopy
 from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
-from itertools import izip, izip_longest, tee
 from math import ceil, copysign, cos, floor, log, radians, sin, sqrt, pow
 from operator import attrgetter, itemgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
 
+try:
+    from itertools import izip as zip, izip_longest as zip_longest, tee
+except ImportError:
+    from itertools import zip_longest, tee
+
 from hdfaccess.parameter import MappedArray
 
 from flightdatautilities import aircrafttables as at
 from flightdatautilities.geometry import cross_track_distance
 
-from settings import (
+from analysis_engine.settings import (
     BUMP_HALF_WIDTH,
     HEADING_RATE_FOR_MOBILE,
     ILS_CAPTURE,
@@ -665,7 +673,7 @@ def calculate_flap(mode, flap_angle, model, series, family):
     :rtype: dict, np.ma.array, int or float
     '''
     values_mapping = at.get_flap_map(model.value, series.value, family.value)
-    array, frequency, offset = calculate_surface_angle(mode, flap_angle, values_mapping.keys())
+    array, frequency, offset = calculate_surface_angle(mode, flap_angle, list(values_mapping.keys()))
     '''
     import matplotlib.pyplot as plt
     plt.plot(flap_angle.array)
@@ -783,7 +791,7 @@ def calculate_timebase(years, months, days, hours, mins, secs):
     WARNING: If at all times, one or more of the parameters are masked, you
     willnot get a valid timestamp and an exception will be raised.
 
-    Note: if uneven arrays are passed in, they are assumed by izip that the
+    Note: if uneven arrays are passed in, they are assumed by zip that the
     start is valid and the uneven ends are invalid and skipped over.
 
     Supports years as a 2 digits - e.g. "11" is "2011"
@@ -829,7 +837,7 @@ def calculate_timebase(years, months, days, hours, mins, secs):
             base_dt = dt # store reference datetime
         # calc diff from base
         diff = dt - base_dt - timedelta(seconds=step)
-        ##print "%02d - %s %s" % (step, dt, diff)
+        ##print("%02d - %s %s" % (step, dt, diff))
         try:
             clock_variation[diff] += 1
         except KeyError:
@@ -1543,9 +1551,9 @@ def compress_iter_repr(iterable, cast=None, join='+'):
 
     'cast' keyword argument can force casting to another type, e.g. int
 
-    >>> print compress_iter_repr([0,0,1,0,2,2,2])
+    >>> print(compress_iter_repr([0,0,1,0,2,2,2]))
     [0]*2 + [1] + [0] + [2]*3
-    >>> print compress_iter_repr(['a', 'a'])
+    >>> print(compress_iter_repr(['a', 'a']))
     ['a']*2
 
     :param iterable: iterable to compress
@@ -1906,6 +1914,8 @@ def find_toc_tod(alt_data, ccd_slice, frequency, mode=None):
 
     if mode == 'tod':
         # The first part is where the point of interest lies
+        if section_2.start == mid_index:
+            return np.ma.argmax(alt_data)
         section_4 = slice(section_2.start, mid_index)
     else:
         # we need to scan the second part of this half.
@@ -2759,6 +2769,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     # First check that the gspd/hdg arrays are sensible.
     if (len(speed) != len(hdg)) or (len(speed) != len(lat)) or (len(speed) != len(lon)):
         raise ValueError('Ground_track_precise requires equi-length arrays')
+<<<<<<< HEAD
     
     # We use the period where the speed was over 1kn and just leave the position at lower speeds unchanged.
     spd_above_1 = np.ma.masked_less_equal(np.ma.abs(speed), 1.0)
@@ -2794,6 +2805,115 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     lon_return = repair_mask(lon_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
     
     return lat_return, lon_return
+=======
+
+    # We are going to use the period from the runway to the last point where
+    # the speed was over 1kn, to stop the aircraft appearing to wander about
+    # on the stand.
+    spd_above_1 = np.ma.masked_less(np.ma.abs(speed), 1.0)
+    track_edges = np.ma.flatnotmasked_edges(spd_above_1)
+
+    # In cases where the data starts with no useful groundspeed data, throw in the towel now.
+    if track_edges is None or np.ma.count(spd_above_1) < 5:
+        raise ValueError("No useful speed data for '%s' section" % mode)
+
+    # Increment to allow for Python indexing, but don't step over the edge.
+    track_edges[1] = min(track_edges[1]+1, len(speed))
+
+    if mode == 'landing':
+        track_slice=slice(0, track_edges[1])
+    elif mode == 'takeoff':
+        track_slice=slice(track_edges[0], len(speed))
+    else:
+        raise NotImplementedError("Unrecognised mode '%s' in ground_track_precise" % mode)
+
+    rot = np.ma.abs(rate_of_change_array(hdg[track_slice], frequency, width=8.0))
+    straights = np.ma.clump_unmasked(np.ma.masked_greater(rot, HEADING_RATE_FOR_MOBILE))
+    straight_ends = []
+
+    for straight in straights:
+        straight_ends.append(straight.start)
+        straight_ends.append(straight.stop)
+
+    # unable to optimize track if we have too few curves
+    if len(straight_ends) <= 4:
+        logger.warning('Ground_track_precise needs at least two curved sections to operate.')
+        # Substitute a unity weight vector.
+        weights_opt = [np.array([1.0]*len(speed))]
+
+    else:
+        # We aren't interested in the first and last
+        del straight_ends[0]
+        del straight_ends[-1]
+
+        # Initialize the weights for no change.
+        weight_length = len(straight_ends)
+        weights = np.ma.ones(weight_length)
+
+        # Adjust the speed during each leg to reduce cross track errors.
+        speed_bound = (0.8,1.2) # Restict the variation in speeds to 20%.
+        boundaries = [speed_bound]*weight_length
+
+        # Then iterate until optimised solution has been found. We use a dull
+        # algorithm for reliability, rather than the more exciting forms which
+        # can go astray and give less predictable results.
+        weights_opt = optimize.fmin_l_bfgs_b(gtp_compute_error, weights,
+                                             fprime=None,
+                                             args = (straights,
+                                                     straight_ends,
+                                                     lat[track_slice],
+                                                     lon[track_slice],
+                                                     speed[track_slice],
+                                                     hdg[track_slice],
+                                                     frequency,
+                                                     mode, 'iterate'),
+                                             approx_grad=True, epsilon=1.0E-3,
+                                             factr=1e14,
+                                             #bounds=boundaries,
+                                             maxfun=500)
+        """
+        fmin_l_bfgs_b license: This software is freely available, but we expect that all publications describing work using this software, or all commercial products using it, quote at least one of the references given below. This software is released under the BSD License.
+        R. H. Byrd, P. Lu and J. Nocedal. A Limited Memory Algorithm for Bound Constrained Optimization, (1995), SIAM Journal on Scientific and Statistical Computing, 16, 5, pp. 1190-1208.
+        C. Zhu, R. H. Byrd and J. Nocedal. L-BFGS-B: Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (1997), ACM Transactions on Mathematical Software, 23, 4, pp. 550 - 560.
+        J.L. Morales and J. Nocedal. L-BFGS-B: Remark on Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (2011), ACM Transactions on Mathematical Software, 38, 1.
+        """
+    args = (straights, straight_ends, lat[track_slice], lon[track_slice],
+            speed[track_slice], hdg[track_slice], frequency, mode, 'final_answer')
+    if len(weights_opt) > 1 and weights_opt[2]['warnflag']:
+        '''
+        lat_est = lat[track_slice]
+        lon_est = lon[track_slice]
+        wt = gtp_compute_error(weights_opt[0], *args)[2]
+        '''
+        lat_est, lon_est, wt = gtp_compute_error(np.ma.ones(weight_length), *args)
+    else:
+        lat_est, lon_est, wt = gtp_compute_error(weights_opt[0], *args)
+
+    """
+    # Outputs for debugging and inspecting operation of the optimization algorithm.
+    print(weights_opt[0])
+
+    for num, weighting in enumerate(weights_opt[0]):
+        if weighting == speed_bound[0] or weighting == speed_bound[1]:
+            ref = straight_ends[num]
+            print('Mode=',mode, ' Wt[',num, ']=',weighting, 'Index',ref, 'Hdg',hdg[ref], 'Gs',speed[ref])
+
+    # This plot shows how the fitted straight sections match the recorded data.
+    import matplotlib.pyplot as plt
+    for straight in straights:
+        plt.plot(lon_est[straight], lat_est[straight])
+    plt.plot(lon[track_slice], lat[track_slice])
+    plt.show()
+    """
+
+    if mode == 'takeoff':
+        lat_return[track_edges[0]:] = lat_est
+        lon_return[track_edges[0]:] = lon_est
+    else:
+        lat_return[:track_edges[1]] = lat_est
+        lon_return[:track_edges[1]] = lon_est
+    return lat_return, lon_return, wt
+>>>>>>> 598487dceca97184cf7a9f69f903481bb1cd2783
 
 
 def hash_array(array, sections, min_samples):
@@ -3338,7 +3458,7 @@ def pairwise(iterable):
     '''
     a, b = tee(iterable)
     next(b, None)
-    return izip(a, b)
+    return zip(a, b)
 
 
 def is_index_within_slice(index, _slice):
@@ -3537,10 +3657,8 @@ def slices_overlap(first_slice, second_slice):
     if first_slice.step is not None and first_slice.step < 1 \
        or second_slice.step is not None and second_slice.step < 1:
         raise ValueError("Negative step not supported")
-    return ((first_slice.start < second_slice.stop) or
-            (second_slice.stop is None)) and \
-           ((second_slice.start < first_slice.stop) or
-            (first_slice.stop is None))
+    return ((second_slice.stop is None) or ((first_slice.start or 0) < second_slice.stop)) and \
+           ((first_slice.stop is None) or ((second_slice.start or 0) < first_slice.stop))
 
 def slices_and(first_list, second_list):
     '''
@@ -3568,7 +3686,8 @@ def slices_and(first_list, second_list):
             slice_2 = fwd(second_slice)
 
             if slices_overlap(slice_1, slice_2):
-                slice_start = max(slice_1.start, slice_2.start)
+                slice_start = max((s.start for s in (slice_1, slice_2)
+                                   if s.start is not None))
                 if slice_1.stop is None:
                     slice_stop = slice_2.stop
                 elif slice_2.stop is None:
@@ -3619,7 +3738,7 @@ def slices_not(slice_list, begin_at=None, end_at=None):
 
     a = min([s.start for s in slice_list])
     b = min([s.stop for s in slice_list])
-    c = max([s.step for s in slice_list])
+    c = max([s.step or 1 for s in slice_list])
     if c>1:
         raise ValueError("slices_not does not cater for non-unity steps")
 
@@ -4036,7 +4155,7 @@ def median_value(array, _slice=None, start_edge=None, stop_edge=None):
     '''
     start = _slice.start or 0 if _slice else 0
     stop = _slice.stop or len(array) if _slice else len(array)
-    midpoint = start + ((stop - start) / 2)
+    midpoint = start + ((stop - start) // 2)
     if _slice:
         array = array[_slice]
     return Value(midpoint, np.ma.median(array))
@@ -4094,7 +4213,7 @@ def average_value(array, _slice=slice(None), start_edge=None, stop_edge=None):
     '''
     start = _slice.start or 0 if _slice else 0
     stop = _slice.stop or len(array) if _slice else len(array)
-    midpoint = start + ((stop - start) / 2)
+    midpoint = start + ((stop - start) // 2)
     if _slice:
         array = array[_slice]
     return Value(midpoint, np.ma.mean(array))
@@ -4113,7 +4232,7 @@ def std_dev_value(array, _slice=slice(None), start_edge=None, stop_edge=None):
     """
     start = _slice.start or 0 if _slice else 0
     stop = _slice.stop or len(array) if _slice else len(array)
-    midpoint = start + ((stop - start) / 2)
+    midpoint = start + ((stop - start) // 2)
     if _slice:
         array = array[_slice]
     return Value(midpoint, np.ma.std(array))
@@ -6362,7 +6481,7 @@ plt.plot(x,y,'o',xnew,f(xnew),'-')
 plt.legend(['data', 'cubic'], loc='best')
 plt.show()
 for i in xnew:
-    print f(i)
+    print(f(i))
 """
 def step_local_cusp(array, span):
     """
@@ -6436,7 +6555,7 @@ def including_transition(array, steps, threshold=0.20):
         step = min(steps, key=lambda s: abs(step_array[0] - s))
         step_data[step].append(step_array)
 
-    step_angles = {s: float(np.ma.mean(np.ma.concatenate(a))) for s, a in step_data.iteritems()}
+    step_angles = {s: float(np.ma.mean(np.ma.concatenate(a))) for s, a in six.iteritems(step_data)}
 
     # first raise the array to the next step if it exceeds the previous step
     # plus a minimal threshold (step as early as possible)
@@ -6581,7 +6700,7 @@ def step_values(array, steps, hz=1, step_at='midpoint', rate_threshold=0.5):
 
     roc = rate_of_change_array(array, hz)
 
-    for prev_midpoint, (flap_midpoint, direction), next_midpoint in izip_longest(
+    for prev_midpoint, (flap_midpoint, direction), next_midpoint in zip_longest(
         [0] + flap_changes[0:-1], sorted_transitions, flap_changes[1:]):
         prev_flap = prev_unmasked_value(stepped_array, floor(flap_midpoint),
                                         start_index=floor(prev_midpoint))
@@ -6620,7 +6739,8 @@ def step_values(array, steps, hz=1, step_at='midpoint', rate_threshold=0.5):
 
             roc_idx = index_at_value(roc, roc_to_seek_for, scan_rev)
             val_idx = index_at_value(array, prev_flap.value + flap_tolerance, scan_rev)
-            idx = max(val_idx, roc_idx) or flap_midpoint
+            idxs = [x for x in (roc_idx, val_idx) if x]
+            idx = max(idxs) if idxs else flap_midpoint
 
         elif (is_masked and direction == 'increase'
               or step_at == 'move_stop'
@@ -7225,7 +7345,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
             # Rescan the data to find the last point where the array data is
             # closing.
             diff = np.ma.ediff1d(array[_slice])
-            if _slice.step >= 0:
+            if _slice.step is not None and _slice.step >= 0:
                 start_index = _slice.start
                 stop_index = _slice.stop
             else:
@@ -7612,7 +7732,7 @@ def second_window(array, frequency, seconds, extend_window=False):
         # values. That is from start up to stop-sample_idx
         # Much faster than setting the value in the masked array item by item
         window_array.mask[start:window_stop] = False
-        for idx in xrange(start, window_stop):
+        for idx in range(start, window_stop):
             # Clip the last value between sliding window min and max
             last_value = min(max(last_value, min_[idx]), max_[idx])
             # Set this value in the data object of the masked array.
@@ -7879,7 +7999,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
         rf = r.get('localizer').get('frequency')
         f0 = ilsfreq - RUNWAY_ILSFREQ_TOLERANCE
         f1 = ilsfreq + RUNWAY_ILSFREQ_TOLERANCE
-        return f0 <= rf <= f1
+        return (f0 <= rf <= f1) if rf is not None else False
 
     if not airport:
         return None

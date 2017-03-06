@@ -64,18 +64,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(0, 100), 0, 100)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
-                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
-                          P('ILS Frequency', np.ma.array([110.90]*100)),
+                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), np.ones(50)*-0.15))),
+                          P('ILS Glideslope',np.ma.zeros(100)),
+                          P('ILS Frequency', np.ma.ones(100)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(41, 100, None))
 
@@ -94,15 +93,14 @@ class TestApproachInformation(unittest.TestCase):
                           P('Heading Continuous', np.ma.array([260.0]*100)),
                           None,
                           None,
-                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
+                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), np.ones(50)*-0.15))),
+                          P('ILS Glideslope',np.ma.zeros(100)),
                           P('ILS Frequency', np.ma.array(data=[110.90]*100, mask=[True]*100)),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, None)
 
@@ -121,15 +119,14 @@ class TestApproachInformation(unittest.TestCase):
                           P('Heading Continuous', np.ma.array([260.0]*100)),
                           None,
                           None,
-                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
-                          P('ILS Frequency', np.ma.array(data=[110.95]*100)),
+                          P('ILS Localizer', np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), np.ma.ones(50)*-0.15))),
+                          P('ILS Glideslope',np.ma.zeros(100)),
+                          P('ILS Frequency', np.ma.ones(100)*110.95),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, None)
 
@@ -141,7 +138,7 @@ class TestApproachInformation(unittest.TestCase):
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
-        ils_array = np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), [-0.15]*50))
+        ils_array = np.ma.concatenate((np.ma.arange(-2.5, 0, 0.05), np.ma.ones(50)*-0.15))
         ils_array.mask = np.ma.getmaskarray(ils_array)
         ils_array.mask[0:45] = True
         ils_array.mask[70:] = True
@@ -149,18 +146,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(0, 100), 0, 100)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
                           P('ILS Localizer', ils_array),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
-                          P('ILS Frequency', np.ma.array(data=[110.90]*100)),
+                          P('ILS Glideslope', np.ma.zeros(100)),
+                          P('ILS Frequency', np.ma.ones(100)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(45, 70))
 
@@ -176,18 +172,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(0, 100), 0, 100)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
-                          P('ILS Localizer', np.ma.array([3.0]*100)),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
-                          P('ILS Frequency', np.ma.array(data=[110.90]*100)),
+                          P('ILS Localizer', np.ma.ones(100)*3),
+                          P('ILS Glideslope', np.ma.zeros(100)),
+                          P('ILS Frequency', np.ma.ones(100)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, None)
         self.assertEqual(approaches[0].gs_est, None)
@@ -204,18 +199,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(20, 90), 20, 90)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
-                          P('ILS Localizer',np.ma.repeat([0,0,0,1,3,3,2,1,0,0], 10), frequency = 0.5),
-                          P('ILS Glideslope',np.ma.array([0.0]*100)),
-                          P('ILS Frequency', np.ma.array(data=[110.90]*100)),
+                          P('ILS Localizer',np.ma.repeat([0,0,0,1,3,3,2,1,0,0], 10), frequency=0.5),
+                          P('ILS Glideslope',np.ma.zeros(100)),
+                          P('ILS Frequency', np.ma.ones(100)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=80, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=80, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         # Slice changed from original test to reflect new way of determining localizer established phase.
         # Not looking at loc signal, but approach phase and established startpoint, and runway turnoff endpoint.
@@ -233,7 +227,7 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(10, 90), 10, 90)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
                           P('ILS Localizer',np.ma.array(np.repeat([0,0,0,1,2.3,2.3,2,1,0,0], 10))),
@@ -243,8 +237,7 @@ class TestApproachInformation(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(10, 70)) # 70 reflects the 2 dot endpoint
 
@@ -257,24 +250,23 @@ class TestApproachInformation(unittest.TestCase):
 
         ils_array = np.ma.array(np.repeat([0,0,0,1,2.3,2.3,2,1,0,0], 10))
         ils_array.mask = np.ma.getmaskarray(ils_array)
-        ils_array.mask[60:62] = True   
+        ils_array.mask[60:62] = True
         approaches = ApproachInformation()
         approaches.derive(P('Alttiude AAL For Flight Phases', np.ma.arange(1000, 0,-10)),
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(10, 90), 10, 90)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
-                          P('ILS Localizer',ils_array),
+                          P('ILS Localizer', ils_array),
                           None,
                           None,
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=19, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=19, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(10, 70)) # 70 reflects the 2 dot endpoint
 
@@ -290,7 +282,7 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(10, 90), 10, 90)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
                           P('ILS Localizer',np.ma.array(data=[0.0]*20, mask=[0,1]*10)),
@@ -317,7 +309,7 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(4, 18), 4, 18)]),
-                          P('Heading Continuous', np.ma.array([260.0]*100)),
+                          P('Heading Continuous', np.ma.ones(100)*260),
                           None,
                           None,
                           P('ILS Localizer',np.ma.array(data=[0.0]*20, mask=[1]*10+[0]*5+[1]*5)),
@@ -327,8 +319,7 @@ class TestApproachInformation(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, None)
 
@@ -344,18 +335,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(2, 19), 2, 19)]),
-                          P('Heading Continuous', np.ma.array([260.0]*20)),
+                          P('Heading Continuous', np.ma.ones(20)*260),
                           None,
                           None,
-                          P('ILS Localizer',np.ma.array(data=[0.0]*20, mask=[1]*20)),
+                          P('ILS Localizer', np.ma.array(data=[0.0]*20, mask=True)),
                           None,
                           None,
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, None)
 
@@ -371,18 +361,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(2, 19), 2, 19)]),
-                          P('Heading Continuous', np.ma.array([260.0]*20)),
+                          P('Heading Continuous', np.ma.ones(20)*260),
                           None,
                           None,
-                          P('ILS Localizer',np.ma.array([-0.2]*20)),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
-                          P('ILS Frequency', np.ma.array([110.90]*20)),
+                          P('ILS Localizer',np.ma.ones(20)*-0.2),
+                          P('ILS Glideslope',np.ma.zeros(20)),
+                          P('ILS Frequency', np.ma.ones(20)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(2,19,None))
 
@@ -398,18 +387,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(2, 19), 2, 19)]),
-                          P('Heading Continuous', np.ma.array([260.0]*20)),
+                          P('Heading Continuous', np.ma.ones(20)*260),
                           None,
                           None,
-                          P('ILS Localizer',np.ma.array([0.0]*20)),
-                          P('ILS Glideslope',np.ma.array([0.0]*20)),
-                          P('ILS Frequency', np.ma.array([110.90]*20)),
+                          P('ILS Localizer', np.ma.zeros(20)),
+                          P('ILS Glideslope', np.ma.zeros(20)),
+                          P('ILS Frequency', np.ma.ones(20)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(5,19,None))
 
@@ -428,18 +416,17 @@ class TestApproachInformation(unittest.TestCase):
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(2, 39), 2, 39)]),
-                          P('Heading Continuous', np.ma.array([260.0]*40)),
+                          P('Heading Continuous', np.ma.ones(40)*260),
                           None,
                           None,
                           P('ILS Localizer',np.ma.array([2.0]*21+[0.0]*12+[-2.0]*7)),
-                          P('ILS Glideslope',np.ma.array([0.0]*40)),
-                          P('ILS Frequency', np.ma.array([110.90]*40)),
+                          P('ILS Glideslope',np.ma.zeros(40)),
+                          P('ILS Frequency', np.ma.ones(40)*110.90),
                           A(name='AFR Landing Airport', value={'id': 2379}),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=17, value=51.145, name='Latitude At Touchdown')]),
                           KPV('Longitude At Touchdown', items=[KeyPointValue(index=17, value=-0.19, name='Longitude At Touchdown')]),
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_nearest_airport.assert_called_with(latitude=51.145, longitude=-0.19)
         self.assertEqual(approaches[0].loc_est, slice(22,38.5,None))
 
@@ -525,11 +512,11 @@ class TestApproachInformation(unittest.TestCase):
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
-        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array([0]*30)),
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.zeros(30)),
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(10, 27), 10, 26)]),
-                          P('Heading Continuous', np.ma.array([260]*30)),
+                          P('Heading Continuous', np.ma.ones(30)*260),
                           None,
                           None,
                           None,
@@ -539,8 +526,7 @@ class TestApproachInformation(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           None,
                           None,
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_airport.assert_called_with(2379)
         self.assertEqual(approaches[0].turnoff, 26)
 
@@ -553,11 +539,11 @@ class TestApproachInformation(unittest.TestCase):
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
-        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array(range(50, 0, -1)+[0]*40)),
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(30, 80), 30, 80)]),
-                          P('Heading Continuous', np.ma.concatenate(([260]*70, np.arange(20)+260))),
+                          P('Heading Continuous', np.ma.concatenate((np.ma.ones(70)*260, np.arange(260,280)))),
                           None,
                           None,
                           None,
@@ -581,11 +567,11 @@ class TestApproachInformation(unittest.TestCase):
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
-        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.array(range(50, 0, -1)+[0]*40)),
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
                           None,
                           A('Aircraft Type', 'aeroplane'),
                           S(items=[Section('Approach', slice(30, 80), 30, 80)]),
-                          P('Heading Continuous', np.ma.concatenate(([260]*70, np.arange(0, -20, -1)+260))),
+                          P('Heading Continuous', np.ma.concatenate((np.ma.ones(70)*260, np.arange(260,240,-1)))),
                           None,
                           None,
                           None,
@@ -595,8 +581,7 @@ class TestApproachInformation(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           None,
                           None,
-                          A('Precise Positioning', True),
-                          )
+                          A('Precise Positioning', True))
         get_handler.get_airport.assert_called_with(2379)
         self.assertEqual(approaches[0].turnoff, 70)
 
@@ -639,10 +624,9 @@ class TestAlicante(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Alicante')
-        self.assertEqual(approaches[0][3]['identifier'], '28')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Alicante')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '28')
         self.assertEqual(approaches[0].gs_est, None)
         self.assertEqual(approaches[0].loc_est, None)
         
@@ -684,10 +668,9 @@ class TestBardufoss(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Bardufoss')
-        self.assertEqual(approaches[0][3]['identifier'], '10')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Bardufoss')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '10')
         # The aircraft was never established on the glidepath 
         # (started OK, but went outside 0.5 dots within 10 seconds of acquiring the localizer).
         self.assertEqual(approaches[0].gs_est, None)
@@ -733,10 +716,9 @@ class TestBodo(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Bodo')
-        self.assertEqual(approaches[0][3]['identifier'], '25')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Bodo')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '25')
         # The aircraft was never established on the glidepath 
         # (started OK, but went outside 0.5 dots within 10 seconds of acquiring the localizer).
         self.assertEqual(approaches[0].gs_est, None)
@@ -762,7 +744,7 @@ class TestChania(unittest.TestCase):
                 return None
         root = os.path.join(approaches_path, 'ILS_test_9936188_')
         app_start = 12029*2 # 13261 taken from CSV output file, but AppInfo runs at 2Hz.
-        app_end = 12324*2        
+        app_end = 12324*2
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
@@ -783,10 +765,9 @@ class TestChania(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Chania')
-        self.assertEqual(approaches[0][3]['identifier'], '29')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Chania')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '29')
         self.assertEqual(approaches[0].gs_est, None)
         self.assertEqual(approaches[0].loc_est, None)
         self.assertEqual(approaches[0].ils_freq, None)
@@ -830,13 +811,12 @@ class TestDallasFortWorth(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Dallas Fort Worth Intl')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Dallas Fort Worth Intl')
         # We approached runway 17C...
-        self.assertEqual(approaches[0][4]['identifier'], '17C')
+        self.assertEqual(approaches[0].approach_runway['identifier'], '17C')
         # ...but landed on 17R...
-        self.assertEqual(approaches[0][3]['identifier'], '17R')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '17R')
         # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 6523)
         self.assertEqual(int(approaches[0].gs_est.stop), 6590)
@@ -884,10 +864,9 @@ class TestFortWorth(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Fort Worth Alliance')
-        self.assertEqual(approaches[0][3]['identifier'], '16L')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Fort Worth Alliance')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '16L')
         # The aircraft was established on the glidepath slightly after the approach start
         self.assertEqual(int(approaches[0].gs_est.start), 17870)
         self.assertEqual(int(approaches[0].gs_est.stop), 18076)
@@ -935,10 +914,9 @@ class TestHerat(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown',  items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Herat')
-        self.assertEqual(approaches[0][3]['identifier'], '36')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Herat')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '36')
         # There is no ILS on this runway.
         self.assertEqual(approaches[0].gs_est, None)
         self.assertEqual(approaches[0].loc_est, None)
@@ -982,10 +960,9 @@ class TestKirkenes(unittest.TestCase):
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
-                          A('Precise Positioning', True),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Kirkenes')
-        self.assertEqual(approaches[0][3]['identifier'], '06')
+                          A('Precise Positioning', True))
+        self.assertEqual(approaches[0].airport['name'], 'Kirkenes')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '06')
         # There is no ILS on this runway.
         self.assertEqual(approaches[0].gs_est, None)
         self.assertEqual(approaches[0].loc_est, None)
@@ -1029,12 +1006,11 @@ class TestScatsta(unittest.TestCase):
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None),
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=7060, value=60.433, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=7060, value=-1.292, name='Longitude At Touchdown')]),                          
-                          A('Precise Positioning', False),
-                          )
-        self.assertEqual(approaches[0][2]['name'], 'Scatsta')
-        self.assertEqual(approaches[0][3]['identifier'], '24')
-        # We should be established on the (offset) localizer:        
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=7060, value=-1.292, name='Longitude At Touchdown')]),
+                          A('Precise Positioning', False))
+        self.assertEqual(approaches[0].airport['name'], 'Scatsta')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '24')
+        # We should be established on the (offset) localizer:
         self.assertEqual(int(approaches[0].loc_est.start), 7055)
         self.assertEqual(int(approaches[0].loc_est.stop), 7086)
         # ...but there is no glideslope on this runway.
@@ -1081,8 +1057,8 @@ class TestSirSeretseKhama(unittest.TestCase):
                           KPV('Longitude At Touchdown', items=[]),
                           A('Precise Positioning', True),
                           )
-        self.assertEqual(approaches[0][2]['name'], 'Sir Seretse Khama Intl')
-        self.assertEqual(approaches[0][3]['identifier'], '08')
+        self.assertEqual(approaches[0].airport['name'], 'Sir Seretse Khama Intl')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '08')
         # The aircraft did get established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 8679)
         self.assertEqual(int(approaches[0].gs_est.stop), 8882)
@@ -1131,8 +1107,8 @@ class TestWashingtonNational(unittest.TestCase):
                           KPV('Longitude At Touchdown', items=[]),
                           A('Precise Positioning', True),
                           )
-        self.assertEqual(approaches[0][2]['name'], 'Washington National')
-        self.assertEqual(approaches[0][3]['identifier'], '19')
+        self.assertEqual(approaches[0].airport['name'], 'Washington National')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '19')
         # The aircraft did get established on the glidepath
         self.assertEqual(approaches[0].gs_est, None)
         # ...and was on the localizer
@@ -1183,8 +1159,8 @@ class TestZaventem(unittest.TestCase):
                           A('Precise Positioning', False),
                           )
         self.assertEqual(len(approaches), 2)
-        self.assertEqual(approaches[0][2]['name'], 'Brussels Airport')
-        self.assertEqual(approaches[0][3]['identifier'], '01')
+        self.assertEqual(approaches[0].airport['name'], 'Brussels Airport')
+        self.assertEqual(approaches[0].landing_runway['identifier'], '01')
         self.assertEqual(approaches[0].type, 'GO_AROUND')
         self.assertEqual(approaches[1].type, 'LANDING')
         self.assertEqual(int(approaches[0].gs_est.start), 12106)
@@ -1500,4 +1476,8 @@ class TestNewDelhi(unittest.TestCase):
         self.assertEqual(approaches[0].landing_runway['identifier'], '09')
         # There was no runway change
         self.assertEqual(approaches[0].runway_change, False)
+
+
+if __name__ == '__main__':
+    unittest.main()
 

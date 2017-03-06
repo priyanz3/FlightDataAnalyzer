@@ -14,6 +14,7 @@ import abc
 import logging
 
 from operator import itemgetter
+from six import with_metaclass
 
 from flightdatautilities import api
 
@@ -31,12 +32,10 @@ logger = logging.getLogger(name=__name__)
 # Classes
 
 
-class MethodInterface(object):
+class MethodInterface(with_metaclass(abc.ABCMeta, object)):
     '''
     Abstract base class for Flight Data Analyser API handler classes.
     '''
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def get_aircraft(self, aircraft):

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import mock
 import numpy as np
 import os.path
@@ -333,7 +335,7 @@ class TestSplitSegments(unittest.TestCase):
         segment_tuples = split_segments(hdf, {})
         self.assertEqual(len(segment_tuples), 1)
         segment_type, segment_slice, start_padding = segment_tuples[0]
-        self.assertEqual(segment_type, 'GROUND_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
+        self.assertEqual(segment_type, 'START_ONLY', msg="Fast should not be long enough to be a START_AND_STOP")
         self.assertEqual(segment_slice.start, 0)
         self.assertEqual(segment_slice.stop, airspeed_secs)
         # Unmasked single flight less than 3 minutes.
@@ -520,7 +522,7 @@ class mocked_hdf(object):
     def __call__(self, path):
         self.path = path
         if path == 'slow':
-            self.airspeed = np.ma.array(range(10, 20) * 5)
+            self.airspeed = np.ma.arange(10, 20).repeat(5)
         else:
             self.airspeed = np.ma.array(
                 load_compressed(os.path.join(test_data_path, 'airspeed_sample.npz')))
@@ -723,7 +725,7 @@ class TestSegmentInfo(unittest.TestCase):
         hdf['Year'].array[2] = 50
         hdf['Year'].array[2] = np.ma.masked
         res = _calculate_start_datetime(hdf, dt, dt)
-        print hdf, dt
+        print(hdf, dt)
         self.assertEqual(res, datetime(2012, 11, 11, 11, 11, 10, tzinfo=pytz.utc))
 
     def test_no_year_with_a_very_recent_fallback(self):
@@ -752,7 +754,7 @@ class TestSegmentInfo(unittest.TestCase):
         # result is a year behind the fallback datetime, even though the
         # fallback Year was used.
         self.assertEqual(res.year, datetime.now().year - 1)
-        #self.assertEqual(res, datetime(2012,6,01,11,11,1))
+        #self.assertEqual(res, datetime(2012,6,1,11,11,1))
 
     def test_midnight_rollover(self):
         """
@@ -766,7 +768,7 @@ class TestSegmentInfo(unittest.TestCase):
         hdf = MockHDF({
             'Hour': P('Hour', np.ma.array([23, 23] + [0] * 18)),
             'Minute': P('Minute', np.ma.array([59, 59] + [0] * 18)),
-            'Second': P('Minute', np.ma.array([58, 59] + range(18))),  # last two seconds and start of next flight
+            'Second': P('Minute', np.ma.array([58, 59] + list(range(18)))),  # last two seconds and start of next flight
         }, duration=20)
         res = _calculate_start_datetime(hdf, dt, dt)
         # result is the exact start of the data for the timestamp (not a day before!)

@@ -20,6 +20,7 @@ from analysis_engine.library import (
     is_index_within_slice,
     is_slice_within_slice,
     last_valid_sample,
+    max_value,
     moving_average,
     nearest_neighbour_mask_repair,
     peak_curvature,
@@ -364,7 +365,7 @@ class ApproachAndLanding(FlightPhaseNode):
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
-        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'START_ONLY'):
             return False
         elif ac_type == helicopter:
             return all_of(('Approach', 'Landing'), available)
@@ -431,7 +432,7 @@ class Approach(FlightPhaseNode):
     """
     @classmethod
     def can_operate(cls, available, seg_type=A('Segment Type'), ac_type=A('Aircraft Type')):
-        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
+        if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'START_ONLY'):
             return False
         elif ac_type == helicopter:
             return all_of(('Altitude AGL', 'Altitude STD'), available)
@@ -602,7 +603,7 @@ class Climb(FlightPhaseNode):
             closest_toc = None
             for this_toc in toc_list:
                 if (eot < this_toc and
-                    (this_toc < closest_toc
+                    ((closest_toc and this_toc < closest_toc)
                      or
                      closest_toc is None)):
                     closest_toc = this_toc
@@ -1538,9 +1539,12 @@ class Landing(FlightPhaseNode):
             datum = head.array[landing_run]
 
             first = landing_run - (300 * alt_aal.frequency)
+            # Limit first to be the latest of 5 mins or maximum altitude
+            # during fast slice to account for short flights
+            first = max(first, max_value(alt_aal.array, _slice=slice(speedy.slice.start, landing_run)).index)+2
             landing_begin = index_at_value(alt_aal.array,
                                            LANDING_THRESHOLD_HEIGHT,
-                                           slice(landing_run, first-1, -1))
+                                           slice(landing_run, first, -1))
             if landing_begin is None:
                 # we are not able to detect a landing threshold height,
                 # therefore invalid section
@@ -1774,6 +1778,9 @@ class Takeoff(FlightPhaseNode):
             # If it takes more than 5 minutes, he's certainly not doing a normal
             # takeoff !
             last = takeoff_run + (300 * alt_aal.frequency)
+            # Limit last to be the earliest of 5 mins or maximum altitude
+            # during fast slice to account for short flights
+            last = min(last, max_value(alt_aal.array, _slice=slice(takeoff_run, speedy.slice.stop)).index)
             takeoff_end = index_at_value(alt_aal.array, INITIAL_CLIMB_THRESHOLD,
                                          slice(last, takeoff_run, -1))
 
@@ -1922,11 +1929,11 @@ class Takeoff5MinRating(FlightPhaseNode):
     @classmethod
     def can_operate(cls, available, eng_type=A('Engine Propulsion'), ac_type=A('Aircraft Type')):
         if eng_type and eng_type.value == 'PROP':
-            return all_of(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion'), available)
+            return all_of(('Takeoff Acceleration Start', 'Liftoff', 'Eng (*) Np Avg', 'Engine Propulsion', 'HDF Duration'), available)
         elif ac_type == helicopter:
             return all_of(('Liftoff', 'HDF Duration'), available)
         else:
-            return 'Takeoff Acceleration Start' in available
+            return all_of(('Takeoff Acceleration Start', 'HDF Duration'), available)
 
     def get_metrics(self, angle):
         window_sizes = [2,4,8,16,32]
@@ -1951,6 +1958,7 @@ class Takeoff5MinRating(FlightPhaseNode):
         '''
         '''
         five_minutes = 300 * self.frequency
+        max_idx = duration.value * self.frequency
         if eng_type and eng_type.value == 'PROP':
             filter_median_window = 11
             enp_filt = medfilt(eng_np.array, filter_median_window)
@@ -1973,9 +1981,9 @@ class Takeoff5MinRating(FlightPhaseNode):
                         continue
                 if rating_end is None:
                     rating_end = accel_start.index + (five_minutes)
-                self.create_phase(slice(accel_start.index, rating_end))
+                self.create_phase(slice(accel_start.index, min(rating_end, max_idx)))
         elif ac_type == helicopter:
-            max_idx = duration.value * self.frequency
+            
             start_idx = end_idx = 0
             for lift in lifts:
                 start_idx = start_idx or lift.index
@@ -1988,7 +1996,7 @@ class Takeoff5MinRating(FlightPhaseNode):
                 start_idx = 0
         else:
             for toff in toffs:
-                self.create_phase(slice(toff.index, toff.index + five_minutes))
+                self.create_phase(slice(toff.index, min(toff.index + five_minutes, max_idx)))
 
 
 # TODO: Write some unit tests!

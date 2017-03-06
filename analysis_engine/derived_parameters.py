@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import numpy as np
 import geomag
 
@@ -9,6 +11,7 @@ from math import radians
 from scipy import interp
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.signal import medfilt
+from past.builtins import basestring
 
 from flightdatautilities import aircrafttables as at, units as ut
 
@@ -101,26 +104,28 @@ from analysis_engine.library import (air_track,
                                      vstack_params,
                                      vstack_params_sw)
 
-from settings import (AIRSPEED_THRESHOLD,
-                      ALTITUDE_AAL_TRANS_ALT,
-                      ALTITUDE_AGL_SMOOTHING,
-                      ALTITUDE_AGL_TRANS_ALT,
-                      ALTITUDE_RADIO_OFFSET_LIMIT,
-                      AZ_WASHOUT_TC,
-                      BOUNCED_LANDING_THRESHOLD,
-                      CLIMB_THRESHOLD,
-                      FEET_PER_NM,
-                      HYSTERESIS_FPIAS,
-                      HYSTERESIS_FPROC,
-                      GRAVITY_IMPERIAL,
-                      GRAVITY_METRIC,
-                      KTS_TO_FPS,
-                      KTS_TO_MPS,
-                      LANDING_THRESHOLD_HEIGHT,
-                      METRES_TO_FEET,
-                      METRES_TO_NM,
-                      MIN_VALID_FUEL,
-                      VERTICAL_SPEED_LAG_TC)
+from analysis_engine.settings import (
+    AIRSPEED_THRESHOLD,
+    ALTITUDE_AAL_TRANS_ALT,
+    ALTITUDE_AGL_SMOOTHING,
+    ALTITUDE_AGL_TRANS_ALT,
+    ALTITUDE_RADIO_OFFSET_LIMIT,
+    AZ_WASHOUT_TC,
+    BOUNCED_LANDING_THRESHOLD,
+    CLIMB_THRESHOLD,
+    FEET_PER_NM,
+    HYSTERESIS_FPIAS,
+    HYSTERESIS_FPROC,
+    GRAVITY_IMPERIAL,
+    GRAVITY_METRIC,
+    KTS_TO_FPS,
+    KTS_TO_MPS,
+    LANDING_THRESHOLD_HEIGHT,
+    METRES_TO_FEET,
+    METRES_TO_NM,
+    MIN_VALID_FUEL,
+    VERTICAL_SPEED_LAG_TC,
+)
 
 # There is no numpy masked array function for radians, so we just multiply thus:
 deg2rad = radians(1.0)
@@ -1317,8 +1322,12 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode):
         # Attempt to determine elevations at takeoff and landing:
         t_elev = t_apt.value.get('elevation') if t_apt else None
         l_elev = l_apt.value.get('elevation') if l_apt else None
-
-        if t_elev is None and l_elev is not None:
+        
+        if t_elev is None or l_elev is None:
+            self.warning('No takeoff or landing elevation, using Altitude AAL.')
+            self.array = np.ma.copy(alt_aal.array)
+            return
+        elif t_elev is None and l_elev is not None:
             self.warning('No takeoff elevation, using %d ft from landing airport.', l_elev)
             t_elev = l_elev
         elif l_elev is None and t_elev is not None:
@@ -1384,7 +1393,7 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
         
         start_idx = cruise.get_first().slice.start
         start_offset = alt_std.array[start_idx] - alt_aal.array[start_idx]
-        stop_idx = cruise.get_last().slice.stop
+        stop_idx = cruise.get_last().slice.stop - 1
         stop_offset = alt_std.array[stop_idx] - alt_aal.array[stop_idx]
         
         alt_qnh[:start_idx] = alt_aal.array[:start_idx]
@@ -3618,8 +3627,9 @@ class FuelQty(DerivedParameterNode):
                fuel_qty_tail=P('Fuel Qty (Tail)'),
                fuel_qty_stab=P('Fuel Qty (Stab)')):
         params = []
-        for param in (fuel_qty_l, fuel_qty_c, fuel_qty_r,  fuel_qty_trim,
-                      fuel_qty_aux, fuel_qty_tail, fuel_qty_stab):
+        deps = (fuel_qty_l, fuel_qty_c, fuel_qty_r,  fuel_qty_trim,
+                      fuel_qty_aux, fuel_qty_tail, fuel_qty_stab)
+        for param in deps:
             if not param or np.ma.count(param.array)/float(len(param.array))<MIN_VALID_FUEL:
                 continue
             # Repair array masks to ensure that the summed values are not too small
@@ -3646,6 +3656,7 @@ class FuelQty(DerivedParameterNode):
         except:
             # In the case where params are all invalid or empty, return an
             # empty array like the last (inherently recorded) array.
+            param = first_valid_parameter(*deps)
             self.array = np_ma_masked_zeros_like(param.array)
             self.offset = 0.0
 
@@ -3919,8 +3930,8 @@ class GrossWeightSmoothed(DerivedParameterNode):
 
             # Test that the resulting array is sensible compared with Gross Weight.
             where_array = np.ma.where(self.array)[0]
-            test_index = where_array[len(where_array) / 2]
-            #test_index = len(gw_nonzero) / 2
+            test_index = where_array[len(where_array) // 2]
+            #test_index = len(gw_nonzero) // 2
             test_difference = \
                 abs(gw.array[test_index] - self.array[test_index]) > 1000
             if test_difference > 1000: # Q: Is 1000 too large?
@@ -4883,7 +4894,7 @@ class CoordinatesSmoothed(object):
                     lon_adj[:toff_slice.start] = lon_adj[toff_slice.start]
 
             else:
-                print 'Cannot smooth taxi out'
+                print('Cannot smooth taxi out')
 
         #-----------------------------------------------------------------------
         # Use ILS track for approach and landings in all localizer approches
@@ -5200,8 +5211,6 @@ class Mach(DerivedParameterNode):
     data is recorded.
     '''
 
-    can_operate = aeroplane_only
-
     units = ut.MACH
 
     def derive(self, cas=P('Airspeed'), alt=P('Altitude STD Smoothed')):
@@ -5263,8 +5272,9 @@ class MagneticVariation(DerivedParameterNode):
         mag_vars = repair_mask(np.ma.array(mag_vars),
                                repair_duration=None,
                                extrapolate=True)
-        interpolator = InterpolatedUnivariateSpline(
-            np.arange(0, len(lat.array), mag_var_frequency), mag_vars)
+        m = np.arange(0, len(lat.array), mag_var_frequency)
+        k = min(len(m)-1,3) # ensure k is not bigger than len of m as this can occur during RTO segments
+        interpolator = InterpolatedUnivariateSpline(m, mag_vars, k=k)
         interpolation_length = (len(mag_vars) - 1) * mag_var_frequency
         array = np_ma_masked_zeros_like(lat.array)
         array[:interpolation_length] = \

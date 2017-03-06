@@ -107,6 +107,7 @@ from analysis_engine.multistate_parameters import (
     TCASFailure,
     TCASRA,
     ThrustReversers,
+    RotorBrakeEngaged,
 )
 
 ##############################################################################
@@ -131,7 +132,7 @@ class NodeTest(object):
                 self.operational_combination_length,
             )
         else:
-            combinations = map(set, self.node_class.get_operational_combinations())
+            combinations = list(map(set, self.node_class.get_operational_combinations()))
             for combination in map(set, self.operational_combinations):
                 self.assertIn(combination, combinations)
 
@@ -763,7 +764,7 @@ class TestDaylight(unittest.TestCase):
         # delivering parcels mostly by night (in the northern lands).
         lat=P('Latitude', np.ma.arange(60,64,1/64.0))
         lon=P('Longitude', np.ma.arange(-180,180,90/64.0))
-        start_dt = A('Start Datetime', datetime.datetime(2012,12,25,01,00))
+        start_dt = A('Start Datetime', datetime.datetime(2012,12,25,1,00))
         dur = A('HDF Duration', 256)
 
         don = Daylight()
@@ -1400,7 +1401,7 @@ class TestFlap(unittest.TestCase, NodeTest):
         _as = A('Series', 'B737-300')
         _af = A('Family', 'B737 Classic')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(42) + [42] * 5)
+        array = np.ma.array([0] * 5 + list(range(42)) + [42] * 5)
         flap = P(name='Flap Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(flap, *attributes)
@@ -1418,7 +1419,7 @@ class TestFlap(unittest.TestCase, NodeTest):
         _as = A('Series', None)
         _af = A('Family', 'DC-9')
         attributes = (_am, _as, _af)
-        array = np.ma.array(range(50) + range(-5, 0) + [13.1, 1.3, 10, 10])
+        array = np.ma.array(list(range(50)) + list(range(-5, 0)) + [13.1, 1.3, 10, 10])
         flap = P(name='Flap Angle', array=array, frequency=1)
         for index in (1, 57, 58):
             flap.array[index] = np.ma.masked
@@ -1509,7 +1510,7 @@ class TestFlapExcludingTransition(unittest.TestCase, NodeTest):
         _as = A('Series', 'B737-300')
         _af = A('Family', 'B737 Classic')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(42) + [42] * 5)
+        array = np.ma.array([0] * 5 + list(range(42)) + [42] * 5)
         flap = P(name='Flap Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(flap, *attributes)
@@ -1550,7 +1551,7 @@ class TestFlapIncludingTransition(unittest.TestCase, NodeTest):
         _as = A('Series', 'B737-300')
         _af = A('Family', 'B737 Classic')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(42) + [42] * 5)
+        array = np.ma.array([0] * 5 + list(range(42)) + [42] * 5)
         flap = P(name='Flap Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(flap, None, *attributes)
@@ -2482,8 +2483,8 @@ class TestPilotFlying(unittest.TestCase, NodeTest):
         expected_array = MappedArray([2.] * 100 + [1.] * 100)
         expected = M('Pilot Flying', expected_array,
                      values_mapping=PilotFlying.values_mapping)
-        print node.array
-        print expected.array, expected.values_mapping
+        print(node.array)
+        print(expected.array, expected.values_mapping)
         np.testing.assert_array_equal(node.array, expected.array)
 
 
@@ -2549,7 +2550,7 @@ class TestSlat(unittest.TestCase, NodeTest):
         _as = A('Series', 'A300B4')
         _af = A('Family', 'A300')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(27) + [27] * 5)
+        array = np.ma.array([0] * 5 + list(range(27)) + [27] * 5)
         slat = P(name='Slat Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(slat, *attributes)
@@ -2604,7 +2605,7 @@ class TestSlatExcludingTransition(unittest.TestCase, NodeTest):
         _as = A('Series', 'A300B4')
         _af = A('Family', 'A300')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(27) + [27] * 5)
+        array = np.ma.array([0] * 5 + list(range(27)) + [27] * 5)
         slat = P(name='Slat Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(slat, *attributes)
@@ -2644,7 +2645,7 @@ class TestSlatIncludingTransition(unittest.TestCase, NodeTest):
         _as = A('Series', 'A300B4')
         _af = A('Family', 'A300')
         attributes = (_am, _as, _af)
-        array = np.ma.array([0] * 5 + range(27) + [27] * 5)
+        array = np.ma.array([0] * 5 + list(range(27)) + [27] * 5)
         slat = P(name='Slat Angle', array=array, frequency=2)
         node = self.node_class()
         node.derive(slat, *attributes)
@@ -3034,9 +3035,9 @@ class TestSpeedbrakeSelected(unittest.TestCase):
         result = SpeedbrakeSelected.b787_speedbrake(handle)
         self.assertEqual(len(np.ma.where(result == 0)[0]), 9445)
         self.assertEqual(np.ma.where(result == 1)[0].tolist(),
-                         [8189, 8190, 8451, 8524, 8525] + range(9098, 9223))
+                         [8189, 8190, 8451, 8524, 8525] + list(range(9098, 9223)))
         self.assertEqual(np.ma.where(result == 2)[0].tolist(),
-                         range(8191, 8329) + range(8452, 8524) + range(9223, 9262))
+                         list(range(8191, 8329)) + list(range(8452, 8524)) + list(range(9223, 9262)))
 
 
 class TestStableApproach(unittest.TestCase):
@@ -3108,7 +3109,7 @@ class TestStableApproach(unittest.TestCase):
         eng = P(array=np.ma.array(e))
 
         # Altitude for cutoff heights, 9th element is 200 below, last 4 values are below 100ft last 2 below 50ft
-        al = range(2000,219,-200) + range(219,18, -20) + [0]
+        al = list(range(2000,219,-200)) + list(range(219,18, -20)) + [0]
         # == [2000, 1800, 1600, 1400, 1200, 1000, 800, 600, 400, 219, 199, 179, 159, 139, 119, 99, 79, 59, 39, 19]
         alt = P(array=np.ma.array(al))
         # DERIVE without using Vapp (using Vref limits)
@@ -3655,3 +3656,64 @@ class TestSpeedControl(unittest.TestCase, NodeTest):
             values_mapping={0: 'Manual', 1: 'Auto'},
         )
         assert_array_equal(node.array, expected.array)
+
+
+class TestRotorBrakeEngaged(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = RotorBrakeEngaged
+        self.values_mapping = {1: 'Engaged', 0: '-'}
+        self.brk1 = M('Rotor Brake (1) Engaged',
+                      np.ma.array(data=[0,0,1,1,0,0]),
+                      values_mapping=self.values_mapping)
+        self.brk2 = M('Rotor Brake (2) Engaged',
+                      np.ma.array(data=[0,0,0,1,1,0]),
+                      values_mapping=self.values_mapping)
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=aeroplane), [])
+        opts = self.node_class.get_operational_combinations(ac_type=helicopter)
+        for opt in opts:
+            brk1 = 'Rotor Brake (1) Engaged' in opt
+            brk2 = 'Rotor Brake (2) Engaged' in opt
+            self.assertTrue(brk1 or brk2)
+
+    def test_brk1(self):
+        brk1 = self.brk1
+        brk2 = None
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,1,1,0,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)
+        
+    def test_brk2(self):
+        brk1 = None
+        brk2 = self.brk2
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,0,1,1,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)
+
+    def test_both_brakes(self):
+        brk1 = self.brk1
+        brk2 = self.brk2
+
+        node = self.node_class()
+        node.derive(brk1, brk2)
+
+        expected = M('Rotor Brake Engaged',
+                     np.ma.array(data=[0,0,1,1,1,0]),
+                     values_mapping=self.values_mapping)
+
+        np.testing.assert_array_equal(expected.array, node.array)

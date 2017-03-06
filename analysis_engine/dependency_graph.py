@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import os
 import sys
 import logging 
 import networkx as nx # pip install networkx or /opt/epd/bin/easy_install networkx
+import six
 
 from collections import deque
 
@@ -62,7 +65,7 @@ def indent_tree(graph, node, level=0, space='  ', delim='- ', label=True,
     '''
     Small tool to assist representing a tree on the console.
     
-      print '\n'.join(indent_tree(gr_all, 'root'))
+      print('\n'.join(indent_tree(gr_all, 'root')))
       
       - root
         - sub1
@@ -119,7 +122,7 @@ def print_tree(graph, node='root', **kwargs):
     
     See indent_tree for help with args/kwargs.
     '''
-    print '\n'.join(indent_tree(graph, node, **kwargs))
+    print('\n'.join(indent_tree(graph, node, **kwargs)))
 
 
 def dependencies3(di_graph, root, node_mgr):
@@ -311,15 +314,15 @@ def graph_nodes(node_mgr):
                             'node_type': node.__base__.__name__})
         derived_nodes.append(node_info)
     gr_all.add_nodes_from(derived_nodes)
-    
+
     # build list of dependencies
     derived_deps = set()  # list of derived dependencies
-    for node_name, node_obj in derived_minus_lfl.iteritems():
+    for node_name, node_obj in six.iteritems(derived_minus_lfl):
         derived_deps.update(node_obj.get_dependency_names())
         # Create edges between node and its dependencies
         edges = [(node_name, dep, {}) for dep in node_obj.get_dependency_names()]
         gr_all.add_edges_from(edges)
-            
+
     # add root - the top level application dependency structure based on required nodes
     # filter only nodes which are at the top of the tree (no predecessors)
     # TODO: Ask Chris about this causing problems with the trimmer.

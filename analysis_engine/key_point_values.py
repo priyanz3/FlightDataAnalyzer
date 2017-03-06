@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import numpy as np
 import operator
 import re
+import six
 
 from collections import defaultdict
 from copy import deepcopy
@@ -3026,7 +3029,7 @@ class AirspeedWithFlapIncludingTransition20AndSlatFullyExtendedMax(KeyPointValue
                family=A('Family'),
                series=A('Series')):
 
-        slat_fully_ext_value = max(at.get_slat_map(family=family.value, series=series.value).iteritems(), key=operator.itemgetter(0))[1]
+        slat_fully_ext_value = max(six.iteritems(at.get_slat_map(family=family.value, series=series.value)), key=operator.itemgetter(0))[1]
         # Fast scope traps flap changes very late on the approach and
         # raising flaps before 80 kt on the landing run.
         #
@@ -6420,7 +6423,8 @@ class HeadingDuringTakeoff(KeyPointValueNode):
                 # median result is rounded as
                 # -1.42108547152020037174224853515625E-14 == 360.0
                 # which is an invalid value for Heading
-                self.create_kpv(index, float(round(value, 8)) % 360.0)
+                if not np.ma.is_masked(value):
+                    self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
 
 class HeadingTrueDuringTakeoff(KeyPointValueNode):
@@ -6459,7 +6463,8 @@ class HeadingTrueDuringTakeoff(KeyPointValueNode):
                 # median result is rounded as
                 # -1.42108547152020037174224853515625E-14 == 360.0
                 # which is an invalid value for Heading
-                self.create_kpv(index, float(round(value, 8)) % 360.0)
+                if not np.ma.is_masked(value):
+                    self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
 
 class HeadingDuringLanding(KeyPointValueNode):
@@ -6502,12 +6507,13 @@ class HeadingDuringLanding(KeyPointValueNode):
                     # median result is rounded as
                     # -1.42108547152020037174224853515625E-14 == 360.0
                     # which is an invalid value for Heading
-                    self.create_kpv(index, float(round(value, 8)) % 360.0)
+                    if not np.ma.is_masked(value):
+                        self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
         elif ac_type and ac_type.value == 'helicopter':
             for land_helo in land_helos:
                 index = land_helo.slice.start
-                self.create_kpv(index,  float(round(hdg.array[index], 8)) % 360.0)
+                self.create_kpv(index, float(round(hdg.array[index], 8)) % 360.0)
 
 
 class HeadingTrueDuringLanding(KeyPointValueNode):
@@ -6546,7 +6552,8 @@ class HeadingTrueDuringLanding(KeyPointValueNode):
                 # median result is rounded as
                 # -1.42108547152020037174224853515625E-14 == 360.0
                 # which is an invalid value for Heading
-                self.create_kpv(index, float(round(value, 8)) % 360.0)
+                if not np.ma.is_masked(value):
+                    self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
 
 class HeadingAtLowestAltitudeDuringApproach(KeyPointValueNode):
@@ -10182,7 +10189,7 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
                         os.mkdir(output_dir)
                     plt.savefig(os.path.join(output_dir, frame.value + ' '+ str(int(reduce_idx)) +'.png'))
                     plt.clf()
-                    print int(reduce_idx)
+                    print(int(reduce_idx))
                     '''
 
                     if reduce_idx:
@@ -16891,7 +16898,7 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
             for item in kpv:
                 touchdowns[int(item.index / 10)][idx] = item
 
-        for gw, acc_norm, rod in touchdowns.itervalues():
+        for gw, acc_norm, rod in six.itervalues(touchdowns):
             hi_g = acc_norm and acc_norm.value and acc_norm.value > acc_norm_limit
             hi_rod = rod and rod.value and rod.value < vrt_spd_limit # less than as descending
 

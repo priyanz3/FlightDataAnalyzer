@@ -253,7 +253,7 @@ class FlightNumber(FlightAttributeNode):
         # Ignore masked values
         compressed_array = array.compressed()
         _, minvalue = min_value(compressed_array)
-        if minvalue < 0:
+        if minvalue is None or minvalue < 0:
             self.warning(
                 "'%s' only supports unsigned (positive) values > 0, "
                 "but none were found. Cannot determine flight number",
@@ -760,24 +760,25 @@ class FlightType(FlightAttributeNode):
     def derive(self, afr_type=A('AFR Type'), fast=S('Fast'), mobile=S('Mobile'),
                liftoffs=KTI('Liftoff'), touchdowns=KTI('Touchdown'),
                touch_and_gos=S('Touch And Go'), rejected_to=S('Rejected Takeoff'),
-               eng_start=KTI('Eng Start')):
+               eng_start=KTI('Eng Start'), seg_type=A('Segment Type')):
         '''
         TODO: Detect MID_FLIGHT.
         '''
         afr_type = afr_type.value if afr_type else None
 
-        if liftoffs and not touchdowns:
-            # In the air without having touched down.
-            self.warning("'Liftoff' KTI exists without 'Touchdown'.")
-            raise InvalidFlightType('LIFTOFF_ONLY')
-            #self.set_flight_attr('LIFTOFF_ONLY')
-            #return
-        elif not liftoffs and touchdowns:
-            # In the air without having lifted off.
-            self.warning("'Touchdown' KTI exists without 'Liftoff'.")
-            raise InvalidFlightType('TOUCHDOWN_ONLY')
-            #self.set_flight_attr('TOUCHDOWN_ONLY')
-            #return
+        if (seg_type and seg_type.value == 'START_AND_STOP') or not seg_type:
+            if liftoffs and not touchdowns:
+                # In the air without having touched down.
+                self.warning("'Liftoff' KTI exists without 'Touchdown'.")
+                raise InvalidFlightType('LIFTOFF_ONLY')
+                #self.set_flight_attr('LIFTOFF_ONLY')
+                #return
+            elif not liftoffs and touchdowns:
+                # In the air without having lifted off.
+                self.warning("'Touchdown' KTI exists without 'Liftoff'.")
+                raise InvalidFlightType('TOUCHDOWN_ONLY')
+                #self.set_flight_attr('TOUCHDOWN_ONLY')
+                #return
 
         types = FlightType.Type
 

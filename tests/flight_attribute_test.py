@@ -1053,7 +1053,7 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
 class TestFlightType(unittest.TestCase):
     def test_can_operate(self):
         poss_combs = FlightType.get_operational_combinations()
-        self.assertEqual(len(poss_combs), 2**8-1)
+        self.assertEqual(len(poss_combs), 2**9-1)
 
     def test_derive(self):
         '''

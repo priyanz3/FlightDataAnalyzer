@@ -1,8 +1,11 @@
+from __future__ import print_function
+
 import argparse
 import itertools
 import json
 import logging
 import os
+import six
 import sys
 
 from datetime import datetime, timedelta
@@ -60,7 +63,7 @@ def geo_locate(hdf, items):
     lat_pos.array = repair_mask(lat_pos.array, repair_duration=None, extrapolate=True)
     lon_pos.array = repair_mask(lon_pos.array, repair_duration=None, extrapolate=True)
     
-    for item in itertools.chain.from_iterable(items.itervalues()):
+    for item in itertools.chain.from_iterable(six.itervalues(items)):
         item.latitude = lat_pos.at(item.index) or None
         item.longitude = lon_pos.at(item.index) or None
     return items
@@ -75,7 +78,7 @@ def _timestamp(start_datetime, items):
     :param item_list: list of objects with a .index attribute
     :type item_list: list
     '''
-    for item in itertools.chain.from_iterable(items.itervalues()):
+    for item in itertools.chain.from_iterable(six.itervalues(items)):
         item.datetime = start_datetime + timedelta(seconds=float(item.index))
     return items
 
@@ -420,16 +423,16 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
         'AFR Flight ID': # e.g. 1
         'AFR Flight Number': # e.g. 1234
         'AFR Type': # 'POSITIONING'
-        'AFR Off Blocks Datetime': # datetime(2015,01,01,13,00)
-        'AFR Takeoff Datetime': # datetime(2015,01,01,13,15)
+        'AFR Off Blocks Datetime': # datetime(2015,1,1,13,00)
+        'AFR Takeoff Datetime': # datetime(2015,1,1,13,15)
         'AFR Takeoff Pilot': # 'Joe Bloggs'
         'AFR Takeoff Gross Weight': # weight in kg
         'AFR Takeoff Fuel': # fuel in kg
-        'AFR Landing Datetime': # datetime(2015,01,01,18,45)
+        'AFR Landing Datetime': # datetime(2015,1,1,18,45)
         'AFR Landing Pilot': # 'Joe Bloggs'
         'AFR Landing Gross Weight': # weight in kg
         'AFR Landing Fuel': # weight in kg
-        'AFR On Blocks Datetime': # datetime(2015,01,01,19,00)
+        'AFR On Blocks Datetime': # datetime(2015,1,1,19,00)
         'AFR V2': # V2 used at takeoff in kts
         'AFR Vapp': # Vapp used in kts
         'AFR Vref': # Vref used in kts
@@ -567,13 +570,13 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
     else:
         # if requested isn't set, try using ALL derived_nodes!
         logger.debug("No requested nodes declared, using all derived nodes")
-        requested = derived_nodes.keys()
+        requested = list(derived_nodes.keys())
 
     # include all flight attributes as requested
     if include_flight_attributes:
         requested = list(set(
-            requested + get_derived_nodes(
-                ['analysis_engine.flight_attribute']).keys()))
+            requested + list(get_derived_nodes(
+                ['analysis_engine.flight_attribute']).keys())))
     
     initial = process_flight_to_nodes(initial)
     for node_name in requested:
@@ -582,10 +585,12 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
     # open HDF for reading
     with hdf_file(hdf_path) as hdf:
         hdf.start_datetime = segment_info['Start Datetime']
-        if hooks.PRE_FLIGHT_ANALYSIS:
+        hook = hooks.PRE_FLIGHT_ANALYSIS
+        if hook:
             logger.info("Performing PRE_FLIGHT_ANALYSIS action '%s' with options: %s",
-                        hooks.PRE_FLIGHT_ANALYSIS.func_name, pre_flight_kwargs)
-            hooks.PRE_FLIGHT_ANALYSIS(hdf, aircraft_info, **pre_flight_kwargs)
+                        getattr(hook, 'func_name', getattr(hook, '__name__')),
+                        pre_flight_kwargs)
+            hook(hdf, aircraft_info, **pre_flight_kwargs)
         else:
             logger.info("No PRE_FLIGHT_ANALYSIS actions to perform")
         # Track nodes.
@@ -637,10 +642,10 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
 
 
 def main():
-    print 'FlightDataAnalyzer (c) Copyright 2013 Flight Data Services, Ltd.'
-    print '  - Powered by POLARIS'
-    print '  - http://www.flightdatacommunity.com'
-    print ''
+    print('FlightDataAnalyzer (c) Copyright 2013 Flight Data Services, Ltd.')
+    print('  - Powered by POLARIS')
+    print('  - http://www.flightdatacommunity.com')
+    print()
     from analysis_engine.plot_flight import csv_flight_details, track_to_kml
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -786,8 +791,8 @@ def main():
         requested=args.requested, required=args.required, initial=initial,
     )
     # Flatten results.
-    res = {k: list(itertools.chain.from_iterable(v.itervalues()))
-           for k, v in res.iteritems()}
+    res = {k: list(itertools.chain.from_iterable(six.itervalues(v)))
+           for k, v in six.iteritems(res)}
     
     logger.info("Derived parameters stored in hdf: %s", hdf_copy)
     # Write CSV file

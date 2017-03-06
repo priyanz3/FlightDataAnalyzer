@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import argparse
 import csv
 import itertools
@@ -5,6 +7,7 @@ import logging
 import numpy as np
 import os
 import simplekml
+import six
 
 from copy import copy
 
@@ -65,7 +68,7 @@ class TypedWriter(object):
 
     def _format(self, row):
         return dict((k, self.formats.get(k, '%s') % v if v or v == 0.0 else v) 
-                    for k, v in row.iteritems())
+                    for k, v in six.iteritems(row))
     
     def writerow(self, row):
         self.writer.writerow(self._format(row))
@@ -99,7 +102,7 @@ def add_track(kml, track_name, lat, lon, colour, alt_param=None, alt_mode=None,
     ##scope_lat = np.ma.flatnotmasked_edges(lat.array)
     ##begin = max(scope_lon[0], scope_lat[0])+1
     ##end = min(scope_lon[1], scope_lat[1])-1
-    for i in xrange(0, len(lon.array)):
+    for i in range(0, len(lon.array)):
         _lon = value_at_index(lon.array, i)
         _lat = value_at_index(lat.array, i)
         if alt_param:
@@ -248,7 +251,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         elif kti.name not in KEEP_KTIS:
             continue
         
-        altitude = alt.at(kti.index) if plot_altitude else None
+        altitude = alt.at(kti.index) if alt else None
         kti_point_values['altitudemode'] = altitude_mode
         if altitude:
             kti_point_values['coords'] = ((kti.longitude, kti.latitude, altitude),)
@@ -276,7 +279,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         style = simplekml.Style()
         style.iconstyle.color = simplekml.Color.red
         kpv_point_values = {'name': '%s (%.3f)' % (kpv.name, kpv.value)}
-        altitude = alt.at(kpv.index) if plot_altitude else None
+        altitude = alt.at(kpv.index) if alt else None
         kpv_point_values['altitudemode'] = altitude_mode
         if altitude:
             kpv_point_values['coords'] = ((kpv_lon, kpv_lat, altitude),)
@@ -312,7 +315,7 @@ def plot_parameter(array, new_subplot=False, show=True, label='', marker=None):
     :type show: Boolean
     """
     if array is None:
-        print "Cannot plot as array is None!"
+        print("Cannot plot as array is None!")
         return
     n = len(fig.axes)
     if n:
@@ -493,13 +496,13 @@ def csv_flight_details(hdf_path, kti_list, kpv_list, phase_list,
                'Altitude AAL': '%d ft',
                }
     for value in kti_list:
-        vals = value.todict()  # recordtype
+        vals = value._asdict()  # recordtype
         vals['path'] = hdf_path
         vals['type'] = 'Key Time Instance'
         rows.append( vals )
 
     for value in kpv_list:
-        vals = value.todict()  # recordtype
+        vals = value._asdict()  # recordtype
         vals['path'] = hdf_path
         vals['type'] = 'Key Point Value'
         rows.append( vals )
@@ -547,7 +550,7 @@ def csv_flight_details(hdf_path, kti_list, kpv_list, phase_list,
             # the header again
             skip_header = True
 
-    with open(dest_path, 'ab') as dest:
+    with open(dest_path, 'a') as dest:
         writer = TypedWriter(dest, fieldnames=header, fieldformats=formats,
                              skip_header=skip_header, extrasaction='ignore')
         writer.writerows(rows)

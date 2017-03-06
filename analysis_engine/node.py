@@ -1,18 +1,24 @@
 import copy
+try:
+    import cPickle
+except ImportError:
+    import _pickle as cPickle
 import gzip
 import inspect
 import logging
 import math
 import numpy as np
-import cPickle
-import re
 import pprint
+import re
+import six
 
 from abc import ABCMeta
-from collections import namedtuple, Iterable
+from builtins import object
+from collections import namedtuple, Iterable, OrderedDict
 from functools import total_ordering
 from itertools import product
 from operator import attrgetter
+from six import with_metaclass
 
 from analysis_engine.library import (
     align,
@@ -50,8 +56,7 @@ ApproachItem = recordtype(
     'type slice airport landing_runway approach_runway gs_est loc_est ils_freq turnoff lowest_lat lowest_lon lowest_hdg runway_change offset_ils',
     default=None)
 KeyPointValue = recordtype('KeyPointValue',
-                           'index value name slice datetime latitude longitude',
-                           field_defaults={'slice': slice(None)}, default=None)
+                           OrderedDict([('index', None), ('value', None), ('name', None), ('slice', slice(None)), ('datetime', None), ('latitude', None), ('longitude', None)]))
 KeyTimeInstance = recordtype('KeyTimeInstance',
                              'index name datetime latitude longitude',
                              default=None)
@@ -84,14 +89,19 @@ def load(path):
     :returns: Node loaded from file.
     :rtype: Node
     '''
-    with gzip.open(path) as file_obj:
+    ##def _load(file):
+        ##try:
+            ##return cPickle.load(file)
+        ##except UnicodeDecodeError: # python 3
+            ##return cPickle.load(file, encoding='latin1')
+
+    with gzip.open(path) as gzip_file:
         try:
-            return cPickle.load(file_obj)
-        except IOError:
+            return loads(gzip_file.read())
+        except (IOError, OSError):
             pass
-    # pickle self, excluding array
-    with open(path, 'rb') as fh:
-        return cPickle.load(fh)
+    with open(path, 'rb') as file: # pickle self, excluding array
+        return loads(file.read()) # _load(file)
 
 
 def loads(bytes):
@@ -103,7 +113,10 @@ def loads(bytes):
     :returns: Node loaded from string.
     :rtype: Node
     '''
-    return cPickle.loads(bytes)
+    try: # python 2
+        return cPickle.loads(bytes)
+    except UnicodeDecodeError: # python 3
+        return cPickle.loads(bytes, encoding='latin1')
 
 
 def dump(node, dest):
@@ -146,7 +159,10 @@ def get_param_kwarg_names(method):
     :returns: Ordered list of default values of keyword arguments
     :rtype: list
     """
-    args, varargs, varkw, defaults = inspect.getargspec(method)
+    try:
+        args, varargs, varkw, defaults = inspect.getargspec(method)
+    except AttributeError:
+        args, varargs, varkw, defaults = inspect.getfullargspec(method)[:4]
     if not defaults or args[:-len(defaults)] != ['self'] or varargs:
         raise ValueError("Node '%s' must have kwargs, must accept at least one "
                          "kwarg and not any args other than 'self'. args:'%s' "
@@ -172,7 +188,7 @@ def _calculate_offset(frequency, offset):
     return offset % (1.0 / frequency)
 
 
-class Node(object):
+class Node(with_metaclass(ABCMeta, object)):
     '''
     Note about aligning options
     ---------------------------
@@ -186,7 +202,6 @@ class Node(object):
     * The Node will inherit the first dependency's frequency/offset but
       self.frequency and self.offset can be overidden within the derive method.
     '''
-    __metaclass__ = ABCMeta
     node_type_abbr = 'Node'
 
     name = ''  # Optional, default taken from ClassName
@@ -795,7 +810,7 @@ def multistate_string_to_integer(string_array, mapping):
 
     output_array = string_array.copy()
     # values need converting using mapping
-    for int_value, str_value in mapping.iteritems():
+    for int_value, str_value in six.iteritems(mapping):
         output_array.data[string_array.data == str_value] = int_value
     output_array.fill_value = 999999  # NB: only 999 will be stored by dtype
     # apply fill_value to all masked values
@@ -843,7 +858,7 @@ class MultistateDerivedParameterNode(DerivedParameterNode):
         elif not hasattr(self, 'values_mapping'):
             self.values_mapping = {}
 
-        self.state = {v: k for k, v in self.values_mapping.iteritems()}
+        self.state = {v: k for k, v in six.iteritems(self.values_mapping)}
 
         super(MultistateDerivedParameterNode, self).__init__(
             name, array, frequency, offset, data_type, *args,
@@ -2195,7 +2210,7 @@ class FlightAttributeNode(Node):
         '''
         return self.name
 
-    def __nonzero__(self):
+    def __bool__(self):
         """
         Set the boolean value of the object depending on it's attriubute
         content.
@@ -2414,10 +2429,10 @@ class NodeManager(object):
         """
         return sorted(list(set(['HDF Duration']
                                + self.hdf_keys
-                               + self.derived_nodes.keys()
-                               + self.aircraft_info.keys()
-                               + self.achieved_flight_record.keys()
-                               + self.segment_info.keys())))
+                               + list(self.derived_nodes.keys())
+                               + list(self.aircraft_info.keys())
+                               + list(self.achieved_flight_record.keys())
+                               + list(self.segment_info.keys()))))
 
     def get_attribute(self, name):
         """
@@ -2497,7 +2512,7 @@ class NodeManager(object):
 @total_ordering
 class Attribute(object):
 
-    __hash__ = None  # Fix assertItemsEqual in unit tests!
+    __hash__ = None  # Fix assertItemsEqual in unit tests! (python 2.7 only)
 
     def __init__(self, name, value=None):
         '''
@@ -2512,7 +2527,7 @@ class Attribute(object):
         '''
         return 'Attribute(%r, %s)' % (self.name, pprint.pformat(self.value))
 
-    def __nonzero__(self):
+    def __bool__(self):
         '''
         Set the boolean value of the object depending on it's attriubute
         content.

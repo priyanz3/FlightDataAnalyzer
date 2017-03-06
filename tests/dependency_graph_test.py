@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import collections
 import imp
 import os
@@ -5,6 +7,7 @@ import unittest
 import networkx as nx
 
 from datetime import datetime
+from past.builtins import basestring
 
 from analysis_engine.node import (DerivedParameterNode, Node, NodeManager, P)
 from analysis_engine.dependency_graph import (
@@ -185,7 +188,7 @@ class TestDependencyGraph(unittest.TestCase):
         
     def test_graph_requesting_all_dependencies_links_root_to_end_leafs(self):
         # build list of all nodes as required
-        requested = self.lfl_params + self.derived_nodes.keys()
+        requested = self.lfl_params + list(self.derived_nodes.keys())
         mgr = NodeManager({'Start Datetime': datetime.now()}, 1, self.lfl_params, requested, [],
                           self.derived_nodes, {}, {})
         gr = graph_nodes(mgr)
@@ -257,7 +260,7 @@ class TestDependencyGraph(unittest.TestCase):
         """
 # Sample demonstrating which nodes have predecessors, successors and so on:
 for node in node_mgr.keys():
-    print 'Node: %s \tPre: %s \tSucc: %s \tNeighbors: %s \tEdges: %s' % (node, gr_all.predecessors(node), gr_all.successors(node), gr_all.neighbors(node), gr_all.edges(node))
+    print('Node: %s \tPre: %s \tSucc: %s \tNeighbors: %s \tEdges: %s' % (node, gr_all.predecessors(node), gr_all.successors(node), gr_all.neighbors(node), gr_all.edges(node)))
 
 Node: P4 	Pre: ['P7'] 	Succ: ['Raw2', 'Raw1'] 	Neighbors: ['Raw2', 'Raw1'] 	Edges: [('P4', 'Raw2'), ('P4', 'Raw1')]
 Node: P5 	Pre: ['P7'] 	Succ: ['Raw3', 'Raw4'] 	Neighbors: ['Raw3', 'Raw4'] 	Edges: [('P5', 'Raw3'), ('P5', 'Raw4')]
@@ -433,3 +436,8 @@ class TestGraphAdjacencies(unittest.TestCase):
             },
         ]
         self.assertEqual(list(flatten(exp)), list(flatten(res)))
+
+
+if __name__ == '__main__':
+    unittest.main()
+

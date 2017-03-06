@@ -9,6 +9,7 @@ Flight Data Analyzer: Approaches
 ##############################################################################
 # Imports
 
+from __future__ import print_function
 
 import numpy as np
 
@@ -18,20 +19,21 @@ from analysis_engine import settings
 from analysis_engine.library import all_of, nearest_runway
 from analysis_engine.node import A, aeroplane, ApproachNode, KPV, KTI, P, S, helicopter
 
-from analysis_engine.library import (ils_established,
-                                     index_at_value,
-                                     is_index_within_slice,
-                                     latitudes_and_longitudes,
-                                     nearest_neighbour_mask_repair,
-                                     runs_of_ones,
-                                     peak_curvature,
-                                     rate_of_change_array,
-                                     slice_duration,
-                                     slices_and,
-                                     slices_remove_small_gaps,
-                                     shift_slice,
-                                     shift_slices,
-                                     )
+
+from analysis_engine.library import (
+    ils_established,
+    index_at_value,
+    is_index_within_slice,
+    nearest_neighbour_mask_repair,
+    runs_of_ones,
+    peak_curvature,
+    rate_of_change_array,
+    slice_duration,
+    slices_and,
+    slices_remove_small_gaps,
+    shift_slice,
+    shift_slices,
+)
 
 
 ##############################################################################
@@ -350,9 +352,10 @@ class ApproachInformation(ApproachNode):
             
             # Do we have a recorded ILS frequency? If so, what was it tuned to at the start of the approach??
             if ils_freq:
-                appr_ils_freq = round(ils_freq.array[_slice.start], 2)
+                appr_ils_freq = ils_freq.array[_slice.start]
             # Was this valid, and if so did the start of the approach match the landing runway?
-            if appr_ils_freq and not np.isnan(appr_ils_freq):
+            if appr_ils_freq and not (np.isnan(appr_ils_freq) or np.ma.is_masked(appr_ils_freq)):
+                appr_ils_freq = round(appr_ils_freq, 2)
                 runway_kwargs = {
                     'ilsfreq': appr_ils_freq,
                     'latitude': lowest_lat,
@@ -370,7 +373,7 @@ class ApproachInformation(ApproachNode):
                 # Without a frequency source, we just have to hope any localizer signal is for this runway!
                 approach_runway = landing_runway
 
-            if approach_runway and approach_runway['localizer'].has_key('frequency'):
+            if approach_runway and 'frequency' in approach_runway['localizer']:
                 if np.ma.count(ils_loc.array[_slice]) > 10:
                     if runway_change:
                         # We only use the first frequency tuned. This stops scanning across both runways if the pilot retunes.
@@ -386,9 +389,13 @@ class ApproachInformation(ApproachNode):
                 appr_ils_freq = None
                 loc_slice = None
 
-            if appr_ils_freq and loc_slice:
-                if appr_ils_freq != approach_runway['localizer']['frequency']/1000.0:
-                    loc_slice = None
+            if np.ma.is_masked(appr_ils_freq):
+                loc_slice = None
+                appr_ils_freq = None
+            else:
+                if appr_ils_freq and loc_slice:
+                    if appr_ils_freq != approach_runway['localizer']['frequency']/1000.0:
+                        loc_slice = None
 
             #######################################################################
             ## Identification of the period established on the localizer
@@ -457,7 +464,7 @@ class ApproachInformation(ApproachNode):
             #######################################################################
 
             gs_est = None
-            if loc_est and approach_runway.has_key('glideslope') and ils_gs:
+            if loc_est and 'glideslope' in approach_runway and ils_gs:
                 # We only look for glideslope established periods if the localizer is already established.
 
                 # The range to scan for the glideslope starts with localizer capture and ends at
@@ -478,16 +485,16 @@ class ApproachInformation(ApproachNode):
 
             '''
             # These statements help set up test cases.
-            print
-            print airport['name']
-            print approach_runway['identifier']
-            print landing_runway['identifier']
-            print _slice
+            print()
+            print(airport['name'])
+            print(approach_runway['identifier'])
+            print(landing_runway['identifier'])
+            print(_slice)
             if loc_est:
-                print 'Localizer established ', loc_est.start, loc_est.stop
+                print('Localizer established ', loc_est.start, loc_est.stop)
             if gs_est:
-                print 'Glideslope established ', gs_est.start, gs_est.stop
-            print
+                print('Glideslope established ', gs_est.start, gs_est.stop)
+            print()
             '''
 
             self.create_approach(
