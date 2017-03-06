@@ -6,6 +6,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import csv
 
 from itertools import izip
 from mock import Mock, call, patch
