@@ -2769,7 +2769,6 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     # First check that the gspd/hdg arrays are sensible.
     if (len(speed) != len(hdg)) or (len(speed) != len(lat)) or (len(speed) != len(lon)):
         raise ValueError('Ground_track_precise requires equi-length arrays')
-<<<<<<< HEAD
     
     # We use the period where the speed was over 1kn and just leave the position at lower speeds unchanged.
     spd_above_1 = np.ma.masked_less_equal(np.ma.abs(speed), 1.0)
@@ -2805,115 +2804,6 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     lon_return = repair_mask(lon_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
     
     return lat_return, lon_return
-=======
-
-    # We are going to use the period from the runway to the last point where
-    # the speed was over 1kn, to stop the aircraft appearing to wander about
-    # on the stand.
-    spd_above_1 = np.ma.masked_less(np.ma.abs(speed), 1.0)
-    track_edges = np.ma.flatnotmasked_edges(spd_above_1)
-
-    # In cases where the data starts with no useful groundspeed data, throw in the towel now.
-    if track_edges is None or np.ma.count(spd_above_1) < 5:
-        raise ValueError("No useful speed data for '%s' section" % mode)
-
-    # Increment to allow for Python indexing, but don't step over the edge.
-    track_edges[1] = min(track_edges[1]+1, len(speed))
-
-    if mode == 'landing':
-        track_slice=slice(0, track_edges[1])
-    elif mode == 'takeoff':
-        track_slice=slice(track_edges[0], len(speed))
-    else:
-        raise NotImplementedError("Unrecognised mode '%s' in ground_track_precise" % mode)
-
-    rot = np.ma.abs(rate_of_change_array(hdg[track_slice], frequency, width=8.0))
-    straights = np.ma.clump_unmasked(np.ma.masked_greater(rot, HEADING_RATE_FOR_MOBILE))
-    straight_ends = []
-
-    for straight in straights:
-        straight_ends.append(straight.start)
-        straight_ends.append(straight.stop)
-
-    # unable to optimize track if we have too few curves
-    if len(straight_ends) <= 4:
-        logger.warning('Ground_track_precise needs at least two curved sections to operate.')
-        # Substitute a unity weight vector.
-        weights_opt = [np.array([1.0]*len(speed))]
-
-    else:
-        # We aren't interested in the first and last
-        del straight_ends[0]
-        del straight_ends[-1]
-
-        # Initialize the weights for no change.
-        weight_length = len(straight_ends)
-        weights = np.ma.ones(weight_length)
-
-        # Adjust the speed during each leg to reduce cross track errors.
-        speed_bound = (0.8,1.2) # Restict the variation in speeds to 20%.
-        boundaries = [speed_bound]*weight_length
-
-        # Then iterate until optimised solution has been found. We use a dull
-        # algorithm for reliability, rather than the more exciting forms which
-        # can go astray and give less predictable results.
-        weights_opt = optimize.fmin_l_bfgs_b(gtp_compute_error, weights,
-                                             fprime=None,
-                                             args = (straights,
-                                                     straight_ends,
-                                                     lat[track_slice],
-                                                     lon[track_slice],
-                                                     speed[track_slice],
-                                                     hdg[track_slice],
-                                                     frequency,
-                                                     mode, 'iterate'),
-                                             approx_grad=True, epsilon=1.0E-3,
-                                             factr=1e14,
-                                             #bounds=boundaries,
-                                             maxfun=500)
-        """
-        fmin_l_bfgs_b license: This software is freely available, but we expect that all publications describing work using this software, or all commercial products using it, quote at least one of the references given below. This software is released under the BSD License.
-        R. H. Byrd, P. Lu and J. Nocedal. A Limited Memory Algorithm for Bound Constrained Optimization, (1995), SIAM Journal on Scientific and Statistical Computing, 16, 5, pp. 1190-1208.
-        C. Zhu, R. H. Byrd and J. Nocedal. L-BFGS-B: Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (1997), ACM Transactions on Mathematical Software, 23, 4, pp. 550 - 560.
-        J.L. Morales and J. Nocedal. L-BFGS-B: Remark on Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (2011), ACM Transactions on Mathematical Software, 38, 1.
-        """
-    args = (straights, straight_ends, lat[track_slice], lon[track_slice],
-            speed[track_slice], hdg[track_slice], frequency, mode, 'final_answer')
-    if len(weights_opt) > 1 and weights_opt[2]['warnflag']:
-        '''
-        lat_est = lat[track_slice]
-        lon_est = lon[track_slice]
-        wt = gtp_compute_error(weights_opt[0], *args)[2]
-        '''
-        lat_est, lon_est, wt = gtp_compute_error(np.ma.ones(weight_length), *args)
-    else:
-        lat_est, lon_est, wt = gtp_compute_error(weights_opt[0], *args)
-
-    """
-    # Outputs for debugging and inspecting operation of the optimization algorithm.
-    print(weights_opt[0])
-
-    for num, weighting in enumerate(weights_opt[0]):
-        if weighting == speed_bound[0] or weighting == speed_bound[1]:
-            ref = straight_ends[num]
-            print('Mode=',mode, ' Wt[',num, ']=',weighting, 'Index',ref, 'Hdg',hdg[ref], 'Gs',speed[ref])
-
-    # This plot shows how the fitted straight sections match the recorded data.
-    import matplotlib.pyplot as plt
-    for straight in straights:
-        plt.plot(lon_est[straight], lat_est[straight])
-    plt.plot(lon[track_slice], lat[track_slice])
-    plt.show()
-    """
-
-    if mode == 'takeoff':
-        lat_return[track_edges[0]:] = lat_est
-        lon_return[track_edges[0]:] = lon_est
-    else:
-        lat_return[:track_edges[1]] = lat_est
-        lon_return[:track_edges[1]] = lon_est
-    return lat_return, lon_return, wt
->>>>>>> 598487dceca97184cf7a9f69f903481bb1cd2783
 
 
 def hash_array(array, sections, min_samples):
