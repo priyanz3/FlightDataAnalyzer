@@ -2623,19 +2623,25 @@ def runway_snap(runway, lat, lon):
     else:
         return None, None
 
-def groundspeed_from_position(lat, lon):
+def groundspeed_from_position(lat, lon, hz):
     '''
-            Calculation of Groundspeed from latitude and longitude
-
-            Made frame dependent to avoid inadvertant use of this code
-            where a groundspeed signal may be available under a different name.
-            '''
+    Calculation of Groundspeed from latitude and longitude
+    
+    :param lat: Latitude Prepared array
+    :type lat: numpy array
+    :param lon: Longitude Prepared array
+    :type lon: numpy array
+    
+    :returns
+    :param gs: groundspeed in knots
+    :type gs: numpy array
+    '''
     deg_to_metres = 1852*60 # 1852 m/nm & 60 nm/deg latitude
-    dlat = rate_of_change(lat, 2.0) * deg_to_metres
+    dlat = rate_of_change_array(lat, hz, 4.0) * deg_to_metres
     # There is no masked array cos function, but the mask will be
     # carried forward as part of the latitude array anyway.
-    dlon = rate_of_change(lon, 2.0) * deg_to_metres *\
-        np.cos(np.radians(lat.array.data))
+    dlon = rate_of_change_array(lon, hz, 4.0) * deg_to_metres *\
+        np.cos(np.radians(lat))
 
     gs = np.ma.sqrt(dlat*dlat+dlon*dlon) / 0.514 # kn per m/s
     return gs

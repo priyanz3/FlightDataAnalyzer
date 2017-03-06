@@ -3973,7 +3973,7 @@ class Groundspeed(DerivedParameterNode):
             Made frame dependent to avoid inadvertant use of this code
             where a groundspeed signal may be available under a different name.
             '''
-            gs = groundspeed_from_position(lat, lon)
+            gs = groundspeed_from_position(lat, lon, lat.frequency)
 
             # In some data segments, e.g. ground runs, the data is all masked, so don't create a derived parameter.
             if np.ma.count(gs):
