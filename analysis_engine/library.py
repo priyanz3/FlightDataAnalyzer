@@ -2806,6 +2806,20 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     return lat_return, lon_return
 
 
+def av_gnd_trk(lat, lon, gspd, hdg, hz):
+    '''
+    Computation of an average ground track from the start forwards, and the end backwards, averaged.
+    
+    Helper function for ground_track_precise calling ground_track twice per segment.
+    '''
+    lat1, lon1 = ground_track(lat[0], lon[0], gspd, hdg, hz, 'landing')
+    lat2, lon2 = ground_track(lat[-1], lon[-1], gspd, hdg, hz, 'takeoff')
+    scale = np.linspace(1.0, 0.0, num=len(lat), endpoint=True)
+    my_lat = lat1 * scale + lat2 * (1.0-scale)
+    my_lon = lon1 * scale + lon2 * (1.0-scale)
+    return my_lat, my_lon
+    
+
 def hash_array(array, sections, min_samples):
     '''
     Creates a sha256 hash from the array's tostring() method .
