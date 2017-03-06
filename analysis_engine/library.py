@@ -2637,17 +2637,16 @@ def groundspeed_from_position(lat, lon, hz):
     :type gs: numpy array
     '''
     deg_to_metres = 1852*60 # 1852 m/nm & 60 nm/deg latitude
-    dlat = rate_of_change_array(lat, hz, 4.0) * deg_to_metres
+    dlat = rate_of_change_array(lat, hz, 2.0) * deg_to_metres
     # There is no masked array cos function, but the mask will be
     # carried forward as part of the latitude array anyway.
-    dlon = rate_of_change_array(lon, hz, 4.0) * deg_to_metres *\
+    dlon = rate_of_change_array(lon, hz, 2.0) * deg_to_metres *\
         np.cos(np.radians(lat))
 
     gs = np.ma.sqrt(dlat*dlat+dlon*dlon) / 0.514 # kn per m/s
     return gs
 
-def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode,
-                 lat_end, lon_end):
+def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode):
     """
     Computation of the ground track assuming no slipping.
     :param lat_fix: Fixed latitude point at one end of the data.
@@ -2674,15 +2673,6 @@ def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode,
     :Invalid mode fails with ValueError
     :Mismatched array lengths fails with ValueError
     """
-    '''
-    import matplotlib.pyplot as plt
-    plt.plot(gspd)
-    plt.show()
-    plt.clf()
-    plt.plot(hdg)
-    plt.show()
-    plt.clf()
-    '''
 
     # We are going to extend the lat/lon_fix point by the length of the gspd/hdg arrays.
     # First check that the gspd/hdg arrays are sensible.
@@ -2726,90 +2716,14 @@ def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode,
     distance = np.ma.array(np.ma.sqrt(north**2 + east**2))
     distance.mask = result.mask
 
-    lat, lon = latitudes_and_longitudes(bearing, distance,
+    gt_lat, gt_lon = latitudes_and_longitudes(bearing, distance,
                                         {'latitude':lat_fix,
                                          'longitude':lon_fix})
 
-    import matplotlib.pyplot as plt
-    plt.plot(lat, lon, 'o-k')
-    plt.plot(lat[0], lon[0], 'go')
-    plt.plot(lat[-1], lon[-1], 'yo')
-    plt.plot(lat_end, lon_end, 'ro')
-    plt.show()
+    return gt_lat, gt_lon
 
     
-    return lat, lon
-
-def gtp_weighting_vector(speed, straight_ends, weights):
-    # Compute the speed weighted error
-    speed_weighting = np_ma_masked_zeros_like(speed)
-
-    for idx, point in enumerate(straight_ends):
-        index = point
-        if index == len(speed_weighting):
-            index =- 1
-        speed_weighting[index] = weights[idx]
-
-    # We ensure the endpoint scaling is unchanged, to avoid a sudden jump in speed.
-    speed_weighting[0] = 1.0
-    speed_weighting[-1] = 1.0
-    speed_weighting = interpolate(speed_weighting)
-
-    return speed_weighting
-
-def gtp_compute_error(weights, *args):
-    point_0 = args[0]
-    point_1 = args[1]
-    speed = args[2]
-    hdg = args[3]
-    frequency = args[4]
-    mode = args[5]
-    return_arg_set = args[6]
-
-    if len(speed)==0:
-        if return_arg_set == 'iterate':
-            return 0.0
-        else:
-            return lat, lon, 0.0
-
-    cos_function = (1.0-np.cos(np.linspace(0, 2.0*np.pi, num=len(speed))))/2.0
-
-    lat_est, lon_est = ground_track(point_0[1], 
-                                    point_0[2],
-                                    speed + weights[0] * cos_function,
-                                    hdg + weights[1] * cos_function, 
-                                    frequency, mode,
-                                    point_1[1],
-                                    point_1[2])
-
-    if lat_est==None or lon_est==None:
-        error = 0.0
-    else:
-        lat_err = lat_est[-1] - point_1[1]
-        lon_err = lon_est[-1] - point_1[2]
-        error = (lat_err*lat_err + lon_err*lon_err) * 1e6 
-
-        # print lat_err, lon_err
-
-    # The optimization process expects a single error term in response, but
-    # it is convenient to use this function to return the latitude and
-    # longitude as well when asking for the final result, hence two
-    # alternative endings to this story.
-    if return_arg_set == 'iterate':
-        return error
-    else:
-        return lat_est, lon_est, error
-
-
-def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
-
-    '''
-    # Experimental speed based on lat and lon
-    speed = np_ma_masked_zeros_like(lat)
-    speed[1:] = np.sqrt((lat[1:]-lat[:-1])**2.0 + ((lon[1:]-lon[:-1])*0.6)**2.0)
-    speed /= 4.645813E-06
-    '''
-    
+def ground_track_precise(lat, lon, speed, hdg, frequency):
     """
     Computation of the ground track.
     :param lat: Latitude for the duration of the ground track.
@@ -2824,8 +2738,6 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
 
     :param frequency: Frequency of the array data (required for integration scaling).
     :type frequency: Float (units = Hz)
-    :param mode: type of calculation to be completed.
-    :type mode: String, either 'takeoff' or 'landing' accepted.
 
     :returns
     :param lat_track: Latitude of computed ground track
@@ -2834,148 +2746,54 @@ def ground_track_precise(lat, lon, speed, hdg, frequency, mode):
     :type lon_track: Numpy masked array.
 
     :error conditions
-    :Fewer than 5 valid data points, returns None, None
-    :Invalid mode fails with ValueError
     :Mismatched array lengths fails with ValueError
     """
-    def snap(y_in, x_in, m, c):
-        x_out = (m * (y_in - c) - x_in) / (m*m - 1.0)
-        y_out = m * x_out + c
-        return y_out, x_out
-    
-    
+   
     # Build arrays to return the computed track.
     lat_return = np_ma_masked_zeros_like(lat)
     lon_return = np_ma_masked_zeros_like(lat)
+    lat_model = np_ma_masked_zeros_like(lat)
+    lon_model = np_ma_masked_zeros_like(lat)
 
     # We are going to extend the lat/lon_fix point by the length of the gspd/hdg arrays.
     # First check that the gspd/hdg arrays are sensible.
     if (len(speed) != len(hdg)) or (len(speed) != len(lat)) or (len(speed) != len(lon)):
         raise ValueError('Ground_track_precise requires equi-length arrays')
-
-    # We are going to use the period from the runway to the last point where
-    # the speed was over 1kn, to stop the aircraft appearing to wander about
-    # on the stand.
-    spd_above_1 = np.ma.masked_less(np.ma.abs(speed), 1.0)
-    track_edges = np.ma.flatnotmasked_edges(spd_above_1)
-
-    # In cases where the data starts with no useful groundspeed data, throw in the towel now.
-    if track_edges is None or np.ma.count(spd_above_1) < 5:
-        raise ValueError("No useful speed data for '%s' section" % mode)
-
-    # Increment to allow for Python indexing, but don't step over the edge.
-    track_edges[1] = min(track_edges[1]+1, len(speed))
-
-    if mode == 'landing':
-        track_slice=slice(0, track_edges[1])
-    elif mode == 'takeoff':
-        track_slice=slice(track_edges[0], len(speed))
-    else:
-        raise NotImplementedError("Unrecognised mode '%s' in ground_track_precise" % mode)
-
-    rot = np.ma.abs(rate_of_change_array(hdg[track_slice], frequency, width=4.0))
-    all_straights = np.ma.clump_unmasked(np.ma.masked_greater(rot, HEADING_RATE_FOR_MOBILE))
-    i = track_slice.start
-    points = []
-
-    straights = []
-    for straight in all_straights:
-        # Ignore short segments
-        if distance_between_coordinates(lat[straight.start], lon[straight.start],
-                                        lat[straight.stop-1], lon[straight.stop-1]) < 0.05:
-            continue
-        straights.append(straight)
     
-    # If not straight, must be a curve
-    curves = slices_not(straights, begin_at=track_slice.start, end_at=track_slice.stop)
+    # We use the period where the speed was over 1kn and just leave the position at lower speeds unchanged.
+    spd_above_1 = np.ma.masked_less_equal(np.ma.abs(speed), 1.0)
+    track_slices = slices_remove_small_slices(np.ma.clump_unmasked(spd_above_1))
+
+    ##import matplotlib.pyplot as plt    
+    ##plt.plot(lon, lat, '-k')
+
+    hdg_hyst_chg = np.ma.ediff1d(hysteresis(hdg, 10.0))
+    all_straights = np.ma.clump_masked(np.ma.masked_equal(hdg_hyst_chg, 0.0))
+      
+    for track_slice in track_slices:
+        straights = slices_remove_small_slices(slices_and(all_straights, [track_slice]))
+        curves = slices_not(straights, begin_at=track_slice.start, end_at=track_slice.stop)
+
+        for straight in straights:
+            # We compute an average ground track from heading and groundspeed.
+            # This is computed in each direction, then blended progressively so that it meets the 
+            # endpoints exactly thereby cancelling out the errors in integrating the ground track.
+            lat_model[straight], lon_model[straight] = av_gnd_trk(lat[straight], lon[straight], speed[straight], hdg[straight], frequency)
+            ##plt.plot(lon_model[straight], lat_model[straight], 'o-b')
+
+        for curve in curves:
+            # We just use the prepared track because during turns the prepared track errors are usually not obvious
+            lat_model[curve] = lat[curve]
+            lon_model[curve] = lon[curve]
+            ##plt.plot(lon_model[curve], lat_model[curve], 'o-r')
+
+    ##plt.show()
+    # We have computed the straight and curved moving sections. Where the aircraft was barely moving,
+    # we leave it stationary at the point where the last movement stopped.
+    lat_return = repair_mask(lat_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
+    lon_return = repair_mask(lon_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
     
-    for straight in straights:
-
-        # Work out the best endpoints for this straight
-        corr = 0.0
-        if np.ptp(lon[straight]):
-            corr, m, c = coreg(lat[straight], lon[straight])
-        if corr > 0.95:
-            lat_begin, lon_begin = snap(lat[straight][0], lon[straight][0], m, c)
-            lat_end, lon_end = snap(lat[straight][-1], lon[straight][-1], m, c)
-        else:
-            # not straight enough to improve on endpoints
-            lat_begin = lat[straight][0]
-            lon_begin = lon[straight][0]
-            lat_end = lat[straight][-1]
-            lon_end = lon[straight][-1]         
-        '''
-        import matplotlib.pyplot as plt
-        plt.plot(lat[straight], lon[straight], 'ob')
-        plt.plot(lat_begin, lon_begin, 'or')
-        plt.plot(lat_end, lon_end, 'og')
-        plt.show()
-        '''
-        points.append([straight, lat_begin, lon_begin, lat_end, lon_end])
-    
-    for segment_index in range(len(points)-1):
-        segment = slice(points[segment_index][0], points[segment_index+1][0]+1)
-        '''
-        track_lat, track_lon = ground_track(points[segment_index][0], 
-                                            points[segment_index][0], 
-                                            speed[segment], hdg[segment],
-                                            frequency, mode)
-        '''
-
-        # Initialize the weights for no change.
-        weights = np.ma.zeros(2)
-
-        # Then iterate until optimised solution has been found. We use a dull
-        # algorithm for reliability, rather than the more exciting forms which
-        # can go astray and give less predictable results.
-        weights_opt = optimize.fmin_l_bfgs_b(gtp_compute_error, weights,
-                                             fprime=None,
-                                             args = (points[segment_index],
-                                                     points[segment_index+1],
-                                                     speed[segment],
-                                                     hdg[segment],
-                                                     frequency,
-                                                     'landing', 'iterate'),
-                                             approx_grad=True, 
-                                             epsilon=1.0E-6,
-                                             factr=1.0e10,
-                                             maxfun=100)
-        '''
-        fmin_l_bfgs_b license: This software is freely available, but we expect that all publications describing work using this software, or all commercial products using it, quote at least one of the references given below. This software is released under the BSD License.
-        R. H. Byrd, P. Lu and J. Nocedal. A Limited Memory Algorithm for Bound Constrained Optimization, (1995), SIAM Journal on Scientific and Statistical Computing, 16, 5, pp. 1190-1208.
-        C. Zhu, R. H. Byrd and J. Nocedal. L-BFGS-B: Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (1997), ACM Transactions on Mathematical Software, 23, 4, pp. 550 - 560.
-        J.L. Morales and J. Nocedal. L-BFGS-B: Remark on Algorithm 778: L-BFGS-B, FORTRAN routines for large scale bound constrained optimization (2011), ACM Transactions on Mathematical Software, 38, 1.
-        '''
-
-        print weights_opt[0]
-        points[segment_index].append(weights_opt[0])
-
-        cos_function = (1.0-np.cos(np.linspace(0, 2.0*np.pi, num=len(speed[segment]))))/2.0
-        lat_return[segment], lon_return[segment] = ground_track(points[segment_index][1], 
-                                           points[segment_index][2],
-                                           speed[segment] + weights_opt[0][0] * cos_function,
-                                           hdg[segment] + weights_opt[0][1] * cos_function, 
-                                           frequency, 'landing',
-                                           points[segment_index+1][1],
-                                           points[segment_index+1][2])
-
-    # This plot shows how the fitted straight sections match the recorded data.
-
-    import matplotlib.pyplot as plt
-    plt.plot(lon, lat, 'o-r')
-    plt.plot(lon_return, lat_return, 'o-k')
-    plt.plot([p[2] for p in points], [p[1] for p in points], 'ob')
-    plt.show()
-
-    wt = 0
-
-    if mode == 'takeoff':
-        lat_return[track_edges[0]:] = lat_return
-        lon_return[track_edges[0]:] = lon_return
-    else:
-        lat_return[:track_edges[1]] = lat_return
-        lon_return[:track_edges[1]] = lon_return
-    return lat_return, lon_return, points
+    return lat_return, lon_return
 
 
 def hash_array(array, sections, min_samples):

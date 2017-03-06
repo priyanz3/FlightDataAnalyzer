@@ -3973,7 +3973,7 @@ class Groundspeed(DerivedParameterNode):
             Made frame dependent to avoid inadvertant use of this code
             where a groundspeed signal may be available under a different name.
             '''
-            gs = groundspeed_from_position(lat, lon, lat.frequency)
+            gs = groundspeed_from_position(lat.array, lon.array, lat.frequency)
 
             # In some data segments, e.g. ground runs, the data is all masked, so don't create a derived parameter.
             if np.ma.count(gs):
@@ -4724,16 +4724,14 @@ class CoordinatesSmoothed(object):
         Compute a groundspeed and heading based taxi out track.
         '''
 
-        lat_out, lon_out, wt = ground_track_precise(lat, lon, speed, hdg,
-                                                    freq, 'takeoff')
+        lat_out, lon_out = ground_track_precise(lat, lon, speed, hdg, freq)
         return lat_out, lon_out
 
     def taxi_in_track_pp(self, lat, lon, speed, hdg, freq):
         '''
         Compute a groundspeed and heading based taxi in track.
         '''
-        lat_in, lon_in, wt = ground_track_precise(lat, lon, speed, hdg, freq,
-                                              'landing')
+        lat_in, lon_in = ground_track_precise(lat, lon, speed, hdg, freq)
         return lat_in, lon_in
 
     def taxi_out_track(self, toff_slice, lat_adj, lon_adj, speed, hdg, freq):
