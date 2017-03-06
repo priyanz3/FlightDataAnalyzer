@@ -3134,10 +3134,10 @@ class TestGroundspeed(unittest.TestCase):
         node = self.node_class()
         node.derive(None, None, latitude, longitude, helicopter)
 
-        expected = [0,0,0.954280156,2.862840467,4.771400778,6.679961089,
+        expected = [0,0,0.95428,2.862842,4.771405,6.679961089,
                     8.588521401,10.49708171,12.40564202,14.31420233,
                     16.22276265,18.13132296] + [19.08560311]*7
-        assert_array_almost_equal(node.array, expected, decimal=3)
+        assert_array_almost_equal(node.array, expected, decimal=1)
 
     def test_derive_helicopter_east_at_60(self):
         '''

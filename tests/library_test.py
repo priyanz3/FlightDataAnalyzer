@@ -2804,9 +2804,9 @@ class TestGroundspeedFromPosition(unittest.TestCase):
     def test_north(self):
         # A degree of latitude is 60 nautical miles.
         # Travelling 1/60th of a degree in 60 seconds is one nautical mile a minute = 60 knots
-        lat = P(name='Latitude', array=np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False)), frequency=1.0)
-        lon = P(name='Longitude', array=np_ma_zeros_like(lat.array), frequency=1.0)
-        result = groundspeed_from_position(lat, lon)
+        lat = np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False))
+        lon = np_ma_zeros_like(lat)
+        result = groundspeed_from_position(lat, lon, 1.0)
         # Arbitrarily pick one point to check
         self.assertAlmostEqual(result[3], 60.0, places = 0)
         # and make sure the values are all practically the same
@@ -2814,9 +2814,9 @@ class TestGroundspeedFromPosition(unittest.TestCase):
 
     def test_east(self):
         # A degree of longitude at 60 North is 30 nautical miles.
-        lon = P(name='Longitude', array=np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False)),  frequency=1.0)
-        lat = P(name='Latitude', array=np_ma_ones_like(lon.array)*40.0, frequency=1.0)
-        result = groundspeed_from_position(lat, lon)
+        lon = np.ma.array(np.linspace(0.0, 1.0/60.0, num=60, endpoint=False))
+        lat = np_ma_ones_like(lon)*60.0
+        result = groundspeed_from_position(lat, lon, 1.0)
         # Arbitrarily pick one point to check
         self.assertAlmostEqual(result[3], 30.0, places = 0)
         # and make sure the values are all practically the same
@@ -2880,57 +2880,14 @@ class TestGroundTrack(unittest.TestCase):
         np.testing.assert_array_almost_equal(expected_lon, lon)
 
 
-class TestGtpWeightingVector(unittest.TestCase):
-    def test_weighting_vector_basic(self):
-        speed = np.ma.array([10.0]*8)
-        turn_ends = [2,5]
-        weights = [0.8,1.4]
-        speed_weighting = gtp_weighting_vector(speed, turn_ends, weights)
-        expected = np.ma.array([1.0,0.9,0.8,1.0,1.2,1.4,1.2,1.0])
-        np.testing.assert_array_almost_equal(speed_weighting , expected)
-
-
-class TestGtpComputeError(unittest.TestCase):
-    # Precise positioning ground track error computation.
-    def test_gtp_error_basic(self):
-        # Recorded data goes north, heading is northeast.
-        weights = [1.0,2.0]
-        straights = [slice(0,10)]
-        turn_ends = [0,10]
-        lat = np.ma.arange(0,3E-5,3E-6)
-        lon = np.ma.array([0.0]*10)
-        speed = np.ma.array([1.0]*10)
-        hdg = np.ma.array([45.0]*10)
-        frequency = 1.0
-        mode = 'landing'
-        args = (straights, turn_ends, lat, lon, speed, hdg, frequency, mode, 'final_answer')
-        la, lo, error = gtp_compute_error(weights, *args)
-        self.assertLess(error,1.3)
-        self.assertGreater(error,1.2)
-
-    def test_gtp_error_null(self):
-        # Recorded data and heading are northeast.
-        weights = [1.0,2.0]
-        straights = [slice(0,10)]
-        turn_ends = [0,10]
-        lat = np.ma.arange(0,3E-5,3E-6)
-        lon = lat
-        speed = np.ma.array([1.0]*10)
-        hdg = np.ma.array([45.0]*10)
-        frequency = 1.0
-        mode = 'takeoff'
-        args = (straights, turn_ends, lat, lon, speed, hdg, frequency, mode, 'iterate')
-        error = gtp_compute_error(weights, *args)
-        self.assertAlmostEqual(error,0.0)
-
-
 class TestGroundTrackPrecise(unittest.TestCase):
     # Precise Positioning version of Ground Track
-    def setUp(self):
-        lat_data=[]
-        lon_data=[]
-        hdg_data=[]
-        gspd_data=[]
+
+    def test_ppgt_basic(self):
+        lat=[]
+        lon=[]
+        hdg=[]
+        gspd=[]
         duration_test_data_path = os.path.join(test_data_path,
                                                'precise_ground_track_test_data.csv')
         with open(duration_test_data_path, 'rb') as csvfile:
@@ -2940,24 +2897,69 @@ class TestGroundTrackPrecise(unittest.TestCase):
                 # Latitude and Longitude should be prepared values
                 # Heading should be Heading True Continuous
                 # Groundspeed should be Groundspeed Signed
+                lat.append(float(row['Latitude']))
+                lon.append(float(row['Longitude']))
+                hdg.append(float(row['Heading']))
+                gspd.append(float(row['Groundspeed']))
+            la, lo = ground_track_precise(np.ma.array(lat), 
+                                          np.ma.array(lon), 
+                                          np.ma.array(gspd), 
+                                          np.ma.array(hdg),
+                                          1.0)
+        self.assertLess(np.min(la), -.0002)
+        self.assertGreater(np.max(la), +0.002)
+        self.assertAlmostEquals(np.min(lo), 0.0)
+        self.assertGreater(np.max(lo), -.001)
+
+    def test_ppgt_dublin(self):
+        lat_data=[]
+        lon_data=[]
+        hdg_data=[]
+        gspd_data=[]
+        duration_test_data_path = os.path.join(test_data_path,
+                                               'precise_ground_track_test_data_Dublin.csv')
+        with open(duration_test_data_path, 'rb') as csvfile:
+            self.reader = csv.DictReader(csvfile)
+            for row in self.reader:
                 lat_data.append(float(row['Latitude']))
                 lon_data.append(float(row['Longitude']))
                 hdg_data.append(float(row['Heading']))
                 gspd_data.append(float(row['Groundspeed']))
-            self.lat = np.ma.array(lat_data)
-            self.lat[230:232] = np.ma.masked
-            self.lon = np.ma.array(lon_data)
-            self.lon[230:232] = np.ma.masked
-            self.hdg = np.ma.array(hdg_data)
+            self.lat = np.ma.masked_equal(np.ma.array(lat_data), 0.0)
+            self.lon = np.ma.masked_equal(np.ma.array(lon_data), 0.0)
+            self.hdg = np.ma.masked_equal(np.ma.array(hdg_data), 0.0)
             self.gspd = np.ma.array(gspd_data)
+            
+            la, lo = ground_track_precise(self.lat, self.lon, self.gspd,
+                                           self.hdg, 1.0)
+        # For this test data the worst case adjustment should be very small.
+        # They are measured in knots and degrees, so less than 0.1 is fine.
+        self.assertLess(lo[0], 0.1)
 
-    def test_ppgt_basic(self):
-        la, lo, pts = ground_track_precise(self.lat, self.lon, self.gspd,
-                                           self.hdg, 1.0, 'takeoff')
-
-        # Meaningless thresholds at this time as the algorithm is being rewritten soon.
-        self.assertLess(wt, 100000)
-        self.assertGreater(wt, 1)
+    def test_ppgt_svalbard(self):
+        # Because Svalbard is a nicer word than Longyearbyen
+        # This taxi out includes de-icing and a turn on the runway 
+        lat_data=[]
+        lon_data=[]
+        hdg_data=[]
+        gspd_data=[]
+        duration_test_data_path = os.path.join(test_data_path,
+                                               'precise_ground_track_test_data_Svalbard.csv')
+        with open(duration_test_data_path, 'rb') as csvfile:
+            self.reader = csv.DictReader(csvfile)
+            for row in self.reader:
+                lat_data.append(float(row['Latitude']))
+                lon_data.append(float(row['Longitude']))
+                hdg_data.append(float(row['Heading']))
+                gspd_data.append(float(row['Groundspeed']))
+            self.lat = np.ma.masked_equal(np.ma.array(lat_data), 0.0)
+            self.lon = np.ma.masked_equal(np.ma.array(lon_data), 0.0)
+            self.hdg = np.ma.masked_equal(np.ma.array(hdg_data), 0.0)
+            self.gspd = np.ma.array(gspd_data)
+            
+            la, lo = ground_track_precise(self.lat, self.lon, self.gspd,
+                                           self.hdg, 1.0)
+        self.assertTrue(True)
 
 
 class TestHashArray(unittest.TestCase):
