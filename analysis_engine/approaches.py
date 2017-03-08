@@ -33,6 +33,7 @@ from analysis_engine.library import (
     slices_remove_small_gaps,
     shift_slice,
     shift_slices,
+    latitudes_and_longitudes,
 )
 
 
