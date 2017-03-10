@@ -11817,10 +11817,13 @@ class FlareDuration20FtToTouchdown(KeyPointValueNode):
 
 class FlareDistance20FtToTouchdown(KeyPointValueNode):
     '''
+    This is the distance travelled from the last time the aircraft passed 
+    through 20ft to the point of touchdown, in metres.
+    '''
+    
     #TODO: Write a test for this function with less than one second between 20ft and touchdown, using interval arithmetic.
     #NAX_1_LN-DYC_20120104234127_22_L3UQAR___dev__sdb.001.hdf5
-    '''
-
+    
     can_operate = aeroplane_only
 
     units = ut.METER
