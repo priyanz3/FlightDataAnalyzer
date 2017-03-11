@@ -8278,7 +8278,11 @@ class AirspeedMinusV2(DerivedParameterNode):
             search_start = max(start.index - 5 * 64 * self.hz, 0)
             # Avoid touchdown at touch and go which should be relative to vref/vapp
             start_index = max(search_start, ground.slice.start + 1 if ground else 0)
-            stop_index = climb_starts.get_next(start.index).index
+            my_climb_start = climb_starts.get_next(start.index)
+            if my_climb_start:
+                stop_index = climb_starts.get_next(start.index).index
+            else:
+                continue
             phases.append((search_start, start_index, stop_index))
 
         v2 = v2_recorded or airspeed_selected or v2_lookup
