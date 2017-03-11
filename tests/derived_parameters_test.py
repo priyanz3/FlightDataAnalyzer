@@ -3256,7 +3256,31 @@ class TestGroundspeedSigned(unittest.TestCase):
         precision = A(name='Precise Positioning', value = False)
         gs.derive(gspd, running, ac_type, precision, taxiing, lat, lon)
         self.assertGreater(np.max(gs.array), 60)
-      
+
+    def test_scaling_correction_ineffective_if_not_precise(self):
+        lat_data=[]
+        lon_data=[]
+        hdg_data=[]
+        gspd_data=[]
+        this_test_data_path = os.path.join(test_data_path,
+                                           'Groundspeed_test_data_Entebbe.csv')
+        with open(this_test_data_path, 'rb') as csvfile:
+            self.reader = csv.DictReader(csvfile)
+            for row in self.reader:
+                lat_data.append(float(row['Latitude']))
+                lon_data.append(float(row['Longitude']))
+                gspd_data.append(float(row['Groundspeed']))
+        gspd = P('Groundspeed', gspd_data)
+        taxiing = buildsection('Taxiing', 0, len(lat_data))
+        ac_type = A(name='Aircraft Type', value = 'aeroplane')
+        precision = A(name='Precise Positioning', value = False)
+        lat = P('Latitude Prepared', lat_data)
+        lon = P('Longitude Prepared', lon_data)
+        running=P('Eng (*) Any Running', np_ma_ones_like(lat.array))
+        gs = GroundspeedSigned()
+        gs.derive(gspd, running, ac_type, precision, taxiing, lat, lon)
+        self.assertGreater(np.max(gs.array), 40)
+            
 
 class TestGroundspeedAlongTrack(unittest.TestCase):
 
