@@ -12103,11 +12103,11 @@ class TestGroundspeedWithGearOnGroundMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedWithGearOnGroundMax
-        self.operational_combinations = [('Groundspeed', 'Gear On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Gear On Ground')]
         self.function = max_value
 
     def test_derive_basic(self):
-        spd=P('Groundspeed', array = np.ma.arange(100, 0, -10))
+        spd=P('Groundspeed Signed', array = np.ma.arange(100, 0, -10))
         gog=M('Gear On Ground',
              array=np.ma.array([0]*5 + [1]*5),
              values_mapping = {0: 'Air', 1: 'Ground'})
@@ -12124,7 +12124,7 @@ class TestGroundspeedWhileTaxiingStraightMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedWhileTaxiingStraightMax
-        self.operational_combinations = [('Groundspeed', 'Taxiing', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxiing', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12135,7 +12135,7 @@ class TestGroundspeedInStraightLineDuringTaxiInMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedInStraightLineDuringTaxiInMax
-        self.operational_combinations = [('Groundspeed', 'Taxi In', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxi In', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12146,7 +12146,7 @@ class TestGroundspeedInStraightLineDuringTaxiOutMax(unittest.TestCase, NodeTest)
 
     def setUp(self):
         self.node_class = GroundspeedInStraightLineDuringTaxiOutMax
-        self.operational_combinations = [('Groundspeed', 'Taxi Out', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxi Out', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12157,7 +12157,7 @@ class TestGroundspeedWhileTaxiingTurnMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedWhileTaxiingTurnMax
-        self.operational_combinations = [('Groundspeed', 'Taxiing', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxiing', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12168,7 +12168,7 @@ class TestGroundspeedInTurnDuringTaxiInMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedInTurnDuringTaxiInMax
-        self.operational_combinations = [('Groundspeed', 'Taxi In', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxi In', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12179,7 +12179,7 @@ class TestGroundspeedInTurnDuringTaxiOutMax(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = GroundspeedInTurnDuringTaxiOutMax
-        self.operational_combinations = [('Groundspeed', 'Taxi Out', 'Turning On Ground')]
+        self.operational_combinations = [('Groundspeed Signed', 'Taxi Out', 'Turning On Ground')]
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -12191,14 +12191,14 @@ class TestGroundspeedDuringRejectedTakeoffMax(unittest.TestCase):
     def test_can_operate(self):
         expected = [
             ('Acceleration Longitudinal Offset Removed', 'Rejected Takeoff'),
-            ('Groundspeed', 'Rejected Takeoff'),
-            ('Acceleration Longitudinal Offset Removed', 'Groundspeed', 'Rejected Takeoff')
+            ('Groundspeed Signed', 'Rejected Takeoff'),
+            ('Acceleration Longitudinal Offset Removed', 'Groundspeed Signed', 'Rejected Takeoff')
         ]
         opts = GroundspeedDuringRejectedTakeoffMax.get_operational_combinations()
         self.assertEqual(opts, expected)
 
     def test_derive(self):
-        gspd = P('Groundspeed',
+        gspd = P('Groundspeed Signed',
                 np.ma.array([0]*20 + list(range(20)) + list(range(20, 1, -1)) + list(range(80))))
         rto = buildsection('Rejected Takeoff', 22, 40)
         gspd_rto = GroundspeedDuringRejectedTakeoffMax()
@@ -12255,7 +12255,15 @@ class TestGroundspeedVacatingRunway(unittest.TestCase, CreateKPVsAtKTIsTest):
 
     def setUp(self):
         self.node_class = GroundspeedVacatingRunway
-        self.operational_combinations = [('Groundspeed', 'Landing Turn Off Runway')]
+
+    def test_can_operate(self):
+        self.assertEqual(self.node_class.get_operational_combinations(
+            ac_type=helicopter), [])
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 2)
+        self.assertIn('Groundspeed Signed', opts[0])
+        self.assertIn('Landing Turn Off Runway', opts[0])
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

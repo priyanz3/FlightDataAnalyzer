@@ -11967,13 +11967,15 @@ class FuelJettisonDuration(KeyPointValueNode):
 
 class GroundspeedWithGearOnGroundMax(KeyPointValueNode):
     '''
-
+    The highest groundspeed with gear on ground.
+    For fixed wing, at liftoff or touchdown. 
+    For helicopters with wheeled undercarriage, the point of highest taxi speed.
     '''
 
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                gear=M('Gear On Ground')):
 
         self.create_kpvs_within_slices(
@@ -11992,7 +11994,7 @@ class GroundspeedWhileTaxiingStraightMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxiing'),
                turns=S('Turning On Ground')):
 
@@ -12010,7 +12012,7 @@ class GroundspeedInStraightLineDuringTaxiInMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxi In'),
                turns=S('Turning On Ground')):
 
@@ -12028,7 +12030,7 @@ class GroundspeedInStraightLineDuringTaxiOutMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxi Out'),
                turns=S('Turning On Ground')):
 
@@ -12045,7 +12047,7 @@ class GroundspeedWhileTaxiingTurnMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxiing'),
                turns=S('Turning On Ground')):
 
@@ -12062,7 +12064,7 @@ class GroundspeedInTurnDuringTaxiOutMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxi Out'),
                turns=S('Turning On Ground')):
 
@@ -12079,7 +12081,7 @@ class GroundspeedInTurnDuringTaxiInMax(KeyPointValueNode):
     units = ut.KT
 
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                taxiing=S('Taxi In'),
                turns=S('Turning On Ground')):
 
@@ -12104,12 +12106,12 @@ class GroundspeedDuringRejectedTakeoffMax(KeyPointValueNode):
     def can_operate(cls, available):
         return 'Rejected Takeoff' in available and any_of(
             ('Acceleration Longitudinal Offset Removed',
-             'Groundspeed'), available)
+             'Groundspeed Signed'), available)
 
     def derive(self,
                # Accel is first dependency as maximum recoding frequency
                accel=P('Acceleration Longitudinal Offset Removed'),
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                rtos=S('Rejected Takeoff')):
         if gnd_spd:
             self.create_kpvs_within_slices(gnd_spd.array, rtos, max_value)
@@ -12124,6 +12126,7 @@ class GroundspeedDuringRejectedTakeoffMax(KeyPointValueNode):
 
 class GroundspeedAtLiftoff(KeyPointValueNode):
     '''
+    The groundspeed at the point of liftoff.
     '''
 
     units = ut.KT
@@ -12137,6 +12140,7 @@ class GroundspeedAtLiftoff(KeyPointValueNode):
 
 class GroundspeedAtTouchdown(KeyPointValueNode):
     '''
+    The groundspeed at the point of touchdown.
     '''
 
     units = ut.KT
@@ -12150,6 +12154,7 @@ class GroundspeedAtTouchdown(KeyPointValueNode):
 
 class Groundspeed20FtToTouchdownMax(KeyPointValueNode):
     '''
+    The highest groundspeed during the flare manoeuvre. Almost always at the start of the manouevure.
     '''
 
     units = ut.KT
@@ -12222,12 +12227,15 @@ class Groundspeed0_8NMToOffshoreTouchdown(KeyPointValueNode):
 
 class GroundspeedVacatingRunway(KeyPointValueNode):
     '''
+    Groundspeed at the point of turning off the landing runway. May be quite high for runways with Rapid Exit Turnoffs.
     '''
 
     units = ut.KT
 
+    can_operate = aeroplane_only
+    
     def derive(self,
-               gnd_spd=P('Groundspeed'),
+               gnd_spd=P('Groundspeed Signed'),
                off_rwy=KTI('Landing Turn Off Runway')):
 
         self.create_kpvs_at_ktis(gnd_spd.array, off_rwy)
