@@ -4906,8 +4906,10 @@ class CoordinatesSmoothed(object):
         for approach in approaches:
 
             this_app_slice = approach.slice
-
+            
+            # Set a default reference point to be used for Go-Arounds
             tdwn_index = this_app_slice.stop - 2
+            # If we really did touchdown, that is the better point to use.
             for tdwn in tdwns:
                 if not is_index_within_slice(tdwn.index, this_app_slice):
                     continue
