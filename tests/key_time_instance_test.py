@@ -35,6 +35,7 @@ from analysis_engine.key_time_instances import (
     ExitHold,
     FirstEngFuelFlowStart,
     FirstEngStartBeforeLiftoff,
+    LastEngStartBeforeLiftoff,
     FirstFlapExtensionWhileAirborne,
     FlapExtensionWhileAirborne,
     FlapLeverSet,
@@ -1203,6 +1204,39 @@ class TestFirstEngStartBeforeLiftoff(unittest.TestCase):
         node.derive(eng_starts, eng_count, liftoffs)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 60)
+
+
+class TestLastEngStartBeforeLiftoff(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = LastEngStartBeforeLiftoff
+
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations()
+        self.assertEqual(combinations,
+                         [('Eng Start', 'Engine Count', 'Liftoff'),])
+
+    def test_derive(self):
+        eng_count = A('Engine Count', 3)
+        eng_starts = EngStart('Eng Start',items=[
+            KeyTimeInstance(10, name='Eng (1) Start'),
+            KeyTimeInstance(20, name='Eng (2) Start'),
+            KeyTimeInstance(30, name='Eng (3) Start'),
+            KeyTimeInstance(40, name='Eng (1) Start'),
+            KeyTimeInstance(50, name='Eng (2) Start'),
+            KeyTimeInstance(60, name='Eng (3) Start'),
+            KeyTimeInstance(70, name='Eng (1) Start'),
+            KeyTimeInstance(80, name='Eng (2) Start'),
+            KeyTimeInstance(360, name='Eng (1) Start'),
+            KeyTimeInstance(370, name='Eng (1) Start'),
+            KeyTimeInstance(380, name='Eng (2) Start'),
+        ])
+        liftoffs = KTI('Liftoff', items=[KeyTimeInstance(100, 'Liftoff')])
+        node = self.node_class()
+        node.derive(eng_starts, eng_count, liftoffs)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 80)
 
 
 class TestEngStop(unittest.TestCase):

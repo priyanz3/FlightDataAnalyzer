@@ -516,6 +516,30 @@ class FirstEngStartBeforeLiftoff(KeyTimeInstanceNode):
             self.create_kti(0)
 
 
+class LastEngStartBeforeLiftoff(KeyTimeInstanceNode):
+    '''
+    Check for the last engine start before liftoff. The index will be the last
+    time an engine is started and remains on before liftoff.
+    '''
+
+    def derive(self, eng_starts=KTI('Eng Start'), eng_count=A('Engine Count'),
+               liftoffs=KTI('Liftoff')):
+        if not liftoffs:
+            return
+        eng_starts_before_liftoff = []
+        for x in range(eng_count.value):
+            kti_name = eng_starts.format_name(number=x + 1)
+            eng_start_before_liftoff = eng_starts.get_previous(
+                liftoffs.get_first().index, name=kti_name)
+            if not eng_start_before_liftoff:
+                self.warning("Could not find '%s before Liftoff.",
+                             kti_name)
+                continue
+            eng_starts_before_liftoff.append(eng_start_before_liftoff.index)
+        if eng_starts_before_liftoff:
+            self.create_kti(max(eng_starts_before_liftoff))
+
+
 class EngStop(KeyTimeInstanceNode):
     '''
     Monitors the engine stop time. Engines still running at the end of the
