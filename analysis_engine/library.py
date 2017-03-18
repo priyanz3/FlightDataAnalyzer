@@ -2774,8 +2774,8 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     spd_above_1 = np.ma.masked_less_equal(np.ma.abs(speed), 1.0)
     track_slices = slices_remove_small_slices(np.ma.clump_unmasked(spd_above_1))
 
-    ##import matplotlib.pyplot as plt    
-    ##plt.plot(lon, lat, '-k')
+    # import matplotlib.pyplot as plt    
+    # plt.plot(lon, lat, '-k')
 
     hdg_hyst_chg = np.ma.ediff1d(hysteresis(hdg, 10.0))
     all_straights = np.ma.clump_masked(np.ma.masked_equal(hdg_hyst_chg, 0.0))
@@ -2789,15 +2789,20 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
             # This is computed in each direction, then blended progressively so that it meets the 
             # endpoints exactly thereby cancelling out the errors in integrating the ground track.
             lat_model[straight], lon_model[straight] = av_gnd_trk(lat[straight], lon[straight], speed[straight], hdg[straight], frequency)
-            ##plt.plot(lon_model[straight], lat_model[straight], 'o-b')
+            # plt.plot(lon_model[straight], lat_model[straight], 'o-b')
 
         for curve in curves:
+            # If this has to match the ILS track we need to blend it in nicely.
+            if curve.start == 0:
+                lat_model[curve] = gtp_blend_curve(lat[curve])
+                lon_model[curve] = gtp_blend_curve(lon[curve])
             # We just use the prepared track because during turns the prepared track errors are usually not obvious
-            lat_model[curve] = lat[curve]
-            lon_model[curve] = lon[curve]
-            ##plt.plot(lon_model[curve], lat_model[curve], 'o-r')
+            else:
+                lat_model[curve] = lat[curve]
+                lon_model[curve] = lon[curve]
+            # plt.plot(lon_model[curve], lat_model[curve], 'o-r')
 
-    ##plt.show()
+    # plt.show()
     # We have computed the straight and curved moving sections. Where the aircraft was barely moving,
     # we leave it stationary at the point where the last movement stopped.
     lat_return = repair_mask(lat_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
@@ -2805,6 +2810,18 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     
     return lat_return, lon_return
 
+def gtp_blend_curve(array):
+    '''
+    The first data point for a ground track with ILS localizer correction is set from the localizer
+    track computation, so we blend in this point across the curve turning off the runway.
+    
+    We can do this for the first track leaving the stand as it makes no difference and saves
+    the complexity of knowing which piece of track we are calculating.
+    '''
+    delta = array[0]-array[1]
+    out = array + np.linspace(delta, 0.0, num=len(array))
+    out[0] -= delta
+    return out
 
 def av_gnd_trk(lat, lon, gspd, hdg, hz):
     '''

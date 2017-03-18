@@ -2962,6 +2962,15 @@ class TestGroundTrackPrecise(unittest.TestCase):
         self.assertTrue(True)
 
 
+class TestGtpBlendCurve(unittest.TestCase):
+    
+    def test_gtp_blender(self):
+        array = np.ma.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        expected = np.ma.array([1.0, 0.8, 0.6, 0.4, 0.2, 0.0])
+        result = gtp_blend_curve(array)
+        ma_test.assert_masked_array_almost_equal(result, expected)
+        
+
 class TestHashArray(unittest.TestCase):
     def test_hash_array(self):
         section = [slice(0,10)]
