@@ -15861,6 +15861,23 @@ class TestRotorSpeedAt6PercentCollectiveDuringEngStart(unittest.TestCase):
         self.assertAlmostEqual(node[0].index, 31.85, places=2)
         self.assertAlmostEqual(node[0].value, 11.88, places=2)
 
+    def test_derive__rotors_running_data_start(self):
+        nr = P('Nr', np.ma.array([102*41]))
+        collective = P('Collective', 65 - np.ma.array([
+            61.5, 61.25, 61.25, 61.38, 61.5, 61.38, 61.38, 61.38, 61.25, 61.5,
+            61.38, 61.38, 61.25, 61.3, 61.38, 61.25, 61.5, 61.38, 61.38, 61.38,
+            61.5, 61.5, 61.5, 61.25, 61.38, 60.62, 55.5, 52.62, 43.88, 35.75,
+            25.38, 14.38, 4.5, 3.88, 4, 4.38, 4.25, 4, 4.12, 4, 4,
+        ]))
+        firsts = KTI('First Eng Fuel Flow Start', items=[
+            KeyTimeInstance(2, 'First Eng Fuel Flow Start'),
+        ])
+
+        node = self.node_class()
+        node.derive(nr, collective, firsts)
+
+        self.assertEqual(len(node), 0)
+
 
 ##############################################################################
 # Rudder
