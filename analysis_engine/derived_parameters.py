@@ -6421,11 +6421,11 @@ class AileronLeft(DerivedParameterNode):
                alo=P('Aileron (L) Outboard')):
         synchro_samples = 0
         if synchro:
-            synchro_samples = np.ma.count(synchro.array)
+            synchro_noise = rms_noise(synchro.array)
             self.array = synchro.array
         if pot:
-            pot_samples = np.ma.count(pot.array)
-            if pot_samples>synchro_samples:
+            pot_noise = rms_noise(pot.array)
+            if pot_noise>synchro_noise:
                 self.array = pot.array
         # If Inboard available, use this in preference
         if ali:
@@ -6455,11 +6455,11 @@ class AileronRight(DerivedParameterNode):
 
         synchro_samples = 0
         if synchro:
-            synchro_samples = np.ma.count(synchro.array)
+            synchro_noise = rms_noise(synchro.array)
             self.array = synchro.array
         if pot:
-            pot_samples = np.ma.count(pot.array)
-            if pot_samples>synchro_samples:
+            pot_noise = rms_noise(pot.array)
+            if pot_noise>synchro_noise:
                 self.array = pot.array
         # If Inboard available, use this in preference
         if ari:

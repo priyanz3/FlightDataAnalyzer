@@ -60,6 +60,8 @@ from analysis_engine.derived_parameters import (
     AccelerationSideways,
     AccelerationVertical,
     Aileron,
+    AileronLeft,
+    AileronRight,
     AimingPointRange,
     AircraftEnergy,
     AirspeedMinusAirspeedSelectedFor3Sec,
@@ -4192,6 +4194,92 @@ class TestAileron(unittest.TestCase):
         assert_array_within_tolerance(ail.array[800:1000], 0, 4, 90)
 
 
+class TestAileronLeft(unittest.TestCase):
+
+    def test_can_operate(self):
+        opts = AileronLeft.get_operational_combinations()
+        self.assertTrue(('Aileron (L) Synchro',) in opts)
+        self.assertTrue(('Aileron (L) Potentiometer',) in opts)
+        self.assertTrue(('Aileron (L) Inboard',) in opts)
+        self.assertTrue(('Aileron (L) Outboard',) in opts)
+                        
+    def test_synchro_working(self):
+        synchro = P('Aileron (L) Synchro', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        pot = P('Aileron (L) Potentiometer', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronleft = AileronLeft()
+        aileronleft.get_derived([pot, synchro, None, None])
+        assert_array_equal(aileronleft.array, synchro.array)
+
+    def test_pot_working(self):
+        synchro = P('Aileron (L) Synchro', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        pot = P('Aileron (L) Potentiometer', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        aileronleft = AileronLeft()
+        aileronleft.get_derived([pot, synchro, None, None])
+        assert_array_equal(aileronleft.array, pot.array)
+
+    def test_inboard_only(self):
+        inboard = P('Aileron (L) Inboard', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronleft = AileronLeft()
+        aileronleft.get_derived([None, None, inboard, None])
+        assert_array_equal(aileronleft.array, inboard.array)
+
+    def test_outboard_only(self):
+        outboard = P('Aileron (L) Outboard', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronleft = AileronLeft()
+        aileronleft.get_derived([None, None, None, outboard])
+        assert_array_equal(aileronleft.array, outboard.array)
+
+    def test_inboard_preferred(self):
+        inboard = P('Aileron (L) Inboard', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        outboard = P('Aileron (L) Outboard', np.ma.array([0.0, 2.0, -2.0, 0.0]))
+        aileronleft = AileronLeft()
+        aileronleft.get_derived([None, None, inboard, outboard])
+        assert_array_equal(aileronleft.array, inboard.array)
+        
+
+class TestAileronRight(unittest.TestCase):
+
+    def test_can_operate(self):
+        opts = AileronRight.get_operational_combinations()
+        self.assertTrue(('Aileron (R) Synchro',) in opts)
+        self.assertTrue(('Aileron (R) Potentiometer',) in opts)
+        self.assertTrue(('Aileron (R) Inboard',) in opts)
+        self.assertTrue(('Aileron (R) Outboard',) in opts)
+                        
+    def test_synchro_working(self):
+        synchro = P('Aileron (R) Synchro', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        pot = P('Aileron (R) Potentiometer', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronright = AileronRight()
+        aileronright.get_derived([pot, synchro, None, None])
+        assert_array_equal(aileronright.array, synchro.array)
+
+    def test_pot_working(self):
+        synchro = P('Aileron (R) Synchro', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        pot = P('Aileron (R) Potentiometer', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        aileronright = AileronRight()
+        aileronright.get_derived([pot, synchro, None, None])
+        assert_array_equal(aileronright.array, pot.array)
+
+    def test_inboard_only(self):
+        inboard = P('Aileron (R) Inboard', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronright = AileronRight()
+        aileronright.get_derived([None, None, inboard, None])
+        assert_array_equal(aileronright.array, inboard.array)
+
+    def test_outboard_only(self):
+        outboard = P('Aileron (R) Outboard', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        aileronright = AileronRight()
+        aileronright.get_derived([None, None, None, outboard])
+        assert_array_equal(aileronright.array, outboard.array)
+
+    def test_inboard_preferred(self):
+        inboard = P('Aileron (R) Inboard', np.ma.array([0.0, 1.0, -1.0, 0.0]))
+        outboard = P('Aileron (R) Outboard', np.ma.array([0.0, 2.0, -2.0, 0.0]))
+        aileronright = AileronLeft()
+        aileronright.get_derived([None, None, inboard, outboard])
+        assert_array_equal(aileronright.array, inboard.array)
+        
+                
 class TestAileronTrim(unittest.TestCase):
     @unittest.skip('Test Not Implemented')
     def test_can_operate(self):
