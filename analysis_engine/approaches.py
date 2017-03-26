@@ -21,6 +21,7 @@ from analysis_engine.node import A, aeroplane, ApproachNode, KPV, KTI, P, S, hel
 
 
 from analysis_engine.library import (
+    bearing_and_distance,
     ils_established,
     index_at_value,
     is_index_within_slice,
@@ -239,7 +240,12 @@ class ApproachInformation(ApproachNode):
                     search_end = _slice.stop
 
                 tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end+1])
-                lowest_hdg = (tdn_hdg % 360.0).item()
+                # Complex trap for the all landing heading data is masked case...
+                if (tdn_hdg % 360.0)[0] is np.ma.masked:
+                    lowest_hdg = bearing_and_distance(lat.array[ref_idx], lon.array[ref_idx], 
+                                                      lat.array[search_end], lon.array[search_end])[0]
+                else:
+                    lowest_hdg = (tdn_hdg % 360.0).item()
                 
                 # While we're here, let's compute the turnoff index for this landing.
                 head_landing = hdg.array[(ref_idx+_slice.stop)/2:_slice.stop]
