@@ -6894,6 +6894,7 @@ class ApproachRange(DerivedParameterNode):
 
                 # What is the heading with respect to the runway centreline for this approach?
                 off_cl = runway_deviation(hdg.array[this_app_slice], **kwargs)
+                off_cl = np.ma.filled(off_cl, fill_value=0.0)
 
                 # Use recorded groundspeed where available, otherwise
                 # estimate range using true airspeed. This is because there
