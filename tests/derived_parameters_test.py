@@ -4204,8 +4204,9 @@ class TestAileronLeft(unittest.TestCase):
         self.assertTrue(('Aileron (L) Outboard',) in opts)
                         
     def test_synchro_working(self):
+        # Includes offset potentiometer test case
         synchro = P('Aileron (L) Synchro', np.ma.array([0.0, 1.0, -1.0, 0.0]))
-        pot = P('Aileron (L) Potentiometer', np.ma.array([0.0, 0.01, -0.01, 0.0]))
+        pot = P('Aileron (L) Potentiometer', np.ma.array([30.0, 30.01, 29.99, 30.0]))
         aileronleft = AileronLeft()
         aileronleft.get_derived([pot, synchro, None, None])
         assert_array_equal(aileronleft.array, synchro.array)
@@ -4247,6 +4248,7 @@ class TestAileronRight(unittest.TestCase):
         self.assertTrue(('Aileron (R) Outboard',) in opts)
                         
     def test_synchro_working(self):
+        # Includes potentiometer close to zero test case
         synchro = P('Aileron (R) Synchro', np.ma.array([0.0, 1.0, -1.0, 0.0]))
         pot = P('Aileron (R) Potentiometer', np.ma.array([0.0, 0.01, -0.01, 0.0]))
         aileronright = AileronRight()
