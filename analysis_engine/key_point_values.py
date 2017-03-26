@@ -15011,7 +15011,8 @@ class RotorSpeed56To67Duration(KeyPointValueNode):
     def derive(self, nr=P('Nr')):
         self.create_kpvs_from_slice_durations(
             slices_between(nr.array, 56, 67)[1], nr.frequency)
-        
+
+
 class RotorSpeedAt6PercentCollectiveDuringEngStart(KeyPointValueNode):
     '''
     During the engines starting the collective the needs to be high, but as the
@@ -15031,10 +15032,15 @@ class RotorSpeedAt6PercentCollectiveDuringEngStart(KeyPointValueNode):
     def derive(self, nr=P('Nr'), collective=P('Collective'),
                firsts=KTI('First Eng Fuel Flow Start')):
         for first in firsts:
-            index = index_at_value(collective.array, 6,
-                                         slice(first.index,None))
-            value = value_at_index(nr.array, index)
-            self.create_kpv(index, value)
+            if value_at_index(collective.array, first.index) > 50:
+                # ensure we are looking at rotor start and not rotors already
+                # running at start of data
+                index = index_at_value(collective.array, 6,
+                                             slice(first.index, None))
+                value = value_at_index(nr.array, index)
+                self.create_kpv(index, value)
+            else:
+                continue
 
 
 ##############################################################################
