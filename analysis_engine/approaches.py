@@ -121,10 +121,12 @@ class ApproachInformation(ApproachNode):
         airport, runway = None, None
 
         # A1. If we have latitude and longitude, look for the nearest airport:
-        if lowest_lat is not None and lowest_lon is not None:
+        if lowest_lat not in (None, np.ma.masked) and lowest_lon not in (None, np.ma.masked):
             kwargs.update(latitude=lowest_lat, longitude=lowest_lon)
             try:
                 airport = handler.get_nearest_airport(**kwargs)
+            except (ValueError, TypeError):
+                self.warning('No coordinates for looking up approach airport.')
             except api.NotFoundError:
                 msg = 'No approach airport found near coordinates (%f, %f).'
                 self.warning(msg, lowest_lat, lowest_lon)

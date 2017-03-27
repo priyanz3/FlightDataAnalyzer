@@ -12,6 +12,7 @@ Flight Data Analyzer: API Handler
 
 import abc
 import logging
+import numpy as np
 
 from operator import itemgetter
 from six import with_metaclass
@@ -185,7 +186,16 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
         :returns: airport info dictionary
         :rtype: dict
         :raises: api.NotFoundError -- if the aircraft cannot be found.
+        :raises: TypeError -- if the provided lat/lon are none/masked.
+        :raises: ValueError -- if the provided lat/lon are oustside of valid ranges
         '''
+        invalid_values = (np.nan, np.ma.masked, None)
+        if latitude in invalid_values or longitude in invalid_values:
+            raise TypeError(u"Latitude and Longitude must be numeric")
+        if not -90 <= latitude <= 90:
+            raise ValueError(u"Latitude must be between -90° and 90°: \'%s\'.", latitude)
+        if not -180 <= longitude <= 180:
+            raise ValueError(u"Longitude must be between -180° and 180°: \'%s\'.", longitude)
         url = '%(base_url)s/api/airport/nearest/' % {
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
         }
