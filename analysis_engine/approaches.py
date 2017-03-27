@@ -241,7 +241,7 @@ class ApproachInformation(ApproachNode):
 
                 tdn_hdg = np.ma.median(hdg.array[ref_idx:search_end+1])
                 # Complex trap for the all landing heading data is masked case...
-                if (tdn_hdg % 360.0)[0] is np.ma.masked:
+                if (tdn_hdg % 360.0) is np.ma.masked:
                     lowest_hdg = bearing_and_distance(lat.array[ref_idx], lon.array[ref_idx], 
                                                       lat.array[search_end], lon.array[search_end])[0]
                 else:
