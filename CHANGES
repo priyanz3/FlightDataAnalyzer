@@ -8,6 +8,48 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.32.1
+-------
+
+ - Added:
+  - KPV: Rotor Speed At 6 Percent Collective During Eng Start
+  - KTI: Last Eng Start Before Liftoff
+  - Derived: Rotor Brake Engaged
+ 
+ - Improvements:
+  - Make 'Mach' available to all aircraft types. Needed to derive SAT.
+  - FuelQty: better handling of not enough valid data
+  - Groundspeed Signed parameter extended
+  - python 2 & 3 compatibility
+  - Plot flight
+  - Ground track algorithms
+  - Aileron algorithms
+  - Stable approach
+  
+ - Fixes:
+  - Better handling of invalid lat/lon in api request
+  - Autoland use existance of AP 3 data to determine the no. of AP systems
+  - MagneticVariation during short RTO segments.
+  - Phase: Takeoff: Fix takeoff end for short flights
+  - SidestickAngle params: repair small masks to correct invalid dual imput
+  - Amendment to Approaches
+  - Approaches from offset ILS localizers cannot be aligned with the runway
+  - Fix missing/invalid altitude data raising exceptions
+  - Rate Touchdown To 60 Kts Airspeed Max handle exception if Touchdown is empty
+  - AirspeedMinusV2: prevent overlap with Airspeed Minux Vref/Vapp during touch and go 
+  - Split Segments
+  - SpeedbrakeHandle: add additional sources 
+  - Touchdown: prevent carrying indexes over to subsequent landings 
+  - SidestickAngle params: repair small masks to correct invalid dual imput 
+  - Add units to Pitch/Roll Smooted derived parameters
+  - KPV: AirspeedSelectedAtLiftoff
+  - Derived: AirspeedMinusV2
+
+ - Renamed 
+  - Derived: 'Altitude QNH' to 'Altitude Visualization With Ground Offset' and 
+          'Altitude Visualization Without Ground Offset'
+  - Derived: 'Altitude QNH Calculated' to 'Altitude QNH'
+
 v0.31.3
 -------
 
