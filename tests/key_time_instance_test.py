@@ -2222,26 +2222,23 @@ class TestDistanceFromThreshold(unittest.TestCase):
 class TestAutoland(unittest.TestCase):
     def test_can_operate(self):
         expected = [('AP Channels Engaged', 'Touchdown'),
-                    ('AP Channels Engaged', 'Touchdown', 'AP (3) Engaged')]
+                    ('AP Channels Engaged', 'Touchdown', 'Family')]
         opts = Autoland.get_operational_combinations()
         self.assertEqual(opts, expected)
 
-
     def test_derive_autoland_dual(self):
+        # test with no family
         td = [KeyTimeInstance(index=5, name='Touchdown')]
         ap = M('AP Channels Engaged',
                array=['-', '-', '-', 'Dual', 'Dual', 'Dual', '-', '-', '-'],
                values_mapping={0: '-', 1: 'Single', 2: 'Dual', 3: 'Triple'})
-        ap3 = M('AP (3) Engaged', np.ma.array([0,0,1,1,1,1,1,1,1,]),
-                         values_mapping={0:'-', 1:'Engaged'})        
-        # test without 'AP (3) Engaged' parameter (aircrafts without a 3rd AP system)
         node = Autoland()
         node.derive(ap, td, None)
         expected = [KeyTimeInstance(index=5, name='Autoland')]
         self.assertEqual(node, expected)
-        # test with 'AP (3) Engaged' parameter (aircrafts with a 3rd AP system)
+        # test with B737 Classic creates no autoland as requires Triple mode
         node = Autoland()
-        node.derive(ap, td, ap3)
+        node.derive(ap, td, A('Family', 'B737 Classic'))
         self.assertEqual(node, [])
 
     def test_derive_autoland(self):
@@ -2253,15 +2250,17 @@ class TestAutoland(unittest.TestCase):
         ap = M('AP Channels Engaged',
                array=['-', '-', '-', 'Triple', 'Dual', 'Single', '-', '-', '-'],
                values_mapping={0: '-', 1: 'Single', 2: 'Dual', 3: 'Triple'})
-        ap3 = M('AP (3) Engaged', np.ma.array([0,0,1,1,1,1,1,1,1,]),
-                    values_mapping={0:'-', 1:'Engaged'})        
-        # test without 'AP (3) Engaged' parameter (aircrafts without a 3rd AP system)
+        # test with no family
         node = Autoland()
         node.derive(ap, td, None)
         self.assertEqual([n.index for n in node], [3, 4])
-        # test with 'AP (3) Engaged' parameter (aircrafts with a 3rd AP system)
+        # test with no A330
         node = Autoland()
-        node.derive(ap, td, ap3)
+        node.derive(ap, td, A('Family', 'A330'))
+        self.assertEqual([n.index for n in node], [3, 4])
+        # test with no A330
+        node = Autoland()
+        node.derive(ap, td, A('Family', 'B757'))
         self.assertEqual([n.index for n in node], [3])
 
 
