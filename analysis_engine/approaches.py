@@ -236,7 +236,7 @@ class ApproachInformation(ApproachNode):
             turnoff = None
             if landing:
                 search_end = fast.get_surrounding(_slice.start)
-                if search_end:
+                if search_end and search_end[0].slice.stop >= ref_idx:
                     search_end = min(search_end[0].slice.stop, _slice.stop)
                 else:
                     search_end = _slice.stop
