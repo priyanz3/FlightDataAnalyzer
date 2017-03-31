@@ -1391,9 +1391,15 @@ class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
                cruise=S('Cruise')):
         alt_qnh = np_ma_masked_zeros_like(alt_aal.array)
         
-        start_idx = cruise.get_first().slice.start
+        if cruise == []:
+            max_alt_std = max_value(alt_std.array)
+            start_idx = max_alt_std.index
+            stop_idx =  max_alt_std.index
+        else:
+            start_idx = cruise.get_first().slice.start
+            stop_idx = cruise.get_last().slice.stop - 1
+                
         start_offset = alt_std.array[start_idx] - alt_aal.array[start_idx]
-        stop_idx = cruise.get_last().slice.stop - 1
         stop_offset = alt_std.array[stop_idx] - alt_aal.array[stop_idx]
         
         alt_qnh[:start_idx] = alt_aal.array[:start_idx]

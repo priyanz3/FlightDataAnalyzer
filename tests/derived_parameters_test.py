@@ -1446,6 +1446,15 @@ class TestAltitudeVisualizationWithoutGroundOffset(unittest.TestCase, NodeTest):
         self.assertEqual(alt_qnh.array[2], 0.0)
         self.assertEqual(alt_qnh.array[36], 0.0)
         self.assertEqual(alt_qnh.array[22], 11600.0)  # Cruise at STD
+        
+    def test_no_cruise(self):
+        cruise = S('Cruise', items=[])
+        #cruise = buildsection('Cruise', None, None)
+        alt_vis = self.node_class()
+        alt_vis.derive(self.alt_aal_2, self.alt_std, cruise)
+        self.assertEqual(alt_vis.array[2], 0.0)
+        self.assertEqual(alt_vis.array[36], 0.0)
+        self.assertEqual(alt_vis.array[22], 10000.0)  # at Max STD    
 
 
 class TestAltitudeRadio(unittest.TestCase):
