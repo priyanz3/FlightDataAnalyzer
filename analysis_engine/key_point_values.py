@@ -843,7 +843,8 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
                          "model:'%s' mods:'%s'" % series.value, model.value,
                          mods.value)
             return
-            
+        roll_repaired = repair_mask(roll.array, frequency=roll.frequency,
+                                    repair_duration=2)
         weight_threshold = mlw + 1133.981  # 2500LB --> 1133.981KG
         freq_8hz = land_vert_acc.frequency == 8.0
         freq_16hz = land_vert_acc.frequency == 16.0
