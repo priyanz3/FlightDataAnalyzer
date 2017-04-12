@@ -4984,41 +4984,52 @@ class CoordinatesSmoothed(object):
                     lat_adj[this_app_slice] = lat.array[this_app_slice]
                     lon_adj[this_app_slice] = lon.array[this_app_slice]
                 else:
-                    '''
-                    We need to fix the bottom end of the descent without an
-                    ILS to fix. The best we can do is put the touchdown point
-                    in the right place. (An earlier version put the track
-                    onto the runway centreline which looked convincing, but
-                    went disasterously wrong for curving visual approaches
-                    into airfields like Nice).
-                    '''
-                    # Q: Currently we rely on a Touchdown KTI existing to smooth
-                    #    a track without the ILS Localiser being established or
-                    #    precise positioning. This is to ensure that the
-                    #    aircraft is on the runway and therefore we can use
-                    #    database coordinates for the runway to smooth the
-                    #    track. This does not provide a solution for aircraft
-                    #    which do not momentarily land on the runway. Could we
-                    #    assume that the aircraft will match the runway
-                    #    coordinates if it drops below a certain altitude as
-                    #    this will be more accurate than low precision
-                    #    positioning equipment.
 
                     landing_runway = approach.landing_runway
-
-                    # Adjust distance units
-                    distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
-                    bearing = np.ma.array([(runway_heading(landing_runway)+180)%360.0])
-                    # Reference point for visual approaches is the runway end.
-
+                    # The reference point is the ILS Localizer antenna, 
+                    # or the end of the runway where no ILS is available.
                     ref_point = landing_runway['end']
+                    
+                    if approach.type == 'GO_AROUND':
+                        '''
+                        A go-around with no ILS and imprecise positioning, our best option is just
+                        to leave the track alone.
+                        '''
+                        lat_err = 0.0
+                        lon_err = 0.0
 
-                    # Work out the touchdown point
-                    lat_tdwn, lon_tdwn = latitudes_and_longitudes \
-                        (bearing, distance, ref_point)
+                    else:
+                        '''
+                        We need to fix the bottom end of the descent without an
+                        ILS to fix. The best we can do is put the touchdown point
+                        in the right place. (An earlier version put the track
+                        onto the runway centreline which looked convincing, but
+                        went disasterously wrong for curving visual approaches
+                        into airfields like Nice).
+                        '''
+                        # Q: Currently we rely on a Touchdown KTI existing to smooth
+                        #    a track without the ILS Localiser being established or
+                        #    precise positioning. This is to ensure that the
+                        #    aircraft is on the runway and therefore we can use
+                        #    database coordinates for the runway to smooth the
+                        #    track. This does not provide a solution for aircraft
+                        #    which do not momentarily land on the runway. Could we
+                        #    assume that the aircraft will match the runway
+                        #    coordinates if it drops below a certain altitude as
+                        #    this will be more accurate than low precision
+                        #    positioning equipment.
+    
+                        # Adjust distance units
+                        distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
+                        bearing = np.ma.array([(runway_heading(landing_runway)+180)%360.0])
 
-                    lat_err = value_at_index(lat.array, tdwn_index) - lat_tdwn
-                    lon_err = value_at_index(lon.array, tdwn_index) - lon_tdwn
+                        # Work out the touchdown point
+                        lat_tdwn, lon_tdwn = latitudes_and_longitudes \
+                            (bearing, distance, ref_point)
+    
+                        lat_err = value_at_index(lat.array, tdwn_index) - lat_tdwn
+                        lon_err = value_at_index(lon.array, tdwn_index) - lon_tdwn
+                        
                     lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
                     lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
 
