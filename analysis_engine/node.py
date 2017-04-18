@@ -2221,6 +2221,9 @@ class FlightAttributeNode(Node):
         # 0 is a meaningful value. Check self.value is not False as False == 0.
         return bool(self.value or (self.value == 0 and self.value is not False))
 
+    if six.PY2:
+        __nonzero__ = __bool__
+
     def set_flight_attribute(self, value):
         self.value = value
     set_flight_attr = set_flight_attribute
@@ -2579,6 +2582,9 @@ class Attribute(object):
         '''
         # 0 is a meaningful value. Check self.value is not False as False == 0.
         return bool(self.value or (self.value == 0 and self.value is not False))
+
+    if six.PY2:
+        __nonzero__ = __bool__
 
     def __eq__(self, other):
         '''
