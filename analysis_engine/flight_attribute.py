@@ -6,6 +6,7 @@ import numpy as np
 import pytz
 
 from datetime import datetime
+from operator import itemgetter
 
 from flightdatautilities import api
 
@@ -432,12 +433,13 @@ class TakeoffAirport(FlightAttributeNode):
         if lat and lon:
             handler = api.get_handler(settings.API_HANDLER)
             try:
-                airport = handler.get_nearest_airport(lat.value, lon.value)
+                airports = handler.get_nearest_airport(lat.value, lon.value)
             except api.NotFoundError:
                 msg = 'No takeoff airport found near coordinates (%f, %f).'
                 self.warning(msg, lat.value, lon.value)
                 # No airport was found, so fall through and try AFR.
             else:
+                airport = min(airports, key=itemgetter('distance'))
                 codes = airport.get('code', {})
                 code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
                 self.info('Detected takeoff airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)

@@ -36,7 +36,7 @@ class TestApproachInformation(unittest.TestCase):
 
     def setUp(self):
         self.node_class = ApproachInformation
-        self.gatwick = airports['gatwick']
+        self.gatwick = [airports['gatwick']]
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations()
@@ -508,7 +508,7 @@ class TestApproachInformation(unittest.TestCase):
 
         get_handler = Mock()
         get_handler.get_nearest_airport.side_effect = api.NotFoundError()
-        get_handler.get_airport.return_value = self.gatwick
+        get_handler.get_airport.return_value = self.gatwick[0]
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
@@ -535,7 +535,7 @@ class TestApproachInformation(unittest.TestCase):
         
         get_handler = Mock()
         get_handler.get_nearest_airport.side_effect = api.NotFoundError()
-        get_handler.get_airport.return_value = self.gatwick
+        get_handler.get_airport.return_value = self.gatwick[0]
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
@@ -563,7 +563,7 @@ class TestApproachInformation(unittest.TestCase):
         
         get_handler = Mock()
         get_handler.get_nearest_airport.side_effect = api.NotFoundError()
-        get_handler.get_airport.return_value = self.gatwick
+        get_handler.get_airport.return_value = self.gatwick[0]
         api.get_handler.return_value = get_handler
 
         approaches = ApproachInformation()
@@ -585,6 +585,69 @@ class TestApproachInformation(unittest.TestCase):
         get_handler.get_airport.assert_called_with(2379)
         self.assertEqual(approaches[0].turnoff, 70)
 
+class TestCloseAirprots(unittest.TestCase):
+    @patch('analysis_engine.approaches.api')
+    def test_ils_freq(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = [airports['almaza'], airports['cairo'], airports['embaba']]
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                          P('Heading Continuous', np.ma.array([45.703]*90)),
+                          None,
+                          None,
+                          P('ILS Localizer', array=np.ma.ones(90)),
+                          P('ILS Glideslope', array=np.ma.ones(90)),
+                          P('ILS Frequency', np.ma.array([109.9]*90)),
+                          None,
+                          None,
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),                          
+                          A('Precise Positioning', False))
+
+        self.assertEqual(len(approaches), 1)
+        self.assertEqual(approaches[0].airport, airports['cairo'])
+        self.assertEqual(approaches[0].landing_runway, airports['cairo']['runways'][2])
+        self.assertEqual(approaches[0].approach_runway, airports['cairo']['runways'][2])
+
+
+    @patch('analysis_engine.approaches.api')
+    def test_no_ils_freq(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = [airports['almaza'], airports['cairo'], airports['embaba']]
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                          P('Heading Continuous', np.ma.array([45.703]*90)),
+                          None,
+                          None,
+                          P('ILS Localizer', array=np.ma.ones(90)),
+                          P('ILS Glideslope', array=np.ma.ones(90)),
+                          None,
+                          None,
+                          None,
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),                          
+                          A('Precise Positioning', False))
+
+        self.assertEqual(len(approaches), 1)
+        self.assertEqual(approaches[0].airport, airports['cairo'])
+        self.assertEqual(approaches[0].landing_runway, airports['cairo']['runways'][4])
+        self.assertEqual(approaches[0].approach_runway, airports['cairo']['runways'][4])
+
+
 
 class TestAlicante(unittest.TestCase):
     
@@ -593,7 +656,7 @@ class TestAlicante(unittest.TestCase):
     def test_no_ils(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['alicante']
+        get_handler.get_nearest_airport.return_value = [airports['alicante']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -637,7 +700,7 @@ class TestBardufoss(unittest.TestCase):
     def test_slightly_offset_localizer(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['bardufoss']
+        get_handler.get_nearest_airport.return_value = [airports['bardufoss']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -685,7 +748,7 @@ class TestBodo(unittest.TestCase):
     def test_offset_localizer(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['bodo']
+        get_handler.get_nearest_airport.return_value = [airports['bodo']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -734,7 +797,7 @@ class TestChania(unittest.TestCase):
     def test_no_ils(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['chania']
+        get_handler.get_nearest_airport.return_value = [airports['chania']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -780,7 +843,7 @@ class TestDallasFortWorth(unittest.TestCase):
     def test_runway_change_at_DFW(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['dallas_fort_worth']
+        get_handler.get_nearest_airport.return_value = [airports['dallas_fort_worth']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -833,7 +896,7 @@ class TestFortWorth(unittest.TestCase):
     def test_ils_corrected_data(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['fort_worth']
+        get_handler.get_nearest_airport.return_value = [airports['fort_worth']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -929,7 +992,7 @@ class TestKirkenes(unittest.TestCase):
     def test_ils_on_reciprocal_runway(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['kirkenes']
+        get_handler.get_nearest_airport.return_value = [airports['kirkenes']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -976,7 +1039,7 @@ class TestScatsta(unittest.TestCase):
     def test_no_ils_glidepath(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['scatsta']
+        get_handler.get_nearest_airport.return_value = [airports['scatsta']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1024,7 +1087,7 @@ class TestSirSeretseKhama(unittest.TestCase):
     def test_late_turn_and_glideslope_established(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['sir_seretse_khama']
+        get_handler.get_nearest_airport.return_value = [airports['sir_seretse_khama']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1074,7 +1137,7 @@ class TestWashingtonNational(unittest.TestCase):
     def test_huge_offset(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['washington_national']
+        get_handler.get_nearest_airport.return_value = [airports['washington_national']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1123,7 +1186,7 @@ class TestZaventem(unittest.TestCase):
     def test_go_around_and_landing(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['zaventem']
+        get_handler.get_nearest_airport.return_value = [airports['zaventem']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1180,7 +1243,7 @@ class TestBarcelona(unittest.TestCase):
     def test_no_runway_change_at_barcelona(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['barcelona']
+        get_handler.get_nearest_airport.return_value = [airports['barcelona']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1257,7 +1320,7 @@ class TestNice(unittest.TestCase):
     def test__no_runway_change_at_nice(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['nice']
+        get_handler.get_nearest_airport.return_value = [airports['nice']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1316,7 +1379,7 @@ class TestGranCanaria(unittest.TestCase):
     def test_no_runway_change_at_gran_canaria(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['gran_canaria']
+        get_handler.get_nearest_airport.return_value = [airports['gran_canaria']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1375,7 +1438,7 @@ class TestMunich(unittest.TestCase):
     def test_no_runway_change_at_munich(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['munich']
+        get_handler.get_nearest_airport.return_value = [airports['munich']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):
@@ -1435,7 +1498,7 @@ class TestNewDelhi(unittest.TestCase):
     def test_no_runway_change_at_new_delhi(self, api):
 
         get_handler = Mock()
-        get_handler.get_nearest_airport.return_value = airports['new_delhi']
+        get_handler.get_nearest_airport.return_value = [airports['new_delhi']]
         api.get_handler.return_value = get_handler
 
         def fetch(par_name):

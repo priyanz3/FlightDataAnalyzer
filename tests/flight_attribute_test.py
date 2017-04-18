@@ -757,8 +757,8 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
         '''
         Attribute is set when airport is found.
         '''
-        info = {'id': 123}
-        get_nearest_airport.return_value = info
+        info = {'id': 123, 'distance':2}
+        get_nearest_airport.return_value = [info]
         lat = KPV(name='Latitude At Liftoff', items=[
             KeyPointValue(index=12, value=4.0),
             KeyPointValue(index=32, value=6.0),
@@ -767,7 +767,7 @@ class TestTakeoffAirport(unittest.TestCase, NodeTest):
             KeyPointValue(index=12, value=3.0),
             KeyPointValue(index=32, value=9.0),
         ])
-        afr_apt = A(name='AFR Takeoff Airport', value={'id': 25})
+        afr_apt = A(name='AFR Takeoff Airport', value={'id': 25, 'distance':2})
         apt = self.node_class()
         apt.set_flight_attr = Mock()
         # Check that the airport returned via API is used for the attribute:

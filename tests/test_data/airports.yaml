@@ -1024,6 +1024,7 @@ fort_worth:
 gatwick:
   !!python/unicode 'code': {!!python/unicode 'iata': !!python/unicode 'LGW', !!python/unicode 'icao': !!python/unicode 'EGKK'}
   !!python/unicode 'id': 2379
+  !!python/unicode 'distance': 345.24931784251771
   !!python/unicode 'latitude': 51.1481
   !!python/unicode 'location': {!!python/unicode 'city': !!python/unicode 'London',
     !!python/unicode 'country': !!python/unicode 'United Kingdom'}
@@ -1608,3 +1609,180 @@ zaventem:
       !!python/unicode 'longitude': 4.501203061951376}
     !!python/unicode 'strip': {!!python/unicode 'id': 807, !!python/unicode 'length': 9800,
       !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 164}
+almaza:
+    !!python/unicode 'code': {!!python/unicode 'icao': !!python/unicode 'HEAZ'}
+    !!python/unicode 'distance': 1.9650408791970841
+    !!python/unicode 'elevation': 300
+    !!python/unicode 'id': 4461
+    !!python/unicode 'latitude': 30.09179999999999
+    !!python/unicode 'location': {!!python/unicode 'city': !!python/unicode 'Cairo', !!python/unicode 'country': !!python/unicode 'Egypt'}
+    !!python/unicode 'longitude': 31.36
+    !!python/unicode 'magnetic_variation': !!python/unicode 'E003204 0106'
+    !!python/unicode 'name': !!python/unicode 'Almaza AFB'
+    !!python/unicode 'runways':
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 300, !!python/unicode 'latitude': 30.08511076898735,
+        !!python/unicode 'longitude': 31.3596297066779}
+      !!python/unicode 'glideslope': {!!python/unicode 'elevation': 300}
+      !!python/unicode 'id': 3973
+      !!python/unicode 'identifier': !!python/unicode '18'
+      !!python/unicode 'localizer': {!!python/unicode 'is_offset': false}
+      !!python/unicode 'magnetic_heading': 178.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 224, !!python/unicode 'latitude': 30.101873347249708,
+        !!python/unicode 'longitude': 31.359982309190904}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1987, !!python/unicode 'length': 6726,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 224, !!python/unicode 'latitude': 30.101887270086085,
+        !!python/unicode 'longitude': 31.359934029429095}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.9, !!python/unicode 'elevation': 300,
+        !!python/unicode 'latitude': 30.08740169645507, !!python/unicode 'longitude': 31.360928588951523,
+        !!python/unicode 'threshold_distance': 864}
+      !!python/unicode 'id': 3974
+      !!python/unicode 'identifier': !!python/unicode '36'
+      !!python/unicode 'localizer': {!!python/unicode 'beam_width': 4.5, !!python/unicode 'elevation': 224,
+        !!python/unicode 'frequency': 109300.0, !!python/unicode 'heading': 358, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.104356893022494, !!python/unicode 'longitude': 31.359967512724545}
+      !!python/unicode 'magnetic_heading': 358.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 300, !!python/unicode 'latitude': 30.085051115452814,
+        !!python/unicode 'longitude': 31.359577403599097}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1987, !!python/unicode 'length': 6726,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 267, !!python/unicode 'latitude': 30.096257262170493,
+        !!python/unicode 'longitude': 31.36488147195219}
+      !!python/unicode 'id': 19600
+      !!python/unicode 'identifier': !!python/unicode '05'
+      !!python/unicode 'localizer': {!!python/unicode 'is_offset': false}
+      !!python/unicode 'magnetic_heading': 44.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 267, !!python/unicode 'latitude': 30.08772441104273,
+        !!python/unicode 'longitude': 31.35479491696709}
+      !!python/unicode 'strip': {!!python/unicode 'id': 12210, !!python/unicode 'length': 4068,
+        !!python/unicode 'width': 164}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 262, !!python/unicode 'latitude': 30.087724411,
+        !!python/unicode 'longitude': 31.354794917}
+      !!python/unicode 'id': 19601
+      !!python/unicode 'identifier': !!python/unicode '23'
+      !!python/unicode 'localizer': {!!python/unicode 'is_offset': false}
+      !!python/unicode 'magnetic_heading': 224.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 262, !!python/unicode 'latitude': 30.0962572622,
+        !!python/unicode 'longitude': 31.364881472}
+      !!python/unicode 'strip': {!!python/unicode 'id': 12211, !!python/unicode 'length': 4068,
+        !!python/unicode 'width': 164}
+cairo:
+    !!python/unicode 'code': {!!python/unicode 'iata': !!python/unicode 'CAI', !!python/unicode 'icao': !!python/unicode 'HECA'}
+    !!python/unicode 'distance': 2.260081141777538
+    !!python/unicode 'elevation': 382
+    !!python/unicode 'id': 2634
+    !!python/unicode 'latitude': 30.1219
+    !!python/unicode 'location': {!!python/unicode 'city': !!python/unicode 'Cairo', !!python/unicode 'country': !!python/unicode 'Egypt'}
+    !!python/unicode 'longitude': 31.4056
+    !!python/unicode 'magnetic_variation': !!python/unicode 'E003207 0106'
+    !!python/unicode 'name': !!python/unicode 'Cairo Intl'
+    !!python/unicode 'runways':
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.119805241686834,
+        !!python/unicode 'longitude': 31.38029496197063}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.0, !!python/unicode 'elevation': 382,
+        !!python/unicode 'latitude': 30.13797199999999, !!python/unicode 'longitude': 31.40249999999998,
+        !!python/unicode 'threshold_distance': 1169}
+      !!python/unicode 'id': 3986
+      !!python/unicode 'identifier': !!python/unicode '23R'
+      !!python/unicode 'localizer': {!!python/unicode 'beam_width': 4.5, !!python/unicode 'elevation': 382,
+        !!python/unicode 'frequency': 110300.0, !!python/unicode 'heading': 225, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.11772179405247, !!python/unicode 'longitude': 31.377480601188285}
+      !!python/unicode 'magnetic_heading': 225.4
+      !!python/unicode 'start': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.13909431959908,
+        !!python/unicode 'longitude': 31.406196944773935}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1993, !!python/unicode 'length': 10830,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 197}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.13909895879624,
+        !!python/unicode 'longitude': 31.406199626983476}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.0, !!python/unicode 'elevation': 382,
+        !!python/unicode 'latitude': 30.12320163926363, !!python/unicode 'longitude': 31.38240241104382,
+        !!python/unicode 'threshold_distance': 1321}
+      !!python/unicode 'id': 3985
+      !!python/unicode 'identifier': !!python/unicode '05L'
+      !!python/unicode 'localizer': {!!python/unicode 'beam_width': 4.5, !!python/unicode 'elevation': 382,
+        !!python/unicode 'frequency': 110900.0, !!python/unicode 'heading': 45, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.140433411115772, !!python/unicode 'longitude': 31.408020754631075}
+      !!python/unicode 'magnetic_heading': 45.4
+      !!python/unicode 'start': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.119809881790513,
+        !!python/unicode 'longitude': 31.38029496197153}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1993, !!python/unicode 'length': 10830,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 197}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.123262040089575,
+        !!python/unicode 'longitude': 31.429574309191935}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.0, !!python/unicode 'elevation': 382,
+        !!python/unicode 'latitude': 30.10074999999999, !!python/unicode 'longitude': 31.401417000000002,
+        !!python/unicode 'threshold_distance': 1014}
+      !!python/unicode 'id': 3983
+      !!python/unicode 'identifier': !!python/unicode '05C'
+      !!python/unicode 'localizer': {!!python/unicode 'beam_width': 4.5, !!python/unicode 'elevation': 382,
+        !!python/unicode 'frequency': 109900.0, !!python/unicode 'heading': 45, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.125108840950002, !!python/unicode 'longitude': 31.43207881349314}
+      !!python/unicode 'magnetic_heading': 45.1
+      !!python/unicode 'start': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.099763256748712,
+        !!python/unicode 'longitude': 31.398267868717173}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1992, !!python/unicode 'length': 13120,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 197}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.099688999999987,
+        !!python/unicode 'longitude': 31.39823300000001}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.0, !!python/unicode 'elevation': 382,
+        !!python/unicode 'latitude': 30.120548518702453, !!python/unicode 'longitude': 31.427965834324468,
+        !!python/unicode 'threshold_distance': 977}
+      !!python/unicode 'id': 3984
+      !!python/unicode 'identifier': !!python/unicode '23C'
+      !!python/unicode 'localizer': {!!python/unicode 'beam_width': 4.5, !!python/unicode 'elevation': 382,
+        !!python/unicode 'frequency': 109500.0, !!python/unicode 'heading': 225, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.097721999999965, !!python/unicode 'longitude': 31.395556000000003}
+      !!python/unicode 'magnetic_heading': 225.1
+      !!python/unicode 'start': {!!python/unicode 'elevation': 382, !!python/unicode 'latitude': 30.123269,
+        !!python/unicode 'longitude': 31.42963600000001}
+      !!python/unicode 'strip': {!!python/unicode 'id': 1992, !!python/unicode 'length': 13120,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 197}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 467, !!python/unicode 'latitude': 30.120770910347723,
+        !!python/unicode 'longitude': 31.450405202737848}
+      !!python/unicode 'glideslope': {!!python/unicode 'angle': 3.0, !!python/unicode 'latitude': 30.098341324349672,
+        !!python/unicode 'longitude': 31.4228361173519}
+      !!python/unicode 'id': 19553
+      !!python/unicode 'identifier': !!python/unicode '05R'
+      !!python/unicode 'localizer': {!!python/unicode 'frequency': 108900.0, !!python/unicode 'heading': 45,
+        !!python/unicode 'is_offset': false, !!python/unicode 'latitude': 30.12283802772198,
+        !!python/unicode 'longitude': 31.45316787799362}
+      !!python/unicode 'magnetic_heading': 45.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 448, !!python/unicode 'latitude': 30.097165962765246,
+        !!python/unicode 'longitude': 31.419115893478715}
+      !!python/unicode 'strip': {!!python/unicode 'id': 12176, !!python/unicode 'length': 13123,
+        !!python/unicode 'surface': !!python/unicode 'Asphalt', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 448, !!python/unicode 'latitude': 30.097163713531458,
+        !!python/unicode 'longitude': 31.419114552372147}
+      !!python/unicode 'glideslope': {!!python/unicode 'latitude': 30.117858830921257,
+        !!python/unicode 'longitude': 31.448334537377654}
+      !!python/unicode 'id': 19554
+      !!python/unicode 'identifier': !!python/unicode '23L'
+      !!python/unicode 'localizer': {!!python/unicode 'frequency': 108700.0, !!python/unicode 'is_offset': false,
+        !!python/unicode 'latitude': 30.095100221872382, !!python/unicode 'longitude': 31.416358582607877}
+      !!python/unicode 'magnetic_heading': 225.0
+      !!python/unicode 'start': {!!python/unicode 'elevation': 467, !!python/unicode 'latitude': 30.120768190394504,
+        !!python/unicode 'longitude': 31.450399838317875}
+      !!python/unicode 'strip': {!!python/unicode 'id': 12176, !!python/unicode 'length': 13123,
+        !!python/unicode 'surface': !!python/unicode 'Asphalt', !!python/unicode 'width': 148}
+embaba:
+    !!python/unicode 'code': {!!python/unicode 'icao': !!python/unicode 'HEEM'}
+    !!python/unicode 'distance': 10.699780387726783
+    !!python/unicode 'elevation': 59
+    !!python/unicode 'id': 17219
+    !!python/unicode 'latitude': 30.0747
+    !!python/unicode 'location': {!!python/unicode 'city': !!python/unicode 'Cairo', !!python/unicode 'country': !!python/unicode 'Egypt'}
+    !!python/unicode 'longitude': 31.1914
+    !!python/unicode 'name': !!python/unicode 'Embaba'
+    !!python/unicode 'runways':
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 59, !!python/unicode 'latitude': 30.06152918,
+        !!python/unicode 'longitude': 31.18406181}
+      !!python/unicode 'glideslope': {!!python/unicode 'elevation': 59}
+      !!python/unicode 'id': 15851
+      !!python/unicode 'identifier': !!python/unicode '17'
+      !!python/unicode 'localizer': {!!python/unicode 'elevation': 59, !!python/unicode 'is_offset': false}
+      !!python/unicode 'magnetic_heading': 169.1
+      !!python/unicode 'start': {!!python/unicode 'elevation': 59, !!python/unicode 'latitude': 30.07179858,
+        !!python/unicode 'longitude': 31.18260485}
+      !!python/unicode 'strip': {!!python/unicode 'id': 8512, !!python/unicode 'length': 3773,
+        !!python/unicode 'width': 150}
+    

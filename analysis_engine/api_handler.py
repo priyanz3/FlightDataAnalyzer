@@ -202,7 +202,8 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
         # Note: Only need three decimal places as sufficiently accurate.
         #       Also more opportunity for caching similar responses.
         #       See https://gis.stackexchange.com/a/8674 for details.
-        params = {'ll': '%.3f,%.3f' % (latitude, longitude)}
+        params = {'ll': '%.3f,%.3f' % (latitude, longitude),
+                  'all': True}
         return self.request(url, params=params)
 
 
