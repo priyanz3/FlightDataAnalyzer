@@ -3,11 +3,11 @@ from __future__ import print_function
 import collections
 import imp
 import os
-import unittest
 import networkx as nx
+import six
+import unittest
 
 from datetime import datetime
-from past.builtins import basestring
 
 from analysis_engine.node import (DerivedParameterNode, Node, NodeManager, P)
 from analysis_engine.dependency_graph import (
@@ -24,7 +24,7 @@ from analysis_engine.utils import get_derived_nodes
 def flatten(l):
     "Flatten an iterable of many levels of depth (generator)"
     for el in l:
-        if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
+        if isinstance(el, collections.Iterable) and not isinstance(el, six.string_types):
             for sub in sorted(flatten(el)):
                 yield sub
         else:

@@ -13,12 +13,10 @@ import re
 import six
 
 from abc import ABCMeta
-from builtins import object
 from collections import namedtuple, Iterable, OrderedDict
 from functools import total_ordering
 from itertools import product
 from operator import attrgetter
-from six import with_metaclass
 
 from analysis_engine.library import (
     align,
@@ -188,7 +186,7 @@ def _calculate_offset(frequency, offset):
     return offset % (1.0 / frequency)
 
 
-class Node(with_metaclass(ABCMeta, object)):
+class Node(six.with_metaclass(ABCMeta, object)):
     '''
     Note about aligning options
     ---------------------------

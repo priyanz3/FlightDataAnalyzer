@@ -7,7 +7,6 @@ import unittest
 
 from datetime import datetime
 from inspect import ArgSpec
-from past.builtins import cmp
 from random import shuffle
 
 from analysis_engine.library import min_value, max_value
@@ -362,8 +361,6 @@ class TestAttribute(unittest.TestCase):
             self.assertTrue(b == a)
             self.assertFalse(a != b)
             self.assertFalse(b != a)
-            self.assertEqual(0, cmp(a, b))
-            self.assertEqual(0, cmp(b, a))
 
     def test___ne__(self):
         pairs = [
@@ -379,8 +376,6 @@ class TestAttribute(unittest.TestCase):
             self.assertFalse(b == a)
             self.assertTrue(a != b)
             self.assertTrue(b != a)
-            self.assertNotEqual(0, cmp(a, b))
-            self.assertNotEqual(0, cmp(b, a))
 
     def test___lt__(self):
         pairs = [

@@ -10,7 +10,6 @@ import zipfile
 
 from collections import defaultdict
 from inspect import getargspec, isclass, ismodule
-from past.builtins import basestring
 
 from hdfaccess.file import hdf_file
 from hdfaccess.utils import strip_hdf
@@ -166,7 +165,7 @@ def get_derived_nodes(modules):
                 return True
         return issubclass(value, superclass)
 
-    if isinstance(modules, basestring) or ismodule(modules):
+    if isinstance(modules, six.string_types) or ismodule(modules):
         # This has been done too often!
         modules = [modules]
     nodes = {}

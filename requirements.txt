@@ -1,5 +1,4 @@
 flightdatautilities
-future
 geomag>=0.9
 hdfaccess
 matplotlib

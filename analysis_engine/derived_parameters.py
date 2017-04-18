@@ -2,8 +2,9 @@
 
 from __future__ import print_function
 
-import numpy as np
 import geomag
+import numpy as np
+import six
 
 from copy import deepcopy
 from datetime import date
@@ -11,7 +12,6 @@ from math import radians
 from scipy import interp
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.signal import medfilt
-from past.builtins import basestring
 
 from flightdatautilities import aircrafttables as at, units as ut
 
@@ -8200,7 +8200,7 @@ class FlapManoeuvreSpeed(DerivedParameterNode):
                     condition = runs_of_ones(gw.array <= weight)
                     for s in slices_and(slices, condition):
                         self.array[s] = speed
-            elif isinstance(fms[0], basestring):
+            elif isinstance(fms[0], six.string_types):
                 setting, offset = fms
                 vref_recorded = locals().get('vref_%s' % setting)
                 for s in slices:
