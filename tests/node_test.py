@@ -602,6 +602,71 @@ class TestApproachNode(unittest.TestCase):
         aligned = approach.get_aligned(align_to)
         self.assertEqual(align_to, aligned)
 
+    def test_get_ordered_by_index(self):
+        go_around1 = ApproachItem('GO_AROUND', slice(15, 25))
+        go_around2 = ApproachItem('GO_AROUND', slice(25, 30))
+        go_around3 = ApproachItem('GO_AROUND', slice(35, 40))
+        touch_and_go = ApproachItem('TOUCH_AND_GO', slice(5, 15))
+        landing = ApproachItem('LANDING', slice(50, 55))
+        approach = ApproachNode(items=[go_around3, touch_and_go, landing, go_around1, go_around2])
+
+        # no slice
+        approach_node_returned1 = approach.get_ordered_by_index()
+        self.assertTrue(isinstance(approach_node_returned1, ApproachNode))
+        self.assertEqual(approach.frequency, approach_node_returned1.frequency)
+        self.assertEqual(approach.offset, approach_node_returned1.offset)
+        self.assertEqual(approach_node_returned1,
+                         [ApproachItem('TOUCH_AND_GO', slice(5, 15)),
+                          ApproachItem('GO_AROUND', slice(15, 25)),
+                          ApproachItem('GO_AROUND', slice(25, 30)),
+                          ApproachItem('GO_AROUND', slice(35, 40)),
+                          ApproachItem('LANDING', slice(50, 55))])
+        # within a slice
+        approach_node_returned2 = approach.get_ordered_by_index(
+            within_slice=slice(33,100))
+        self.assertEqual(approach_node_returned2,
+                         [ApproachItem('GO_AROUND', slice(35, 40)),
+                          ApproachItem('LANDING', slice(50, 55))])
+        # with a particular Type
+        approach_node_returned3 = approach.get_ordered_by_index(_type='GO_AROUND')
+        self.assertEqual(approach_node_returned3,
+                         [ApproachItem('GO_AROUND', slice(15, 25)),
+                          ApproachItem('GO_AROUND', slice(25, 30)),
+                          ApproachItem('GO_AROUND', slice(35, 40))])
+        approach_node_returned4 = approach.get_ordered_by_index(_type='LANDING')
+        self.assertEqual(approach_node_returned4, [ApproachItem('LANDING', slice(50, 55))])
+        # named within a slice
+        approach_node_returned5 = approach.get_ordered_by_index(
+            within_slice=slice(12,33), _type='GO_AROUND')
+        self.assertEqual(approach_node_returned5,
+                         [ApproachItem('GO_AROUND', slice(15, 25)),
+                          ApproachItem('GO_AROUND', slice(25, 30))])
+        # does not exist
+        with self.assertRaises(ValueError):
+            approach.get_ordered_by_index(_type='Warp 10')
+        approach_node_returned7 = approach.get_ordered_by_index(
+            within_slice=slice(500,600))
+        self.assertEqual(approach_node_returned7, [])
+
+    def test_get_previous(self):
+        go_around1 = ApproachItem('GO_AROUND', slice(15, 25))
+        go_around2 = ApproachItem('GO_AROUND', slice(25, 30))
+        go_around3 = ApproachItem('GO_AROUND', slice(35, 40))
+        touch_and_go = ApproachItem('TOUCH_AND_GO', slice(5, 15))
+        landing = ApproachItem('LANDING', slice(50, 55))
+        approach = ApproachNode(items=[go_around3, touch_and_go, landing, go_around1, go_around2])
+
+        previous_approach = approach.get_previous(56)
+        self.assertEqual(previous_approach, landing)
+        previous_approach = approach.get_previous(25, _type="TOUCH_AND_GO")
+        self.assertEqual(previous_approach, touch_and_go)
+        previous_approach = approach.get_previous(27, _type="GO_AROUND")
+        self.assertEqual(previous_approach, go_around1)
+        previous_approach = approach.get_previous(27, _type="GO_AROUND", use='start')
+        self.assertEqual(previous_approach, go_around2)
+        previous_approach = approach.get_previous(110, frequency=4)
+        self.assertEqual(previous_approach, go_around1)
+
 
 class TestSectionNode(unittest.TestCase):
     def setUp(self):

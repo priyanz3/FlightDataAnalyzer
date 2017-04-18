@@ -2251,6 +2251,9 @@ class ApproachNode(ListNode):
         if _type not in ('APPROACH', 'LANDING', 'GO_AROUND', 'TOUCH_AND_GO'):
             raise ValueError("Unknown approach type: '%s'." % _type)
 
+    slice_attrgetters = {'start': attrgetter('slice.start'),
+                         'stop': attrgetter('slice.stop')}
+
     def create_approach(self, _type, _slice, runway_change=None, offset_ils=None,
                         airport=None, landing_runway=None, approach_runway=None,
                         gs_est=None, loc_est=None, ils_freq=None, turnoff=None,
@@ -2341,6 +2344,43 @@ class ApproachNode(ListNode):
         '''
         approaches = sorted(self.get(**kwargs), key=attrgetter('slice.start'))
         return approaches[-1] if approaches else None
+
+    def get_previous(self, index, frequency=None, use='stop', **kwargs):
+        '''
+        Gets the element with the previous index optionally filter within_slice
+        or by name.
+
+        :param index: Index to get the previous Section from.
+        :type index: int or float
+        :param frequency: Frequency of index argument.
+        :type frequency: int or float
+        :param use: Use either 'start' or 'stop' of slice.
+        :type use: str
+        :param kwargs: Passed into _get_condition (see docstring).
+        :returns: Element with the previous index matching criteria.
+        :rtype: item within self or None
+        '''
+        if frequency:
+            index = index * (self.frequency / frequency)
+        ordered = self.get_ordered_by_index(**kwargs)
+        for elem in reversed(ordered):
+            if getattr(elem.slice, use) < index:
+                return elem
+        return None
+
+    def get_ordered_by_index(self, order_by='start', **kwargs):
+        '''
+        :param order_by: Index of slice to use when ordering, either 'start' or 'stop'.
+        :type order_by: str
+        :param kwargs: Passed into _get_condition (see docstring).
+        :returns: An object of the same type as self containing elements ordered by index.
+        :rtype: Section
+        '''
+        matching = self.get(**kwargs)
+        ordered_by_start = sorted(matching,
+                                  key=self.slice_attrgetters[order_by])
+        return self.__class__(name=self.name, frequency=self.frequency,
+                              offset=self.offset, items=ordered_by_start)
 
     def get_aligned(self, param):
         '''
