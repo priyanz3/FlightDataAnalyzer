@@ -1030,6 +1030,29 @@ class TestAlign(unittest.TestCase):
         np.testing.assert_array_equal(result.data, [0,2,3,5,7,8,10,12,13,15,17,18,20,22,23])
         np.testing.assert_array_equal(result.mask, [0] * 15)
 
+class TestAlignStringArrays(unittest.TestCase):
+    def test_offset(self):
+        first = P(frequency=1.0, offset=0.6,
+                  array=np.ma.array([11,12,13,14,15], dtype=float))
+        second = P(frequency=1.0, offset=0.0,
+                   array=np.ma.array(["0","1","2","3","4"]))
+
+        expected = np.ma.array(("1", "2", "3", "4", "0"), mask=[0,0,0,0,1])
+        result = align(second, first)
+
+        np.testing.assert_array_equal(result, expected)
+
+    def test_align_multi_state_5_10(self):
+        first = P(frequency=10, offset=0.0,
+                  array=np.ma.array([11,12,13,14,15,16,17,18,19,20], dtype=float))
+        second = P(frequency=5.0, offset=0.0,
+                   array=np.ma.array(["1","3","4","5","6"]))
+
+        result = align(second, first)
+        expected = np.ma.array(["1","3","3","4","4","5","5","6","0","0"], mask=[0,0,0,0,0,0,0,0,1,1])
+
+        np.testing.assert_array_equal(result, expected)
+
 
 class TestAmbiguousRunway(unittest.TestCase):
     def test_valid(self):

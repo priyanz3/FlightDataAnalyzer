@@ -355,10 +355,18 @@ def align_args(slave_array, slave_frequency, slave_offset, master_frequency, mas
     :type master_offset: int or float
     :type interpolate: bool
     :returns: Slave array aligned to master.
-    :rtype: np.ma.array
+    :rtype: array of same type as slave_array
     '''
+
+    original_array = slave_array
+    if slave_array.dtype.type is np.string_:
+        # by converting string arrays to multistate arrays we can use
+        # established aligning process
+        slave_array = string_array_to_mapped_array(slave_array)
+
     if isinstance(slave_array, MappedArray):  # Multi-state array.
         # force disable interpolate!
+        mappings = slave_array.values_mapping
         slave_array = slave_array.raw
         interpolate = False
         _dtype = slave_array.dtype
@@ -483,6 +491,16 @@ def align_args(slave_array, slave_frequency, slave_offset, master_frequency, mas
             # ends of the array.
             slave_aligned[i::wm] = a*slave_array[h::ws] + b*slave_array[h1::ws]
 
+    if isinstance(original_array, MappedArray) or original_array.dtype.type is np.string_:
+        # return back to mapped array
+        mapped_array = MappedArray(np.ma.zeros(len(slave_aligned)).astype(_dtype), values_mapping=mappings)
+        mapped_array[:] = slave_aligned[:]
+        slave_aligned = mapped_array
+
+    if original_array.dtype.type is np.string_:
+        # return back to string array
+        slave_aligned = mapped_array_to_string_array(slave_aligned)
+
     return slave_aligned
 
 
@@ -526,6 +544,25 @@ def align_slice(slave, master, _slice):
     '''
     return align_slices(slave, master, [_slice])[0]
 
+
+def string_array_to_mapped_array(array):
+    compressed = array.compressed()
+    values, counts = np.unique(compressed, return_counts=True)
+    mappings = {k: v for k, v in zip(range(len(values)+1), [''] + list(values))}
+    mapped_array = MappedArray(np.ma.zeros(len(array)).astype('int'), values_mapping=mappings)
+    mapped_array[:] = array[:]
+
+    return mapped_array
+
+
+def mapped_array_to_string_array(array):
+    max_string_length = max(len(x) for x in array.values_mapping.values())
+    string_array = np.ma.empty(len(array), dtype='S%s'%max_string_length)
+    string_array.fill('')
+    for state in array.values_mapping.values():
+        string_array[array==state] = state
+    string_array.mask = array.mask
+    return string_array
 
 def ambiguous_runway(rwy):
     # There are a number of runway related KPVs that we only create if we
@@ -7872,6 +7909,16 @@ def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None):
     obj.warning(message, name, *attributes)
     return None
 
+def filter_runway_heading(r, h):
+    rh = r.get('magnetic_heading')
+    if not rh:
+        logger.warning('No heading information available for runway #%d.', r['id'])
+        return
+    h1 = h - RUNWAY_HEADING_TOLERANCE
+    h2 = h + RUNWAY_HEADING_TOLERANCE
+    q1 = h1 + 360 <= rh <= 360 or 0 <= rh <= h if h1 < 0 else h1 <= rh <= h
+    q2 = h <= rh <= 360 or 0 <= rh <= h2 % 360 if h2 > 360 else h <= rh <= h2
+    return q1 or q2
 
 def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None, hint=None):
     '''
@@ -7905,17 +7952,6 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
     :raises: IndexError
     '''
 
-    def _filter_heading(r, h):
-        rh = r.get('magnetic_heading')
-        if not rh:
-            logger.warning('No heading information available for runway #%d.', r['id'])
-            return
-        h1 = heading - RUNWAY_HEADING_TOLERANCE
-        h2 = heading + RUNWAY_HEADING_TOLERANCE
-        q1 = h1 + 360 <= rh <= 360 or 0 <= rh <= h if h1 < 0 else h1 <= rh <= h
-        q2 = h <= rh <= 360 or 0 <= rh <= h2 % 360 if h2 > 360 else h <= rh <= h2
-        return q1 or q2
-
     def _filter_ilsfreq(r, f):
         rf = r.get('localizer').get('frequency')
         f0 = ilsfreq - RUNWAY_ILSFREQ_TOLERANCE
@@ -7933,7 +7969,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
 
     # 1. Attempt to identify the runway by magnetic heading:
     assert 0 <= heading <= 360, u'Heading must be between 0° and 360° degrees.'
-    runways = [runway for runway in runways if _filter_heading(runway, heading)]
+    runways = [runway for runway in runways if filter_runway_heading(runway, heading)]
     if len(runways) == 0:
         logger.warning('No runways found at airport #%d for heading %03.1f degrees.', airport['id'], heading)
         return None
