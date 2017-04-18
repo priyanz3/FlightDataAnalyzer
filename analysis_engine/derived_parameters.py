@@ -7386,7 +7386,10 @@ class TrackDeviationFromRunway(DerivedParameterNode):
                                  "approach as there is no runway.")
                     continue
                 # extend approach slice up to 15 minutes earlier (or to takeoff)
-                app_start = max(to_stop, app.slice.start-900)
+                # limit to previous approach stop
+                prev_app = apps.get_previous(app.slice.start, use='start')
+                prev_app_idx = prev_app.slice.stop if prev_app else 0
+                app_start = max(to_stop, app.slice.start-900, prev_app_idx)
                 _slice = slice(app_start, app.slice.stop)
                 self._track_deviation(track.array, _slice, runway, magnetic)
 

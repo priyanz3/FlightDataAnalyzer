@@ -3627,6 +3627,28 @@ class TestTrackDeviationFromRunway(unittest.TestCase):
         self.assertAlmostEqual(np.ma.min(deviation.array[8775:8975]), -10.5, places = 1)
         self.assertAlmostEqual(np.ma.max(deviation.array[8775:8975]), 12.3, places = 1)
 
+    def test_derive__multiple_approaches(self):
+        
+        apps = App(items=[
+            ApproachItem(
+                    'GO_AROUND', slice(500, 1500),
+                    airport={},
+                    approach_runway={
+                        'magnetic_heading': 45.0}),
+            ApproachItem(
+                    'LANDING', slice(1500, 2200),
+                    airport={},
+                    approach_runway={
+                        'magnetic_heading': 90.0},
+                    landing_runway={
+                        'magnetic_heading': 90.0})])
+        heading_track = P('Track Continuous', array=np.ma.array([45]*1500 + [90]*700))
+
+        deviation = TrackDeviationFromRunway()
+        deviation.derive(None, heading_track, None, None, apps)
+
+        np.testing.assert_array_equal(deviation.array, np.ma.zeros(2200))
+
 
 class TestHeadingIncreasing(unittest.TestCase):
     def test_can_operate(self):
