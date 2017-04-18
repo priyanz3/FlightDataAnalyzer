@@ -107,6 +107,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      slices_remove_overlaps,
                                      slices_remove_small_slices,
                                      slices_remove_small_gaps,
+                                     string_array_to_mapped_array,
                                      trim_slices,
                                      level_off_index,
                                      valid_slices_within_array,
@@ -5962,6 +5963,64 @@ class GreatCircleDistance(KeyPointValueNode):
             index = tdwn.get_last().index
             if value:
                 self.create_kpv(index, value)
+
+
+class DistanceTravelledDuringTurnback(KeyPointValueNode):
+    '''
+    This measures the distance flown over the ground during a flight which
+    Lands back at the Takeoff airport only.
+    '''
+
+    units = ut.NM
+    
+    def derive(self, gspd=P('Groundspeed'), toff_airport=A('AFR Takeoff Airport'),
+               ldg_airport=A('AFR Landing Airport'),
+               loffs=KTI('Liftoff'), tdowns=KTI('Touchdown')):
+
+        if toff_airport and ldg_airport and toff_airport.value == ldg_airport.value:
+            loff = loffs.get_first()
+            tdown = tdowns.get_last()
+            dist = max(integrate(gspd.array[loff.index:tdown.index + 1],
+                                 gspd.hz, scale=1.0 / 3600.0))
+            self.create_kpv(tdown.index, dist)
+
+
+class DistanceTravelledFollowingDiversion(KeyPointValueNode):
+    '''
+    This measures the distance flown over the ground following a diversion to
+    a different airport than initially intended.
+
+    Diversions are detected from a change in the "Destination" parameter.
+    '''
+
+    units = ut.NM
+    
+    def derive(self, gspd=P('Groundspeed'), destination=P('Destination'),
+               loff=KTI('Liftoff'), tdwn=KTI('Touchdown')):
+        from operator import itemgetter
+        # remove masked entries
+        dest_repair = nearest_neighbour_mask_repair(destination.array)
+        values = [(dest, index) for (dest, index) in zip(*np.unique(dest_repair, return_index=True)) if dest]
+        if len(values) < 2: # We have more than one destination during flight
+            return
+        values = sorted(values, key=itemgetter(1))
+        start_idx = loff.get_first().index
+        stop_idx = tdwn.get_last().index
+        for dest, index in values:
+            runs = runs_of_ones(dest_repair==dest)
+            for run in runs:
+                if run.stop < start_idx or slice_duration(run, self.frequency) < 10:
+                    continue
+                if run.start < start_idx:
+                    continue
+                end_idx = min((stop_idx, run.stop))
+                dist = max(integrate(gspd.array[run.start:end_idx + 1],
+                                                 gspd.hz, scale=1.0 / 3600.0))
+                if dist:
+                    self.create_kpv(end_idx, dist)
+                if stop_idx < run.stop:
+                    break
+            
 
 
 ##############################################################################

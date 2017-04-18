@@ -232,6 +232,8 @@ from analysis_engine.key_point_values import (
     DirectLawDuration,
     DistanceFromRunwayCentrelineAtTouchdown,
     DistanceFromRunwayCentrelineFromTouchdownTo60KtMax,
+    DistanceTravelledDuringTurnback,
+    DistanceTravelledFollowingDiversion,
     DualInputAbove200FtDuration,
     DualInputBelow200FtDuration,
     DualInputByCaptDuration,
@@ -7940,6 +7942,45 @@ class TestDistancePastGlideslopeAntennaToTouchdown(unittest.TestCase):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestDistanceTravelledDuringTurnback(unittest.TestCase):
+    def setUp(self):
+        self.node_class = DistanceTravelledDuringTurnback
+
+    @unittest.skip('Test Not Implemented')
+    def test_can_operate(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+    def test_derive_basic(self):
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*20))
+        #airborne = buildsections('Airborne', [5, 16])
+        toff_airport = A('AFR Takeoff Airport', value={'id':123})
+        ldg_airport = A('AFR Landing Airport', value={'id':123})
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(16, 'Touchdown')])
+        node = self.node_class()
+        node.get_derived((gspd, toff_airport, ldg_airport, loffs, tdowns))
+        self.assertAlmostEqual(node[0].value, 11*120/3600.0)
+
+
+class TestDistanceTravelledFollowingDiversion(unittest.TestCase):
+    def setUp(self):
+        self.node_class = DistanceTravelledFollowingDiversion
+
+    @unittest.skip('Test Not Implemented')
+    def test_can_operate(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+    def test_derive_basic(self):
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*40))
+        #airborne = buildsections('Airborne', [5, 16])
+        destination = P('Destination', np.ma.array(['EGHH']*21 + ['EGHI']*19))
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(36, 'Touchdown')])
+        node = self.node_class()
+        node.get_derived((gspd, destination, loffs, tdowns))
+        self.assertAlmostEqual(node[0].value, 15*120/3600.0)
 
 
 ##############################################################################
