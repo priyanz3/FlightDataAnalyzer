@@ -188,7 +188,8 @@ class ApproachInformation(ApproachNode):
                                     key=itemgetter('min_rwy_start_dist'))
                     else:
                         # filter by airport distances
-                        airport = min(airports, key=itemgetter('distance'))
+                        if airports:
+                            airport = min(airports, key=itemgetter('distance'))
                 if match:
                     airport = match['airport']
                 self.debug('Detected approach airport: %s', airport)
