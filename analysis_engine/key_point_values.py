@@ -11497,6 +11497,9 @@ class HeadingVariation300To50Ft(KeyPointValueNode):
                 self.create_kpv(band.stop, dev)
         else:
             for band in alt_aal.slices_from_to(300, 50, threshold=0.25):
+                # Trap for zero length slices
+                if slice_duration(band, head.frequency) < 1.0:
+                    continue
                 dev = np.ma.ptp(head.array[band])
                 self.create_kpv(band.stop, dev)
 
