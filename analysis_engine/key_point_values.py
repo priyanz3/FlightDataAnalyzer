@@ -6016,7 +6016,7 @@ class DistanceTravelledFollowingDiversion(KeyPointValueNode):
                     dist = max(integrate(gspd.array[run.start:end_idx + 1],
                                                      gspd.hz, scale=1.0 / 3600.0))
                     if dist:
-                        self.create_kpv(end_idx, dist)
+                        self.create_kpv(run.start, dist)
                     if stop_idx < run.stop:
                         break
 
