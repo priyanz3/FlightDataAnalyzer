@@ -7982,6 +7982,16 @@ class TestDistanceTravelledFollowingDiversion(unittest.TestCase):
         node.get_derived((gspd, destination, loffs, tdowns))
         self.assertAlmostEqual(node[0].value, 15*120/3600.0)
 
+    def test_derive__after_touchdown(self):
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*40))
+        #airborne = buildsections('Airborne', [5, 16])
+        destination = P('Destination', np.ma.array(['EGHH']*30 + ['EGHI']*10))
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(25, 'Touchdown')])
+        node = self.node_class()
+        node.get_derived((gspd, destination, loffs, tdowns))
+        self.assertEqual(len(node), 0)
+
 
 ##############################################################################
 # Engine Transients
