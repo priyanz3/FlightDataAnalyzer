@@ -17,12 +17,13 @@ from operator import itemgetter
 from flightdatautilities import api
 
 from analysis_engine import settings
-from analysis_engine.library import all_of, nearest_runway
+from analysis_engine.exceptions import AFRMissmatchError
 from analysis_engine.node import A, aeroplane, ApproachNode, KPV, P, S, helicopter
 
 
 from analysis_engine.library import (
     _dist,
+    all_of,
     bearing_and_distance,
     filter_runway_heading,
     ils_established,
@@ -31,6 +32,7 @@ from analysis_engine.library import (
     peak_curvature,
     shift_slices,
     latitudes_and_longitudes,
+    nearest_runway,
 )
 
 
@@ -164,7 +166,9 @@ class ApproachInformation(ApproachNode):
                     match = airport_info[land_afr_apt.value['id']]
                 elif land_afr_apt and precise:
                     # raise error as afr and flight data do not match
-                    raise ValueError
+                    msg = "'%s' provided by AFR is not in list of aiports within range of %s, %s. Aircraft has precise positioning"\
+                        % (land_afr_apt.value['code'], lowest_lat, lowest_lon)
+                    raise AFRMissmatchError(self.name, msg)
                 elif not land_afr_apt and precise:
                     # filter by runway coordinates
                     match = min((x for x in airport_info.values() if x['min_rwy_start_dist'] is not None),
@@ -192,7 +196,10 @@ class ApproachInformation(ApproachNode):
                             airport = min(airports, key=itemgetter('distance'))
                 if match:
                     airport = match['airport']
-                self.debug('Detected approach airport: %s', airport)
+                if airport:
+                    self.debug('Detected approach airport: %s', airport)
+                else:
+                    self.warning('Unable to locate Airport from provided coordinates')
         else:
             # No suitable coordinates, so fall through and try AFR.
             self.warning('No coordinates for looking up approach airport.')

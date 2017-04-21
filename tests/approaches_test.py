@@ -8,6 +8,7 @@ from mock import call, Mock, patch
 from flightdatautilities import api
 
 from analysis_engine.approaches import ApproachInformation, is_heliport
+from analysis_engine.exceptions import AFRMissmatchError
 from analysis_engine.flight_phase import ApproachAndLanding
 from analysis_engine.node import (
     A, ApproachItem, aeroplane, helicopter, KPV, KeyPointValue, P, S, Section,
@@ -608,7 +609,7 @@ class TestCloseAirprots(unittest.TestCase):
                           None,
                           None,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),                          
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),
                           A('Precise Positioning', False))
 
         self.assertEqual(len(approaches), 1)
@@ -639,7 +640,7 @@ class TestCloseAirprots(unittest.TestCase):
                           None,
                           None,
                           KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
-                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),                          
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),
                           A('Precise Positioning', False))
 
         self.assertEqual(len(approaches), 1)
@@ -647,6 +648,63 @@ class TestCloseAirprots(unittest.TestCase):
         self.assertEqual(approaches[0].landing_runway, airports['cairo']['runways'][4])
         self.assertEqual(approaches[0].approach_runway, airports['cairo']['runways'][4])
 
+
+    @patch('analysis_engine.approaches.api')
+    def test_afr_match(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = [airports['almaza'], airports['cairo'], airports['embaba']]
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+
+        approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
+                          None,
+                          A('Aircraft Type', 'aeroplane'),
+                          S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                          P('Heading Continuous', np.ma.array([45.703]*90)),
+                          None,
+                          None,
+                          P('ILS Localizer', array=np.ma.ones(90)),
+                          P('ILS Glideslope', array=np.ma.ones(90)),
+                          None,
+                          A(name='AFR Landing Airport', value={'id':4461}),
+                          None,
+                          KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
+                          KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),
+                          A('Precise Positioning', False))
+
+        self.assertEqual(len(approaches), 1)
+        self.assertEqual(approaches[0].airport, airports['almaza'])
+        self.assertEqual(approaches[0].landing_runway, airports['almaza']['runways'][2])
+        self.assertEqual(approaches[0].approach_runway, airports['almaza']['runways'][2])
+
+
+    @patch('analysis_engine.approaches.api')
+    def test_afr_missmatch(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = [airports['almaza'], airports['cairo'], airports['embaba']]
+        api.get_handler.return_value = get_handler
+
+        approaches = ApproachInformation()
+
+        with self.assertRaises(AFRMissmatchError):
+            approaches.derive(P('Altitude AAL For Flight Phases', np.ma.concatenate((np.ma.arange(50,0,-1), np.zeros(40)))),
+                              None,
+                              A('Aircraft Type', 'aeroplane'),
+                              S(items=[Section('Approach', slice(30, 80), 30, 80)]),
+                              P('Heading Continuous', np.ma.array([45.703]*90)),
+                              None,
+                              None,
+                              P('ILS Localizer', array=np.ma.ones(90)),
+                              P('ILS Glideslope', array=np.ma.ones(90)),
+                              None,
+                              A(name='AFR Landing Airport', value={'id':1234, 'code': {'iata': 'xxx'}}),
+                              None,
+                              KPV('Latitude At Touchdown', items=[KeyPointValue(index=50, value=30.08465, name='Latitude At Touchdown')]),
+                              KPV('Longitude At Touchdown', items=[KeyPointValue(index=50, value=31.3969768, name='Longitude At Touchdown')]),
+                              A('Precise Positioning', True))
 
 
 class TestAlicante(unittest.TestCase):
