@@ -16762,6 +16762,28 @@ class TouchdownTo60KtsDuration(KeyPointValueNode):
                 self.create_kpv(index_60kt, t__60kt)
 
 
+class TouchdownToPitchRefDuration(KeyPointValueNode):
+    '''
+    Return the duration between Touchdown and Pitch_Ref.
+    Pitch_Ref is the point at which the pitch is 2 degrees more than the pitch
+    when the aircraft has reached 60 Kts airspeed.
+    '''
+    units = ut.SECOND
+
+    def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
+               tdwns=KTI('Touchdown')):
+        for tdwn in tdwns:
+            # get index where airspeed is 60 Kts
+            air_spd_end = index_at_value(airspeed.array.data, 60,
+                                         slice(tdwn.index, None))
+            pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
+            stop = index_at_value(pitch.array, pitch_ref,
+                                  slice(air_spd_end, tdwn.index, -1))
+            self.create_kpvs_from_slice_durations(
+                [slice(tdwn.index, stop), ], pitch.frequency
+            )
+
+
 ##############################################################################
 # Turbulence
 
