@@ -7944,7 +7944,8 @@ def lookup_table(obj, name, _am, _as, _af, _et=None, _es=None, _em=None):
     :returns: the instantiated velocity speed table.
     :rtype: VelocitySpeed or None
     '''
-    attributes = (_am, _as, _af, _et, _es, _em)
+    #attributes = (_am, _as, _af, _et, _es, _em)
+    attributes = (_am, _as, _af, _et, _es)
     attributes = [(a.value if a else None) for a in attributes]
     try:
         _vs = at.get_vspeed_map(*attributes)()

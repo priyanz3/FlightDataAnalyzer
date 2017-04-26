@@ -8025,137 +8025,149 @@ class MMOLookup(DerivedParameterNode):
 # Minimum Slat Retraction Speed (VS/V4)
 
 
-class MinSlatRetractionSpeed(DerivedParameterNode):
-    '''
-    Minimum Slat Retraction Speed (VS/V4) for aircraft manufactured by Airbus.
+##class MinSlatRetractionSpeed(DerivedParameterNode):
+    ##'''
+    ##Minimum Slat Retraction Speed (VS/V4) for aircraft manufactured by Airbus.
 
-    Reference was made to the following documentation to assist with the
-    development of this algorithm:
+    ##Reference was made to the following documentation to assist with the
+    ##development of this algorithm:
 
-    - A320 Flight Profile Specification
-    - A321 Flight Profile Specification
-    '''
+    ##- A320 Flight Profile Specification
+    ##- A321 Flight Profile Specification
+    ##'''
 
-    # TODO: Also included 1* - check whether this is valid.
-    # TODO: Find constant values and implementation details for A318/A319/A330/A340.
-    # TODO: Finish writing documentation...
+    ### TODO: Also included 1* - check whether this is valid.
+    ### TODO: Find constant values and implementation details for A318/A319/A330/A340.
+    ### TODO: Finish writing documentation...
 
-    units = ut.KT
+    ##units = ut.KT
 
-    @classmethod
-    def can_operate(cls, available, manufacturer=A('Manufacturer')):
+    ##@classmethod
+    ##def can_operate(cls, available, manufacturer=A('Manufacturer')):
 
-        if not manufacturer or not manufacturer.value == 'Airbus':
-            return False
+        ##if not manufacturer or not manufacturer.value == 'Airbus':
+            ##return False
 
-        if not all_of(cls.get_dependency_names(), available):
-            return False
+        ##if not all_of(cls.get_dependency_names(), available):
+            ##return False
 
-        # FIXME: Implement this properly...
+        ### FIXME: Implement this properly...
 
-        return True
+        ##return True
 
-    def derive(self,
-               gw=P('Gross Weight Smoothed'),
-               conf=M('Configuration')):
+    ##def derive(self,
+               ##gw=P('Gross Weight Smoothed'),
+               ##conf=M('Configuration')):
 
-        # FIXME: Lookup a value for kac!
-        valid = np.ma.logical_or(conf == '1', conf == '1*', conf == '1+F')
-        self.array = kac * mp.ma.sqrt(gw.array / 1000)
-        self.array[~valid] = np.ma.masked
+        ### FIXME: Lookup a value for kac!
+        ##valid = np.ma.logical_or(conf.array == '1', conf.array == '1*', conf.array == '1+F')
+        ##self.array = kac * mp.ma.sqrt(gw.array / 1000)
+        ##self.array[~valid] = np.ma.masked
 
 
 ########################################
 # Minimum Flap Retraction Speed (VF/V3)
 
 
-class MinFlapRetractionSpeed(DerivedParameterNode):
-    '''
-    Minimum Flap Retraction Speed (VF/V3) for aircraft manufactured by Airbus.
+##class MinFlapRetractionSpeed(DerivedParameterNode):
+    ##'''
+    ##Minimum Flap Retraction Speed (VF/V3) for aircraft manufactured by Airbus.
 
-    Reference was made to the following documentation to assist with the
-    development of this algorithm:
+    ##Reference was made to the following documentation to assist with the
+    ##development of this algorithm:
 
-    - A320 Flight Profile Specification
-    - A321 Flight Profile Specification
-    '''
+    ##- A320 Flight Profile Specification
+    ##- A321 Flight Profile Specification
+    ##'''
 
-    # TODO: Also included 2* - check whether this is valid.
-    # TODO: Find constant values and implementation details for A318/A319/A330/A340.
-    # TODO: Finish writing documentation...
+    ### TODO: Also included 2* - check whether this is valid.
+    ### TODO: Find constant values and implementation details for A318/A319/A330/A340.
+    ### TODO: Finish writing documentation...
 
-    units = ut.KT
+    ##units = ut.KT
 
-    @classmethod
-    def can_operate(cls, available, manufacturer=A('Manufacturer')):
+    ##@classmethod
+    ##def can_operate(cls, available, manufacturer=A('Manufacturer')):
 
-        if not manufacturer or not manufacturer.value == 'Airbus':
-            return False
+        ##if not manufacturer or not manufacturer.value == 'Airbus':
+            ##return False
 
-        if not all_of(cls.get_dependency_names(), available):
-            return False
+        ##if not all_of(cls.get_dependency_names(), available):
+            ##return False
 
-        # FIXME: Implement this properly...
+        ### FIXME: Implement this properly...
 
-        return True
+        ##return True
 
-    def derive(self,
-               gw=P('Gross Weight Smoothed'),
-               conf=M('Configuration')):
+    ##def derive(self,
+               ##gw=P('Gross Weight Smoothed'),
+               ##conf=M('Configuration')):
 
-        # FIXME: Lookup a value for kac!
-        valid = np.ma.logical_or(conf == '2', conf == '2*', conf == '3')
-        self.array = kac * mp.ma.sqrt(gw.array / 1000)
-        self.array[~valid] = np.ma.masked
+        ### FIXME: Lookup a value for kac!
+        ##valid = np.ma.logical_or(conf.array == '2', conf.array == '2*', conf.array == '3')
+        ##self.array = kac * mp.ma.sqrt(gw.array / 1000)
+        ##self.array[~valid] = np.ma.masked
 
 
 ########################################
-# Green Dot Speed (VGREENDOT)
+### Green Dot Speed (VGREENDOT)
 
 
-class GreenDotSpeed(DerivedParameterNode):
-    '''
-    Green Dot Speed (VGREENDOT) for aircraft manufactured by Airbus.
+##class GreenDotSpeed(DerivedParameterNode):
+    ##'''
+    ##Green Dot Speed (VGREENDOT) for aircraft manufactured by Airbus.
 
-    Reference was made to the following documentation to assist with the
-    development of this algorithm:
+    ##Reference was made to the following documentation to assist with the
+    ##development of this algorithm:
 
-    - A320 Flight Profile Specification
-    - A321 Flight Profile Specification
-    '''
+    ##- A320 Flight Profile Specification
+    ##- A321 Flight Profile Specification
+    ##'''
 
-    # TODO: Find constant values and implementation details for A318/A319/A330/A340.
-    # TODO: Finish writing documentation...
+    ### TODO: Find constant values and implementation details for A318/A319/A330/A340.
+    ### TODO: Finish writing documentation...
 
-    units = ut.KT
+    ##units = ut.KT
 
-    @classmethod
-    def can_operate(cls, available, manufacturer=A('Manufacturer')):
+    ##@classmethod
+    ##def can_operate(cls, available, manufacturer=A('Manufacturer')):
 
-        if not manufacturer or not manufacturer.value == 'Airbus':
-            return False
+        ##if not manufacturer or not manufacturer.value == 'Airbus':
+            ##return False
 
-        if not all_of(cls.get_dependency_names(), available):
-            return False
+        ##if not all_of(cls.get_dependency_names(), available):
+            ##return False
 
-        # FIXME: Implement this properly...
+        ### FIXME: Implement this properly...
 
-        return True
+        ##return True
 
+    ##def derive(self,
+               ##gw=P('Gross Weight Smoothed'),
+               ##alt_std=P('Altitude STD Smoothed'),
+               ##vls=P('VLS'),
+               ##conf=M('Configuration')):
+
+        ### FIXME: Lookup a value for f and k!
+        ##zalt = (alt_std.array - 20000) / 1000
+        ##zalt[alt_std.array <= 20000] = 0
+        ##valid = (conf.array == '0')
+        ##self.array = (gw.array / 1000) * f + k + zalt
+        ##self.array = np.ma.maximum(self.array, vls)
+        ##self.array[~valid] = 0
+
+
+class Airbrakes(DerivedParameterNode):
+    units = ut.DEGREE
+    
     def derive(self,
-               gw=P('Gross Weight Smoothed'),
-               alt_std=P('Altitude STD Smoothed'),
-               vls=P('VLS'),
-               conf=M('Configuration')):
-
-        # FIXME: Lookup a value for f and k!
-        zalt = (alt_std.array - 20000) / 1000
-        zalt[alt_std.array <= 20000] = 0
-        valid = (conf == '0')
-        self.array = (gw.array / 1000) * f + k + zalt
-        self.array = np.ma.maximum(self.array, vls)
-        self.array[~valid] = 0
-
+               sl=P('Spoiler (L) (5)'),  #sl=P('Spoiler (4)'),
+               sr=P('Spoiler (R) (5)')): #sr=P('Spoiler (8)'),
+        #self.array = np_ma_masked_zeros_like(airspeed.array, np.double)
+        # Determine the airbrakes position throughout the flight:
+        src, slc = -sr.array, -sl.array
+        self.array = (src + slc + np.ma.abs(src - slc)) / 2
+        self.array[self.array > 0] = 0.0  # should always be non-positive...        
 
 ########################################
 # Lowest Selectable Speed (VLS)
@@ -8176,6 +8188,7 @@ class VLS(DerivedParameterNode):
     # TODO: Finish writing documentation...
 
     units = ut.KT
+    name = 'VLS Calculated'
 
     @classmethod
     def can_operate(cls, available, manufacturer=A('Manufacturer'),
@@ -8195,8 +8208,8 @@ class VLS(DerivedParameterNode):
         ), available)
 
         spoilers = all_of((
-            'Spoiler (4)',
-            'Spoiler (8)',
+            'Spoiler (L) (5)', #'Spoiler (4)',
+            'Spoiler (R) (5)', #'Spoiler (8)',
         ), available)
 
         attributes = all_of((
@@ -8206,16 +8219,18 @@ class VLS(DerivedParameterNode):
             'Engine Manufacturer',
         ), available)
 
-        t0 = lookup_table(cls, 'kaf', model, series, family)
-        t1 = lookup_table(cls, 'vls1g', model, series, family, engine_manufacturer)
+        #t0 = lookup_table(cls, 'kaf', model, series, family)
+        t0 = at.get_kaf_map(model.value, series.value, family.value)
+        t1 = at.get_vls1g_map(model.value, series.value, family.value, engine_manufacturer.value)
+        #t1 = lookup_table(cls, 'vls1g', model, series, family, engine_manufacturer)
         return core and spoilers and attributes and t0 and t1
 
     def derive(self,
                airspeed=P('Airspeed'),
                conf=M('Configuration'),
                gw=P('Gross Weight Smoothed'),
-               sl=P('Spoiler (4)'),
-               sr=P('Spoiler (8)'),
+               sl=P('Spoiler (L) (5)'), #sl=P('Spoiler (4)'),
+               sr=P('Spoiler (R) (5)'), #sr=P('Spoiler (8)'),
                speedbrake=M('Speedbrake Command'),
                alt_std=P('Altitude STD Smoothed'),
                descents=S('Descent'),
@@ -8234,8 +8249,11 @@ class VLS(DerivedParameterNode):
         gwt = gw.array / 1000  # convert kg --> t
 
         # Retrieve the appropriate lookup tables for calculating VLS:
-        kaf_table = lookup_table(cls, 'kaf', model, series, family)
-        vls1g_table = lookup_table(cls, 'vls1g', model, series, family, engine_manufacturer)
+        kaf_table = at.get_kaf_map(model.value, series.value, family.value)
+        vls1g_table = at.get_vls1g_map(model.value, series.value, family.value,
+                                       engine_manufacturer.value)
+        #kaf_table = lookup_table(cls, 'kaf', model, series, family)
+        #vls1g_table = lookup_table(cls, 'vls1g', model, series, family, engine_manufacturer)
 
         # Lookup the value for VLS1G and KAF in lookup tables for the aircraft:
         for detent, slices in slices_of_runs(conf.array):
@@ -8247,7 +8265,8 @@ class VLS(DerivedParameterNode):
                     kaf[s] = b
 
         # Determine and apply the security coefficient throughout the flight:
-        descent = self.array.copy().astype(np.bool).fill(False)
+        descent = self.array.copy().astype(np.bool)
+        descent.fill(False)
         for x in descents.get_slices():
             descent[x] = True
         vls1g *= np.select([clean, descent], [1.362, 1.300], default=1.200)
@@ -8265,21 +8284,21 @@ class VLS(DerivedParameterNode):
         vlslow = vls1g * np.ma.sqrt(gwt)
 
         vls02g = 187 + (gwt - 60) * 2
-        vls02g[alt_std.array > 15000] += 1.1 * alt_std_minus_15k / 1000
+        vls02g[alt_std.array > 15000] += 1.1 * alt_std_minus_15k[alt_std.array > 15000] / 1000
 
         afaltcoef = 0.475 + alt_std_minus_15k * 0.275 / 15000
 
         dvls = (gwt - 45) * 0.64 - airbrk * afaltcoef
         dvls[speedbrake != 'Command'] = 0.0  # only if speedbrakes commanded...
 
-        self.array[clean] = np.ma.maximum(vls02g, vlslow) + dvls
+        self.array[clean] = (np.ma.maximum(vls02g, vlslow) + dvls)[clean]
 
         ######################################################################
         # 2. Calculate VLS where configuration is not clean:
 
         dgw = -0.00202 * kaf * airspeed.array ** 2 * airbrk
 
-        self.array[~clean] = vls1g * np.ma.sqrt(gwt + dgw)
+        self.array[~clean] = (vls1g * np.ma.sqrt(gwt + dgw))[~clean]
 
 
 ########################################
