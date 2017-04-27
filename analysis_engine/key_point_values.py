@@ -16761,12 +16761,11 @@ class TouchdownTo60KtsDuration(KeyPointValueNode):
                 t__60kt = (index_60kt - tdwn.index) / freq
                 self.create_kpv(index_60kt, t__60kt)
 
-
-class TouchdownToPitchRefDuration(KeyPointValueNode):
+class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
     '''
-    Return the duration between Touchdown and Pitch_Ref.
-    Pitch_Ref is the point at which the pitch is 2 degrees more than the pitch
-    when the aircraft has reached 60 Kts airspeed.
+    Return the duration between Touchdown and a point at which the pitch is 2
+    degrees more than the pitch when the aircraft has reached an airspeed
+    of 60 Kts.
     '''
     units = ut.SECOND
 

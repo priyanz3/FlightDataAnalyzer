@@ -697,7 +697,7 @@ from analysis_engine.key_point_values import (
     ThrustReversersDeployedDuringFlightDuration,
     TorqueAsymmetryWhileAirborneMax,
     TouchdownTo60KtsDuration,
-    TouchdownToPitchRefDuration,
+    TouchdownToPitch2DegreesAbovePitchAt60KtsDuration,
     TouchdownToElevatorDownDuration,
     TouchdownToThrustReversersDeployedDuration,
     TrackVariation100To50Ft,
@@ -17809,9 +17809,9 @@ class TestTouchdownTo60KtsDuration(unittest.TestCase, NodeTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestTouchdownToPitchRefDuration(unittest.TestCase):
+class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
     def setUp(self):
-        self.node_class = TouchdownToPitchRefDuration
+        self.node_class = TouchdownToPitch2DegreesAbovePitchAt60KtsDuration
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
