@@ -697,6 +697,7 @@ from analysis_engine.key_point_values import (
     ThrustReversersDeployedDuringFlightDuration,
     TorqueAsymmetryWhileAirborneMax,
     TouchdownTo60KtsDuration,
+    TouchdownToPitch2DegreesAbovePitchAt60KtsDuration,
     TouchdownToElevatorDownDuration,
     TouchdownToThrustReversersDeployedDuration,
     TrackVariation100To50Ft,
@@ -7981,6 +7982,16 @@ class TestDistanceTravelledFollowingDiversion(unittest.TestCase):
         node = self.node_class()
         node.get_derived((gspd, destination, loffs, tdowns))
         self.assertAlmostEqual(node[0].value, 15*120/3600.0)
+
+    def test_derive__after_touchdown(self):
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*40))
+        #airborne = buildsections('Airborne', [5, 16])
+        destination = P('Destination', np.ma.array(['EGHH']*30 + ['EGHI']*10))
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(25, 'Touchdown')])
+        node = self.node_class()
+        node.get_derived((gspd, destination, loffs, tdowns))
+        self.assertEqual(len(node), 0)
 
 
 ##############################################################################
@@ -17796,6 +17807,42 @@ class TestTouchdownTo60KtsDuration(unittest.TestCase, NodeTest):
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = TouchdownToPitch2DegreesAbovePitchAt60KtsDuration
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Pitch', opts[0])
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        tdwns = KTI('Touchdown', items=[KeyTimeInstance(8,'Touchdown'), ])
+        airspeed = P('Airspeed', np.ma.array(
+            [150, 146, 142, 145, 143, 139, 142, 137, 133, 140,
+             133, 128, 131, 128, 124, 120, 124, 123, 120, 118,
+             113, 110, 112, 107, 108, 106, 101, 97, 95, 94,
+             90, 86, 86, 84, 80, 79, 78, 73, 73, 68,
+             64, 60, 58, 51, 47, 43, 46, 44, 40, 43,],
+            mask=[False]*41 + [True]*9
+        ))
+        pitch = P('Pitch', np.ma.array(
+            [2.8, 3.3, 4.7, 4.7, 4.4, 5.1, 5.1, 4.9, 5.8, 5.4,
+             6.0, 6.0, 5.8, 6.9, 7.0, 7.6, 7.4, 7.2, 7.7, 7.9,
+             8.1, 8.4, 8.8, 9.3, 9.0, 8.6, 7.9, 7.7, 7.2, 5.8,
+             4.7, 3.7, 3.0, 2.1, 1.2, -0.2, -0.5, -0.7, -0.9, -0.9,
+             -0.7, -0.9, -1.1, -0.9, -0.9, -0.9, -0.9, -0.9, -0.9, -0.9,]
+        ))
+
+        node = self.node_class()
+        node.derive(pitch, airspeed, tdwns)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].index, 34.1, places=1)
+        self.assertAlmostEqual(node[0].value, 26.1, places=1)
 
 
 ##############################################################################

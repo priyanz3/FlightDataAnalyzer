@@ -10,6 +10,7 @@ import six
 from collections import defaultdict
 from copy import deepcopy
 from math import ceil, copysign
+from operator import itemgetter
 
 from flightdatautilities import aircrafttables as at, units as ut
 from flightdatautilities.geometry import midpoint
@@ -5997,7 +5998,6 @@ class DistanceTravelledFollowingDiversion(KeyPointValueNode):
     
     def derive(self, gspd=P('Groundspeed'), destination=P('Destination'),
                loff=KTI('Liftoff'), tdwn=KTI('Touchdown')):
-        from operator import itemgetter
         # remove masked entries
         dest_repair = nearest_neighbour_mask_repair(destination.array)
         values = [(dest, index) for (dest, index) in zip(*np.unique(dest_repair, return_index=True)) if dest]
@@ -6009,18 +6009,16 @@ class DistanceTravelledFollowingDiversion(KeyPointValueNode):
         for dest, index in values:
             runs = runs_of_ones(dest_repair==dest)
             for run in runs:
-                if run.stop < start_idx or slice_duration(run, self.frequency) < 10:
-                    continue
-                if run.start < start_idx:
-                    continue
-                end_idx = min((stop_idx, run.stop))
-                dist = max(integrate(gspd.array[run.start:end_idx + 1],
-                                                 gspd.hz, scale=1.0 / 3600.0))
-                if dist:
-                    self.create_kpv(end_idx, dist)
-                if stop_idx < run.stop:
-                    break
-            
+                if start_idx < run.start < stop_idx: 
+                    if slice_duration(run, self.frequency) < 10:
+                        continue
+                    end_idx = min((stop_idx, run.stop))
+                    dist = max(integrate(gspd.array[run.start:end_idx + 1],
+                                                     gspd.hz, scale=1.0 / 3600.0))
+                    if dist:
+                        self.create_kpv(run.start, dist)
+                    if stop_idx < run.stop:
+                        break
 
 
 ##############################################################################
@@ -16762,6 +16760,26 @@ class TouchdownTo60KtsDuration(KeyPointValueNode):
             if index_60kt:
                 t__60kt = (index_60kt - tdwn.index) / freq
                 self.create_kpv(index_60kt, t__60kt)
+
+class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
+    '''
+    Return the duration between Touchdown and a point at which the pitch is 2
+    degrees more than the pitch when the aircraft has reached an airspeed
+    of 60 Kts.
+    '''
+    units = ut.SECOND
+
+    def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
+               tdwns=KTI('Touchdown')):
+        for tdwn in tdwns:
+            # get index where airspeed is 60 Kts
+            air_spd_end = index_at_value(airspeed.array.data, 60,
+                                         slice(tdwn.index, None))
+            pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
+            stop = index_at_value(pitch.array, pitch_ref,
+                                  slice(air_spd_end, None, -1))
+            duration = (stop - tdwn.index) / pitch.frequency
+            self.create_kpv(stop, duration)
 
 
 ##############################################################################

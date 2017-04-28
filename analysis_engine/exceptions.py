@@ -16,6 +16,30 @@ Custom exceptions raised by the flight data analyser.
 # http://docs.celeryproject.org/en/latest/userguide/tasks.html#creating-pickleable-exceptions
 
 
+class AFRMissmatchError(Exception):
+    '''
+    Error handling for cases where provided AFR does not match analysed Flight Data.
+    '''
+
+    def __init__(self, node_name, message):
+        '''
+        :param node_name: Node where discrepancy from AFR is detected.
+        :type node_name: string
+        :param message: Message explaining discrepancy.
+        :type message: string
+        '''
+        self.node_name = node_name
+        self.message = message
+        super(AFRMissmatchError, self).__init__(node_name, message)
+
+    def __str__(self):
+        '''
+        '''
+        return "A descrepancy was detected between the provided AFR and flight data while"\
+               " processing '%s': %s"\
+            % (self.node_name, self.message)
+
+
 class DataFrameError(Exception):
     '''
     Error handling for cases where new LFLs require a derived parameter
