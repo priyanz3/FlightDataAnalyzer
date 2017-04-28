@@ -17841,7 +17841,7 @@ class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
         node = self.node_class()
         node.derive(pitch, airspeed, tdwns)
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 8)
+        self.assertAlmostEqual(node[0].index, 34.1, places=1)
         self.assertAlmostEqual(node[0].value, 26.1, places=1)
 
 

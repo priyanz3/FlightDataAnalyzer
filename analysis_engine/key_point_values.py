@@ -16777,10 +16777,9 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
                                          slice(tdwn.index, None))
             pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
             stop = index_at_value(pitch.array, pitch_ref,
-                                  slice(air_spd_end, tdwn.index, -1))
-            self.create_kpvs_from_slice_durations(
-                [slice(tdwn.index, stop), ], pitch.frequency
-            )
+                                  slice(air_spd_end, None, -1))
+            duration = (stop - tdwn.index) / pitch.frequency
+            self.create_kpv(stop, duration)
 
 
 ##############################################################################
