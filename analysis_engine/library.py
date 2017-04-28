@@ -2815,7 +2815,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     # plt.plot(lon, lat, '-k')
 
     hdg_hyst_chg = np.ma.ediff1d(hysteresis(hdg, 10.0))
-    all_straights = np.ma.clump_masked(np.ma.masked_equal(hdg_hyst_chg, 0.0))
+    all_straights = np.ma.clump_unmasked(np.ma.masked_not_equal(hdg_hyst_chg, 0.0))
       
     for track_slice in track_slices:
         straights = slices_remove_small_slices(slices_and(all_straights, [track_slice]))
