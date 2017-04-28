@@ -177,7 +177,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
 
     def get_nearest_airport(self, latitude, longitude):
         '''
-        Returns the nearest airport to the provided latitude and longitude.
+        Returns the nearest airports to the provided latitude and longitude.
 
         :param latitude: latitude in decimal degrees.
         :type latitude: float
@@ -275,7 +275,7 @@ class FileHandler(MethodInterface, api.FileHandler):
 
     def get_nearest_airport(self, latitude, longitude):
         '''
-        Returns the nearest airport to the provided latitude and longitude.
+        Returns the nearest airports to the provided latitude and longitude.
 
         :param latitude: latitude in decimal degrees.
         :type latitude: float
@@ -294,6 +294,6 @@ class FileHandler(MethodInterface, api.FileHandler):
             airport['distance'] = library.bearing_and_distance(*args)[1]
             airports.append(airport)
         try:
-            return min(airports, key=itemgetter('distance'))
+            return airports
         except:
             raise api.NotFoundError('Airport not found using Local File API: %f,%f' % (latitude, longitude))

@@ -9,7 +9,7 @@ Flight Data Analyzer: API Handler: Tests
 ##############################################################################
 # Imports
 
-
+import copy
 import unittest
 import yaml
 
@@ -51,13 +51,16 @@ class FileHandlerTest(unittest.TestCase):
 
     def test_get_nearest_airport(self):
         airport = self.handler.get_nearest_airport(58, 8)
-        self.assertEqual(airport['distance'], 23253.447237062534)
-        del airport['distance']
-        self.assertEqual(airport, self.airports[0])
+        self.assertEqual(airport[0]['distance'], 23253.447237062534)
+        expected = copy.deepcopy(self.airports)
+        expected[0]['distance'] = 23253.447237062534
+        expected[1]['distance'] = 301363.618453967
+        self.assertEqual(airport, expected)
         airport = self.handler.get_nearest_airport(60, 11)
-        self.assertEqual(airport['distance'], 22267.45203750386)
-        del airport['distance']
-        self.assertEqual(airport, self.airports[1])
+        self.assertEqual(airport[1]['distance'], 22267.45203750386)
+        expected[0]['distance'] = 259894.3641803484
+        expected[1]['distance'] = 22267.45203750386
+        self.assertEqual(airport, expected)
 
 
 class HTTPHandlerTest(unittest.TestCase):
