@@ -1019,6 +1019,8 @@ class AltitudeAGLForFlightPhases(DerivedParameterNode):
 
 class AltitudeDensity(DerivedParameterNode):
     '''
+    Only computed for helicopters, this includes compensation for temperature changes
+    that cause the air density to vary from the ISA standard.
     '''
 
     units = ut.FT
@@ -1034,14 +1036,19 @@ class AltitudeDensity(DerivedParameterNode):
 
 
 class AltitudeRadio(DerivedParameterNode):
-    """
+    '''
     There is a wide variety of radio altimeter installations with one, two or
     three sensors recorded - each with different timing, sample rate and
-    inaccuracies to be compensated. This derive process gathers all the
-    available data and passes the blending task to blend_parameters where
-    multiple cubic splines are joined with variable weighting to provide an
-    optimal combination of the available data.
+    inaccuracies to be compensated. Each will have been independently validated
+    and so samples, or groups of sample, from each may be masked where they are
+    identified as invalid. 
+    
+    This derive process gathers all the available data and passes the blending 
+    task to blend_parameters where multiple cubic splines are joined,
+    with variable weighting to provide an optimal combination of the available data.
+    '''
 
+    """
     :returns Altitude Radio with values typically taken as the mean between
     two valid sensors.
     :type parameter object.
@@ -1150,10 +1157,10 @@ class AltitudeRadio(DerivedParameterNode):
 
 
 class AltitudeRadioOffsetRemoved(DerivedParameterNode):
-    '''
+    """
     Remove the offset form Altitude Radio parameters so that it averages 0ft on
     the ground.
-    '''
+    """
     def derive(self, alt_rad=P('Altitude Radio'), fasts=S('Fast')):
         self.array = alt_rad.array
         smoothed = np.ma.copy(alt_rad.array)
@@ -1170,6 +1177,13 @@ class AltitudeRadioOffsetRemoved(DerivedParameterNode):
 
 
 class AltitudeSTDSmoothed(DerivedParameterNode):
+    """
+    This applies various smoothing functions depending upon the quality of the source data, then
+    in all cases applies a local average smoothing. In particular, this ensures that the derived
+    Vertical Speed parameter matches the response seen by the pilot and is not excesively affected
+    by turbulence.
+    """
+    
     '''
     :param frame: The frame attribute, e.g. '737-i'
     :type frame: An attribute
@@ -1237,9 +1251,12 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
         self.array = moving_average(moving_average(self.array))
 
 
-#class AltitudeQNHCalculated(DerivedParameterNode):
 class AltitudeQNH(DerivedParameterNode):
-    #name = 'Altitude QNH Calculated'
+    '''
+    This computes the displayed pressure altitude for aircraft where the datum pressure
+    setting ("Baro Correction") has been recorded.
+    '''
+    
     name = 'Altitude QNH'
     units = ut.FT
 
@@ -1379,7 +1396,7 @@ class AltitudeVisualizationWithGroundOffset(DerivedParameterNode):
 # TODO: Account for 'Touch & Go' - need to adjust QNH for additional airfields!
 class AltitudeVisualizationWithoutGroundOffset(DerivedParameterNode):
     '''
-    This altitude is above airodrome level, but excludes the jump in Altitude
+    This altitude is above aerodrome level, but excludes the jump in Altitude
     AAL by blending with Altitude STD in the Cruise.
     '''
 
