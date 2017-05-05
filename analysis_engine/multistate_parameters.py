@@ -2719,7 +2719,8 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                 self.array = np.ma.where((handle.array < -1.0),
                                          'Armed/Cmd Dn', 'Stowed')
             if armed:
-                self.array[armed.array == 'Armed'] = 'Armed/Cmd Dn'
+                self.array = np.ma.where((armed.array == 'Armed'),
+                                         'Armed/Cmd Dn', 'Stowed')
             self.array = np.ma.where((spdbrk.array > 5.0),
                                      'Deployed/Cmd Up', self.array)
 
