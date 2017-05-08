@@ -7956,8 +7956,8 @@ class TestDistanceTravelledDuringTurnback(unittest.TestCase):
     def test_derive_basic(self):
         gspd = P('Groundspeed', array=np.ma.array([120.0]*20))
         #airborne = buildsections('Airborne', [5, 16])
-        toff_airport = A('AFR Takeoff Airport', value={'id':123})
-        ldg_airport = A('AFR Landing Airport', value={'id':123})
+        toff_airport = A('FDR Takeoff Airport', value={'id':123})
+        ldg_airport = A('FDR Landing Airport', value={'id':123})
         loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
         tdowns = KTI('Touchdown', items=[KeyTimeInstance(16, 'Touchdown')])
         node = self.node_class()

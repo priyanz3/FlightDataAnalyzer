@@ -5974,11 +5974,11 @@ class DistanceTravelledDuringTurnback(KeyPointValueNode):
 
     units = ut.NM
     
-    def derive(self, gspd=P('Groundspeed'), toff_airport=A('AFR Takeoff Airport'),
-               ldg_airport=A('AFR Landing Airport'),
+    def derive(self, gspd=P('Groundspeed'), toff_airport=A('FDR Takeoff Airport'),
+               ldg_airport=A('FDR Landing Airport'),
                loffs=KTI('Liftoff'), tdowns=KTI('Touchdown')):
 
-        if toff_airport and ldg_airport and toff_airport.value == ldg_airport.value:
+        if toff_airport and ldg_airport and toff_airport.value.get('id') == ldg_airport.value.get('id'):
             loff = loffs.get_first()
             tdown = tdowns.get_last()
             dist = max(integrate(gspd.array[loff.index:tdown.index + 1],
