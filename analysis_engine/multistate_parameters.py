@@ -22,6 +22,7 @@ from analysis_engine.node import (
     helicopter_only,
 )
 from analysis_engine.library import (
+    align,
     all_of,
     any_of,
     calculate_flap,
@@ -1595,8 +1596,9 @@ class GearOnGround(MultistateDerivedParameterNode):
             self.frequency = gear.frequency
             self.offset = gear.offset
         elif ac_type == helicopter:
+            vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
             # Introducted for S76 and Bell 212 which do not have Gear On Ground available
-            self.array = np.ma.logical_and(np.ma.where(abs(vert_spd.array) < 100.0, True, False),
+            self.array = np.ma.logical_and(np.ma.where(abs(vert_spd_array) < 100.0, True, False),
                                            np.ma.where(torque.array < 30.0, True, False))
             self.frequency = torque.frequency
             self.offset = torque.offset
