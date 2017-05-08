@@ -608,6 +608,8 @@ class Climb(FlightPhaseNode):
                      closest_toc is None)):
                     closest_toc = this_toc
             # Build the slice from what we have found.
+            if ((closest_toc - eot) / self.hz) <= 2:
+                continue # skip brief climbs
             self.create_phase(slice(eot, closest_toc))
 
 
