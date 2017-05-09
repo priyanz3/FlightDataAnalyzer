@@ -2717,14 +2717,16 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             self.array = np.ma.where((spdbrk.array > 5.0),
                                      'Deployed/Cmd Up', self.array)
         elif family_name == 'A330':
-            if handle:
-                self.array = np.ma.where((handle.array < -1.0),
-                                         'Armed/Cmd Dn', 'Stowed')
             if armed:
-                self.array = np.ma.where((armed.array == 'Armed'),
+                array = np.ma.where((armed.array == 'Armed'),
                                          'Armed/Cmd Dn', 'Stowed')
+            elif handle:
+                array = np.ma.where((handle.array < -1.0),
+                                         'Armed/Cmd Dn', 'Stowed')
+            else:
+                array = np.ma.zeros(len(spdbrk.array), dtype=np.short)
             self.array = np.ma.where((spdbrk.array > 5.0),
-                                     'Deployed/Cmd Up', self.array)
+                                     'Deployed/Cmd Up', array)
 
         elif family_name == 'Learjet':
             self.array = self.learjet_speedbrake(spdsw)
