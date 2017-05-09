@@ -16774,6 +16774,8 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
     '''
     units = ut.SECOND
 
+    can_operate = aeroplane_only
+
     def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
                tdwns=KTI('Touchdown')):
         for tdwn in tdwns:

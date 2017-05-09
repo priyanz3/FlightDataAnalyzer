@@ -17821,7 +17821,7 @@ class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
         self.node_class = TouchdownToPitch2DegreesAbovePitchAt60KtsDuration
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
         self.assertEqual(len(opts), 1)
         self.assertIn('Pitch', opts[0])
         self.assertIn('Airspeed', opts[0])
