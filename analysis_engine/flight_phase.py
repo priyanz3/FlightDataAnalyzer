@@ -161,7 +161,7 @@ class Airborne(FlightPhaseNode):
         preliminary data validation flight phase computation.
         '''
         # When was the gear in the air?
-        gear_off_grounds = np.ma.clump_masked(np.ma.masked_equal(gog.array, 0))
+        gear_off_grounds = runs_of_ones(gog.array == 'Air')
 
         if alt_rad and alt_agl and rtr:
             # We can do a full analysis.
