@@ -248,7 +248,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         
         if not KEEP_KTIS and kti.name in SKIP_KTIS:
             continue
-        elif kti.name not in KEEP_KTIS:
+        elif len(KEEP_KTIS)>0 and (kti.name not in KEEP_KTIS):
             continue
         
         altitude = alt.at(kti.index) if alt else None
@@ -273,7 +273,7 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
 
         if not KEEP_KPVS and kti.name in SKIP_KPVS:
             continue
-        elif kti.name not in KEEP_KPVS:
+        elif len(KEEP_KPVS)>0 and (kti.name not in KEEP_KPVS):
             continue
         
         style = simplekml.Style()
