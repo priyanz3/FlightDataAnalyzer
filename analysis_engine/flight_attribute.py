@@ -439,12 +439,13 @@ class TakeoffAirport(FlightAttributeNode):
                 self.warning(msg, lat.value, lon.value)
                 # No airport was found, so fall through and try AFR.
             else:
-                airport = min(airports, key=itemgetter('distance'))
-                codes = airport.get('code', {})
-                code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
-                self.info('Detected takeoff airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)
-                self.set_flight_attr(airport)
-                return True  # We found an airport, so finish here.
+                if airports:
+                    airport = min(airports, key=itemgetter('distance'))
+                    codes = airport.get('code', {})
+                    code = codes.get('icao') or codes.get('iata')or codes.get('faa') or 'Unknown'
+                    self.info('Detected takeoff airport: %s from coordinates (%f, %f)', code, lat.value, lon.value)
+                    self.set_flight_attr(airport)
+                    return True  # We found an airport, so finish here.
         else:
             self.warning('No coordinates for looking up takeoff airport.')
             # No suitable coordinates, so fall through and try AFR.

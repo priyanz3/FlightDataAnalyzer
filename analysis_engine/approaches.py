@@ -171,8 +171,9 @@ class ApproachInformation(ApproachNode):
                     raise AFRMissmatchError(self.name, msg)
                 elif not land_afr_apt and precise:
                     # filter by runway coordinates
-                    match = min((x for x in airport_info.values() if x['min_rwy_start_dist'] is not None),
-                                key=itemgetter('min_rwy_start_dist'))
+                    filtered = [x for x in airport_info.values() if x['min_rwy_start_dist'] is not None]
+                    if filtered:
+                        match = min(filtered, key=itemgetter('min_rwy_start_dist'))
                 else:
                     # filter by runway heading
                     airport = None
@@ -188,8 +189,9 @@ class ApproachInformation(ApproachNode):
                         match = potential_airports[0]
                     elif len(potential_airports) > 1:
                         # filter by runway distances
-                        match = min((x for x in potential_airports if x['min_rwy_start_dist'] is not None),
-                                    key=itemgetter('min_rwy_start_dist'))
+                        filtered = [x for x in potential_airports if x['min_rwy_start_dist'] is not None]
+                        if filtered:
+                            match = min(filtered, key=itemgetter('min_rwy_start_dist'))
                     else:
                         # filter by airport distances
                         if airports:

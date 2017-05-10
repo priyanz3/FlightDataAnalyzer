@@ -1779,8 +1779,7 @@ class AirspeedAt200FtDuringOnshoreApproach(KeyPointValueNode):
             if value_at_index(offshore.array, approach.slice.stop, interpolate=False) == 'Offshore':
                 continue
 
-            index = index_at_value(alt_agl.array, 200, approach.slice,
-                                   'nearest')
+            index = index_at_value(alt_agl.array, 200, approach.slice)
             if not index:
                 continue
             value = value_at_index(air_spd.array, index)
@@ -5974,11 +5973,11 @@ class DistanceTravelledDuringTurnback(KeyPointValueNode):
 
     units = ut.NM
     
-    def derive(self, gspd=P('Groundspeed'), toff_airport=A('AFR Takeoff Airport'),
-               ldg_airport=A('AFR Landing Airport'),
+    def derive(self, gspd=P('Groundspeed'), toff_airport=A('FDR Takeoff Airport'),
+               ldg_airport=A('FDR Landing Airport'),
                loffs=KTI('Liftoff'), tdowns=KTI('Touchdown')):
 
-        if toff_airport and ldg_airport and toff_airport.value == ldg_airport.value:
+        if toff_airport and ldg_airport and toff_airport.value.get('id') == ldg_airport.value.get('id'):
             loff = loffs.get_first()
             tdown = tdowns.get_last()
             dist = max(integrate(gspd.array[loff.index:tdown.index + 1],
@@ -5994,6 +5993,8 @@ class DistanceTravelledFollowingDiversion(KeyPointValueNode):
     Diversions are detected from a change in the "Destination" parameter.
     '''
 
+    can_operate = aeroplane_only
+
     units = ut.NM
     
     def derive(self, gspd=P('Groundspeed'), destination=P('Destination'),
@@ -6006,11 +6007,15 @@ class DistanceTravelledFollowingDiversion(KeyPointValueNode):
         values = sorted(values, key=itemgetter(1))
         start_idx = loff.get_first().index
         stop_idx = tdwn.get_last().index
+        start_dest = dest_repair[start_idx]
         for dest, index in values:
+            if dest == start_dest:
+                # Analysts requested only diversion if destination changes and remains changed.
+                continue
             runs = runs_of_ones(dest_repair==dest)
             for run in runs:
-                if start_idx < run.start < stop_idx: 
-                    if slice_duration(run, self.frequency) < 10:
+                if (start_idx < run.start < stop_idx) and run.stop > stop_idx: 
+                    if slice_duration(run, self.frequency) <= 64: # one superframe sample
                         continue
                     end_idx = min((stop_idx, run.stop))
                     dist = max(integrate(gspd.array[run.start:end_idx + 1],
@@ -16768,6 +16773,8 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
     of 60 Kts.
     '''
     units = ut.SECOND
+
+    can_operate = aeroplane_only
 
     def derive(self, pitch=P('Pitch'), airspeed=P('Airspeed'),
                tdwns=KTI('Touchdown')):

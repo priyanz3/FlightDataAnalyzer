@@ -22,6 +22,7 @@ from analysis_engine.node import (
     helicopter_only,
 )
 from analysis_engine.library import (
+    align,
     all_of,
     any_of,
     calculate_flap,
@@ -1595,8 +1596,9 @@ class GearOnGround(MultistateDerivedParameterNode):
             self.frequency = gear.frequency
             self.offset = gear.offset
         elif ac_type == helicopter:
+            vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
             # Introducted for S76 and Bell 212 which do not have Gear On Ground available
-            self.array = np.ma.logical_and(np.ma.where(abs(vert_spd.array) < 100.0, True, False),
+            self.array = np.ma.logical_and(np.ma.where(abs(vert_spd_array) < 100.0, True, False),
                                            np.ma.where(torque.array < 30.0, True, False))
             self.frequency = torque.frequency
             self.offset = torque.offset
@@ -2511,7 +2513,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             return 'Speedbrake Handle' in x
         elif family and family.value in ('A318', 'A319', 'A320', 'A321', 'MD-11'):
             return 'Speedbrake' in x and 'Speedbrake Armed' in x
-        elif family and family.value in ('A330', 'A340', 'A380'):
+        elif family and family.value in ('A340', 'A380'):
             return ('Speedbrake Deployed' in x or
                     all_of(('Speedbrake', 'Speedbrake Handle'), x))
         else:
@@ -2709,11 +2711,22 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk)
         elif family_name == 'MD-11':
             self.array = self.derive_from_armed_and_speedbrake(armed, spdbrk, threshold=10.0)
-        elif family_name in ('A330', 'A340', 'A350', 'A380'):
+        elif family_name in ('A340', 'A350', 'A380'):
             self.array = np.ma.where((handle.array < -1.0),
                          'Armed/Cmd Dn', 'Stowed')
             self.array = np.ma.where((spdbrk.array > 5.0),
                                      'Deployed/Cmd Up', self.array)
+        elif family_name == 'A330':
+            if armed:
+                array = np.ma.where((armed.array == 'Armed'),
+                                         'Armed/Cmd Dn', 'Stowed')
+            elif handle:
+                array = np.ma.where((handle.array < -1.0),
+                                         'Armed/Cmd Dn', 'Stowed')
+            else:
+                array = np.ma.zeros(len(spdbrk.array), dtype=np.short)
+            self.array = np.ma.where((spdbrk.array > 5.0),
+                                     'Deployed/Cmd Up', array)
 
         elif family_name == 'Learjet':
             self.array = self.learjet_speedbrake(spdsw)

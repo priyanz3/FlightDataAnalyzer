@@ -7956,8 +7956,8 @@ class TestDistanceTravelledDuringTurnback(unittest.TestCase):
     def test_derive_basic(self):
         gspd = P('Groundspeed', array=np.ma.array([120.0]*20))
         #airborne = buildsections('Airborne', [5, 16])
-        toff_airport = A('AFR Takeoff Airport', value={'id':123})
-        ldg_airport = A('AFR Landing Airport', value={'id':123})
+        toff_airport = A('FDR Takeoff Airport', value={'id':123})
+        ldg_airport = A('FDR Landing Airport', value={'id':123})
         loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
         tdowns = KTI('Touchdown', items=[KeyTimeInstance(16, 'Touchdown')])
         node = self.node_class()
@@ -7974,21 +7974,28 @@ class TestDistanceTravelledFollowingDiversion(unittest.TestCase):
         self.assertTrue(False, msg='Test not implemented.')
 
     def test_derive_basic(self):
-        gspd = P('Groundspeed', array=np.ma.array([120.0]*40))
-        #airborne = buildsections('Airborne', [5, 16])
-        destination = P('Destination', np.ma.array(['EGHH']*21 + ['EGHI']*19))
-        loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
-        tdowns = KTI('Touchdown', items=[KeyTimeInstance(36, 'Touchdown')])
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*400))
+        destination = P('Destination', np.ma.array(['EGHH']*210 + ['EGHI']*190))
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(50, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(360, 'Touchdown')])
         node = self.node_class()
         node.get_derived((gspd, destination, loffs, tdowns))
-        self.assertAlmostEqual(node[0].value, 15*120/3600.0)
+        self.assertAlmostEqual(node[0].value, 150*120/3600.0)
 
     def test_derive__after_touchdown(self):
         gspd = P('Groundspeed', array=np.ma.array([120.0]*40))
-        #airborne = buildsections('Airborne', [5, 16])
         destination = P('Destination', np.ma.array(['EGHH']*30 + ['EGHI']*10))
         loffs = KTI('Liftoff', items=[KeyTimeInstance(5, 'Liftoff')])
         tdowns = KTI('Touchdown', items=[KeyTimeInstance(25, 'Touchdown')])
+        node = self.node_class()
+        node.get_derived((gspd, destination, loffs, tdowns))
+        self.assertEqual(len(node), 0)
+
+    def test_derive__change_back(self):
+        gspd = P('Groundspeed', array=np.ma.array([120.0]*400))
+        destination = P('Destination', np.ma.array(['EGHI']*100 + ['EGHH']*110 + ['EGHI']*190))
+        loffs = KTI('Liftoff', items=[KeyTimeInstance(50, 'Liftoff')])
+        tdowns = KTI('Touchdown', items=[KeyTimeInstance(360, 'Touchdown')])
         node = self.node_class()
         node.get_derived((gspd, destination, loffs, tdowns))
         self.assertEqual(len(node), 0)
@@ -17814,7 +17821,7 @@ class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
         self.node_class = TouchdownToPitch2DegreesAbovePitchAt60KtsDuration
 
     def test_can_operate(self):
-        opts = self.node_class.get_operational_combinations()
+        opts = self.node_class.get_operational_combinations(ac_type=aeroplane)
         self.assertEqual(len(opts), 1)
         self.assertIn('Pitch', opts[0])
         self.assertIn('Airspeed', opts[0])
