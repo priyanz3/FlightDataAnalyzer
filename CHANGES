@@ -8,6 +8,41 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.33.1
+------- 
+
+KPVs added 
+
+ - TailRotorPedalWhileTaxiingABSMax
+ - TailRotorPedalWhileTaxiingMin
+ - DistanceTravelledDuringTurnback
+ - DistanceTravelledFollowingDiversion
+ - TouchdownToPitch2DegreesAbovePitchAt60KtsDuration
+
+Improvements:
+
+- Derotation slow KPV amended to handle less than 2 degree pitch variaiton on ground. Also aeroplane only kpv
+- Additional filters to get_nearest_airport. If lat/lon not precise use heading and ils freq to help detect airport. Also raise error if precise and data does not match AFR
+- Handle aligning of string Paramerters also return same array type as is passed into align_args
+- Approaches landing heading improvement for ATR aircraft. 
+- python 2 & 3 compat: change from future to six
+- multistate.GearOnGround: align vertical speed if required
+- flight_phase.Climb: skip brief climbs
+  
+Fix:
+ - Airborne: fix gear on ground check for masked values
+ - A330 speedbrake parameters
+ - Trap for zero length slices in Heading Variation 300 To 50 Ft 
+ - Removal of ground track correction for go-arounds with imprecise navigation and no ILS reference.
+ - AccelerationNormalMinusLoadFactorThresholdAtTouchdown: Fix NoneType when getting Roll value.  
+ - AltitudeVisualizationWithoutGroundOffset: use max alt when there's no cruise phase. 
+ - TrackDeviationFromRunway prevent overlapping with previous approach 
+
+Docstring updates:
+ - stable approach
+ - altitude parameters revisited for completeness
+ 
+
 v0.32.2
 -------
 
