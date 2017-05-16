@@ -16950,14 +16950,12 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
         for tdwn in tdwns:
             # get index where airspeed is 60 Kts
             air_spd_end = index_at_value(airspeed.array.data, 60,
-                                         slice(tdwn.index, None))            
-            pitch_at_60_kts  = value_at_index(pitch.array, air_spd_end)
-            if pitch_at_60_kts:
-                pitch_ref = pitch_at_60_kts + 2
-                stop = index_at_value(pitch.array, pitch_ref,
-                                      slice(air_spd_end, None, -1))
-                duration = (stop - tdwn.index) / pitch.frequency
-                self.create_kpv(stop, duration)
+                                         slice(tdwn.index, None))
+            pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
+            stop = index_at_value(pitch.array, pitch_ref,
+                                  slice(air_spd_end, None, -1))
+            duration = (stop - tdwn.index) / pitch.frequency
+            self.create_kpv(stop, duration)
 
 
 ##############################################################################
