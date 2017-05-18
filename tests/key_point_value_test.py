@@ -117,6 +117,8 @@ from analysis_engine.key_point_values import (
     AirspeedGustsDuringFinalApproach,
     AirspeedMax,
     AirspeedMinsToTouchdown,
+    AirspeedMinusAirspeedSelectedFor3Sec500To20FtMax,
+    AirspeedMinusAirspeedSelectedFor3Sec1000To500FtMax,
     AirspeedMinusFlapManoeuvreSpeedWithFlapDuringDescentMin,
     AirspeedMinusMinimumAirspeedAbove10000FtMin,
     AirspeedMinusMinimumAirspeed35To10000FtMin,
@@ -3533,6 +3535,35 @@ class TestAirspeedMinusMinimumAirspeedDuringGoAroundMin(unittest.TestCase, Creat
             KeyPointValue(name=name, index=10, value=210),
             KeyPointValue(name=name, index=35, value=235),
         ]))
+
+
+########################################
+# Airspeed: Minus Airspeed Selected
+
+class TestAirspeedMinusAirspeedSelectedFor3Sec1000To500FtMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusAirspeedSelectedFor3Sec1000To500FtMax
+        self.operational_combinations = [('Airspeed Minus Airspeed Selected For 3 Sec', 'Altitude AAL For Flight Phases', 'HDF Duration')]
+        self.function = max_value
+        self.second_param_method_calls = [('slices_from_to', (1000, 500), {})]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
+
+
+class TestAirspeedMinusAirspeedSelectedFor3Sec500To20FtMax(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusAirspeedSelectedFor3Sec500To20FtMax
+        self.operational_combinations = [('Airspeed Minus Airspeed Selected For 3 Sec', 'Altitude AAL For Flight Phases', 'HDF Duration')]
+        self.function = max_value
+        self.second_param_method_calls = [('slices_from_to', (500, 20), {})]
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test Not Implemented')
 
 
 ########################################

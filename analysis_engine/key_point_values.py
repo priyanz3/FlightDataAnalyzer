@@ -2575,6 +2575,50 @@ class AirspeedMinusMinimumAirspeedDuringGoAroundMin(KeyPointValueNode):
 
 
 ########################################
+# Airspeed: Minus Airspeed Selected
+
+
+class AirspeedMinusAirspeedSelectedFor3Sec500To20FtMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus Airspeed Selected For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(500, 20), 3, self.frequency,
+                        hdf_duration),
+            max_value,
+        )
+
+
+class AirspeedMinusAirspeedSelectedFor3Sec1000To500FtMax(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus Airspeed Selected For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(1000, 500), 3, self.frequency,
+                        hdf_duration),
+            max_value,
+        )
+
+
+########################################
 # Airspeed: Relative
 
 
