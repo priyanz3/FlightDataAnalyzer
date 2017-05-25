@@ -334,6 +334,7 @@ from analysis_engine.key_point_values import (
     EngOilPressFor60SecDuringCruiseMax,
     EngOilPressMax,
     EngOilPressMin,
+    EngOilPressWarningDuration,
     EngOilQtyDuringTaxiInMax,
     EngOilQtyDuringTaxiOutMax,
     EngOilQtyMax,
@@ -10027,6 +10028,36 @@ class TestEngOilPressMin(unittest.TestCase):
         node = self.node_class()
         node.derive(oil_p, airborne)
         self.assertEqual(node, [])
+
+
+class TestEngOilPressWarningDuration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = EngOilPressWarningDuration
+        self.airborne = buildsection('Airborne', 2, 17)
+        self.oil_press_warn = M('Eng (*) Oil Press Warning',    
+                                np.ma.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                             1, 1, 1, 1, 1, 0, 0, 0, 0, 1]),
+                                values_mapping={0:'-', 1:'Warning'})
+        
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Eng Oil Press Warning Duration')
+        self.assertEqual(node.units, 's')
+        
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts),1)
+        self.assertIn('Eng (*) Oil Press Warning', opts[0])
+        self.assertIn('Airborne', opts[0])
+        
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(self.oil_press_warn, self.airborne)
+        
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 5)
+        self.assertEqual(node[0].index, 10)
 
 
 ##############################################################################
