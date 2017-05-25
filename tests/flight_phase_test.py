@@ -527,6 +527,18 @@ class TestApproach(unittest.TestCase):
         self.assertAlmostEqual(app[2].slice.start,26926, places=0)
         self.assertAlmostEqual(app[2].slice.stop, 27342, places=0)
 
+    def test_approach__helicopter_multiple(self):
+        alt_array = np.ma.array([1500]*5 + range(1500,50,-25) + range(50,1100,25) + range(1100,0,-25) + [0]*6)
+        alt = Parameter('Altitude AGL', alt_array)
+        app = Approach()
+        app.derive(helicopter, None, None, None, alt, alt)
+
+        self.assertEqual(len(app), 2)
+        self.assertAlmostEqual(app[0].slice.start,8, places=0)
+        self.assertAlmostEqual(app[0].slice.stop, 63, places=0)
+        self.assertAlmostEqual(app[1].slice.start,106.5, places=0)
+        self.assertAlmostEqual(app[1].slice.stop, 149, places=0)
+
 
 class TestAutorotation(unittest.TestCase):
 

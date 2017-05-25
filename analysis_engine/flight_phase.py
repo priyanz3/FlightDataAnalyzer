@@ -453,13 +453,13 @@ class Approach(FlightPhaseNode):
                 self.create_phase(low_alt)
 
     def _derive_helicopter(self, alt_agl, alt_std):
-        apps = slices_from_to(alt_agl.array, 500, 100, threshold=1.0)
-        for app in apps[1]:
+        _, apps = slices_from_to(alt_agl.array, 500, 100, threshold=1.0)
+        for app, next_app in zip(apps, apps[1:]+[slice(None)]):
             begin = peak_curvature(alt_std.array,
                                    _slice=slice(app.start, app.start - 300 * alt_std.frequency, -1),
                                    curve_sense='Convex')
             end = index_at_value(alt_agl.array, 0.0,
-                                 _slice=slice(app.stop, None),
+                                 _slice=slice(app.stop, next_app.start),
                                  endpoint='first_closing')
             self.create_phase(slice(begin, end))
 
