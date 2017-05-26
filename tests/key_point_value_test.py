@@ -265,7 +265,7 @@ from analysis_engine.key_point_values import (
     EngEPRFor5SecDuringMaximumContinuousPowerMax,
     EngEPRFor5SecDuringTakeoff5MinRatingMax,
     EngFireWarningDuration,
-    EngGasTempAboveNormalMaxLimitDuringTakeoffDuration,
+    EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration,
     EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration,
     EngGasTempDuringEngStartForXSecMax,
     EngGasTempDuringEngStartMax,
@@ -9154,13 +9154,13 @@ class TestEngGasTempExceededEngGasTempRedlineDuration(unittest.TestCase):
         self.assertEqual(node[0].name, 'Eng Gas Temp Exceeded Eng Gas Temp Redline Duration')
 
 
-class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
+class TestEngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = EngGasTempAboveNormalMaxLimitDuringTakeoffDuration
+        self.node_class = EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration
 
     def test_can_operate(self):
-        nodes = ('Eng (1) Gas Temp', 'Takeoff')
+        nodes = ('Eng (1) Gas Temp', 'Takeoff 5 Min Rating')
         engine = A('Engine Series', value='CFM56-5A')
         self.assertFalse(self.node_class.can_operate(nodes, eng_series=engine))
         engine = A('Engine Series', value='CFM56-3')
@@ -9172,7 +9172,7 @@ class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
         y = np.sin(2*2*np.pi*x)+2
         egt_array = np.ma.array(y*440)
         egt = P(name='Eng (2) Gas Temp', array=egt_array)
-        takeoffs = buildsection('Takeoff', None, 80)
+        takeoffs = buildsection('Takeoff 5 Min Rating', None, 80)
 
         node = self.node_class()
         node.derive(None, egt, None, None, takeoffs)
@@ -9183,7 +9183,7 @@ class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertAlmostEqual(node[0].value, expected, delta=1)
         self.assertAlmostEqual(node[0].index, 1, delta=1)
-        self.assertEqual(node[0].name, 'Eng (2) Gas Temp Above Normal Max Limit During Takeoff Duration')
+        self.assertEqual(node[0].name, 'Eng (2) Gas Temp Above Normal Max Limit During Takeoff 5 Min Rating Duration')
 
 
 class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unittest.TestCase):

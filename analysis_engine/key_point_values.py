@@ -9281,7 +9281,7 @@ class EngGasTempExceededEngGasTempRedlineDuration(KeyPointValueNode):
                 self.create_kpvs_where(egt_diff > 0, self.hz)
 
 
-class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
+class EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration(KeyPointValueNode):
     '''
     Total duration Engine Gas Temperature is above maintenance limit During
     Takeoff. Limit depends on type of engine.
@@ -9291,7 +9291,7 @@ class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
     TODO: extend for engines other than CFM56-3
     '''
 
-    NAME_FORMAT = 'Eng (%(number)d) Gas Temp Above Normal Max Limit During Takeoff Duration'
+    NAME_FORMAT = 'Eng (%(number)d) Gas Temp Above Normal Max Limit During Takeoff 5 Min Rating Duration'
     NAME_VALUES = NAME_VALUES_ENGINE
     units = ut.SECOND
 
@@ -9300,14 +9300,14 @@ class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
         gas_temps = any_of(('Eng (%d) Gas Temp' % n for n in range(1, 5)), available)
         engine_series = eng_series and eng_series.value == 'CFM56-3'
 
-        return gas_temps and engine_series and 'Takeoff' in available
+        return gas_temps and engine_series and 'Takeoff 5 Min Rating' in available
 
     def derive(self,
                eng1=P('Eng (1) Gas Temp'),
                eng2=P('Eng (2) Gas Temp'),
                eng3=P('Eng (3) Gas Temp'),
                eng4=P('Eng (4) Gas Temp'),
-               takeoffs=S('Takeoff'),
+               takeoffs=S('Takeoff 5 Min Rating'),
                eng_series=A('Engine Series')):
 
         limit = 930
