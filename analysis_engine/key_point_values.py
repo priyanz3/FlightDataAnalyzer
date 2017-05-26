@@ -10439,6 +10439,23 @@ class EngOilPressWarningDuration(KeyPointValueNode):
                                phase=airborne)
 
 
+class EngOilPressLowRedlineExceededDuration(KeyPointValueNode):
+    '''
+    For aircraft with Engine Oil Press Low Redline Exceeded paramater, this
+    keypoint value measures the duration of the warning for any engine.
+    '''
+
+    units = ut.SECOND
+
+    def derive(self, press_low_1=M('Eng (1) Oil Press Low Redline Exceeded'),
+               press_low_2=M('Eng (2) Oil Press Low Redline Exceeded')):
+
+        press_low = vstack_params_where_state((press_low_1, 'Exceeded'),
+                                              (press_low_2, 'Exceeded'))
+        self.create_kpvs_where(press_low.any(axis=0) == True,
+                               frequency=press_low_1.frequency)
+
+
 ##############################################################################
 # Engine Oil Quantity
 

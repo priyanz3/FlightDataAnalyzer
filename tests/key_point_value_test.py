@@ -335,6 +335,7 @@ from analysis_engine.key_point_values import (
     EngOilPressMax,
     EngOilPressMin,
     EngOilPressWarningDuration,
+    EngOilPressLowRedlineExceededDuration,
     EngOilQtyDuringTaxiInMax,
     EngOilQtyDuringTaxiOutMax,
     EngOilQtyMax,
@@ -10058,6 +10059,54 @@ class TestEngOilPressWarningDuration(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 5)
         self.assertEqual(node[0].index, 10)
+
+
+class TestEngOilPressLowRedlineExceededDuration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = EngOilPressLowRedlineExceededDuration
+        self.values_mapping = {0:'-', 1:'Exceeded'}
+        self.press_low_1 = M('Eng (1) Oil Press Low Redline Exceeded',
+                             np.ma.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 1, 1, 1, 1, 1, 0, 0, 0]),
+                             values_mapping=self.values_mapping)
+        self.press_low_2 = M('Eng (2) Oil Press Low Redline Exceeded',
+                             np.ma.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          1, 1, 1, 1, 1, 0, 0, 0, 0, 0]),
+                             values_mapping=self.values_mapping)
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Eng Oil Press Low Redline Exceeded Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Eng (1) Oil Press Low Redline Exceeded', opts[0])
+        self.assertIn('Eng (2) Oil Press Low Redline Exceeded', opts[0])
+
+    def test_derive_overlapping(self):
+        node = self.node_class()
+        node.derive(self.press_low_1, self.press_low_2)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 7)
+        self.assertEqual(node[0].index, 10)
+
+    def test_derive_no_warnings(self):
+        press_low_1 = M('Eng (1) Oil Press Low Redline Exceeded',
+                        np.ma.array([0]*20),
+                        values_mapping=self.values_mapping)
+        press_low_2 = M('Eng (2) Oil Press Low Redline Exceeded',
+                        np.ma.array([0]*20),
+                        values_mapping=self.values_mapping)
+
+        node = self.node_class()
+        node.derive(press_low_1, press_low_2)
+
+        self.assertEqual(len(node), 0)
 
 
 ##############################################################################
