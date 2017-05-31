@@ -493,6 +493,7 @@ from analysis_engine.key_point_values import (
     CruiseSpeedLowDuration,
     DegradedPerformanceCautionDuration,
     AirspeedIncreaseAlertDuration,
+    AirspeedBelowMinimumAirspeedDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -16467,6 +16468,105 @@ class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
         self.node_class = AirspeedIncreaseAlertDuration
         self.values_mapping = {0: '-', 1: 'Alert'}
         self.basic_setup()
+
+
+class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = AirspeedBelowMinimumAirspeedDuration
+        self.air_spd = P('Airspeed',
+                         np.ma.array([
+                             170, 170, 171, 172, 172, 172, 174, 174, 175, 176,
+                             176, 176, 177, 177, 178, 178, 178, 178, 178, 178,
+                             178, 178, 177, 176, 175, 174, 172, 172, 172, 168,
+                             168, 168, 166, 166, 165, 165, 166, 167, 169, 171,
+                             174, 178, 182, 184, 188, 190, 194, 196, 198, 200,
+                             202, 206, 208, 211, 213, 214, 216, 217, 218, 220,
+                             220, 221, 221, 222, 222, 224, 224
+                         ]))
+        self.f_m_spd = P('Flap Manoeuvre Speed',
+                         np.ma.array([
+                             156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196
+                         ], mask=[False]*40 + [True]*27))
+        self.flap = M('Flap',
+                      np.ma.array([
+                          5, 5, 5, 5, 1, 1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0
+                          ]),
+                      values_mapping={0:"0", 1: "1", 5: "5", 15: "15",
+                                      20: "20", 25: "25", 30: "30"})
+        self.airborne = buildsection('Airborne', 0, 66)        
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 's')
+        self.assertEqual(node.name, 'Airspeed Below Minimum Airspeed Duration')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3) 
+        for opt in opts:
+            self.assertIn('Airspeed', opt)
+            self.assertIn('Airborne', opt)
+            self.assertIn('Flap', opt)
+            self.assertTrue(any_of(['Flap Manoeuvre Speed','Minimum Airspeed'],
+                                   opt))
+
+    def test_derive_flap_manoeuvre_speed(self):
+        '''
+        If Minimum Airspeed isn't available use Flap Manoeuvre Speed
+        Data from the example flight in the ticket. Duration: 19, Index 28
+        '''
+
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                    min_spd=None,
+                    flap=self.flap,
+                    f_m_spd=self.f_m_spd,
+                    airborne=self.airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 19)
+
+    def test_derive_minimum_airspeed(self):
+        '''
+        Use the Minimum Airspeed parameter along with Flap Manoeuvre Speed.
+        Should use Minimum Speed over Flap Manoeuvre Speed and test should
+        be 2 less than kpv from test_derive_flap_manoeuvre_speed
+        Duration: 17, Index 28
+        '''
+        min_spd = P('Minimum Speed',
+                    np.ma.array([
+                        156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
+                        176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
+                        176, 176, 176, 176, 176, 176, 190, 190, 190, 190,
+                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                        190, 190, 190, 190, 190, 190, 190
+                    ]))
+
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                        min_spd=min_spd,
+                        flap=self.flap,
+                        f_m_spd=self.f_m_spd,
+                        airborne=self.airborne)
+    
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 17)
 
 
 ##############################################################################

@@ -15529,6 +15529,42 @@ class AirspeedIncreaseAlertDuration(KeyPointValueNode):
                                airborne)
 
 
+class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
+    '''
+    Duration in which the Airspeed is below Minimum Airspeed in clean
+    configuration. 
+    
+    If no Minimum Airspeed parameter, KPV will use the Flap and 
+    Flap Manoeuvre Speed
+    '''
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available):
+        core = all_of(['Airspeed', 'Airborne', 'Flap'], available)
+        min_spd = any_of(['Minimum Airspeed', 'Flap Manoeuvre Speed'],
+                         available)
+        return core and min_spd
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               min_spd=P('Minimum Airspeed'),
+               flap = M('Flap'),
+               f_m_spd = P('Flap Manoeuvre Speed'),
+               airborne = S('Airborne')):
+        mspd = min_spd or f_m_spd
+        if mspd.name == 'Minimum Airspeed':
+            slow_spd = runs_of_ones((air_spd.array - mspd.array) < 0)
+        else:
+            # Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
+            # raw data
+            slices = slices_and(
+                clump_multistate(flap.array, '0', airborne.get_slices()),
+                runs_of_ones((air_spd.array - mspd.array.data) < 0)
+            )
+        self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
+
+
 ##############################################################################
 # Tail Clearance
 
