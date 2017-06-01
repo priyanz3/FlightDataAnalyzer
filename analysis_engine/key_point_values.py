@@ -15554,14 +15554,15 @@ class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
                airborne = S('Airborne')):
         mspd = min_spd or f_m_spd
         if mspd.name == 'Minimum Airspeed':
-            slow_spd = runs_of_ones((air_spd.array - mspd.array) < 0)
+            spd_slices = runs_of_ones((air_spd.array - mspd.array) < 0)
         else:
             # Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
             # raw data
-            slices = slices_and(
-                clump_multistate(flap.array, '0', airborne.get_slices()),
-                runs_of_ones((air_spd.array - mspd.array.data) < 0)
-            )
+            spd_slices = runs_of_ones((air_spd.array - mspd.array.data) < 0)
+        slices = slices_and(
+            clump_multistate(flap.array, '0', airborne.get_slices()),
+            spd_slices
+        )
         self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
 
 

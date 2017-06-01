@@ -16493,6 +16493,16 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
                              196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
                              196, 196, 196, 196, 196, 196, 196
                          ], mask=[False]*40 + [True]*27))
+        self.min_spd = P('Minimum Airspeed',
+                         np.ma.array([
+                             156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190
+                         ]))
         self.flap = M('Flap',
                       np.ma.array([
                           5, 5, 5, 5, 1, 1, 1, 1, 1, 1,
@@ -16527,7 +16537,6 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
         If Minimum Airspeed isn't available use Flap Manoeuvre Speed
         Data from the example flight in the ticket. Duration: 19, Index 28
         '''
-
         node = self.node_class()
         node.derive(air_spd=self.air_spd,
                     min_spd=None,
@@ -16541,29 +16550,35 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
 
     def test_derive_minimum_airspeed(self):
         '''
-        Use the Minimum Airspeed parameter along with Flap Manoeuvre Speed.
-        Should use Minimum Speed over Flap Manoeuvre Speed and test should
-        be 2 less than kpv from test_derive_flap_manoeuvre_speed
+        Use just the Minimum Airspeed parameter. The test should
+        be 2 less than the kpv from test_derive_flap_manoeuvre_speed
         Duration: 17, Index 28
         '''
-        min_spd = P('Minimum Speed',
-                    np.ma.array([
-                        156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
-                        176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
-                        176, 176, 176, 176, 176, 176, 190, 190, 190, 190,
-                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
-                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
-                        190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
-                        190, 190, 190, 190, 190, 190, 190
-                    ]))
-
         node = self.node_class()
         node.derive(air_spd=self.air_spd,
-                        min_spd=min_spd,
-                        flap=self.flap,
-                        f_m_spd=self.f_m_spd,
-                        airborne=self.airborne)
-    
+                    min_spd=self.min_spd,
+                    flap=self.flap,
+                    f_m_spd=None,
+                    airborne=self.airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 17)
+
+    def test_derive_both_speed_param(self):
+        '''
+        Uses Minimum Airspeed parameter and Flap Manoeuvre Speed. The KPV
+        should use Minimum Speed over Flap Manoeuvre Speed. The test should
+        be 2 less than the kpv from test_derive_flap_manoeuvre_speed
+        Duration: 17, Index 28
+        '''
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                    min_spd=self.min_spd,
+                    flap=self.flap,
+                    f_m_spd=self.f_m_spd,
+                    airborne=self.airborne)
+
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 28)
         self.assertEqual(node[0].value, 17)
