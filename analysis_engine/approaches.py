@@ -143,7 +143,7 @@ class ApproachInformation(ApproachNode):
     def _lookup_airport_and_runway(self, _slice, precise, lowest_lat,
                                    lowest_lon, lowest_hdg, appr_ils_freq,
                                    land_afr_apt=None, land_afr_rwy=None,
-                                   hint='approach'):
+                                   hint='approach', ac_type=aeroplane):
         handler = api.get_handler(settings.API_HANDLER)
         kwargs = {}
         airport, runway, match = None, None, None
@@ -164,7 +164,7 @@ class ApproachInformation(ApproachNode):
                 if land_afr_apt and land_afr_apt.value['id'] in airport_info:
                     # use afr airprot
                     match = airport_info[land_afr_apt.value['id']]
-                elif land_afr_apt and precise:
+                elif land_afr_apt and precise and ac_type != helicopter:
                     # raise error as afr and flight data do not match
                     msg = "'%s' provided by AFR is not in list of aiports within range of %s, %s. Aircraft has precise positioning"\
                         % (land_afr_apt.value['code'], lowest_lat, lowest_lon)
@@ -367,6 +367,7 @@ class ApproachInformation(ApproachNode):
                 lowest_lon=lowest_lon,
                 lowest_hdg=lowest_hdg,
                 appr_ils_freq=None,
+                ac_type=ac_type,
             )
 
             # If the approach is a landing, pass through information from the
