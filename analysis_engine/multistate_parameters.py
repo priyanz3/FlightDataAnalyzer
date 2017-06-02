@@ -401,6 +401,8 @@ class Configuration(MultistateDerivedParameterNode):
     Note: Does not use the Flap Lever position. This parameter reflects the
     actual configuration state of the aircraft rather than the intended state
     represented by the selected lever position.
+    
+    Note: Flap Lever position used for A330/A340 to improve CONF 1* and CONF 2* detection.
 
     Note: Values that do not map directly to a required state are masked
     ''' % pformat(at.constants.AVAILABLE_CONF_STATES)
@@ -419,7 +421,14 @@ class Configuration(MultistateDerivedParameterNode):
 
         if not all_of(('Slat', 'Flap', 'Model', 'Series', 'Family'), available):
             return False
-
+        
+        has_flap_relief = all_of(('Flap Relief Engaged', 'Flap Lever', 'Slat', 'Flap', 'Model', 'Series', 'Family'), available)
+        is_a340 = series and series.value in ('A340-300', 'A340-500')
+        is_a330 = family and family.value in ('A330')
+        
+        if (is_a340 or is_a330) and has_flap_relief:
+            return True
+            
         try:
             at.get_conf_angles(model.value, series.value, family.value)
         except KeyError:
@@ -430,11 +439,13 @@ class Configuration(MultistateDerivedParameterNode):
         return True
 
     def derive(self, slat=M('Slat'), flap=M('Flap'), flaperon=M('Flaperon'),
-               model=A('Model'), series=A('Series'), family=A('Family')):
+               model=A('Model'), series=A('Series'), family=A('Family'), 
+               relief=M('Flap Relief Engaged'), lever=M('Flap Lever')):
 
         angles = at.get_conf_angles(model.value, series.value, family.value)
         self.array = MappedArray(np_ma_masked_zeros_like(flap.array, dtype=np.short),
                                  values_mapping=self.values_mapping)
+
         for (state, (s, f, a)) in six.iteritems(angles):
             condition = (flap.array == f)
             if s is not None:
@@ -445,8 +456,17 @@ class Configuration(MultistateDerivedParameterNode):
 
         # Repair the mask to smooth out transitions:
         nearest_neighbour_mask_repair(self.array, copy=False,
-                                      repair_gap_size=(30 * self.hz),
-                                      direction='backward')
+                                          repair_gap_size=(30 * self.hz),
+                                          direction='backward')
+        
+        # Check if A330 or A340-300/500 and derive CONF 1* or CONF 2* from flap lever position and flap relief state
+        is_a340 = series and series.value in ('A340-300', 'A340-500')
+        is_a330 = family and family.value in ('A330')
+
+        if (is_a340 or is_a330) and relief and lever:
+            self.array[(lever.array == "Lever 2") & (relief.array == "Engaged")] = '1*'
+            if is_a330:
+                self.array[(lever.array == "Lever 3") & (relief.array == "Engaged")] = '2*'
 
 
 class Daylight(MultistateDerivedParameterNode):
