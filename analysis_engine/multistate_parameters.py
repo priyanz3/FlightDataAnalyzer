@@ -438,9 +438,9 @@ class Configuration(MultistateDerivedParameterNode):
 
         return True
 
-    def derive(self, slat=M('Slat'), flap=M('Flap'), flaperon=M('Flaperon'),
-               model=A('Model'), series=A('Series'), family=A('Family'), 
-               relief=M('Flap Relief Engaged'), lever=M('Flap Lever')):
+    def derive(self, slat=M('Slat'), flap=M('Flap'), flaperon=M('Flaperon'), 
+               relief=M('Flap Relief Engaged'), lever=M('Flap Lever'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
 
         angles = at.get_conf_angles(model.value, series.value, family.value)
         self.array = MappedArray(np_ma_masked_zeros_like(flap.array, dtype=np.short),

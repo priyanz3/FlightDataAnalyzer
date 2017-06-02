@@ -744,7 +744,7 @@ class TestConfiguration(unittest.TestCase, NodeTest):
         flap = M('Flap', np.ma.array(f), values_mapping=z(f))
         ails = M('Flaperon', np.ma.array(a), values_mapping=z(a))
         node = self.node_class()
-        node.derive(slat, flap, ails, *attributes)
+        node.derive(slat, flap, ails, None, None, *attributes)
         attributes = (a.value for a in attributes)
         at.get_conf_angles.assert_called_once_with(*attributes)
         self.assertEqual(node.values_mapping, AVAILABLE_CONF_STATES)
@@ -799,7 +799,7 @@ class TestConfiguration(unittest.TestCase, NodeTest):
         })
         
         node = self.node_class()
-        node.derive(slat, flap, ails, _am, _as, _af, relief=relief, lever=lever)
+        node.derive(slat, flap, ails, relief, lever, *attributes)
         
         np.testing.assert_array_equal(node.array, configuration.array)
         
@@ -849,10 +849,9 @@ class TestConfiguration(unittest.TestCase, NodeTest):
         })
         
         node = self.node_class()
-        node.derive(slat, flap, ails, _am, _as, _af, relief=relief, lever=lever)
+        node.derive(slat, flap, ails, relief, lever, *attributes)
         
-        np.testing.assert_array_equal(node.array, configuration.array)
-
+        np.testing.assert_array_equal(node.array, configuration.array)        
 
 class TestDaylight(unittest.TestCase):
     def test_can_operate(self):
