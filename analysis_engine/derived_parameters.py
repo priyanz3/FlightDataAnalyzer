@@ -1203,11 +1203,11 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
                 (('Altitude STD' in available) or
                  all_of(('Altitude STD (Capt)', 'Altitude STD (FO)'), available)))
 
-    def derive(self, fine = P('Altitude STD (Fine)'),
-               alt = P('Altitude STD'),
-               alt_capt = P('Altitude STD (Capt)'),
-               alt_fo = P('Altitude STD (FO)'),
-               frame = A('Frame')):
+    def derive(self, fine=P('Altitude STD (Fine)'),
+               alt=P('Altitude STD'),
+               alt_capt=P('Altitude STD (Capt)'),
+               alt_fo=P('Altitude STD (FO)'),
+               frame=A('Frame')):
 
         frame_name = frame.value if frame else ''
 

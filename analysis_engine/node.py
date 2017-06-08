@@ -2169,6 +2169,8 @@ class KeyPointValueNode(FormattedNameNode):
 
         for _slice in slices:
             start = _slice.start or 0
+            if _slice.stop is not None and _slice.stop == _slice.start:
+                continue # e.g. if section is aligned to lower frequency
             # NOTE: TypeError: 'bool' object is not subscriptable:
             #     If condition is False check Values Mapping has correct
             #     state being checked against in condition.

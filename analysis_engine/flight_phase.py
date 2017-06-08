@@ -1866,14 +1866,9 @@ class TakeoffRollOrRejectedTakeoff(FlightPhaseNode):
                trolls=S('Takeoff Roll'),
                rtoffs=S('Rejected Takeoff'),
                helo_toffs=S('Transition Hover To Flight')):
-        phases = []
-        if trolls:
-            phases.extend([s.slice for s in trolls])
-        if rtoffs:
-            phases.extend([s.slice for s in rtoffs])
-        if helo_toffs:
-            phases.extend([s.slice for s in helo_toffs])
-        self.create_phases(phases, name= "Takeoff Roll Or Rejected Takeoff")
+        self.create_phases(
+            [s.slice for n in (trolls, rtoffs, helo_toffs) if n for s in n],
+            name= "Takeoff Roll Or Rejected Takeoff")
 
 
 class TakeoffRotation(FlightPhaseNode):
