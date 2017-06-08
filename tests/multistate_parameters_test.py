@@ -2334,6 +2334,26 @@ class TestGearOnGround(unittest.TestCase):
         np.testing.assert_array_equal(wow.array, [0,0,0,1])
         self.assertEqual(wow.frequency, 1.0)
         self.assertAlmostEqual(wow.offset, 0.7)
+        
+    def test_derive__columbia234(self):
+        vert_spd = load(os.path.join(test_data_path, "gear_on_ground__columbia234_vert_spd.nod"))
+        torque = load(os.path.join(test_data_path, "gear_on_ground__columbia234_torque.nod"))
+        ac_series = A("Series", value="Columbia 234")
+        wow=GearOnGround()
+        wow.derive(None, None, vert_spd, torque, helicopter, ac_series)
+        self.assertTrue(all(wow.array[10:253] == 'Ground'))
+        self.assertTrue(all(wow.array[254:540] == 'Air'))
+        self.assertTrue(all(wow.array[1040:1200] == 'Air'))
+        self.assertTrue(all(wow.array[1420:1440] == 'Air'))
+        self.assertTrue(all(wow.array[1533:1550] == 'Ground'))
+        self.assertTrue(all(wow.array[1615:1622] == 'Air'))
+        #self.assertTrue(all(wow.array[1696:1730] == 'Ground'))
+        #self.assertTrue(all(wow.array[1900:2150] == 'Air'))
+        self.assertTrue(all(wow.array[2350:2385] == 'Air'))
+        self.assertTrue(all(wow.array[2550:2750] == 'Air'))
+        self.assertTrue(all(wow.array[2900:3020] == 'Air'))
+        self.assertTrue(all(wow.array[3366:3376] == 'Air'))
+        self.assertTrue(all(wow.array[3425:3680] == 'Ground')) 
 
 
 class TestGearDownSelected(unittest.TestCase):
