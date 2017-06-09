@@ -1872,17 +1872,18 @@ class GearOnGround(MultistateDerivedParameterNode):
             torque_limit = 30.0
             if ac_series and ac_series.value == 'Columbia 234':
                 vert_spd_limit = 125.0
-                torque_limit = 22.0             
+                torque_limit = 22.0
             vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
             # Introducted for S76 and Bell 212 which do not have Gear On Ground available
+            vert_spd_array = moving_average(vert_spd_array)
+            torque_array = moving_average(torque.array)
             grounded = slices_and(runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1), 
-                                  runs_of_ones(torque.array < torque_limit, min_samples=1))
+                                  runs_of_ones(torque_array < torque_limit, min_samples=1))
             array = np_ma_zeros_like(vert_spd.array)
             for _slice in slices_remove_small_slices(grounded, count=2):
                 array[_slice] = 1
-            self.array = array
-            #self.array = np.ma.logical_and(np.ma.where(abs(vert_spd_array) < vert_spd_limit, True, False),
-                                           #np.ma.where(torque.array < torque_limit, True, False))
+            array.mask = vert_spd_array.mask | torque_array.mask
+            self.array = nearest_neighbour_mask_repair(array)
             self.frequency = torque.frequency
             self.offset = torque.offset
         else:
