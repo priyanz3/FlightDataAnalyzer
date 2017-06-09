@@ -12449,9 +12449,10 @@ class GroundspeedWithThrustReversersDeployedMin(KeyPointValueNode):
                tr=M('Thrust Reversers'),
                eng_epr=P('Eng (*) EPR Max'),
                eng_n1=P('Eng (*) N1 Max'),
-               landings=S('Landing')):
+               landings=S('Landing'),
+               recorded_n1=P('Eng (1) N1')):
 
-        if eng_epr and eng_epr.frequency > (eng_n1.frequency if eng_n1 else 0):
+        if eng_epr and eng_epr.frequency >= (recorded_n1.frequency if recorded_n1 else 0):
             power = eng_epr
             threshold = REVERSE_THRUST_EFFECTIVE_EPR
         else:
@@ -12468,7 +12469,6 @@ class GroundspeedWithThrustReversersDeployedMin(KeyPointValueNode):
             # handle difference in frequencies
             high_rev = thrust_reversers_working(landing, power, tr, threshold)
             self.create_kpvs_within_slices(gnd_spd.array, high_rev, min_value)
-
 
 class GroundspeedStabilizerOutOfTrimDuringTakeoffMax(KeyPointValueNode):
     '''
