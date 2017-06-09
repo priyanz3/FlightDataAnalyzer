@@ -1487,20 +1487,16 @@ class TestGearRetracting(unittest.TestCase):
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts,[
-                         ('Gear Up Selected', 'Gear Up', 'Airborne')])
+                         ('Gear Up In Transit', 'Airborne')])
 
     def test_derive(self):
-        gear_down = M('Gear Up', np.ma.array([0,0,0,0,1,1,1,1,1,0,0,0]),
-                      values_mapping={0:'Down', 1:'Up'})
-        gear_up_sel = M('Gear Up Selected',
-                        np.ma.array([0,0,1,1,1,1,1,0,0,0,0,0]),
-                        values_mapping={0:'Down', 1:'Up'})
-        airs = buildsection('Airborne', 1, 11)
-
+        up_trans = M('Gear Up In Transit', array=np.ma.array([0]*5 + [1]*10 + [0]*45),
+                      values_mapping={0: '-', 1: 'Retracting'})
+        airs = buildsection('Airborne', 2, 58)
 
         node = self.node_class()
-        node.derive(gear_up_sel, gear_down, airs)
-        expected=buildsection('Gear Retracting', 2, 4)
+        node.derive(up_trans, airs)
+        expected=buildsection('Gear Retracting', 5, 15)
         self.assertEqual(node.get_slices(), expected.get_slices())
 
 
@@ -2485,21 +2481,18 @@ class TestGearExtending(unittest.TestCase):
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
         self.assertEqual(opts,[
-                         ('Gear Down Selected', 'Gear Down', 'Airborne')])
+                         ('Gear Down In Transit', 'Airborne')])
 
 
     def test_derive(self):
-        gear_down = M('Gear Down', np.ma.array([1,1,1,1,0,0,0,0,0,1,1,1]),
-                      values_mapping={0:'Up', 1:'Down'})
-        gear_down_sel = M('Gear Down Selected',
-                        np.ma.array([1,1,0,0,0,0,0,1,1,1,1,1]),
-                        values_mapping={0:'Up', 1:'Down'})
-        airs = buildsection('Airborne', 1, 11)
+        down_transit = M('Gear Down In Transit', array=np.ma.array([0]*45 + [1]*10 + [0]*5),
+                 values_mapping={0: '-', 1: 'Extending'})
+        airs = buildsection('Airborne', 2, 58)
 
 
         node = self.node_class()
-        node.derive(gear_down_sel, gear_down, airs)
-        expected=buildsection('Gear Extending', 7, 9)
+        node.derive(down_transit, airs)
+        expected=buildsection('Gear Extending', 45, 55)
         self.assertEqual(node.get_slices(), expected.get_slices())
 
 

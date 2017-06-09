@@ -33,6 +33,7 @@ from analysis_engine.library import (
     including_transition,
     index_at_value,
     index_closest_value,
+    first_valid_parameter,
     mask_inside_slices,
     merge_masks,
     merge_two_parameters,
@@ -44,7 +45,9 @@ from analysis_engine.library import (
     repair_mask,
     runs_of_ones,
     second_window,
+    slice_duration,
     slices_and,
+    slices_and_not,
     slices_from_to,
     slices_remove_small_gaps,
     slices_remove_small_slices,
@@ -1417,9 +1420,6 @@ class GearDown(MultistateDerivedParameterNode):
 
     If Gear (*) Down is not recorded, it will be created from Gear Down
     Selected which is from the cockpit lever.
-
-    TODO: Add a transit delay (~10secs) to the selection to when the gear is
-    down.
     '''
 
     align = False
@@ -1431,31 +1431,301 @@ class GearDown(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        gear_downs = ('Gear (L) Down', 'Gear (N) Down', 'Gear (R) Down', 'Gear Down Selected')
-        return any_of(gear_downs, available) or all_of(('Gear Up', 'Gear In Transit'), available)
+        combine_gears = any_of(('Gear (L) Down', 'Gear (N) Down', 'Gear (R) Down', 'Gear (C) Down'), available)
+        gear_lever = all_of(('Gear Down Selected', 'Gear Down In Transit'), available)
+        return 'Gear Position' in available or combine_gears or gear_lever
 
     def derive(self,
                gl=M('Gear (L) Down'),
                gn=M('Gear (N) Down'),
                gr=M('Gear (R) Down'),
-               gear_up=M('Gear Up'),
-               gear_transit=M('Gear In Transit'),
-               gear_sel=M('Gear Down Selected')):
+               gc=M('Gear (C) Down'),
+               gear_transit=M('Gear Down In Transit'),
+               gear_sel=M('Gear Down Selected'),
+               gear_pos=M('Gear Position')):
         # Join all available gear parameters and use whichever are available.
-        if gl or gn or gr:
+        if gl or gn or gr or gc:
             self.array = vstack_params_where_state(
                 (gl, 'Down'),
                 (gn, 'Down'),
                 (gr, 'Down'),
-            ).any(axis=0)
-        elif gear_up and gear_transit:
-            not_up = vstack_params_where_state(
-                (gear_up, 'Up'),
-                (gear_transit, 'In Transit'),
-            ).any(axis=0)
-            self.array = ~not_up
-        else:  # gear_sel
-            self.array = gear_sel.array
+                (gc, 'Down'),
+            ).all(axis=0)
+        elif gear_sel and gear_transit:
+            gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
+            self.array = (gear_sel_array == 'Down') & ~(gear_transit.array == 'Extending')
+        else:
+            self.array = gear_pos.array == 'Down'
+
+
+class GearDownInTransit(MultistateDerivedParameterNode):
+    '''
+
+    '''
+
+    values_mapping = {
+        0: '-',
+        1: 'Extending',
+    }
+
+    @classmethod
+    def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
+        # Can operate with a any combination of parameters available
+        gear_transits = ('Gear (L) Down In Transit', 'Gear (N) Down In Transit', 'Gear (R) Down In Transit', 'Gear (C) Down In Transit')
+        gears_available = any_of(gear_transits, available) \
+            or all_of(('Gear Down', 'Gear Down Selected'), available) \
+            or all_of(('Gear Up', 'Gear Down'), available) \
+            or all_of(('Gear Down Selected', 'Gear In Transit'), available) \
+            or all_of(('Gear Up', 'Gear In Transit'), available) \
+            or all_of(('Gear Down', 'Gear In Transit'), available) \
+            or all_of(('Gear Down Selected', 'Gear (*) Red Warning'), available) \
+            or all_of(('Gear Up', 'Gear (*) Red Warning'), available) \
+            or all_of(('Gear Down', 'Gear (*) Red Warning'), available) \
+            or 'Gear Position' in available
+
+        if gears_available:
+            return True
+
+        if all_of(('Model', 'Series', 'Family'), available) \
+           and any_of(('Gear Down Selected', 'Gear Up', 'Gear Down'), available):
+            # Check dependancies before checking if transition times are available to save necessary lookups
+            if model and series and family:
+                try:
+                    at.get_gear_transition_times(model.value, series.value, family.value)
+                except KeyError:
+                    cls.exception("No gear transition times available for '%s', '%s', '%s'.",
+                                  model.value, series.value, family.value)
+                    return False
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
+
+    def derive(self,
+               gear_L=M('Gear (L) Down In Transit'),
+               gear_N=M('Gear (N) Down In Transit'),
+               gear_R=M('Gear (R) Down In Transit'),
+               gear_C=M('Gear (C) Down In Transit'),
+               gear_down=M('Gear Down'),
+               gear_up=M('Gear Up'),
+               gear_down_sel=M('Gear Down Selected'),
+               gear_in_transit=M('Gear In Transit'),
+               gear_red=M('Gear (*) Red Warning'),
+               gear_position=M('Gear Position'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
+
+        combine_params = [(x, 'Extending') for x in (gear_L, gear_R, gear_N, gear_C) if x]
+        if len(combine_params):
+            self.array = vstack_params_where_state(*combine_params).any(axis=0)
+            return
+
+        gear_sels = gear_ups = gear_downs = runs = []
+        self.array = np_ma_zeros_like(first_valid_parameter(gear_down, gear_up, gear_down_sel, gear_position).array)
+
+        # work out fallback
+        extend_duration = 0
+        if model and series and family:
+            extend_duration, _ = at.get_gear_transition_times(model.value, series.value, family.value)
+        fallback = extend_duration * self.frequency
+
+        # find stating points.
+        if gear_down:
+            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array))
+        if gear_up:
+            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array), change='leaving')
+        if gear_down_sel:
+            gear_sels = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down_sel.array))
+
+        # create slices indicating Gear Extending
+        if gear_position:
+            downs = find_edges_on_state_change('Down', gear_position.array)
+            transits = find_edges_on_state_change('In Transit', gear_position.array)
+            for stop in downs:
+                start = math.ceil(max(x for x in transits if x < stop))
+                runs.append(slice(start, stop+1))
+        elif gear_down and gear_up:
+            for start, stop in zip(gear_ups, gear_downs):
+                runs.append(slice(start, stop+1))
+        elif gear_down and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array))
+            for stop in gear_downs:
+                start = math.ceil(max(x for x in transits if x < stop))
+                _slice = slice(math.ceil(start), stop+1)
+                if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
+                    _slice = slice(math.ceil(stop-fallback), stop+1)
+                runs.append(_slice)
+        elif gear_down and gear_down_sel:
+            for stop in gear_downs:
+                start = math.ceil(max(x for x in gear_sels if x < stop))
+                runs.append(slice(start, stop+1))
+        elif gear_down and fallback:
+            for stop in gear_downs:
+                runs.append(slice(math.ceil(stop-fallback), stop+1))
+        elif gear_up and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            for start in gear_ups:
+                stop = min(x for x in transits if x > start)
+                _slice = slice(math.ceil(start), stop+1)
+                if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
+                    _slice = slice(math.ceil(start), start+fallback+1)
+                runs.append(_slice)
+        elif gear_up and fallback:
+            for start in gear_ups:
+                runs.append(slice(math.ceil(start), start+fallback+1))
+        elif gear_down_sel and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            for start in gear_sels:
+                stop = min(x for x in transits if x > start)
+                runs.append(slice(math.ceil(start), stop+1))
+        elif gear_down_sel and fallback:
+            for start in gear_sels:
+                runs.append(slice(math.ceil(start), start+fallback+1))
+        else:
+            pass
+
+        for run in runs:
+            self.array[run.start:run.stop] = 'Extending'
+
+
+class GearUpInTransit(MultistateDerivedParameterNode):
+    '''
+
+    '''
+
+    align = False
+    values_mapping = {
+        0: '-',
+        1: 'Retracting',
+    }
+
+    @classmethod
+    def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
+        # Can operate with a any combination of parameters available
+        gear_transits = ('Gear (L) Up In Transit', 'Gear (N) Up In Transit', 'Gear (R) Up In Transit', 'Gear (C) Up In Transit')
+        gears_available = any_of(gear_transits, available) \
+            or all_of(('Gear Up', 'Gear Up Selected'), available) \
+            or all_of(('Gear Down', 'Gear Up'), available) \
+            or all_of(('Gear Up Selected', 'Gear In Transit'), available) \
+            or all_of(('Gear Up', 'Gear In Transit'), available) \
+            or all_of(('Gear Down', 'Gear In Transit'), available) \
+            or all_of(('Gear Up Selected', 'Gear (*) Red Warning'), available) \
+            or all_of(('Gear Up', 'Gear (*) Red Warning'), available) \
+            or all_of(('Gear Down', 'Gear (*) Red Warning'), available) \
+            or 'Gear Position' in available
+
+        if gears_available:
+            return True
+
+        if all_of(('Model', 'Series', 'Family'), available) \
+           and any_of(('Gear Up Selected', 'Gear Up', 'Gear Down'), available):
+            # Check dependancies before checking if transition times are available to save necessary lookups
+            if model and series and family:
+                try:
+                    at.get_gear_transition_times(model.value, series.value, family.value)
+                except KeyError:
+                    cls.exception("No gear transition times available for '%s', '%s', '%s'.",
+                                  model.value, series.value, family.value)
+                    return False
+                return True
+        else:
+            return False
+
+    def derive(self,
+               gear_L=M('Gear (L) Up In Transit'),
+               gear_N=M('Gear (N) Up In Transit'),
+               gear_R=M('Gear (R) Up In Transit'),
+               gear_C=M('Gear (C) Up In Transit'),
+               gear_down=M('Gear Down'),
+               gear_up=M('Gear Up'),
+               gear_up_sel=M('Gear Up Selected'),
+               gear_in_transit=M('Gear In Transit'),
+               gear_red=M('Gear (*) Red Warning'),
+               gear_position=M('Gear Position'),
+               model=A('Model'), series=A('Series'), family=A('Family')):
+
+        combine_params = [(x, 'Retracting') for x in (gear_L, gear_R, gear_N, gear_C) if x]
+        if len(combine_params):
+            self.array = vstack_params_where_state(*combine_params).any(axis=0)
+            return
+
+        gear_sels = gear_ups = gear_downs = runs = []
+        self.array = np_ma_zeros_like(first_valid_parameter(gear_down, gear_up, gear_up_sel, gear_position).array)
+
+        # work out fallback
+        retract_duration = 0
+        if model and series and family:
+            _, retract_duration = at.get_gear_transition_times(model.value, series.value, family.value)
+        fallback = retract_duration * self.frequency
+
+        # find stating points.
+        if gear_down:
+            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array), change='leaving')
+        if gear_up:
+            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array))
+        if gear_up_sel:
+            gear_sels = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up_sel.array))
+
+        # create slices indicating Gear Retracting
+        if gear_position:
+            ups = find_edges_on_state_change('Up', gear_position.array)
+            transits = find_edges_on_state_change('In Transit', nearest_neighbour_mask_repair(gear_position.array))
+            for stop in ups:
+                start = math.ceil(max(x for x in transits if x < stop))
+                runs.append(slice(start, stop+1))
+        elif gear_down and gear_up:
+            for start, stop in zip(gear_ups, gear_downs):
+                runs.append(slice(math.ceil(start), stop+1))
+        elif gear_down and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            for start in gear_downs:
+                stop = min(x for x in transits if x > start)
+                _slice = slice(math.ceil(start), stop+1)
+                if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
+                    _slice = slice(math.ceil(start), start+fallback+1)
+                runs.append(_slice)
+        elif gear_up and gear_up_sel:
+            for stop in gear_ups:
+                start = max(x for x in gear_sels if x < stop)
+                runs.append(slice(math.ceil(start), stop+1))
+        elif gear_down and fallback:
+            for start in gear_downs:
+                runs.append(slice(math.ceil(start), start+fallback+1))
+        elif gear_up and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, param.array)
+            for stop in gear_ups:
+                start = max(x for x in transits if x < stop)
+                _slice = slice(math.ceil(start), stop+1)
+                if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
+                    _slice = slice(math.ceil(stop-fallback), stop+1)
+                runs.append(_slice)
+        elif gear_up and fallback:
+            for stop in gear_ups:
+                runs.append(slice(math.ceil(stop-fallback), stop+1))
+        elif gear_up_sel and (gear_in_transit or gear_red):
+            param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            for start in gear_sels:
+                stop = min(x for x in transits if x > start)
+                _slice = slice(math.ceil(start), stop+1)
+                if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
+                    _slice = slice(math.ceil(start), start+fallback+1)
+                runs.append(_slice)
+        elif gear_up_sel and fallback:
+            for start in gear_sels:
+                runs.append(slice(math.ceil(start), start+fallback+1))
+        else:
+            pass
+
+        for run in runs:
+            self.array[run.start:run.stop] = 'Retracting'
 
 
 class GearUp(MultistateDerivedParameterNode):
@@ -1473,65 +1743,31 @@ class GearUp(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        merge_gear_up = any_of(('Gear (L) Up', 'Gear (N) Up', 'Gear (R) Up'), available)
-        calc_gear_up = all_of(('Gear Up Selected', 'Gear (*) Red Warning'), available)
-        up_sel_transit = all_of(('Gear Up Selected', 'Gear In Transit'), available)
-        return merge_gear_up or calc_gear_up or up_sel_transit
+        merge_gear_up = any_of(('Gear (L) Up', 'Gear (N) Up', 'Gear (R) Up', 'Gear (C) Up'), available)
+        calc_gear_up = all_of(('Gear Up Selected', 'Gear Up In Transit'), available)
+        gear_pos = 'Gear Position' in available
+        return merge_gear_up or calc_gear_up or gear_pos
 
     def derive(self,
                gl=M('Gear (L) Up'),
                gn=M('Gear (N) Up'),
                gr=M('Gear (R) Up'),
-               gear_up_sel=M('Gear Up Selected'),
-               gear_warn=M('Gear (*) Red Warning'),
-               gear_transit=M('Gear In Transit')
-               ):
-
-        if gl or gn or gr:
-            # Join all available gear parameters and use whichever are available.
+               gc=M('Gear (C) Up'),
+               gear_transit=M('Gear Up In Transit'),
+               gear_sel=M('Gear Up Selected'),
+               gear_pos=M('Gear Position')):
+        if gl or gn or gr or gc:
             self.array = vstack_params_where_state(
                 (gl, 'Up'),
                 (gn, 'Up'),
                 (gr, 'Up'),
-            ).any(axis=0)
+                (gc, 'Up'),
+            ).all(axis=0)
+        elif gear_sel and gear_transit:
+            gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
+            self.array = (gear_sel_array == 'Up') & ~(gear_transit.array == 'Retracting')
         else:
-            # we need to align the gear down and gear red warnings parameters
-            # before we continue
-            movement_param = gear_warn if gear_warn else gear_transit
-            movement_state = 'Warning' if gear_warn else 'In Transit'
-            if gear_up_sel.frequency > movement_param.frequency:
-                movement_param = movement_param.get_aligned(gear_up_sel)
-            else:
-                gear_up_sel = gear_up_sel.get_aligned(movement_param)
-            self.frequency = gear_up_sel.frequency
-            self.offset = gear_up_sel.offset
-            self.array = np.zeros_like(gear_up_sel.array, dtype=np.short)
-            self.array[gear_up_sel.array == 'Up'] = 'Up'
-            # Calculate gear up from gear down and gear red warnings.
-            # We use up to 10s of `Gear (*) Red Warning` == 'Warning'
-            # preceeding the actual gear position change state to define the
-            # gear transition.
-            start_end_changes = find_edges_on_state_change(
-                movement_state, movement_param.array, change='entering_and_leaving')
-            starts = start_end_changes[::2]
-            ends = start_end_changes[1::2]
-            start_end_changes = zip(starts, ends)
-
-            for start, end in start_end_changes:
-                # for clarity, we're only interested in the end of the
-                # transition - so ceiling finds the end
-                start = math.ceil(start)
-                end = math.ceil(end)
-                if (end - start) / self.frequency > 10:
-                    # we are only using 10s gear transitions
-                    end = start + 10 * self.frequency
-
-                # look for state before gear started moving (back one sample)
-                if gear_up_sel.array[start - 1] == 'Down':
-                    # Prepend the warning to the gear position to define the
-                    # selection
-                    self.array[start:end] = 'Down'
-            self.array.mask = gear_up_sel.array.mask
+            self.array = gear_pos.array == 'Up'
 
 
 class GearInTransit(MultistateDerivedParameterNode):
@@ -1549,18 +1785,28 @@ class GearInTransit(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        return any_of(cls.get_dependency_names(), available)
+        merge_transit = ('Gear (L) In Transit', 'Gear (N) In Transit', 'Gear (R) In Transit', 'Gear (C) In Transit')
+
+        return any_of(merge_transit, available) \
+               or all_of(('Gear Down In Transit', 'Gear Up In Transit'), available)
 
     def derive(self,
                gl=M('Gear (L) In Transit'),
                gn=M('Gear (N) In Transit'),
-               gr=M('Gear (R) In Transit')):
+               gr=M('Gear (R) In Transit'),
+               gc=M('Gear (C) In Transit'),
+               gear_down_transit=M('Gear Down In Transit'),
+               gear_up_transit=M('Gear Up In Transit')):
 
-        self.array = vstack_params_where_state(
-            (gl, 'In Transit'),
-            (gn, 'In Transit'),
-            (gr, 'In Transit'),
-        ).any(axis=0)
+        if gl or gn or gr or gc:
+            self.array = vstack_params_where_state(
+                (gl, 'In Transit'),
+                (gn, 'In Transit'),
+                (gr, 'In Transit'),
+                (gc, 'In Transit'),
+            ).any(axis=0)
+        else:
+            self.array = (gear_down_transit.array == 'Extending') | (gear_up_transit.array == 'Retracting')
 
 
 class GearOnGround(MultistateDerivedParameterNode):
@@ -1658,40 +1904,23 @@ class GearDownSelected(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        return 'Gear Down' in available
+        if 'Gear Down In Transit' in available:
+            return any_of(('Gear Down', 'Gear Position'), available)
+        else:
+            return 'Gear Up Selected' in available
 
     def derive(self,
                gear_down=M('Gear Down'),
-               gear_warn=M('Gear (*) Red Warning')):
+               gear_position=M('Gear Position'),
+               up_sel=M('Gear Up Selected'),
+               gear_down_transit=M('Gear Down In Transit')):
 
-        self.array = np.ma.zeros(gear_down.array.size, dtype=np.short)
-        self.array.mask = gear_down.array.mask
-        self.array[gear_down.array == 'Down'] = 'Down'
-        self.array = repair_mask(self.array, method='fill_start')
-        if gear_warn:
-            # We use up to 10s of `Gear (*) Red Warning` == 'Warning'
-            # preceeding the actual gear position change state to define the
-            # gear transition.
-            start_end_warnings = find_edges_on_state_change(
-                'Warning', gear_warn.array, change='entering_and_leaving')
-            starts = start_end_warnings[::2]
-            ends = start_end_warnings[1::2]
-            start_end_warnings = zip(starts, ends)
-
-            for start, end in start_end_warnings:
-                # for clarity, we're only interested in the end of the
-                # transition - so ceiling finds the end
-                start = math.ceil(start)
-                end = math.ceil(end)
-                if (end - start) / self.frequency > 10:
-                    # we are only using 10s gear transitions
-                    start = end - 10 * self.frequency
-
-                # look for state before gear started moving (back one sample)
-                if gear_down.array[end + 1] == 'Down':
-                    # Prepend the warning to the gear position to define the
-                    # selection
-                    self.array[start:end + 1] = 'Down'
+        if gear_down and gear_down_transit:
+            self.array = (gear_down.array == 'Down') | (gear_down_transit.array == 'Extending')
+        elif gear_position and gear_down_transit:
+            self.array = (gear_position.array == 'Down') | (gear_down_transit.array == 'Extending')
+        else:
+            self.array = up_sel.array == 'Down'
 
 
 class GearUpSelected(MultistateDerivedParameterNode):
@@ -1707,9 +1936,27 @@ class GearUpSelected(MultistateDerivedParameterNode):
         1: 'Up',
     }
 
-    def derive(self, gear_dn_sel=M('Gear Down Selected')):
-        # Invert the Gear Down Selected array
-        self.array = 1 - gear_dn_sel.array.raw
+    @classmethod
+    def can_operate(cls, available):
+        if 'Gear Up In Transit' in available:
+            return any_of(('Gear Up', 'Gear Position'), available)
+        else:
+            return 'Gear Down Selected' in available
+
+    def derive(self,
+               gear_up=M('Gear Up'),
+               gear_position=M('Gear Position'),
+               down_sel=M('Gear Down Selected'),
+               gear_up_transit=M('Gear Up In Transit')):
+
+        if gear_up and gear_up_transit:
+            self.array = (gear_up.array == 'Up') | (gear_up_transit.array == 'Retracting')
+        elif gear_position and gear_up_transit:
+            self.array = (gear_position.array == 'Up') | (gear_up_transit.array == 'Retracting')
+        else:
+            self.array = down_sel.array == 'Up'
+        ## Invert the Gear Down Selected array
+        # self.array = 1 - gear_dn_sel.array.raw
 
 
 class Gear_RedWarning(MultistateDerivedParameterNode):
