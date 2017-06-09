@@ -1109,7 +1109,7 @@ class AltitudeRadio(DerivedParameterNode):
                     max_val = 8191
                 elif max_jump > 2047:
                     max_val = 4095
-                elif max_jump > 1023:
+                elif max_jump > 1024: # previously 1023 changed due to flights such as 1b566455f121
                     max_val = 2047
                 elif max_jump > 1023 * .75:
                     max_val = 1023
