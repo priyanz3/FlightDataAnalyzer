@@ -1601,7 +1601,6 @@ class GearUpInTransit(MultistateDerivedParameterNode):
 
     '''
 
-    align = False
     values_mapping = {
         0: '-',
         1: 'Retracting',
