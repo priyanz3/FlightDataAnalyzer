@@ -4939,7 +4939,14 @@ class CoordinatesSmoothed(object):
                 else:
                     tdwn_index = tdwn.index
 
-            runway = approach.approach_runway
+            if approach.type == 'LANDING':
+                runway = approach.landing_runway
+            elif approach.type == 'GO AROUND':
+                runway = approach.approach_runway
+            else:
+                raise 'unfamiliar approach type'
+                runway = None
+            
             if not runway:
                 continue
 
