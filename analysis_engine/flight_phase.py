@@ -673,6 +673,8 @@ class InitialCruise(FlightPhaseNode):
     can_operate = aeroplane_only
 
     def derive(self, cruises=S('Cruise')):
+        if not cruises:
+            return
         cruise = cruises[0].slice
         if cruise.stop - cruise.start > 330:
             self.create_phase(slice(cruise.start+300, cruise.start+330))
@@ -1970,6 +1972,8 @@ class Takeoff5MinRating(FlightPhaseNode):
             flat_slices = np.ma.clump_unmasked(enp_filt)
             for accel_start in toffs:
                 rating_end = toff_slice_avg = None
+                if not lifts.get_next(accel_start.index):
+                    continue
                 toff_idx = lifts.get_next(accel_start.index).index
                 for flat in flat_slices:
                     if is_index_within_slice(toff_idx, flat):
