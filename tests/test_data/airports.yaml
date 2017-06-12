@@ -1785,4 +1785,97 @@ embaba:
         !!python/unicode 'longitude': 31.18260485}
       !!python/unicode 'strip': {!!python/unicode 'id': 8512, !!python/unicode 'length': 3773,
         !!python/unicode 'width': 150}
+palma_de_mallorca:
+    !!python/unicode 'code': {!!python/unicode 'iata': !!python/unicode 'PMI', !!python/unicode 'icao': !!python/unicode 'LEPA'}
+    !!python/unicode 'elevation': 27
+    !!python/unicode 'id': 2969
+    !!python/unicode 'latitude': 39.55027999999999
+    !!python/unicode 'location': {!!python/unicode 'city': !!python/unicode 'Palma De Mallorca',
+      !!python/unicode 'country': !!python/unicode 'Spain'}
+    !!python/unicode 'longitude': 2.7341700000000104
+    !!python/unicode 'magnetic_variation': !!python/unicode 'E 2'
+    !!python/unicode 'name': !!python/unicode 'Palma De Mallorca'
+    !!python/unicode 'runways':
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 8, !!python/unicode 'latitude': 39.55532659194196,
+        !!python/unicode 'longitude': 2.7615065423279406}
+      !!python/unicode 'id': 9961
+      !!python/unicode 'identifier': !!python/unicode '06R'
+      !!python/unicode 'localizer': {!!python/unicode 'is_offset': false}
+      !!python/unicode 'magnetic_heading': !!python/object/apply:decimal.Decimal ['59.0']
+      !!python/unicode 'start': {!!python/unicode 'elevation': 25, !!python/unicode 'latitude': 39.543173407565504,
+        !!python/unicode 'longitude': 2.735786453403019}
+      !!python/unicode 'strip': {!!python/unicode 'id': 4981, !!python/unicode 'length': 9842,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 25, !!python/unicode 'latitude': 39.5431740216137,
+        !!python/unicode 'longitude': 2.7357904767166077}
+      !!python/unicode 'glideslope':
+        !!python/unicode 'angle': 3.0
+        !!python/unicode 'elevation': 3
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109300.00']
+        !!python/unicode 'latitude': 39.553041999999984
+        !!python/unicode 'longitude': 2.7592720000000024
+        !!python/unicode 'threshold_distance': 981
+      !!python/unicode 'id': 9962
+      !!python/unicode 'identifier': !!python/unicode '24L'
+      !!python/unicode 'localizer':
+        !!python/unicode 'beam_width': 4.5
+        !!python/unicode 'elevation': 26
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109300.00']
+        !!python/unicode 'heading': 240
+        !!python/unicode 'is_offset': false
+        !!python/unicode 'latitude': 39.54004399999937
+        !!python/unicode 'longitude': 2.7291779999999632
+      !!python/unicode 'magnetic_heading': !!python/object/apply:decimal.Decimal ['239.0']
+      !!python/unicode 'start': {!!python/unicode 'elevation': 8, !!python/unicode 'latitude': 39.55532659193989,
+        !!python/unicode 'longitude': 2.76150922453685}
+      !!python/unicode 'strip': {!!python/unicode 'id': 4981, !!python/unicode 'length': 9842,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 8, !!python/unicode 'latitude': 39.56218259730186,
+        !!python/unicode 'longitude': 2.742504820822242}
+      !!python/unicode 'glideslope':
+        !!python/unicode 'angle': 3.0
+        !!python/unicode 'elevation': 0
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['110900.00']
+        !!python/unicode 'latitude': 39.54968899999995
+        !!python/unicode 'longitude': 2.7134079999999985
+        !!python/unicode 'threshold_distance': 1128
+      !!python/unicode 'id': 9963
+      !!python/unicode 'identifier': !!python/unicode '06L'
+      !!python/unicode 'localizer':
+        !!python/unicode 'beam_width': 4.5
+        !!python/unicode 'elevation': -3
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['110900.00']
+        !!python/unicode 'heading': 59
+        !!python/unicode 'is_offset': false
+        !!python/unicode 'latitude': 39.56351399999996
+        !!python/unicode 'longitude': 2.7453309999999918
+      !!python/unicode 'magnetic_heading': !!python/object/apply:decimal.Decimal ['59.0']
+      !!python/unicode 'start': {!!python/unicode 'elevation': 15, !!python/unicode 'latitude': 39.547165939418264,
+        !!python/unicode 'longitude': 2.710754641931794}
+      !!python/unicode 'strip': {!!python/unicode 'id': 4982, !!python/unicode 'length': 10728,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
+    - !!python/unicode 'end': {!!python/unicode 'elevation': 15, !!python/unicode 'latitude': 39.547168007671196,
+        !!python/unicode 'longitude': 2.7107600063498825}
+      !!python/unicode 'glideslope':
+        !!python/unicode 'angle': 3.0
+        !!python/unicode 'elevation': 7
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109900.00']
+        !!python/unicode 'latitude': 39.561502999999945
+        !!python/unicode 'longitude': 2.7382469999999963
+        !!python/unicode 'threshold_distance': 1150
+      !!python/unicode 'id': 9964
+      !!python/unicode 'identifier': !!python/unicode '24R'
+      !!python/unicode 'localizer':
+        !!python/unicode 'beam_width': 4.5
+        !!python/unicode 'elevation': 13
+        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109900.00']
+        !!python/unicode 'heading': 240
+        !!python/unicode 'is_offset': false
+        !!python/unicode 'latitude': 39.54576699999999
+        !!python/unicode 'longitude': 2.707813999999991
+      !!python/unicode 'magnetic_heading': !!python/object/apply:decimal.Decimal ['239.0']
+      !!python/unicode 'start': {!!python/unicode 'elevation': 8, !!python/unicode 'latitude': 39.56217639388361,
+        !!python/unicode 'longitude': 2.7425101852401506}
+      !!python/unicode 'strip': {!!python/unicode 'id': 4982, !!python/unicode 'length': 10728,
+        !!python/unicode 'surface': !!python/unicode 'ASP', !!python/unicode 'width': 148}
     
