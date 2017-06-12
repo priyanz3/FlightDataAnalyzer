@@ -1109,7 +1109,7 @@ class AltitudeRadio(DerivedParameterNode):
                     max_val = 8191
                 elif max_jump > 2047:
                     max_val = 4095
-                elif max_jump > 1023:
+                elif max_jump > 1024: # previously 1023 changed due to flights such as 1b566455f121
                     max_val = 2047
                 elif max_jump > 1023 * .75:
                     max_val = 1023
@@ -1203,11 +1203,11 @@ class AltitudeSTDSmoothed(DerivedParameterNode):
                 (('Altitude STD' in available) or
                  all_of(('Altitude STD (Capt)', 'Altitude STD (FO)'), available)))
 
-    def derive(self, fine = P('Altitude STD (Fine)'),
-               alt = P('Altitude STD'),
-               alt_capt = P('Altitude STD (Capt)'),
-               alt_fo = P('Altitude STD (FO)'),
-               frame = A('Frame')):
+    def derive(self, fine=P('Altitude STD (Fine)'),
+               alt=P('Altitude STD'),
+               alt_capt=P('Altitude STD (Capt)'),
+               alt_fo=P('Altitude STD (FO)'),
+               frame=A('Frame')):
 
         frame_name = frame.value if frame else ''
 
@@ -6645,6 +6645,10 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (2)' in available and
                 'Spoiler (R) (2)' in available
             ) or
+            family_name in ('G-VI',) and (
+                'Spoiler (L) (1)' in available and
+                'Spoiler (R) (1)' in available
+            ) or
             family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380') and (
                 ('Spoiler (L) (3)' in available and
                     'Spoiler (R) (3)' in available) or
@@ -6720,12 +6724,14 @@ class Speedbrake(DerivedParameterNode):
 
     def derive(self,
                spoiler_l=P('Spoiler (L)'),
+               spoiler_l1=P('Spoiler (L) (1)'),
                spoiler_l2=P('Spoiler (L) (2)'),
                spoiler_l3=P('Spoiler (L) (3)'),
                spoiler_l4=P('Spoiler (L) (4)'),
                spoiler_l5=P('Spoiler (L) (5)'),
                spoiler_l7=P('Spoiler (L) (7)'),
                spoiler_r=P('Spoiler (R)'),
+               spoiler_r1=P('Spoiler (R) (1)'),
                spoiler_r2=P('Spoiler (R) (2)'),
                spoiler_r3=P('Spoiler (R) (3)'),
                spoiler_r4=P('Spoiler (R) (4)'),
@@ -6738,6 +6744,8 @@ class Speedbrake(DerivedParameterNode):
 
         if family_name in ('G-V', 'G-IV') or (family_name == 'CL-600' and spoiler_l2 and spoiler_r2):
             self.merge_spoiler(spoiler_l2, spoiler_r2)
+        elif family_name in ('G-VI',):
+            self.merge_spoiler(spoiler_l1, spoiler_r1)
         elif family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380'):
             if spoiler_l3 is not None:
                 self.merge_spoiler(spoiler_l3, spoiler_r3)

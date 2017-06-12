@@ -265,7 +265,7 @@ from analysis_engine.key_point_values import (
     EngEPRFor5SecDuringMaximumContinuousPowerMax,
     EngEPRFor5SecDuringTakeoff5MinRatingMax,
     EngFireWarningDuration,
-    EngGasTempAboveNormalMaxLimitDuringTakeoffDuration,
+    EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration,
     EngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration,
     EngGasTempDuringEngStartForXSecMax,
     EngGasTempDuringEngStartMax,
@@ -335,6 +335,7 @@ from analysis_engine.key_point_values import (
     EngOilPressMax,
     EngOilPressMin,
     EngOilPressWarningDuration,
+    EngOilPressLowRedlineExceededDuration,
     EngOilQtyDuringTaxiInMax,
     EngOilQtyDuringTaxiOutMax,
     EngOilQtyMax,
@@ -492,6 +493,7 @@ from analysis_engine.key_point_values import (
     CruiseSpeedLowDuration,
     DegradedPerformanceCautionDuration,
     AirspeedIncreaseAlertDuration,
+    AirspeedBelowMinimumAirspeedDuration,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
@@ -9153,13 +9155,13 @@ class TestEngGasTempExceededEngGasTempRedlineDuration(unittest.TestCase):
         self.assertEqual(node[0].name, 'Eng Gas Temp Exceeded Eng Gas Temp Redline Duration')
 
 
-class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
+class TestEngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration(unittest.TestCase):
 
     def setUp(self):
-        self.node_class = EngGasTempAboveNormalMaxLimitDuringTakeoffDuration
+        self.node_class = EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration
 
     def test_can_operate(self):
-        nodes = ('Eng (1) Gas Temp', 'Takeoff')
+        nodes = ('Eng (1) Gas Temp', 'Takeoff 5 Min Rating')
         engine = A('Engine Series', value='CFM56-5A')
         self.assertFalse(self.node_class.can_operate(nodes, eng_series=engine))
         engine = A('Engine Series', value='CFM56-3')
@@ -9171,7 +9173,7 @@ class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
         y = np.sin(2*2*np.pi*x)+2
         egt_array = np.ma.array(y*440)
         egt = P(name='Eng (2) Gas Temp', array=egt_array)
-        takeoffs = buildsection('Takeoff', None, 80)
+        takeoffs = buildsection('Takeoff 5 Min Rating', None, 80)
 
         node = self.node_class()
         node.derive(None, egt, None, None, takeoffs)
@@ -9182,7 +9184,7 @@ class TestEngGasTempAboveNormalMaxLimitDuringTakeoffDuration(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertAlmostEqual(node[0].value, expected, delta=1)
         self.assertAlmostEqual(node[0].index, 1, delta=1)
-        self.assertEqual(node[0].name, 'Eng (2) Gas Temp Above Normal Max Limit During Takeoff Duration')
+        self.assertEqual(node[0].name, 'Eng (2) Gas Temp Above Normal Max Limit During Takeoff 5 Min Rating Duration')
 
 
 class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unittest.TestCase):
@@ -10058,6 +10060,54 @@ class TestEngOilPressWarningDuration(unittest.TestCase):
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].value, 5)
         self.assertEqual(node[0].index, 10)
+
+
+class TestEngOilPressLowRedlineExceededDuration(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = EngOilPressLowRedlineExceededDuration
+        self.values_mapping = {0:'-', 1:'Exceeded'}
+        self.press_low_1 = M('Eng (1) Oil Press Low Redline Exceeded',
+                             np.ma.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 1, 1, 1, 1, 1, 0, 0, 0]),
+                             values_mapping=self.values_mapping)
+        self.press_low_2 = M('Eng (2) Oil Press Low Redline Exceeded',
+                             np.ma.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                          1, 1, 1, 1, 1, 0, 0, 0, 0, 0]),
+                             values_mapping=self.values_mapping)
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Eng Oil Press Low Redline Exceeded Duration')
+        self.assertEqual(node.units, 's')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Eng (1) Oil Press Low Redline Exceeded', opts[0])
+        self.assertIn('Eng (2) Oil Press Low Redline Exceeded', opts[0])
+
+    def test_derive_overlapping(self):
+        node = self.node_class()
+        node.derive(self.press_low_1, self.press_low_2)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 7)
+        self.assertEqual(node[0].index, 10)
+
+    def test_derive_no_warnings(self):
+        press_low_1 = M('Eng (1) Oil Press Low Redline Exceeded',
+                        np.ma.array([0]*20),
+                        values_mapping=self.values_mapping)
+        press_low_2 = M('Eng (2) Oil Press Low Redline Exceeded',
+                        np.ma.array([0]*20),
+                        values_mapping=self.values_mapping)
+
+        node = self.node_class()
+        node.derive(press_low_1, press_low_2)
+
+        self.assertEqual(len(node), 0)
 
 
 ##############################################################################
@@ -12483,7 +12533,7 @@ class TestGroundspeedWithThrustReversersDeployedMin(unittest.TestCase, NodeTest)
         self.assertEqual(node[0], KeyPointValue(
             index=7, value=30.0,
             name='Groundspeed With Thrust Reversers Deployed Min'))
-
+        
     def test_derive_with_epr(self):
         spd = P('Groundspeed True', array = np.ma.arange(100, 0, -10))
         tr = M('Thrust Reversers',
@@ -12494,12 +12544,71 @@ class TestGroundspeedWithThrustReversersDeployedMin(unittest.TestCase, NodeTest)
                 array=np.ma.array([1.0] * 2 + [1.26] * 2 + [1.0] * 1))
         landings=buildsection('Landing', 2, 9)
         node = GroundspeedWithThrustReversersDeployedMin()
-        node.derive(spd, tr, epr, None, landings)
+        node.derive(spd, tr, epr, None, landings, None)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0], KeyPointValue(
+            index=6, value=40.0,
+            name='Groundspeed With Thrust Reversers Deployed Min'))        
+
+    def test_derive_with_epr_n1_equal_freq(self):
+        spd = P('Groundspeed True', array = np.ma.arange(100, 0, -10))
+        tr = M('Thrust Reversers',
+               array=np.ma.array([0] * 3 + [1] + [2] * 4 + [1,0]),
+               values_mapping = {0: 'Stowed', 1: 'In Transit', 2: 'Deployed'})
+        # half the frequency of spd
+        epr = P('Eng (*) EPR Max', frequency=0.5,
+                array=np.ma.array([1.0] * 2 + [1.26] * 2 + [1.0] * 1))
+        n1=P('Eng (*) N1 Max', frequency=4, # Frequency set to 4 as the derived N1 freq should be ignored anyway
+                 array=np.ma.array([40] * 16 + [70] * 24))   
+        n1_recorded=P('Eng (1) N1', frequency=0.5,
+                 array=np.ma.array([40] * 2 + [70] * 3))          
+        landings=buildsection('Landing', 2, 9)
+        node = GroundspeedWithThrustReversersDeployedMin()
+        node.derive(spd, tr, epr, n1, landings, n1_recorded)
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0], KeyPointValue(
             index=6, value=40.0,
             name='Groundspeed With Thrust Reversers Deployed Min'))
-
+        
+    def test_derive_with_epr_freq_higher(self):
+        spd = P('Groundspeed True', array = np.ma.arange(100, 0, -10))
+        tr = M('Thrust Reversers',
+               array=np.ma.array([0] * 3 + [1] + [2] * 4 + [1,0]),
+               values_mapping = {0: 'Stowed', 1: 'In Transit', 2: 'Deployed'})
+        # half the frequency of spd
+        epr = P('Eng (*) EPR Max', frequency=0.5,
+                array=np.ma.array([1.0] * 2 + [1.26] * 2 + [1.0] * 1))
+        n1=P('Eng (*) N1 Max', frequency=4, # Frequency set to 4 as the derived N1 freq should be ignored anyway
+                 array=np.ma.array([40] * 16 + [70] * 24))   
+        n1_recorded=P('Eng (1) N1', frequency=0.25,
+                 array=np.ma.array([40] * 2 + [70] * 3))          
+        landings=buildsection('Landing', 2, 9)
+        node = GroundspeedWithThrustReversersDeployedMin()
+        node.derive(spd, tr, epr, n1, landings, n1_recorded)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0], KeyPointValue(
+            index=6, value=40.0,
+            name='Groundspeed With Thrust Reversers Deployed Min'))    
+   
+    def test_derive_with_n1_freq_higher(self):
+        spd = P('Groundspeed True', array = np.ma.arange(100, 0, -10))
+        tr = M('Thrust Reversers',
+               array=np.ma.array([0] * 3 + [1] + [2] * 4 + [1,0]),
+               values_mapping = {0: 'Stowed', 1: 'In Transit', 2: 'Deployed'})
+        # half the frequency of spd
+        epr = P('Eng (*) EPR Max', frequency=0.25,
+                array=np.ma.array([1.0] * 2 + [1.26] * 2 + [1.0] * 1))
+        n1=P('Eng (*) N1 Max', frequency=4, # Frequency set to 4 as the derived N1 freq should be ignored anyway
+                 array=np.ma.array([40] * 16 + [70] * 24))   
+        n1_recorded=P('Eng (1) N1', frequency=0.5,
+                 array=np.ma.array([40] * 2 + [70] * 3))          
+        landings=buildsection('Landing', 2, 9)
+        node = GroundspeedWithThrustReversersDeployedMin()
+        node.derive(spd, tr, epr, n1, landings, n1_recorded)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0], KeyPointValue(
+            index=7, value=30.0,
+            name='Groundspeed With Thrust Reversers Deployed Min'))            
 
 class TestGroundspeedStabilizerOutOfTrimDuringTakeoffMax(unittest.TestCase,
                                                          NodeTest):
@@ -16418,6 +16527,120 @@ class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
         self.node_class = AirspeedIncreaseAlertDuration
         self.values_mapping = {0: '-', 1: 'Alert'}
         self.basic_setup()
+
+
+class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
+    def setUp(self):
+        self.node_class = AirspeedBelowMinimumAirspeedDuration
+        self.air_spd = P('Airspeed',
+                         np.ma.array([
+                             170, 170, 171, 172, 172, 172, 174, 174, 175, 176,
+                             176, 176, 177, 177, 178, 178, 178, 178, 178, 178,
+                             178, 178, 177, 176, 175, 174, 172, 172, 172, 168,
+                             168, 168, 166, 166, 165, 165, 166, 167, 169, 171,
+                             174, 178, 182, 184, 188, 190, 194, 196, 198, 200,
+                             202, 206, 208, 211, 213, 214, 216, 217, 218, 220,
+                             220, 221, 221, 222, 222, 224, 224
+                         ]))
+        self.f_m_spd = P('Flap Manoeuvre Speed',
+                         np.ma.array([
+                             156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196, 196, 196, 196,
+                             196, 196, 196, 196, 196, 196, 196
+                         ], mask=[False]*40 + [True]*27))
+        self.min_spd = P('Minimum Airspeed',
+                         np.ma.array([
+                             156, 156, 156, 156, 156, 156, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 176, 176, 176, 176,
+                             176, 176, 176, 176, 176, 176, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190, 190, 190, 190,
+                             190, 190, 190, 190, 190, 190, 190
+                         ]))
+        self.flap = M('Flap',
+                      np.ma.array([
+                          5, 5, 5, 5, 1, 1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0
+                          ]),
+                      values_mapping={0:"0", 1: "1", 5: "5", 15: "15",
+                                      20: "20", 25: "25", 30: "30"})
+        self.airborne = buildsection('Airborne', 0, 66)        
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.units, 's')
+        self.assertEqual(node.name, 'Airspeed Below Minimum Airspeed Duration')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 3) 
+        for opt in opts:
+            self.assertIn('Airspeed', opt)
+            self.assertIn('Airborne', opt)
+            self.assertIn('Flap', opt)
+            self.assertTrue(any_of(['Flap Manoeuvre Speed','Minimum Airspeed'],
+                                   opt))
+
+    def test_derive_flap_manoeuvre_speed(self):
+        '''
+        If Minimum Airspeed isn't available use Flap Manoeuvre Speed
+        Data from the example flight in the ticket. Duration: 19, Index 28
+        '''
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                    min_spd=None,
+                    flap=self.flap,
+                    f_m_spd=self.f_m_spd,
+                    airborne=self.airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 19)
+
+    def test_derive_minimum_airspeed(self):
+        '''
+        Use just the Minimum Airspeed parameter. The test should
+        be 2 less than the kpv from test_derive_flap_manoeuvre_speed
+        Duration: 17, Index 28
+        '''
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                    min_spd=self.min_spd,
+                    flap=self.flap,
+                    f_m_spd=None,
+                    airborne=self.airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 17)
+
+    def test_derive_both_speed_param(self):
+        '''
+        Uses Minimum Airspeed parameter and Flap Manoeuvre Speed. The KPV
+        should use Minimum Speed over Flap Manoeuvre Speed. The test should
+        be 2 less than the kpv from test_derive_flap_manoeuvre_speed
+        Duration: 17, Index 28
+        '''
+        node = self.node_class()
+        node.derive(air_spd=self.air_spd,
+                    min_spd=self.min_spd,
+                    flap=self.flap,
+                    f_m_spd=self.f_m_spd,
+                    airborne=self.airborne)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 28)
+        self.assertEqual(node[0].value, 17)
 
 
 ##############################################################################

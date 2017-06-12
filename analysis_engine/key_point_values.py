@@ -9281,7 +9281,7 @@ class EngGasTempExceededEngGasTempRedlineDuration(KeyPointValueNode):
                 self.create_kpvs_where(egt_diff > 0, self.hz)
 
 
-class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
+class EngGasTempAboveNormalMaxLimitDuringTakeoff5MinRatingDuration(KeyPointValueNode):
     '''
     Total duration Engine Gas Temperature is above maintenance limit During
     Takeoff. Limit depends on type of engine.
@@ -9291,7 +9291,7 @@ class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
     TODO: extend for engines other than CFM56-3
     '''
 
-    NAME_FORMAT = 'Eng (%(number)d) Gas Temp Above Normal Max Limit During Takeoff Duration'
+    NAME_FORMAT = 'Eng (%(number)d) Gas Temp Above Normal Max Limit During Takeoff 5 Min Rating Duration'
     NAME_VALUES = NAME_VALUES_ENGINE
     units = ut.SECOND
 
@@ -9300,14 +9300,14 @@ class EngGasTempAboveNormalMaxLimitDuringTakeoffDuration(KeyPointValueNode):
         gas_temps = any_of(('Eng (%d) Gas Temp' % n for n in range(1, 5)), available)
         engine_series = eng_series and eng_series.value == 'CFM56-3'
 
-        return gas_temps and engine_series and 'Takeoff' in available
+        return gas_temps and engine_series and 'Takeoff 5 Min Rating' in available
 
     def derive(self,
                eng1=P('Eng (1) Gas Temp'),
                eng2=P('Eng (2) Gas Temp'),
                eng3=P('Eng (3) Gas Temp'),
                eng4=P('Eng (4) Gas Temp'),
-               takeoffs=S('Takeoff'),
+               takeoffs=S('Takeoff 5 Min Rating'),
                eng_series=A('Engine Series')):
 
         limit = 930
@@ -10437,6 +10437,23 @@ class EngOilPressWarningDuration(KeyPointValueNode):
         self.create_kpvs_where(oil_press_warn.array == 'Warning',
                                frequency=oil_press_warn.frequency,
                                phase=airborne)
+
+
+class EngOilPressLowRedlineExceededDuration(KeyPointValueNode):
+    '''
+    For aircraft with Engine Oil Press Low Redline Exceeded paramater, this
+    keypoint value measures the duration of the warning for any engine.
+    '''
+
+    units = ut.SECOND
+
+    def derive(self, press_low_1=M('Eng (1) Oil Press Low Redline Exceeded'),
+               press_low_2=M('Eng (2) Oil Press Low Redline Exceeded')):
+
+        press_low = vstack_params_where_state((press_low_1, 'Exceeded'),
+                                              (press_low_2, 'Exceeded'))
+        self.create_kpvs_where(press_low.any(axis=0) == True,
+                               frequency=press_low_1.frequency)
 
 
 ##############################################################################
@@ -12432,9 +12449,10 @@ class GroundspeedWithThrustReversersDeployedMin(KeyPointValueNode):
                tr=M('Thrust Reversers'),
                eng_epr=P('Eng (*) EPR Max'),
                eng_n1=P('Eng (*) N1 Max'),
-               landings=S('Landing')):
+               landings=S('Landing'),
+               recorded_n1=P('Eng (1) N1')):
 
-        if eng_epr and eng_epr.frequency > (eng_n1.frequency if eng_n1 else 0):
+        if eng_epr and eng_epr.frequency >= (recorded_n1.frequency if recorded_n1 else 0):
             power = eng_epr
             threshold = REVERSE_THRUST_EFFECTIVE_EPR
         else:
@@ -12451,7 +12469,6 @@ class GroundspeedWithThrustReversersDeployedMin(KeyPointValueNode):
             # handle difference in frequencies
             high_rev = thrust_reversers_working(landing, power, tr, threshold)
             self.create_kpvs_within_slices(gnd_spd.array, high_rev, min_value)
-
 
 class GroundspeedStabilizerOutOfTrimDuringTakeoffMax(KeyPointValueNode):
     '''
@@ -15510,6 +15527,43 @@ class AirspeedIncreaseAlertDuration(KeyPointValueNode):
                airborne=S('Airborne')):
         self.create_kpvs_where(alert.array == 'Alert', alert.frequency,
                                airborne)
+
+
+class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
+    '''
+    Duration in which the Airspeed is below Minimum Airspeed in clean
+    configuration. 
+    
+    If no Minimum Airspeed parameter, KPV will use the Flap and 
+    Flap Manoeuvre Speed
+    '''
+    units = ut.SECOND
+
+    @classmethod
+    def can_operate(cls, available):
+        core = all_of(['Airspeed', 'Airborne', 'Flap'], available)
+        min_spd = any_of(['Minimum Airspeed', 'Flap Manoeuvre Speed'],
+                         available)
+        return core and min_spd
+
+    def derive(self,
+               air_spd=P('Airspeed'),
+               min_spd=P('Minimum Airspeed'),
+               flap = M('Flap'),
+               f_m_spd = P('Flap Manoeuvre Speed'),
+               airborne = S('Airborne')):
+        mspd = min_spd or f_m_spd
+        if mspd.name == 'Minimum Airspeed':
+            spd_slices = runs_of_ones((air_spd.array - mspd.array) < 0)
+        else:
+            # Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
+            # raw data
+            spd_slices = runs_of_ones((air_spd.array - mspd.array.data) < 0)
+        slices = slices_and(
+            clump_multistate(flap.array, '0', airborne.get_slices()),
+            spd_slices
+        )
+        self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
 
 
 ##############################################################################

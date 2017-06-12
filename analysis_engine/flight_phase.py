@@ -838,10 +838,9 @@ class GearExtending(FlightPhaseNode):
     allow for exceedance of gear transit limits.
     '''
 
-    def derive(self, gear_down_selected=M('Gear Down Selected'),
-               gear_down=M('Gear Down'), airs=S('Airborne')):
+    def derive(self, down_in_transit=M('Gear Down In Transit'), airs=S('Airborne')):
 
-        in_transit = (gear_down_selected.array == 'Down') & (gear_down.array != 'Down')
+        in_transit = (down_in_transit.array == 'Extending')
         gear_extending = slices_and(runs_of_ones(in_transit), airs.get_slices())
         self.create_phases(gear_extending)
 
@@ -872,10 +871,9 @@ class GearRetracting(FlightPhaseNode):
     allow for exceedance of gear transit limits.
     '''
 
-    def derive(self, gear_up_selected=M('Gear Up Selected'),
-               gear_up=M('Gear Up'), airs=S('Airborne')):
+    def derive(self, up_in_transit=M('Gear Up In Transit'), airs=S('Airborne')):
 
-        in_transit = (gear_up_selected.array == 'Up') & (gear_up.array != 'Up')
+        in_transit = (up_in_transit.array == 'Retracting')
         gear_retracting = slices_and(runs_of_ones(in_transit), airs.get_slices())
         self.create_phases(gear_retracting)
 
@@ -1868,14 +1866,9 @@ class TakeoffRollOrRejectedTakeoff(FlightPhaseNode):
                trolls=S('Takeoff Roll'),
                rtoffs=S('Rejected Takeoff'),
                helo_toffs=S('Transition Hover To Flight')):
-        phases = []
-        if trolls:
-            phases.extend([s.slice for s in trolls])
-        if rtoffs:
-            phases.extend([s.slice for s in rtoffs])
-        if helo_toffs:
-            phases.extend([s.slice for s in helo_toffs])
-        self.create_phases(phases, name= "Takeoff Roll Or Rejected Takeoff")
+        self.create_phases(
+            [s.slice for n in (trolls, rtoffs, helo_toffs) if n for s in n],
+            name= "Takeoff Roll Or Rejected Takeoff")
 
 
 class TakeoffRotation(FlightPhaseNode):
