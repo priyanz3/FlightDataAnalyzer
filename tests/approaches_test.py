@@ -1596,14 +1596,15 @@ class TestPalmaDeMallorca(unittest.TestCase):
             except:
                 return None
         root = os.path.join(approaches_path, 'ILS_test_14100867_')
-        app_start = 17853 * 2
-        app_end = 18678 * 2
+        app_start = 17853
+        app_end = 18678
 
         approaches = ApproachInformation()
         approaches.derive(fetch('Altitude AAL'),
                           fetch('Altitude AGL'),
                           A('Aircraft Type', 'aeroplane'),
-                          S(name='Approach And Landing', 
+                          S(name='Approach And Landing',
+                            frequency=2.0,
                             items=[Section(name='Approach And Landing', 
                                            slice=slice(app_start, app_end),
                                            start_edge=app_start, 
@@ -1612,14 +1613,20 @@ class TestPalmaDeMallorca(unittest.TestCase):
                           fetch('Latitude Prepared'),
                           fetch('Longitude Prepared'),
                           fetch('ILS Localizer'),
-                          P('ILS Glideslope', array=np.ma.ones(20160*2)),
+                          P('ILS Glideslope', array=np.ma.ones(20160)),
                           fetch('ILS Frequency'),
                           A(name='AFR Landing Airport', value=None),
                           A(name='AFR Landing Runway', value=None) ,
                           KPV('Latitude At Touchdown', items=[]),
                           KPV('Longitude At Touchdown', items=[]),
                           A('Precise Positioning', True),
-                          )
+                          S(name='Fast',
+                            frequency=2.0,
+                            items=[Section(name='Fast',
+                                           slice=slice(5507, 18515),
+                                           start_edge=5507,
+                                           stop_edge=18515)],
+                          ))
 
         self.assertEqual(approaches[0].type, 'LANDING')
         # We approached runway 24L...

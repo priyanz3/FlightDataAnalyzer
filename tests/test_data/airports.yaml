@@ -1787,6 +1787,7 @@ embaba:
         !!python/unicode 'width': 150}
 palma_de_mallorca:
     !!python/unicode 'code': {!!python/unicode 'iata': !!python/unicode 'PMI', !!python/unicode 'icao': !!python/unicode 'LEPA'}
+    !!python/unicode 'distance': 0.5296111804957316
     !!python/unicode 'elevation': 27
     !!python/unicode 'id': 2969
     !!python/unicode 'latitude': 39.55027999999999
@@ -1811,7 +1812,7 @@ palma_de_mallorca:
       !!python/unicode 'glideslope':
         !!python/unicode 'angle': 3.0
         !!python/unicode 'elevation': 3
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109300.00']
+        !!python/unicode 'frequency': 109300.00
         !!python/unicode 'latitude': 39.553041999999984
         !!python/unicode 'longitude': 2.7592720000000024
         !!python/unicode 'threshold_distance': 981
@@ -1820,7 +1821,7 @@ palma_de_mallorca:
       !!python/unicode 'localizer':
         !!python/unicode 'beam_width': 4.5
         !!python/unicode 'elevation': 26
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109300.00']
+        !!python/unicode 'frequency': 109300.00
         !!python/unicode 'heading': 240
         !!python/unicode 'is_offset': false
         !!python/unicode 'latitude': 39.54004399999937
@@ -1835,7 +1836,7 @@ palma_de_mallorca:
       !!python/unicode 'glideslope':
         !!python/unicode 'angle': 3.0
         !!python/unicode 'elevation': 0
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['110900.00']
+        !!python/unicode 'frequency': 110900.00
         !!python/unicode 'latitude': 39.54968899999995
         !!python/unicode 'longitude': 2.7134079999999985
         !!python/unicode 'threshold_distance': 1128
@@ -1844,7 +1845,7 @@ palma_de_mallorca:
       !!python/unicode 'localizer':
         !!python/unicode 'beam_width': 4.5
         !!python/unicode 'elevation': -3
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['110900.00']
+        !!python/unicode 'frequency': 110900.00
         !!python/unicode 'heading': 59
         !!python/unicode 'is_offset': false
         !!python/unicode 'latitude': 39.56351399999996
@@ -1859,7 +1860,7 @@ palma_de_mallorca:
       !!python/unicode 'glideslope':
         !!python/unicode 'angle': 3.0
         !!python/unicode 'elevation': 7
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109900.00']
+        !!python/unicode 'frequency': 109900.00
         !!python/unicode 'latitude': 39.561502999999945
         !!python/unicode 'longitude': 2.7382469999999963
         !!python/unicode 'threshold_distance': 1150
@@ -1868,7 +1869,7 @@ palma_de_mallorca:
       !!python/unicode 'localizer':
         !!python/unicode 'beam_width': 4.5
         !!python/unicode 'elevation': 13
-        !!python/unicode 'frequency': !!python/object/apply:decimal.Decimal ['109900.00']
+        !!python/unicode 'frequency': 109900.00
         !!python/unicode 'heading': 240
         !!python/unicode 'is_offset': false
         !!python/unicode 'latitude': 39.54576699999999
