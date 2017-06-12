@@ -1338,32 +1338,22 @@ class TestBarcelona(unittest.TestCase):
                           )
         # Go Around
         self.assertEqual(approaches[0].type, 'GO_AROUND')
-        # We approached runway 17C...
         self.assertEqual(approaches[0].approach_runway['identifier'], '07L')
-        # ...but landed on 17R...
         self.assertEqual(approaches[0].landing_runway['identifier'], '07L')
-        # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 19085)
         self.assertEqual(int(approaches[0].gs_est.stop), 19312)
-        # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 19085)
         self.assertEqual(int(approaches[0].loc_est.stop), 19340)
-        # There was no runway change
         self.assertEqual(approaches[0].runway_change, False)
 
         # Landing
         self.assertEqual(approaches[1].type, 'LANDING')
-        # We approached runway 17C...
         self.assertEqual(approaches[1].approach_runway['identifier'], '07L')
-        # ...but landed on 17R...
         self.assertEqual(approaches[1].landing_runway['identifier'], '07L')
-        # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[1].gs_est.start), 21025)
         self.assertEqual(int(approaches[1].gs_est.stop), 21251)
-        # ...but was on the localizer
         self.assertEqual(int(approaches[1].loc_est.start), 21025)
         self.assertEqual(int(approaches[1].loc_est.stop), 21371)
-        # There was no runway change
         self.assertEqual(approaches[1].runway_change, False)
 
 
@@ -1413,17 +1403,12 @@ class TestNice(unittest.TestCase):
                           )
 
         self.assertEqual(approaches[0].type, 'LANDING')
-        # We approached runway 26L...
         self.assertEqual(approaches[0].approach_runway['identifier'], '04R')
-        # ...and landed on 26L...
         self.assertEqual(approaches[0].landing_runway['identifier'], '04R')
-        # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 6818)
         self.assertEqual(int(approaches[0].gs_est.stop), 7025)
-        # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 6818)
         self.assertEqual(int(approaches[0].loc_est.stop), 7055)
-        # There was no runway change
         self.assertEqual(approaches[0].runway_change, False)
 
 
@@ -1472,17 +1457,12 @@ class TestGranCanaria(unittest.TestCase):
                           )
 
         self.assertEqual(approaches[0].type, 'LANDING')
-        # We approached runway 26L...
         self.assertEqual(approaches[0].approach_runway['identifier'], '03L')
-        # ...and landed on 26L...
         self.assertEqual(approaches[0].landing_runway['identifier'], '03R')
-        # The aircraft was established on the glidepath
         self.assertEqual(int(approaches[0].gs_est.start), 22197)
         self.assertEqual(int(approaches[0].gs_est.stop), 22229)
-        # ...but was on the localizer
         self.assertEqual(int(approaches[0].loc_est.start), 22177)
         self.assertEqual(int(approaches[0].loc_est.stop), 22229)
-        # There was no runway change
         self.assertEqual(approaches[0].runway_change, True)
 
 
@@ -1591,14 +1571,67 @@ class TestNewDelhi(unittest.TestCase):
                           )
 
         self.assertEqual(approaches[0].type, 'LANDING')
-        # We approached runway 26L...
         self.assertEqual(approaches[0].approach_runway['identifier'], '10')
-        # ...and landed on 26L...
         self.assertEqual(approaches[0].landing_runway['identifier'], '09')
         # There was no runway change
         self.assertEqual(approaches[0].runway_change, False)
 
 
+class TestPalmaDeMallorca(unittest.TestCase):
+    '''
+    14100867 aka bfd:1a1cef312a74
+    '''
+
+    # A change in runways early on the approach.
+    @patch('analysis_engine.approaches.api')
+    def test_runway_change_at_Palma_De_Mallorca(self, api):
+
+        get_handler = Mock()
+        get_handler.get_nearest_airport.return_value = [airports['palma_de_mallorca']]
+        api.get_handler.return_value = get_handler
+
+        def fetch(par_name):
+            try:
+                return load(root + par_name + '.nod')
+            except:
+                return None
+        root = os.path.join(approaches_path, 'ILS_test_14100867_')
+        app_start = 17853 * 2
+        app_end = 18678 * 2
+
+        approaches = ApproachInformation()
+        approaches.derive(fetch('Altitude AAL'),
+                          fetch('Altitude AGL'),
+                          A('Aircraft Type', 'aeroplane'),
+                          S(name='Approach And Landing', 
+                            items=[Section(name='Approach And Landing', 
+                                           slice=slice(app_start, app_end),
+                                           start_edge=app_start, 
+                                           stop_edge=app_end)]),
+                          fetch('Heading Continuous'),
+                          fetch('Latitude Prepared'),
+                          fetch('Longitude Prepared'),
+                          fetch('ILS Localizer'),
+                          P('ILS Glideslope', array=np.ma.ones(20160*2)),
+                          fetch('ILS Frequency'),
+                          A(name='AFR Landing Airport', value=None),
+                          A(name='AFR Landing Runway', value=None) ,
+                          KPV('Latitude At Touchdown', items=[]),
+                          KPV('Longitude At Touchdown', items=[]),
+                          A('Precise Positioning', True),
+                          )
+
+        self.assertEqual(approaches[0].type, 'LANDING')
+        # We approached runway 24L...
+        self.assertEqual(approaches[0].approach_runway['identifier'], '24L')
+        # ...and landed on 24R...
+        self.assertEqual(approaches[0].landing_runway['identifier'], '24R')
+        # There was a runway change
+        self.assertEqual(approaches[0].runway_change, True)
+
+
+
 if __name__ == '__main__':
     unittest.main()
+
 
