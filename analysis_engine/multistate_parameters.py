@@ -1887,7 +1887,7 @@ class GearOnGround(MultistateDerivedParameterNode):
             torque_array = moving_average(torque.array)
             grounded = slices_and(runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1), 
                                   runs_of_ones(torque_array < torque_limit, min_samples=1))
-            array = np_ma_zeros_like(vert_spd.array)
+            array = np_ma_zeros_like(vert_spd_array)
             for _slice in slices_remove_small_slices(grounded, count=2):
                 array[_slice] = 1
             array.mask = vert_spd_array.mask | torque_array.mask
