@@ -6638,6 +6638,10 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (2)' in available and
                 'Spoiler (R) (2)' in available
             ) or
+            family_name in ('G-VI',) and (
+                'Spoiler (L) (1)' in available and
+                'Spoiler (R) (1)' in available
+            ) or
             family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380') and (
                 ('Spoiler (L) (3)' in available and
                     'Spoiler (R) (3)' in available) or
@@ -6713,12 +6717,14 @@ class Speedbrake(DerivedParameterNode):
 
     def derive(self,
                spoiler_l=P('Spoiler (L)'),
+               spolier_l1=P('Spoiler (L) (1)'),
                spoiler_l2=P('Spoiler (L) (2)'),
                spoiler_l3=P('Spoiler (L) (3)'),
                spoiler_l4=P('Spoiler (L) (4)'),
                spoiler_l5=P('Spoiler (L) (5)'),
                spoiler_l7=P('Spoiler (L) (7)'),
                spoiler_r=P('Spoiler (R)'),
+               spolier_r1=P('Spoiler (R) (1)'),
                spoiler_r2=P('Spoiler (R) (2)'),
                spoiler_r3=P('Spoiler (R) (3)'),
                spoiler_r4=P('Spoiler (R) (4)'),
@@ -6731,6 +6737,8 @@ class Speedbrake(DerivedParameterNode):
 
         if family_name in ('G-V', 'G-IV') or (family_name == 'CL-600' and spoiler_l2 and spoiler_r2):
             self.merge_spoiler(spoiler_l2, spoiler_r2)
+        elif family_name in ('G-VI',):
+            self.merge_spoiler(spoiler_l1, spoiler_r1)
         elif family_name in ('A300', 'A318', 'A319', 'A320', 'A321', 'A330', 'A340', 'A380'):
             if spoiler_l3 is not None:
                 self.merge_spoiler(spoiler_l3, spoiler_r3)
