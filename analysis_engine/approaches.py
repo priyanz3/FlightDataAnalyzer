@@ -319,17 +319,21 @@ class ApproachInformation(ApproachNode):
                 
                 # While we're here, let's compute the turnoff index for this landing.
                 head_landing = hdg.array[(ref_idx+_slice.stop)/2:_slice.stop]
-                peak_bend = peak_curvature(head_landing, curve_sense='Bipolar')
-                fifteen_deg = index_at_value(
-                    np.ma.abs(head_landing - head_landing[0]), 15.0)
-                if peak_bend:
-                    turnoff = (ref_idx+_slice.stop)/2 + peak_bend
-                else:
-                    if fifteen_deg and fifteen_deg < peak_bend:
-                        turnoff = start_search + landing_turn
+                if len(head_landing) > 2:
+                    peak_bend = peak_curvature(head_landing, curve_sense='Bipolar')
+                    fifteen_deg = index_at_value(
+                        np.ma.abs(head_landing - head_landing[0]), 15.0)
+                    if peak_bend:
+                        turnoff = (ref_idx+_slice.stop)/2 + peak_bend
                     else:
-                        # No turn, so just use end of landing run.
-                        turnoff = _slice.stop
+                        if fifteen_deg and fifteen_deg < peak_bend:
+                            turnoff = start_search + landing_turn
+                        else:
+                            # No turn, so just use end of landing run.
+                            turnoff = _slice.stop
+                else:
+                    # No turn, so just use end of landing run.
+                    turnoff = _slice.stop
             else:
                 # We didn't land, but this is indicative of the runway heading
                 lowest_hdg = (hdg.array[ref_idx] % 360.0).item()
