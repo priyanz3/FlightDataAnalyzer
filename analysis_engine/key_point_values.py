@@ -6002,10 +6002,10 @@ class GreatCircleDistance(KeyPointValueNode):
             return
 
         if tdwn:
-            value = great_circle_distance__haversine(toff_lat, toff_lon, ldg_lat, ldg_lon)
+            value = great_circle_distance__haversine(toff_lat, toff_lon, ldg_lat, ldg_lon, units=ut.NM)
             index = tdwn.get_last().index
             if value:
-                self.create_kpv(index, ut.convert(value, ut.METER, ut.NM))
+                self.create_kpv(index, value)
 
 
 class DistanceTravelledDuringTurnback(KeyPointValueNode):

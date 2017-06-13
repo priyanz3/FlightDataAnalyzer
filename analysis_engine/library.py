@@ -7182,7 +7182,7 @@ def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
     except ValueError:
         lat_i = 0.0
 
-    return  great_circle_distance__haversine(lat_i, lon_i, latitude_ref, longitude_ref, ut.NM)
+    return  great_circle_distance__haversine(lat_i, lon_i, latitude_ref, longitude_ref, units=ut.NM)
 
 
 def index_closest_value(array, threshold, _slice=slice(None)):

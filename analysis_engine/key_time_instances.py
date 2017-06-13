@@ -2080,8 +2080,7 @@ class DistanceFromLocationMixin(object):
             lat_array = repair_mask(lat_array, repair_duration=repair_mask_duration)
             lon_array = repair_mask(lon_array, repair_duration=repair_mask_duration)
 
-        distances = great_circle_distance__haversine(lat_array, lon_array, [datum_lat], [datum_lon])
-        distances = ut.convert(distances, ut.METER, ut.NM)
+        distances = great_circle_distance__haversine(lat_array, lon_array, [datum_lat], [datum_lon], units=ut.NM)
         if direction == 'backward':
             back_slice = slice(_slice.stop, _slice.start, -1)
             index = index_at_value(distances, distance, back_slice, endpoint='nearest')
