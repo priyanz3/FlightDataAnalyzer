@@ -3030,6 +3030,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                                 'Deployed/Cmd Up', 'Stowed')
         elif family_name in ['G-IV',
                              'G-V',
+                             'G-VI',
                              'Global',
                              'CL-600',
                              'Citation',
