@@ -1688,7 +1688,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                 start = math.ceil(max(x for x in transits if x < stop))
                 runs.append(slice(start, stop+1))
         elif gear_down and gear_up:
-            for start, stop in zip(gear_ups, gear_downs):
+            for start, stop in zip(gear_downs, gear_ups):
                 runs.append(slice(math.ceil(start), stop+1))
         elif gear_down and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')

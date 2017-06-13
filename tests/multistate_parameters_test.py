@@ -3760,7 +3760,7 @@ class TestGearUpInTransit(unittest.TestCase):
         gear_down = M('Gear Down', array=np.ma.array([1]*5 + [0]*50 + [1]*5),
                       values_mapping={0: 'Up', 1: 'Down'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_up, gear_down, None, None, None, None, self.model, self.series, self.family)
+        node.derive(None, None, None, None, gear_down, gear_up, None, None, None, None, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
