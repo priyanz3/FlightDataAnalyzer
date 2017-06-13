@@ -508,12 +508,12 @@ airports:
       magnetic_heading: !!python/object/apply:decimal.Decimal ['98.0']
       start: {elevation: 117, latitude: 43.30334798, longitude: -2.937025569999989}
       strip: {id: 4957, length: 6266, surface: !!python/unicode 'ASP', width: 148}
-    - end: {elevation: 117, latitude: 43.30334212420607, longitude: -2.9370067945368716}
+    - end: {elevation: 117, latitude: 43.303496326587634, longitude: -2.935858809078722}
       id: 9914
       identifier: !!python/unicode '28'
       localizer: {is_offset: false}
       magnetic_heading: !!python/object/apply:decimal.Decimal ['278.0']
-      start: {elevation: 130, latitude: 43.301264019999984, longitude: -2.9125384300000072}
+      start: {elevation: 130, latitude: 43.30184766461988, longitude: -2.9194048850771157}
       strip: {id: 4957, length: 6266, surface: !!python/unicode 'ASP', width: 148}
   '005':
     code: {iata: !!python/unicode 'SOU', icao: !!python/unicode 'EGHI'}

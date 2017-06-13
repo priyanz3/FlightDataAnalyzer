@@ -465,12 +465,14 @@ from analysis_engine.key_point_values import (
     LastUnstableStateDuringLastApproach,
     LatitudeAtLiftoff,
     LatitudeAtLowestAltitudeDuringApproach,
+    LatitudeAtTakeoffAccelerationStart,
     LatitudeAtTouchdown,
     LatitudeOffBlocks,
     LatitudeSmoothedAtLiftoff,
     LatitudeSmoothedAtTouchdown,
     LongitudeAtLiftoff,
     LongitudeAtLowestAltitudeDuringApproach,
+    LongitudeAtTakeoffAccelerationStart,
     LongitudeAtTouchdown,
     LongitudeOffBlocks,
     LongitudeSmoothedAtLiftoff,
@@ -11213,6 +11215,51 @@ class TestLongitudeOffBlocks(unittest.TestCase, NodeTest):
         node.create_kpvs_at_ktis = Mock()
         node.derive(lon, liftoffs, None)
         node.create_kpvs_at_ktis.assert_called_once_with(lon.array, liftoffs)
+        assert not node.create_kpv.called, 'method should not have been called'
+
+
+class TestLatitudeAtTakeoffAccelerationStart(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = LatitudeAtTakeoffAccelerationStart
+        self.operational_combinations = [
+            ('Latitude', 'Takeoff Acceleration Start'),
+            ('Takeoff Acceleration Start', 'Latitude (Coarse)'),
+            ('Latitude', 'Takeoff Acceleration Start', 'Latitude (Coarse)')
+        ]
+
+    def test_derive_with_Latitude(self):
+        lat = P(name='Latitude')
+        lat.array = Mock()
+        toff_accel = KTI(name='Takeoff Acceleration Start')
+        lat_c = None
+        node = self.node_class()
+        node.create_kpv = Mock()
+        node.create_kpvs_at_ktis = Mock()
+        node.derive(lat, toff_accel, lat_c)
+        node.create_kpvs_at_ktis.assert_called_once_with(lat.array, toff_accel)
+        assert not node.create_kpv.called, 'method should not have been called'
+
+
+class TestLongitudeAtTakeoffAccelerationStart(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = LongitudeAtTakeoffAccelerationStart
+        self.operational_combinations = [
+            ('Longitude', 'Takeoff Acceleration Start'),
+            ('Takeoff Acceleration Start', 'Longitude (Coarse)'),
+            ('Longitude', 'Takeoff Acceleration Start', 'Longitude (Coarse)')
+        ]
+
+    def test_derive_with_longitude(self):
+        lon = P(name='Longitude')
+        lon.array = Mock()
+        toff_accel = KTI(name='Takeoff Acceleration Start')
+        node = self.node_class()
+        node.create_kpv = Mock()
+        node.create_kpvs_at_ktis = Mock()
+        node.derive(lon, toff_accel, None)
+        node.create_kpvs_at_ktis.assert_called_once_with(lon.array, toff_accel)
         assert not node.create_kpv.called, 'method should not have been called'
 
 

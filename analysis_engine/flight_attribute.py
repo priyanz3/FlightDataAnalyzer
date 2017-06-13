@@ -665,6 +665,8 @@ class TakeoffRunway(FlightAttributeNode):
                toff_hdg=KPV('Heading During Takeoff'),
                toff_lat=KPV('Latitude At Liftoff'),
                toff_lon=KPV('Longitude At Liftoff'),
+               accel_start_lat=KPV('Latitude At Takeoff Acceleration Start'),
+               accel_start_lon=KPV('Longitude At Takeoff Acceleration Start'),
                precision=A('Precise Positioning')):
         '''
         '''
@@ -700,12 +702,17 @@ class TakeoffRunway(FlightAttributeNode):
             # but this would require an airport database with terminal and
             # taxiway details that was not felt justified).
             if toff_lat and toff_lon:
-                lat = toff_lat.get_first()
-                lon = toff_lon.get_first()
-                if lat and lon:
+                lats = [toff_lat.get_first()]
+                lons = [toff_lon.get_first()]
+                if accel_start_lat and accel_start_lon:
+                    lats.append(accel_start_lat.get_first())
+                    lons.append(accel_start_lon.get_first())
+                lats = [l.value for l in lats if l]
+                lons = [l.value for l in lons if l]
+                if lats and lons:
                     kwargs.update(
-                        latitude=lat.value,
-                        longitude=lon.value,
+                        latitude=np.array(lats),
+                        longitude=np.array(lons),
                     )
                 else:
                     self.warning('No coordinates for takeoff runway lookup.')

@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import unittest
+import yaml
 
 from datetime import datetime, timedelta
 from mock import Mock, call, patch
@@ -45,6 +46,8 @@ from flight_phase_test import buildsection
 
 test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               'test_data')
+
+airports = yaml.load(open(os.path.join(test_data_path, 'airports.yaml'), 'rb'))
 
 
 def setUpModule():
@@ -956,7 +959,7 @@ class TestTakeoffPilot(unittest.TestCase):
 class TestTakeoffRunway(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = TakeoffRunway
-        self.operational_combination_length = 40
+        self.operational_combination_length = 160
         self.check_operational_combination_length_only = True
 
     @patch('analysis_engine.flight_attribute.nearest_runway')
@@ -988,19 +991,19 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
         nearest_runway.reset_mock()
         # Test for aircraft where positioning is not precise:
         precise.value = True
-        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise)
+        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, None, None, precise)
         rwy.set_flight_attr.assert_called_once_with(info)
         rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=4.0, longitude=3.0)
+        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=np.array([4.0]), longitude=np.array([3.0]))
         nearest_runway.reset_mock()
         # Test for aircraft where positioning is not precise:
         # NOTE: Latitude and longitude are still used for determining the
         #       takeoff runway, even when positioning is not precise!
         precise.value = False
-        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, precise)
+        rwy.derive(fdr_apt, afr_apt, hdg, lat, lon, None, None, precise)
         rwy.set_flight_attr.assert_called_once_with(info)
         rwy.set_flight_attr.reset_mock()
-        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=4.0, longitude=3.0,  hint='takeoff')
+        nearest_runway.assert_called_once_with(fdr_apt.value, 20.0, latitude=np.array([4.0]), longitude=np.array([3.0]),  hint='takeoff')
         nearest_runway.reset_mock()
 
     @patch('analysis_engine.flight_attribute.nearest_runway')
@@ -1048,6 +1051,31 @@ class TestTakeoffRunway(unittest.TestCase, NodeTest):
         rwy.derive(fdr_apt, afr_rwy, hdg_b)
         rwy.set_flight_attr.assert_called_once_with(info)
         nearest_runway.assert_called_once_with(fdr_apt.value, hdg_b.get_first().value, hint='takeoff')
+
+    def test_derive__bilbao(self):
+        fdr_apt = A(name='FDR Takeoff Airport', value=airports['airports']['004'])
+        toff_hdg = KPV(name='Heading During Takeoff', items=[
+            KeyPointValue(index=710.4453125, value=299.53125),
+        ])
+        toff_lat = KPV(name='Latitude At Liftoff', items=[
+            KeyPointValue(index=724.50390625, value=43.3009835333),
+        ])
+        toff_lon = KPV(name='Longitude At Liftoff', items=[
+            KeyPointValue(index=724.50390625, value=-2.91060447693),
+        ])
+        accel_start_lat = KPV(name='Latitude Takeoff Acceleration Start', items=[
+            KeyPointValue(index=695.76852498, value=43.2960891724),
+        ])
+        accel_start_lon = KPV(name='Longitude Takeoff Acceleration Start', items=[
+            KeyPointValue(index=695.76852498, value=-2.89747238159),
+        ])
+        precise = A(name='Precise Positioning', value=True)
+
+        node = self.node_class()
+        node.derive(fdr_apt, None, toff_hdg, toff_lat, toff_lon, accel_start_lat,
+                   accel_start_lon, precise)
+
+        self.assertEqual(node.value['identifier'], '30')
 
 
 class TestFlightType(unittest.TestCase):
