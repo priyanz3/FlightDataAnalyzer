@@ -29,8 +29,8 @@ except ImportError:
 
 from hdfaccess.parameter import MappedArray
 
-from flightdatautilities import aircrafttables as at
-from flightdatautilities.geometry import cross_track_distance
+from flightdatautilities import aircrafttables as at, units as ut
+from flightdatautilities.geometry import cross_track_distance, great_circle_distance__haversine
 
 from analysis_engine.settings import (
     BUMP_HALF_WIDTH,
@@ -50,8 +50,6 @@ from analysis_engine.settings import (
     TRUCK_OR_TRAILER_PERIOD,
     WRAPPING_PARAMS,
 )
-
-EARTH_RADIUS = 6371000
 
 # There is no numpy masked array function for radians, so we just multiply thus:
 deg2rad = radians(1.0)
@@ -2318,30 +2316,6 @@ def first_order_washout(param, time_constant, hz, gain=1.0, initial_value=None):
     return masked_first_order_filter(y_term, x_term, param, initial_value)
 
 
-def _dist(lat1, lon1, lat2, lon2):
-    '''
-    Haversine formula for calculating distances between coordinates.
-
-    This function has been adapted to work with numpy arrays or single values.
-
-    :param lat1: latitude (degrees)
-    :type lat1: float or numpy.array
-    :param lon1: longitude (degrees)
-    :type lon1: float or numpy.array
-    :param lat2: latitude (degrees)
-    :type lat2: float or numpy.array
-    :param lon2: longitude (degrees)
-    :type lon2: float or numpy.array
-
-    :returns: distance between the two points
-    :rtype: float (units=metres)
-    '''
-    sdlat2 = np.sin(np.radians(lat1 - lat2) / 2.) ** 2
-    sdlon2 = np.sin(np.radians(lon1 - lon2) / 2.) ** 2
-    a = sdlat2 + sdlon2 * np.cos(np.radians(lat1)) * np.cos(np.radians(lat2))
-    return 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a)) * EARTH_RADIUS
-
-
 def runway_distance_from_end(runway, *args, **kwds):
     """
     Distance from the end of the runway to any point. The point is first
@@ -2387,8 +2361,9 @@ def runway_distance_from_end(runway, *args, **kwds):
             return None
 
     if new_lat and new_lon:
-        return _dist(new_lat, new_lon,
-                     runway['end']['latitude'], runway['end']['longitude'])
+        return great_circle_distance__haversine(new_lat, new_lon,
+                                                runway['end']['latitude'],
+                                                runway['end']['longitude'])
     else:
         return None
 
@@ -2487,10 +2462,10 @@ def runway_distances(runway):
     gs_lat = runway['glideslope']['latitude']
     gs_lon = runway['glideslope']['longitude']
 
-    #a = _dist(gs_lat, gs_lon, lzr_lat, lzr_lon)
-    #b = _dist(gs_lat, gs_lon, start_lat, start_lon)
-    #c = _dist(end_lat, end_lon, lzr_lat, lzr_lon)
-    #d = _dist(start_lat, start_lon, lzr_lat, lzr_lon)
+    #a = great_circle_distance__haversine(gs_lat, gs_lon, lzr_lat, lzr_lon)
+    #b = great_circle_distance__haversine(gs_lat, gs_lon, start_lat, start_lon)
+    #c = great_circle_distance__haversine(end_lat, end_lon, lzr_lat, lzr_lon)
+    #d = great_circle_distance__haversine(start_lat, start_lon, lzr_lat, lzr_lon)
 
     #r = (1.0+(a**2 - b**2)/d**2)/2.0
     #g = r*d
@@ -2514,11 +2489,11 @@ def runway_distances(runway):
         logger.warning('Reversing lat and long for glideslope on runway %d' %runway['id'])
     # =========================================================================
 
-    start_2_loc = _dist(start_lat, start_lon, lzr_lat, lzr_lon)
+    start_2_loc = great_circle_distance__haversine(start_lat, start_lon, lzr_lat, lzr_lon)
     # The projected glideslope antenna position is given by this formula
     pgs_lat, pgs_lon = runway_snap(runway, gs_lat, gs_lon)
-    gs_2_loc = _dist(pgs_lat, pgs_lon, lzr_lat, lzr_lon)
-    end_2_loc = _dist(end_lat, end_lon, lzr_lat, lzr_lon)
+    gs_2_loc = great_circle_distance__haversine(pgs_lat, pgs_lon, lzr_lat, lzr_lon)
+    end_2_loc = great_circle_distance__haversine(end_lat, end_lon, lzr_lat, lzr_lon)
 
     return start_2_loc, gs_2_loc, end_2_loc, pgs_lat, pgs_lon  # Runway distances to start, glideslope and end.
 
@@ -2551,7 +2526,7 @@ def runway_length(runway):
         end_lat = runway['end']['latitude']
         end_lon = runway['end']['longitude']
 
-        return _dist(start_lat, start_lon, end_lat, end_lon)
+        return great_circle_distance__haversine(start_lat, start_lon, end_lat, end_lon)
     except:
         raise ValueError("runway_length unable to compute length of runway id='%s'" %runway['id'])
 
@@ -2648,9 +2623,9 @@ def runway_snap(runway, lat, lon):
         logger.warning('Reversing lat and long in runway_snap')
     # =========================================================================
 
-    a = _dist(lat, lon, end_lat, end_lon)
-    b = _dist(lat, lon, start_lat, start_lon)
-    d = _dist(start_lat, start_lon, end_lat, end_lon)
+    a = great_circle_distance__haversine(lat, lon, end_lat, end_lon)
+    b = great_circle_distance__haversine(lat, lon, start_lat, start_lon)
+    d = great_circle_distance__haversine(start_lat, start_lon, end_lat, end_lon)
 
     if not a or not b:
         return lat, lon
@@ -7207,18 +7182,7 @@ def distance_at_index(i, latitude, longitude, latitude_ref, longitude_ref):
     except ValueError:
         lat_i = 0.0
 
-    return distance_between_coordinates(lat_i, lon_i, latitude_ref, longitude_ref)
-
-
-def distance_between_coordinates(lat_start, lon_start, lat_end, lon_end):
-    '''
-    return distance in Nautical Miles between two coordinates.
-    '''
-
-    # The function _dist from the library provides the haversine distance in metres
-    # hence the conversion factor required to convert to nautical miles.
-    rad = (_dist(lat_start, lon_start, lat_end, lon_end) or 0.0) * 0.000539957
-    return rad
+    return  great_circle_distance__haversine(lat_i, lon_i, latitude_ref, longitude_ref, ut.NM)
 
 
 def index_closest_value(array, threshold, _slice=slice(None)):
@@ -8009,8 +7973,8 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
 
     # 4. Attempt to identify by nearest runway:
     if latitude is not None and longitude is not None:
-        assert -90 <= latitude <= 90, 'Latitude must be between -90 and 90 degrees.'
-        assert -180 < longitude <= 180, 'Longitude must be between -180 and 180 degrees.'
+        assert np.all(-90 <= latitude) and np.all(latitude <= 90), 'Latitude must be between -90 and 90 degrees.'
+        assert np.all(-180 < longitude) and np.all(longitude <= 180), 'Longitude must be between -180 and 180 degrees.'
         p3y, p3x = latitude, longitude
         distance = float('inf')
         runway = None
@@ -8022,7 +7986,7 @@ def nearest_runway(airport, heading, ilsfreq=None, latitude=None, longitude=None
             args = (p1y, p1x, p2y, p2x, p3y, p3x)
             if not any(args):
                 continue
-            abs_dxt = abs(cross_track_distance(*args))
+            abs_dxt = np.average(np.abs(cross_track_distance(*args)))
             if abs_dxt < distance:
                 distance = abs_dxt
                 runway = r

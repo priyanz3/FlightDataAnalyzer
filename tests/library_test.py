@@ -5331,7 +5331,7 @@ class TestRunwayHeading(unittest.TestCase):
 
 
 class TestRunwayLength(unittest.TestCase):
-    @mock.patch('analysis_engine.library._dist')
+    @mock.patch('analysis_engine.library.great_circle_distance__haversine')
     def test_runway_length(self, _dist):
         _dist.return_value = 100
         length = runway_length({'start': {'latitude': 10, 'longitude': 20},

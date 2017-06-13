@@ -22,7 +22,6 @@ from analysis_engine.node import A, aeroplane, ApproachNode, KPV, P, S, helicopt
 
 
 from analysis_engine.library import (
-    _dist,
     all_of,
     bearing_and_distance,
     filter_runway_heading,
@@ -35,6 +34,7 @@ from analysis_engine.library import (
     nearest_runway,
 )
 
+from flightdatautilities.geometry import great_circle_distance__haversine
 
 ##############################################################################
 # Nodes
@@ -128,8 +128,11 @@ class ApproachInformation(ApproachNode):
                 if runway.get('localizer', {}).get('frequency', 0)/1000 == appr_ils_freq:
                     ils_match = True
                 if runway.get('start') and lowest_lat is not None and lowest_lon is not None:
-                    start_dist = _dist(runway['start']['latitude'], runway['start']['longitude'],
-                                       lowest_lat, lowest_lon)
+                    start_dist = great_circle_distance__haversine(
+                        runway['start']['latitude'],
+                        runway['start']['longitude'],
+                        lowest_lat, lowest_lon,
+                    )
                     min_rwy_start_dist = min(min_rwy_start_dist, start_dist) if min_rwy_start_dist else start_dist
 
             annotated_airports[airport['id']] = {'airport': airport,

@@ -13,7 +13,7 @@ from math import ceil, copysign
 from operator import itemgetter
 
 from flightdatautilities import aircrafttables as at, units as ut
-from flightdatautilities.geometry import midpoint
+from flightdatautilities.geometry import midpoint, great_circle_distance__haversine
 
 from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
                                       ACCEL_LON_OFFSET_LIMIT,
@@ -57,7 +57,6 @@ from analysis_engine.library import (ambiguous_runway,
                                      cycle_counter,
                                      cycle_finder,
                                      cycle_select,
-                                     distance_between_coordinates,
                                      find_edges,
                                      find_edges_on_state_change,
                                      first_valid_parameter,
@@ -6003,10 +6002,10 @@ class GreatCircleDistance(KeyPointValueNode):
             return
 
         if tdwn:
-            value = distance_between_coordinates(toff_lat, toff_lon, ldg_lat, ldg_lon)
+            value = great_circle_distance__haversine(toff_lat, toff_lon, ldg_lat, ldg_lon)
             index = tdwn.get_last().index
             if value:
-                self.create_kpv(index, value)
+                self.create_kpv(index, ut.convert(value, ut.METER, ut.NM))
 
 
 class DistanceTravelledDuringTurnback(KeyPointValueNode):

@@ -10,7 +10,6 @@ from analysis_engine.library import (
     all_of,
     any_of,
     coreg,
-    _dist,
     find_edges_on_state_change,
     find_toc_tod,
     first_valid_sample,
@@ -40,6 +39,7 @@ from analysis_engine.node import (
     aeroplane, aeroplane_only, helicopter, helicopter_only)
 
 from flightdatautilities import units as ut
+from flightdatautilities.geometry import great_circle_distance__haversine
 
 from analysis_engine.settings import (
     CLIMB_THRESHOLD,
@@ -2080,7 +2080,7 @@ class DistanceFromLocationMixin(object):
             lat_array = repair_mask(lat_array, repair_duration=repair_mask_duration)
             lon_array = repair_mask(lon_array, repair_duration=repair_mask_duration)
 
-        distances = _dist(lat_array, lon_array, [datum_lat], [datum_lon])
+        distances = great_circle_distance__haversine(lat_array, lon_array, [datum_lat], [datum_lon])
         distances = ut.convert(distances, ut.METER, ut.NM)
         if direction == 'backward':
             back_slice = slice(_slice.stop, _slice.start, -1)
