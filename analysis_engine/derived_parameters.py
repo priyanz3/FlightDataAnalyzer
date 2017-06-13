@@ -8674,7 +8674,7 @@ class KineticEnergy(DerivedParameterNode):
 
     def derive(self,airspeed=P('Airspeed True'),
                mass=P('Gross Weight Smoothed')):
-        v = airspeed.array * 0.5144 # v in m/s
+        v = ut.convert(airspeed.array, ut.KT, ut.METER_S)
         # m is in kg
         self.array = (0.5 * mass.array * v ** 2 * 10 **-6) # converted to MJoule
 

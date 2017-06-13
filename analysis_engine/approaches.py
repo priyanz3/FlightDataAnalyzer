@@ -125,7 +125,7 @@ class ApproachInformation(ApproachNode):
                     # Heading does not match runway
                     continue
                 heading_match = True
-                if runway.get('localizer', {}).get('frequency', 0)/1000 == appr_ils_freq:
+                if ut.convert(runway.get('localizer', {}).get('frequency', 0), ut.KHZ, ut.MHZ) == appr_ils_freq:
                     ils_match = True
                 if runway.get('start') and lowest_lat is not None and lowest_lon is not None:
                     start_dist = great_circle_distance__haversine(
@@ -479,7 +479,7 @@ class ApproachInformation(ApproachNode):
                 appr_ils_freq = None
             else:
                 if appr_ils_freq and loc_slice:
-                    if appr_ils_freq != approach_runway['localizer']['frequency']/1000.0:
+                    if appr_ils_freq != ut.convert(approach_runway['localizer']['frequency'], ut.KHZ, ut.MHZ):
                         loc_slice = None
 
             #######################################################################

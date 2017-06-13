@@ -7963,12 +7963,7 @@ class TestKineticEnergy(unittest.TestCase):
         # result = 0.5 * 22900 * velocity **2
         # result / 10 ** 6
 
-        # the effective value is rounded to 4 places after the comma
-        # therefore we get
-        # Exception: AssertionError: 43.628461516799995 != 43.6284 within 4 places
-        # self.assertAlmostEqual(ke.array[100], 43.6284, places=4)
-
-        self.assertAlmostEqual(ke.array[100],43.6285, places=4)
+        self.assertAlmostEqual(ke.array[100], 43.6359, places=4)
 
     def test_can_operate(self):
         result = KineticEnergy.can_operate(['Airspeed True','Gross Weight Smoothed'])
