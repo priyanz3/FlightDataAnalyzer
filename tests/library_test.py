@@ -26,12 +26,12 @@ from analysis_engine.flight_attribute import LandingRunway
 
 # A set of masked array test utilities from Pierre GF Gerard-Marchant
 # http://www.java2s.com/Open-Source/Python/Math/Numerical-Python/numpy/numpy/ma/testutils.py.htm
+from flightdatautilities import units as ut
 from flightdatautilities.array_operations import load_compressed
 import flightdatautilities.masked_array_testutils as ma_test
 
 from analysis_engine.library import *
 from analysis_engine.node import (A, P, S, load, M, KTI, KeyTimeInstance, Section)
-from analysis_engine.settings import METRES_TO_FEET
 
 from flight_phase_test import buildsections
 
@@ -7199,7 +7199,7 @@ class TestAlt2Press(unittest.TestCase):
 
     def test_04(self):
         # Truth values from NASA RP 1046
-        Value = alt2press(25000*METRES_TO_FEET)
+        Value = alt2press(ut.convert(25000, ut.METER, ut.FT))
         Truth = 25.492
         # Wide tolerance as we're not going to be using this for
         # commercial air transport !
@@ -7219,7 +7219,7 @@ class TestAlt2PressRatio(unittest.TestCase):
 
     def test_03(self):
         # Truth values from NASA RP 1046
-        Value = alt2press_ratio(20000*METRES_TO_FEET)
+        Value = alt2press_ratio(ut.convert(20000, ut.METER, ut.FT))
         Truth = 5474.87 / 101325
         self.assertAlmostEqual(Value, Truth, delta = 1e-5)
 

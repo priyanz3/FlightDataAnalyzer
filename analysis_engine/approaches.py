@@ -14,7 +14,7 @@ from __future__ import print_function
 import numpy as np
 from operator import itemgetter
 
-from flightdatautilities import api
+from flightdatautilities import api, units as ut
 
 from analysis_engine import settings
 from analysis_engine.exceptions import AFRMissmatchError
@@ -351,7 +351,7 @@ class ApproachInformation(ApproachNode):
                     # Doing a go-around, we extrapolate to the threshold
                     # in case we abort the approach abeam a different airport,
                     # using the rule of three miles per thousand feet.
-                    distance = np.ma.array([alt_aal.array[ref_idx] * (3/1000.0) * settings.METRES_TO_NM])
+                    distance = np.ma.array([ut.convert(alt_aal.array[ref_idx] * (3 / 1000.0), ut.NM, ut.METER)])
                     bearing = np.ma.array([lowest_hdg])
                     reference = {'latitude': lowest_lat, 'longitude': lowest_lon}
                     lat_ga, lon_ga = latitudes_and_longitudes(bearing, distance, reference)

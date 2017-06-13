@@ -231,9 +231,6 @@ CONTROL_COLUMN_IN_USE_RATIO = 1.30  # %
 # approaches, go-around and touch-and-go phases and instances derive.
 DESCENT_LOW_CLIMB_THRESHOLD = 500 #ft
 
-# This strange conversion is for the tail clearance calculation
-FEET_PER_NM = 6076
-
 # Acceleration due to gravity
 GRAVITY_IMPERIAL = 32.2  # ft/sec^2 - used for combining acceleration and height terms
 
@@ -330,16 +327,6 @@ INITIAL_APPROACH_THRESHOLD = 3000  # ft
 # Threshold for start of initial climb phase
 INITIAL_CLIMB_THRESHOLD = 35  # ft (Radio, where available)
 
-# Conversion from kg to lb.
-# Thanks to David A. Forbes of Aero Tech Research for the conversion figure.
-KG_TO_LB = 2.2046226218487757  # lb/kg
-
-# Conversion from knots to ft/sec (used in airspeed rate of change)
-KTS_TO_FPS = 1.68781  # ft/sec
-
-# Conversion from knots to m/sec (used in groundspeed computation)
-KTS_TO_MPS = 0.514444  # m/sec
-
 # Threshold for start of braking / reverse thrust on landing.
 LANDING_ACCELERATION_THRESHOLD = -0.1  # g
 # TODO: Was -0.2g set to -0.1 for Herc testing - revert or not???
@@ -355,17 +342,6 @@ LEVEL_FLIGHT_MIN_DURATION = 60  # sec
 
 # Maximum age of a Segment's timebase in days. A value of None allows any age.
 MAX_TIMEBASE_AGE = 365 * 10  # days
-
-# Conversion from degrees of latitude to metres. I know it's approximate, but
-# good enough for the uses we have here. To convert deg longitude, allow for
-# the cos(latitude) reduction in distance as we get away from the equator.
-METRES_PER_DEG_LATITUDE = 111120  # metres/deg
-
-# Conversion of length units
-METRES_TO_FEET = 1000/25.4/12
-
-# Conversion from metres to nautical miles.
-METRES_TO_NM = 1852.0
 
 # Heading change KPV rejects turns below this threshold. 270deg splits full
 # orbits (which we want to measure) from turns in the hold.

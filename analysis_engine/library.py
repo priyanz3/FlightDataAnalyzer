@@ -40,8 +40,6 @@ from analysis_engine.settings import (
     ILS_ESTABLISHED_DURATION,
     ILS_LOC_SPREAD,
     ILS_GS_SPREAD,
-    KTS_TO_MPS,
-    METRES_TO_FEET,
     REPAIR_DURATION,
     RUNWAY_HEADING_TOLERANCE,
     RUNWAY_ILSFREQ_TOLERANCE,
@@ -148,16 +146,18 @@ airspeed may be used.
         spd_north = spd * np.ma.cos(hdg_rad)
         spd_east = spd * np.ma.sin(hdg_rad)
 
+        scale = ut.multiplier(ut.KT, ut.METER_S)
+
         # Compute displacements in metres north and east of the starting point.
-        north_from_start = integrate(spd_north[:half_len], frequency, scale=KTS_TO_MPS)
-        east_from_start = integrate(spd_east[:half_len], frequency, scale=KTS_TO_MPS)
+        north_from_start = integrate(spd_north[:half_len], frequency, scale=scale)
+        east_from_start = integrate(spd_east[:half_len], frequency, scale=scale)
         bearings = np.ma.array(np.rad2deg(np.arctan2(east_from_start, north_from_start)))
         distances = np.ma.array(np.ma.sqrt(north_from_start**2 + east_from_start**2))
         lat[:half_len],lon[:half_len] = latitudes_and_longitudes(
             bearings, distances, {'latitude':lat_start, 'longitude':lon_start})
 
-        south_from_end = integrate(spd_north[half_len:], frequency, scale=KTS_TO_MPS, direction='reverse')
-        west_from_end = integrate(spd_east[half_len:], frequency, scale=KTS_TO_MPS, direction='reverse')
+        south_from_end = integrate(spd_north[half_len:], frequency, scale=scale, direction='reverse')
+        west_from_end = integrate(spd_east[half_len:], frequency, scale=scale, direction='reverse')
         bearings = (np.ma.array(np.rad2deg(np.arctan2(west_from_end, south_from_end)))+180.0) % 360.0
         distances = np.ma.array(np.ma.sqrt(south_from_end**2 + west_from_end**2))
         lat[half_len:],lon[half_len:] = latitudes_and_longitudes(
@@ -641,10 +641,11 @@ def bearings_and_distances(latitudes, longitudes, reference):
 Landing stopping distances.
 
 def braking_action(gspd, landing, mu):
-    dist = integrate(gspd.array[landing.slice], gspd.hz, scale=KTS_TO_MPS)
-    #decelerate = np.power(gspd.array[landing.slice]*KTS_TO_MPS,2.0)\
+    scale = ut.multiplier(ut.KT, ut.METER_S)
+    dist = integrate(gspd.array[landing.slice], gspd.hz, scale=scale)
+    #decelerate = np.power(gspd.array[landing.slice]*scale,2.0)\
         #/(2.0*GRAVITY_METRIC*mu)
-    mu = np.power(gspd.array[landing.slice]*KTS_TO_MPS,2.0)\
+    mu = np.power(gspd.array[landing.slice]*scale,2.0)\
         /(2.0*GRAVITY_METRIC*dist)
     limit_point = np.ma.argmax(mu)
     ##limit_point = np.ma.argmax(dist+decelerate)
@@ -2729,10 +2730,9 @@ def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode):
     delta_north = gspd * np.ma.cos(hdg_rad)
     delta_east = gspd * np.ma.sin(hdg_rad)
 
-    north = integrate(delta_north, frequency, scale=KTS_TO_MPS,
-                      direction=direction)
-    east = integrate(delta_east, frequency, scale=KTS_TO_MPS,
-                     direction=direction)
+    scale = ut.multiplier(ut.KT, ut.METER_S)
+    north = integrate(delta_north, frequency, scale=scale, direction=direction)
+    east = integrate(delta_east, frequency, scale=scale, direction=direction)
 
     bearing = np.ma.array(np.rad2deg(np.arctan2(east, north)))
     distance = np.ma.array(np.ma.sqrt(north**2 + east**2))
@@ -3022,7 +3022,8 @@ def integrate(array, frequency, initial_value=0.0, scale=1.0,
     Trapezoidal integration
 
     Usage example:
-    feet_to_land = integrate(airspeed[:touchdown], scale=KTS_TO_FPS, direction='reverse')
+
+    feet_to_land = integrate(airspeed[:touchdown], scale=ut.multiplier(ut.KT, ut.FPS), direction='reverse')
 
     :param array: Integrand.
     :type array: Numpy masked array.
@@ -3917,7 +3918,7 @@ def localizer_scale(runway):
             length = None
 
         if length is None:
-            length = 8000 / METRES_TO_FEET # Typical length
+            length = ut.convert(8000, ut.FT, ut.METER)  # Typical length
 
         # Normal scaling of a localizer gives 700ft width at the threshold,
         # so half of this is 350ft=106.68m. This appears to be full 2-dots
@@ -7692,7 +7693,7 @@ Rd = 287.05307     # Gas constant for dry air, J/kg K
 H1 = 36089.0       # Transition from Troposphere to Stratosphere
 
 # Values at 11km:
-T11 =  T0 + 11000 * METRES_TO_FEET * L0
+T11 =  T0 + ut.convert(11000 * L0, ut.METER, ut.FT)
 PR11 = (T11 / T0) ** ((-g) / (Rd * L0))
 P11 = PR11 * P0
 
@@ -7725,7 +7726,7 @@ def cas2dp(cas_kt):
     """
     if np.ma.max(cas_kt) > 661.48:
         raise ValueError('Supersonic airspeed compuations not included')
-    cas_mps = np.ma.masked_greater(cas_kt, 661.48) * KTS_TO_MPS
+    cas_mps = ut.convert(np.ma.masked_greater(cas_kt, 661.48), ut.KT, ut.METER_S)
     p = P0*100 # pascal not mBar inside the calculation
     return P0 * (((Rhoref * cas_mps*cas_mps)/(7.* p) + 1.)**3.5 - 1.)
 
@@ -7753,7 +7754,7 @@ def _dp2speed(dp, P, Rho):
     # dp / P not changed as we use mBar for pressure dp.
     speed_mps = np.ma.sqrt(((7. * p) * (1. / Rho)) * (
         np.ma.power((dp / P + 1.), 2./7.) - 1.))
-    speed_kt = speed_mps / KTS_TO_MPS
+    speed_kt = ut.convert(speed_mps, ut.METER_S, ut.KT)
 
     # Mask speeds over 661.48 kt
     return np.ma.masked_greater(speed_kt, 661.48)

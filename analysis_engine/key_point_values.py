@@ -22,13 +22,10 @@ from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
                                       BUMP_HALF_WIDTH,
                                       CLIMB_OR_DESCENT_MIN_DURATION,
                                       CONTROL_FORCE_THRESHOLD,
-                                      FEET_PER_NM,
                                       GRAVITY_IMPERIAL,
                                       GRAVITY_METRIC,
                                       HOVER_MIN_DURATION,
                                       HYSTERESIS_FPALT,
-                                      KTS_TO_FPS,
-                                      KTS_TO_MPS,
                                       MIN_HEADING_CHANGE,
                                       NAME_VALUES_CONF,
                                       NAME_VALUES_ENGINE,
@@ -6148,7 +6145,7 @@ class DecelerationToAbortTakeoffAtRotation(KeyPointValueNode):
                                                lat.array[rot_idx],
                                                lon.array[rot_idx])
             if rot_end:
-                lift_speed = value_at_index(speed, rot_idx) * KTS_TO_MPS
+                lift_speed = ut.convert(value_at_index(speed, rot_idx), ut.KT, ut.METER_S)
                 mu = (lift_speed**2.0) / (2.0 * GRAVITY_METRIC * rot_end)
                 self.create_kpv(rot_idx, mu)
 
@@ -6185,7 +6182,7 @@ class DecelerationToAbortTakeoffBeforeV1(KeyPointValueNode):
                                                lat.array[v1_idx ],
                                                lon.array[v1_idx ])
 
-            v1_mps = value_at_index(speed, v1.value) * KTS_TO_MPS
+            v1_mps = ut.convert(value_at_index(speed, v1.value), ut.KT, ut.METER_S)
             mu = (v1_mps**2.0) / (2.0 * GRAVITY_METRIC * rot_end)
             self.create_kpv(vi_idx, mu)
 """
@@ -6332,7 +6329,7 @@ class DecelerationFromTouchdownToStopOnRunway(KeyPointValueNode):
                 kts = value_at_index(repair_mask(gspd.array), index)
                 if not kts:
                     return
-                speed = kts * KTS_TO_MPS
+                speed = ut.convert(kts, ut.KT, ut.METER_S)
                 mu = (speed * speed) / (2.0 * GRAVITY_METRIC * (distance_at_tdn))
                 self.create_kpv(index, mu)
 
@@ -6458,6 +6455,7 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
         last_tdwn = tdwns.get_last()
         if not last_tdwn:
             return
+        scale = ut.multiplier(ut.KT, ut.METER_S)
         for landing in landings:
             if not is_index_within_slice(last_tdwn.index, landing.slice):
                 continue
@@ -6477,7 +6475,7 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
             land_roll = slice(last_tdwn.index, last_turnoff.index)
             # So for captured ILS approaches or aircraft with precision location we can compute the deceleration required.
             if precise.value or ils_approach:
-                speed = gspd.array[land_roll] * KTS_TO_MPS
+                speed = gspd.array[land_roll] * scale
                 if precise.value:
                     _, dist_to_end = bearings_and_distances(
                         lat.array[land_roll],
@@ -6488,8 +6486,7 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
                     distance_at_tdn = runway_distance_from_end(
                         rwy.value, lat_tdn.get_last().value,
                         lon_tdn.get_last().value)
-                    dist_from_td = integrate(gspd.array[land_roll],
-                                             gspd.hz, scale=KTS_TO_MPS)
+                    dist_from_td = integrate(gspd.array[land_roll], gspd.hz, scale=scale)
                     time_to_end = (distance_at_tdn - dist_from_td) / speed
                 limit_point = np.ma.argmin(time_to_end)
                 if limit_point < 0.0:  # Some error conditions lead to rogue negative results.
@@ -12065,6 +12062,7 @@ class FlareDistance20FtToTouchdown(KeyPointValueNode):
                lands=S('Landing'),
                gspd=P('Groundspeed')):
 
+        scale = ut.multiplier(ut.KT, ut.METER_S)
         for tdown in tdowns:
             this_landing = lands.get_surrounding(tdown.index)
             if this_landing:
@@ -12074,8 +12072,7 @@ class FlareDistance20FtToTouchdown(KeyPointValueNode):
                 # Integrate returns an array, so we need to take the max
                 # value to yield the KTP value.
                 if idx_20:
-                    dist = max(integrate(gspd.array[idx_20:tdown.index + 1],
-                                         gspd.hz, scale=KTS_TO_MPS))
+                    dist = max(integrate(gspd.array[idx_20:tdown.index + 1], gspd.hz, scale=scale))
                     self.create_kpv(tdown.index, dist)
 
 
@@ -12348,7 +12345,7 @@ class GroundspeedDuringRejectedTakeoffMax(KeyPointValueNode):
             self.create_kpvs_within_slices(gnd_spd.array, rtos, max_value)
             return
         # Without groundspeed, we only calculate an estimated Groundspeed for RTOs.
-        scale = GRAVITY_IMPERIAL / KTS_TO_FPS
+        scale = ut.convert(GRAVITY_IMPERIAL, ut.FPS, ut.KT)
         for rto_slice in rtos.get_slices():
             spd = integrate(accel.array[rto_slice], accel.frequency, scale=scale)
             index, value = max_value(spd)
@@ -15689,7 +15686,7 @@ class TailClearanceDuringApproachMin(KeyPointValueNode):
 
         for desc_slice in alt_aal.slices_from_to(3000, 100):
             angle_array = alt_tail.array[desc_slice] \
-                / (dtl.array[desc_slice] * FEET_PER_NM)
+                / ut.convert(dtl.array[desc_slice], ut.NM, ut.FT)
             index, value = min_value(angle_array)
             if index:
                 sample = index + desc_slice.start

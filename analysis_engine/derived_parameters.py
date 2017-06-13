@@ -113,16 +113,11 @@ from analysis_engine.settings import (
     AZ_WASHOUT_TC,
     BOUNCED_LANDING_THRESHOLD,
     CLIMB_THRESHOLD,
-    FEET_PER_NM,
     HYSTERESIS_FPIAS,
     HYSTERESIS_FPROC,
     GRAVITY_IMPERIAL,
     GRAVITY_METRIC,
-    KTS_TO_FPS,
-    KTS_TO_MPS,
     LANDING_THRESHOLD_HEIGHT,
-    METRES_TO_FEET,
-    METRES_TO_NM,
     MIN_VALID_FUEL,
     VERTICAL_SPEED_LAG_TC,
 )
@@ -359,6 +354,8 @@ class AirspeedTrue(DerivedParameterNode):
             np.ma.array(data=tas, mask=combined_mask), 50)
         tas_valids = np.ma.clump_unmasked(tas_from_airspeed)
 
+        scale = ut.convert(GRAVITY_IMPERIAL, ut.FPS, ut.KT)
+
         if toffs:
             # Now see if we can extend this during the takeoff phase, using
             # either recorded groundspeed or failing that integrating
@@ -377,7 +374,7 @@ class AirspeedTrue(DerivedParameterNode):
                                 integrate(acc_fwd.array[scope],
                                           acc_fwd.frequency,
                                           initial_value=tas_0,
-                                          scale=GRAVITY_IMPERIAL / KTS_TO_FPS,
+                                          scale=scale,
                                           extend=True,
                                           direction='backwards')
 
@@ -398,7 +395,7 @@ class AirspeedTrue(DerivedParameterNode):
                                           acc_fwd.frequency,
                                           initial_value=tas_0,
                                           extend=True,
-                                          scale=GRAVITY_IMPERIAL / KTS_TO_FPS)
+                                          scale=scale)
 
         if rtos and acc_fwd:
             for rto in rtos:
@@ -411,7 +408,7 @@ class AirspeedTrue(DerivedParameterNode):
                             integrate(acc_fwd.array[scope],
                                       acc_fwd.frequency,
                                       initial_value=tas_0,
-                                      scale=GRAVITY_IMPERIAL / KTS_TO_FPS,
+                                      scale=scale,
                                       extend=True,
                                       direction='backwards')
                     tix = tas_valid.stop - 1
@@ -423,7 +420,7 @@ class AirspeedTrue(DerivedParameterNode):
                                       acc_fwd.frequency,
                                       initial_value=tas_0,
                                       extend=True,
-                                      scale=GRAVITY_IMPERIAL / KTS_TO_FPS)
+                                      scale=scale)
 
         self.array = tas_from_airspeed
 
@@ -1560,8 +1557,8 @@ class AltitudeTail(DerivedParameterNode):
                          )
 
         # Scale the aircraft geometry into feet to match aircraft altimetry.
-        gear2tail = dist_gear_to_tail.value * METRES_TO_FEET
-        ground2tail = ground_to_tail.value * METRES_TO_FEET
+        gear2tail = ut.convert(dist_gear_to_tail.value, ut.METER, ut.FT)
+        ground2tail = ut.convert(ground_to_tail.value, ut.METER, ut.FT)
 
         result = np_ma_masked_zeros_like(alt_rad.array)
         # The tail clearance is the value with the aircraft settled on its
@@ -4323,7 +4320,7 @@ class SlopeToLanding(DerivedParameterNode):
 
     def derive(self, alt_aal=P('Altitude AAL'), dist=P('Distance To Landing')):
 
-        self.array = alt_aal.array / (dist.array * FEET_PER_NM)
+        self.array = alt_aal.array / ut.convert(dist.array, ut.NM, ut.FT)
 
 
 class SlopeAngleToLanding(DerivedParameterNode):
@@ -4347,7 +4344,7 @@ class SlopeToAimingPoint(DerivedParameterNode):
 
     def derive(self, alt_aal=P('Altitude AAL'), dist=P('Aiming Point Range')):
 
-        self.array = alt_aal.array / (dist.array * FEET_PER_NM)
+        self.array = alt_aal.array / ut.convert(dist.array, ut.NM, ut.FT)
 
 
 class SlopeAngleToAimingPoint(DerivedParameterNode):
@@ -4380,7 +4377,7 @@ class GroundspeedAlongTrack(DerivedParameterNode):
                glide = P('ILS Glideslope')):
         at_washout = first_order_washout(at.array, AT_WASHOUT_TC, gndspd.hz,
                                          gain=GROUNDSPEED_LAG_TC*GRAVITY_METRIC)
-        self.array = first_order_lag(gndspd.array*KTS_TO_MPS + at_washout,
+        self.array = first_order_lag(ut.convert(gndspd.array, ut.KT, ut.METER_S) + at_washout,
                                      GROUNDSPEED_LAG_TC,gndspd.hz)
 
 
@@ -4394,7 +4391,7 @@ class GroundspeedAlongTrack(DerivedParameterNode):
         spam.writerow(['at', 'gndspd', 'at_washout', 'self', 'alt_aal','glide'])
         for showme in range(0, len(at.array)):
             spam.writerow([at.array.data[showme],
-                           gndspd.array.data[showme]*KTS_TO_FPS,
+                           ut.convert(gndspd.array.data[showme], ut.KT, ut.FPS),
                            at_washout[showme],
                            self.array.data[showme],
                            alt_aal.array[showme],glide.array[showme]])
@@ -4665,7 +4662,7 @@ class ILSLateralDistance(DerivedParameterNode):
 
             try:
                 start_2_loc = runway_distances(runway)[0]
-                hw = (runway['strip']['width'] / 2.0) / METRES_TO_FEET
+                hw = ut.convert(runway['strip']['width'] / 2.0, ut.FT, ut.METER)
             except (KeyError, TypeError):
                 self.warning('Unknown runway width or localizer coordinates')
                 continue
@@ -4732,10 +4729,10 @@ class AimingPointRange(DerivedParameterNode):
             try:
                 extend = runway_distances(runway)[1] # gs_2_loc
             except (KeyError, TypeError):
-                extend = runway_length(runway) - 1000 / METRES_TO_FEET
+                extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
 
             s = approach.slice
-            self.array[s] = (app_rng.array[s] - extend) / METRES_TO_NM
+            self.array[s] = ut.convert(app_rng.array[s] - extend, ut.METER, ut.NM)
 
 
 class CoordinatesSmoothed(object):
@@ -4885,7 +4882,7 @@ class CoordinatesSmoothed(object):
                     data = integrate(speed[toff_slice], freq,
                                      initial_value=initial_displacement,
                                      extend=True,
-                                     scale=KTS_TO_MPS),
+                                     scale=ut.multiplier(ut.KT, ut.METER_S)),
                     mask = np.ma.getmaskarray(speed[toff_slice]))
 
                 # Similarly the runway bearing is derived from the runway endpoints
@@ -6965,7 +6962,7 @@ class ApproachRange(DerivedParameterNode):
                 spd_repaired = repair_mask(speed, repair_duration=None,
                                            extrapolate=True)
                 app_range[this_app_slice] = integrate(spd_repaired, freq,
-                                                      scale=KTS_TO_MPS,
+                                                      scale=ut.multiplier(ut.KT, ut.METER_S),
                                                       extend=True,
                                                       direction='reverse')
 
@@ -7008,7 +7005,7 @@ class ApproachRange(DerivedParameterNode):
                     except (KeyError, TypeError):
                         # If ILS antennae coordinates not known, substitute the
                         # touchdown point 1000ft from start of runway
-                        extend = runway_length(runway) - 1000 / METRES_TO_FEET
+                        extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
 
                 else:
                     # Just work off the height data assuming the pilot was aiming
@@ -7031,7 +7028,7 @@ class ApproachRange(DerivedParameterNode):
                         extend = gs_2_loc - end_2_loc
                     except (KeyError, TypeError):
                         # If no ILS antennae, put the touchdown point 1000ft from start of runway
-                        extend = runway_length(runway) - 1000 / METRES_TO_FEET
+                        extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
 
 
                 # This plot code allows the actual flightpath and regression line

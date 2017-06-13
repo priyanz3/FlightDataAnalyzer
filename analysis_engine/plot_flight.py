@@ -12,6 +12,7 @@ import six
 from copy import copy
 
 from hdfaccess.file import hdf_file
+from flightdatautilities import units as ut
 from flightdatautilities.print_table import indent
 
 from analysis_engine.library import (
@@ -21,7 +22,6 @@ from analysis_engine.library import (
     value_at_index,
 )
 from analysis_engine.node import derived_param_from_hdf, Parameter
-from analysis_engine.settings import METRES_TO_FEET
 
 import matplotlib
 
@@ -146,7 +146,7 @@ def draw_centreline(kml, rwy):
         angle = np.deg2rad(rwy['glideslope']['angle'])
     except:
         angle = np.deg2rad(3.0)
-    end_height = 30000 * np.tan(angle) * METRES_TO_FEET
+    end_height = ut.convert(30000 * np.tan(angle), ut.METER, ut.FT)
     track_config = {'name': 'ILS'}
     track_coords = []
     track_coords.append((end_lon,end_lat))
@@ -208,8 +208,8 @@ def track_to_kml(hdf_path, kti_list, kpv_list, approach_list,
         # Get altitude param from hdf.
         if plot_altitude and plot_altitude in hdf.keys():
             alt = derived_param_from_hdf(hdf[plot_altitude]).get_aligned(one_hz)
-            alt.array = repair_mask(alt.array, frequency=alt.frequency,
-                                    repair_duration=None) / METRES_TO_FEET
+            alt.array = repair_mask(alt.array, frequency=alt.frequency, repair_duration=None)
+            alt.array = ut.convert(alt.array, ut.FT, ut.METER)
         else:
             alt = None
         

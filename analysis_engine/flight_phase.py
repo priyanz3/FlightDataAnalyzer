@@ -2,6 +2,8 @@ import numpy as np
 from scipy.ndimage import filters
 from scipy.signal import medfilt
 
+from flightdatautilities import units as ut
+
 from analysis_engine import settings
 
 from analysis_engine.library import (
@@ -63,7 +65,6 @@ from analysis_engine.settings import (
     HYSTERESIS_FPALT_CCD,
     ILS_CAPTURE,
     INITIAL_CLIMB_THRESHOLD,
-    KTS_TO_MPS,
     LANDING_ROLL_END_SPEED,
     LANDING_THRESHOLD_HEIGHT,
     ROTORSPEED_THRESHOLD,
@@ -319,7 +320,7 @@ class Holding(FlightPhaseNode):
                     _, hold_dist = bearing_and_distance(
                         lat.array[start], lon.array[start],
                         lat.array[stop], lon.array[stop])
-                    if hold_dist/KTS_TO_MPS/hold_sec < HOLDING_MAX_GSPD:
+                    if ut.convert(hold_dist / hold_sec, ut.METER_S, ut.KT) < HOLDING_MAX_GSPD:
                         hold_bands.append(turn_band)
 
             self.create_phases(hold_bands)

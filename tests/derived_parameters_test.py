@@ -36,7 +36,7 @@ from analysis_engine.node import (
     aeroplane, Attribute, A, App, ApproachItem, helicopter, KeyPointValue, KPV,
     KeyTimeInstance, KTI, load, M, Parameter, P, Section, S)
 from analysis_engine.process_flight import process_flight
-from analysis_engine.settings import GRAVITY_IMPERIAL, METRES_TO_FEET
+from analysis_engine.settings import GRAVITY_IMPERIAL
 
 from flight_phase_test import buildsection, buildsections
 
@@ -1773,8 +1773,8 @@ class TestAltitudeTail(unittest.TestCase):
                     buildsections('Takeoff', [0, 3]),
                     buildsections('Go Around And Climbout', [5, 6]),
                     buildsections('Landing', [8, 10]),
-                    Attribute('Ground To Lowest Point Of Tail', 10.0/METRES_TO_FEET),
-                    Attribute('Main Gear To Lowest Point Of Tail', 35.0/METRES_TO_FEET))
+                    Attribute('Ground To Lowest Point Of Tail', ut.convert(10.0, ut.FT, ut.METER)),
+                    Attribute('Main Gear To Lowest Point Of Tail', ut.convert(35.0, ut.FT, ut.METER)))
         result = talt.array
         # At 35ft tail arm and 16deg nose up, the tail just scrapes the runway with 10ft
         # clearance at the mainwheels...
@@ -1798,8 +1798,8 @@ class TestAltitudeTail(unittest.TestCase):
                     buildsections('Takeoff', [0, 2]),
                     buildsections('Go Around And Climbout', [2, 2]),
                     buildsections('Landing', [2, 2]),
-                    Attribute('Ground To Lowest Point Of Tail', 10.0/METRES_TO_FEET),
-                    Attribute('Main Gear To Lowest Point Of Tail', 35.0/METRES_TO_FEET))
+                    Attribute('Ground To Lowest Point Of Tail', ut.convert(10.0, ut.FT, ut.METER)),
+                    Attribute('Main Gear To Lowest Point Of Tail', ut.convert(35.0, ut.FT, ut.METER)))
         result = talt.array
         # Lift 5ft
         answer = np.ma.array(data=[10, 0.0],
