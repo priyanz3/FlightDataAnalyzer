@@ -47,7 +47,6 @@ from analysis_engine.library import (
     second_window,
     slice_duration,
     slices_and,
-    slices_and_not,
     slices_from_to,
     slices_remove_small_gaps,
     slices_remove_small_slices,

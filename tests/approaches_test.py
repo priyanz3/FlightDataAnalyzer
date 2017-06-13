@@ -5,11 +5,8 @@ import yaml
 
 from mock import call, Mock, patch
 
-from flightdatautilities import api
-
 from analysis_engine.approaches import ApproachInformation, is_heliport
 from analysis_engine.exceptions import AFRMissmatchError
-from analysis_engine.flight_phase import ApproachAndLanding
 from analysis_engine.node import (
     A, ApproachItem, aeroplane, helicopter, KPV, KeyPointValue, P, S, Section,
     load)
@@ -40,7 +37,6 @@ class TestApproachInformation(unittest.TestCase):
         self.gatwick = [airports['gatwick']]
 
     def test_can_operate(self):
-        combinations = self.node_class.get_operational_combinations()
         self.assertTrue(ApproachInformation.can_operate(
             ('Approach And Landing', 'Altitude AAL'), ac_type=aeroplane))
         self.assertTrue(ApproachInformation.can_operate(
@@ -1262,8 +1258,8 @@ class TestZaventem(unittest.TestCase):
                           A('Aircraft Type', 'aeroplane'),
                           S(name='Approach And Landing', 
                             items=[Section(name='Approach And Landing', 
-                                           slice=slice(11754, 12346),
-                                           start_edge=11754, stop_edge=12346),
+                                           slice=slice(app_start, app_end),
+                                           start_edge=app_start, stop_edge=app_end),
                                    Section(name='Approach And Landing', 
                                            slice=slice(13500, 13898),
                                            start_edge=13500, stop_edge=13898)]),

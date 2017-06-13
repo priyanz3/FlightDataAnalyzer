@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from math import ceil, copysign, cos, floor, log, radians, sin, sqrt, pow
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from scipy import interpolate as scipy_interpolate, optimize
 from scipy.ndimage import filters
 from scipy.signal import medfilt
@@ -34,7 +34,6 @@ from flightdatautilities.geometry import cross_track_distance, great_circle_dist
 
 from analysis_engine.settings import (
     BUMP_HALF_WIDTH,
-    HEADING_RATE_FOR_MOBILE,
     ILS_CAPTURE,
     ILS_CAPTURE_ROC,
     ILS_ESTABLISHED_DURATION,

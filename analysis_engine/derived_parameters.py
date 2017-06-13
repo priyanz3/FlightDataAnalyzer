@@ -18,7 +18,7 @@ from flightdatautilities import aircrafttables as at, units as ut
 from analysis_engine.exceptions import DataFrameError
 from analysis_engine.node import (
     A, App, DerivedParameterNode, KPV, KTI, M, P, S,
-    aeroplane, aeroplane_only, helicopter, helicopter_only)
+    aeroplane, helicopter, helicopter_only)
 
 from analysis_engine.library import (air_track,
                                      align,
@@ -89,11 +89,9 @@ from analysis_engine.library import (air_track,
                                      slices_and,
                                      slices_of_runs,
                                      slices_between,
-                                     slices_from_ktis,
                                      slices_from_to,
                                      slices_not,
                                      slices_or,
-                                     slices_remove_small_gaps,
                                      slices_remove_small_slices,
                                      slices_split,
                                      smooth_track,
@@ -113,7 +111,6 @@ from analysis_engine.settings import (
     AZ_WASHOUT_TC,
     BOUNCED_LANDING_THRESHOLD,
     CLIMB_THRESHOLD,
-    HYSTERESIS_FPIAS,
     HYSTERESIS_FPROC,
     GRAVITY_IMPERIAL,
     GRAVITY_METRIC,
@@ -3927,8 +3924,6 @@ class GrossWeightSmoothed(DerivedParameterNode):
             gw_masked = mask_inside_slices(gw_masked, climbs.get_slices())
             gw_masked = mask_outside_slices(gw_masked, airs.get_slices())
 
-            gw_nonzero = gw.array.nonzero()[0]
-
             flow = repair_mask(ff.array)
             fuel_to_burn = np.ma.array(integrate(flow / 3600.0, ff.frequency,
                                                  direction='reverse'))
@@ -3951,7 +3946,6 @@ class GrossWeightSmoothed(DerivedParameterNode):
             # Test that the resulting array is sensible compared with Gross Weight.
             where_array = np.ma.where(self.array)[0]
             test_index = where_array[len(where_array) // 2]
-            #test_index = len(gw_nonzero) // 2
             test_difference = \
                 abs(gw.array[test_index] - self.array[test_index]) > 1000
             if test_difference > 1000: # Q: Is 1000 too large?
@@ -6457,7 +6451,7 @@ class AileronLeft(DerivedParameterNode):
                synchro=P('Aileron (L) Synchro'),
                ali=P('Aileron (L) Inboard'),
                alo=P('Aileron (L) Outboard')):
-        synchro_samples = 0
+        synchro_noise = 0
         if synchro:
             synchro_noise = rms_noise(synchro.array)
             self.array = synchro.array
@@ -6491,7 +6485,7 @@ class AileronRight(DerivedParameterNode):
                ari=P('Aileron (R) Inboard'),
                aro=P('Aileron (R) Outboard')):
 
-        synchro_samples = 0
+        synchro_noise = 0
         if synchro:
             synchro_noise = rms_noise(synchro.array)
             self.array = synchro.array
