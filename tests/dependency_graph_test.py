@@ -351,7 +351,7 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
         derived = get_derived_nodes([import_module('sample_circular_dependency_nodes')])
         mgr = NodeManager({'Start Datetime': datetime.now()}, 10, lfl_params, requested, [],
                           derived, {}, {})
-        order, _ = dependency_order(mgr, draw=True)
+        order, _ = dependency_order(mgr, draw=False)
         # As Gear Selected Down depends upon Gear Down
         
         self.assertEqual(order,
