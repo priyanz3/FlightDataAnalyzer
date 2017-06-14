@@ -204,9 +204,8 @@ class TestDependencyGraph(unittest.TestCase):
         self.assertEqual(gr.neighbors('root'), ['P5'])
     
     def test_graph_nodes_with_duplicate_key_in_lfl_and_derived(self):
-        """ Test that LFL nodes are used in place of Derived where available.
-        Tests a few of the colours
-        """
+        # Test that LFL nodes are used in place of Derived where available.
+        # Tests a few of the colours
         class One(DerivedParameterNode):
             # Hack to allow objects rather than classes to be added to the tree.
             __base__ = DerivedParameterNode
