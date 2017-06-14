@@ -1863,9 +1863,9 @@ class GearPosition(MultistateDerivedParameterNode):
         ).any(axis=0)
         param = first_valid_parameter(gl, gn, gr, gc)
         self.array = np_ma_masked_zeros_like(param.array)
-        self.array[up_state] = 'Up'
-        self.array[down_state] = 'Down'
-        self.array[transit_state] = 'In Transit'
+        self.array[repair_mask(up_state, repair_duration=None)] = 'Up'
+        self.array[repair_mask(down_state, repair_duration=None)] = 'Down'
+        self.array[repair_mask(transit_state, repair_duration=None)] = 'In Transit'
         self.array = nearest_neighbour_mask_repair(self.array)
 
 
