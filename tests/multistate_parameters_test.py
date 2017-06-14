@@ -73,6 +73,7 @@ from analysis_engine.multistate_parameters import (
     GearDownSelected,
     GearInTransit,
     GearOnGround,
+    GearPosition,
     GearUp,
     GearUpInTransit,
     GearUpSelected,
@@ -4456,6 +4457,32 @@ class TestGearInTransit(unittest.TestCase):
                           values_mapping={0: '-', 1: 'Extending'})
         node = self.node_class()
         node.derive(None, None, None, None, down_transit, up_transit)
+
+        np.testing.assert_array_equal(node.array, self.expected.array)
+        self.assertEqual(node.values_mapping, self.values_mapping)
+
+
+class TestPosition(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GearPosition
+
+        self.values_mapping = {
+            0: '-',
+            1: 'Up',
+            2: 'In Transit',
+            3: 'Down',
+        }
+        self.expected = M('Gear Position', array=np.ma.array([3]*5 + [2]*10 + [1]*30 + [2]*10 + [3]*5),
+                          values_mapping=self.values_mapping)
+
+    def test_derive__gear_position(self):
+        gl = M('Gear (L) Position', array=np.ma.array([3]*5 + [2]*10 + [1]*30 + [2]*10 + [3]*5),
+                      values_mapping=self.values_mapping)
+        gr = M('Gear (R) Position', array=np.ma.array([3]*6 + [2]*9 + [1]*30 + [2]*9 + [3]*6),
+                      values_mapping=self.values_mapping)
+        node = self.node_class()
+        node.derive(gl, None, gr, None)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
