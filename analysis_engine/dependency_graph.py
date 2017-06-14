@@ -225,8 +225,8 @@ def draw_graph(graph, name, horizontal=False):
     except ImportError:
         logger.exception("Unable to import pygraphviz to draw graph '%s'", name)
         return
-    G.layout(prog='dot')
     G.graph_attr['label'] = name
+    G.layout(prog='dot')
     G.draw(file_path)
     logger.info("Dependency tree drawn: %s", os.path.abspath(file_path))
 
