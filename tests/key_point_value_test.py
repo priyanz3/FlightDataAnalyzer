@@ -18183,6 +18183,20 @@ class TestTouchdownToPitch2DegreesAbovePitchAt60KtsDuration(unittest.TestCase):
         self.assertAlmostEqual(node[0].index, 34.1, places=1)
         self.assertAlmostEqual(node[0].value, 26.1, places=1)
 
+    def test_derive_pitch_not_2_deg_higher(self):
+        # From pti-90dbc326da5a after touchdown the pitch never went above the
+        # 2 degrees (0 deg at 60Kts), This test should not produce a KPV.
+        airspeed = load(os.path.join(test_data_path,
+                                     'pti-90dbc326da5a-airspeed.nod'))
+        pitch = load(os.path.join(test_data_path,
+                                  'pti-90dbc326da5a-pitch.nod'))
+        tdwns = KTI('Touchdown',
+                    items=[KeyTimeInstance(5760.140625,'Touchdown'), ])
+
+        node = self.node_class()
+        node.derive(pitch, airspeed, tdwns)
+        
+        self.assertAlmostEqual(len(node), 0)
 
 ##############################################################################
 # Turbulence
