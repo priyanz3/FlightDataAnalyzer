@@ -920,7 +920,6 @@ class Eng1OneEngineInoperative(MultistateDerivedParameterNode):
         nr_periods = np.ma.masked_less(nr.array, 80)
         nr_periods = mask_inside_slices(nr_periods, autorotation.get_slices())
         delta = nr_periods - eng_2_n2.array
-        split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
         self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 
@@ -949,7 +948,6 @@ class Eng2OneEngineInoperative(MultistateDerivedParameterNode):
         nr_periods = np.ma.masked_less(nr.array, 80)
         nr_periods = mask_inside_slices(nr_periods, autorotation.get_slices())
         delta = nr_periods - eng_1_n2.array
-        split = np.ma.masked_less(delta, AUTOROTATION_SPLIT)
         self.array = np.ma.where(delta > AUTOROTATION_SPLIT, 'Active', '-')
 
 

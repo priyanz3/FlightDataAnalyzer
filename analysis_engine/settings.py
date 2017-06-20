@@ -33,6 +33,10 @@ NODE_MODULES = [
     'analysis_engine.flight_attribute',
     'analysis_engine.flight_phase',
 ]
+PRE_PROCESSING_MODULE_PATHS = [ # Cant end with _MODULES as will be added to NODE_MODULES
+    'analysis_engine.pre_processing.merge_multistate_parameters',
+    'analysis_engine.pre_processing.merge_parameters',
+]
 
 API_HTTP_HANDLER = 'analysis_engine.api_handler.HTTPHandler'
 API_HTTP_BASE_URL = None

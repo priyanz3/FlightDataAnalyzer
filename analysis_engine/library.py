@@ -73,6 +73,9 @@ class IntegrationError(ValueError):
 def all_deps(cls, available):
     return all(x in available for x in cls.get_dependency_names())
 
+def any_deps(cls, available):
+    return any(x in available for x in cls.get_dependency_names())
+
 
 def all_of(names, available):
     '''

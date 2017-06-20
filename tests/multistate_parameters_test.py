@@ -4416,10 +4416,6 @@ class TestGearInTransit(unittest.TestCase):
 
     def setUp(self):
         self.node_class = GearInTransit
-        (
-            ('Gear (L) In Transit', 'Gear (N) In Transit', 'Gear (R) In Transit'), # any one will do
-            ('Gear Up Selected', 'Gear Up In Transit'),
-        )
         self.values_mapping = {
             0: '-',
             1: 'In Transit',
