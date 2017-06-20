@@ -166,7 +166,10 @@ def dependencies3(di_graph, root, node_mgr):
             return True
         
         layer = set()  # layer of current node's available dependencies
-        for dependency in di_graph.successors(node):
+        # order the successors based on the order in the derive method; this allows the
+        # class to define the best path through the dependency tree.
+        ordered_successors = [name for (name, d) in sorted(di_graph[node].items(), key=lambda a: a[1].get('order'))]
+        for dependency in ordered_successors:
             # traverse again, 'like we did last summer'
             if traverse_tree(dependency):
                 layer.add(dependency)
@@ -320,7 +323,9 @@ def graph_nodes(node_mgr):
     for node_name, node_obj in six.iteritems(derived_minus_lfl):
         derived_deps.update(node_obj.get_dependency_names())
         # Create edges between node and its dependencies
-        edges = [(node_name, dep, {}) for dep in node_obj.get_dependency_names()]
+        edges = []
+        for (n, dep) in enumerate(node_obj.get_dependency_names()):
+            edges.append((node_name, dep, {'order':n}))
         gr_all.add_edges_from(edges)
 
     # add root - the top level application dependency structure based on required nodes
@@ -368,6 +373,7 @@ def graph_nodes(node_mgr):
     # RAW parameters missing from the LFL unless something has gone wrong with
     # the derived_nodes dict!
     gr_all.add_nodes_from(missing_derived_dep, color='#6a6e70')  # fds-grey
+
     return gr_all
 
 
