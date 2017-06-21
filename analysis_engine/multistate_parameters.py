@@ -1526,7 +1526,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
         extend_duration = 0
         if model and series and family:
             try:
-                extend_duration, _ = at.get_gear_transition_times(model.value, series.value, family.value)
+                _, extend_duration = at.get_gear_transition_times(model.value, series.value, family.value)
             except KeyError:
                 pass
         fallback = extend_duration * self.frequency
@@ -1664,7 +1664,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
         retract_duration = 0
         if model and series and family:
             try:
-                _, retract_duration = at.get_gear_transition_times(model.value, series.value, family.value)
+                retract_duration, _ = at.get_gear_transition_times(model.value, series.value, family.value)
             except KeyError:
                 pass
         fallback = retract_duration * self.frequency
