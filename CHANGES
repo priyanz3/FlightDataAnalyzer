@@ -8,6 +8,50 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.34.1
+-------
+
+KPVs Added:
+ - Airspeed Minus Airspeed Selected Max
+ - Eng Oil Press Low Redline Exceeded Duration
+ - Eng Gas Temp Above Normal Max Limit During Takeoff 5 Min Rating Duration
+ 
+Improvements:
+ - Derived Gear Parameter
+   - Gear Position
+   - Gear Position multi-state to merge individual Gears
+   - Gear Up/Down In Transit
+   - Gear Up/Down In Transit handle noisy data at end of segment
+   - Gear Up/Down
+   - Use lookup tables for transition times for when only one gear indicator available
+ - Node Dependency:
+   - Added Pre processing function. Merge parameters before processing to simplify dependency
+     order calculations by reducing circular dependencies
+   - Dependency order calculation updated to enfore order of dependencies 
+     order taken from order of parameters passed into derive method
+     previously order was based on order of dictionary keys so could change
+     each time it was run
+   - Graph: avoid segfault by delaying layout.
+ - Update _dist to FlightDataUtilities Geometry
+ - Gear On Ground: detection improvements for Columbia 234 & 264
+ - Speedbrake: Include G-VI into the derived parameter
+ - SpeedbrakeSelected: Include G-VI into the derived parameter
+ - Altitude Radio overflow tweak
+ - Implemented A330/A340 flap configurations in relief based on Relief Engaged parameter 
+   and Flap Lever position
+ - Improvement to precise takeoff runway use two points use average distace between accel start/liftoff 
+   and runway centreline improves detection for airports such as Bilbao
+
+Fixes:
+ - EngOilPressWarningDuration: Added unittest
+ - Phase: Approaches (Heli) prevent overlapping phases
+ - KPV: GroundspeedWithThrustReversersDeployedMin: EPR to be prioritized over N1
+ - KPV: TouchdownToPitch2DegreesAbovePitchAt60KtsDuration: Fix negative duration
+ - Track smoothing to correct for the landing runway and not the approach runway (except for go-around). 
+   - New unittest TestPalmaDeMallorca
+ - Use flightdatautilities.units module over hardcoded values
+ - Empty slices raising
+
 v0.33.3
 -------
 Improvements:
