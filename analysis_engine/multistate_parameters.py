@@ -1692,10 +1692,11 @@ class GearUpInTransit(MultistateDerivedParameterNode):
             transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
             for start in gear_downs:
                 stop = min([x for x in transits if x > start] or (None,))
+                _start = math.floor(start) if param.array[math.floor(start)] != '-' else math.ceil(start)
                 if stop is not None:
-                    _slice = slice(math.floor(start), stop+1)
+                    _slice = slice(_start, stop+1)
                     if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
-                        _slice = slice(math.floor(start), start+fallback+1)
+                        _slice = slice(_start, start+fallback+1)
                     runs.append(_slice)
         elif gear_up and gear_up_sel:
             for stop in gear_ups:
