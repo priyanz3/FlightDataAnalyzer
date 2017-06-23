@@ -1693,9 +1693,9 @@ class GearUpInTransit(MultistateDerivedParameterNode):
             for start in gear_downs:
                 stop = min([x for x in transits if x > start] or (None,))
                 if stop is not None:
-                    _slice = slice(math.ceil(start), stop+1)
+                    _slice = slice(math.floor(start), stop+1)
                     if family and family.value == 'B737 Classic' and fallback and slice_duration(_slice, self.frequency) > fallback:
-                        _slice = slice(math.ceil(start), start+fallback+1)
+                        _slice = slice(math.floor(start), start+fallback+1)
                     runs.append(_slice)
         elif gear_up and gear_up_sel:
             for stop in gear_ups:
