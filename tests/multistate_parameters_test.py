@@ -3831,6 +3831,22 @@ class TestGearUpInTransit(unittest.TestCase):
         self.assertEqual(node.values_mapping, self.values_mapping)
 
     @patch('analysis_engine.multistate_parameters.at')
+    def test_derive__gear_down_gear_in_transit_overlap(self, at):
+        at.get_gear_transition_times.return_value = (15, 15)
+        # Gear Down changed to Up + following Gear In Transit
+        gear_down = M('Gear Down', array=np.ma.array([1]*5 + [0]*50 + [1]*5),
+                      values_mapping={0: 'Up', 1: 'Down'})
+        in_trans = M('Gear In Transition', array=np.ma.array([0]*4 + [1]*10 + [0]*31 + [1]*10 + [0]*5),
+                     values_mapping={0: '-', 1: 'In Transit'})
+        expected = M('Gear Up In Transit', array=np.ma.array([0]*4 + [1]*10 + [0]*46),
+                     values_mapping=self.values_mapping)        
+        node = self.node_class()
+        node.derive(None, None, None, None, gear_down, None, None, in_trans, None, None, self.model, self.series, self.family)
+
+        np.testing.assert_array_equal(node.array, expected.array)
+        self.assertEqual(node.values_mapping, self.values_mapping)
+
+    @patch('analysis_engine.multistate_parameters.at')
     def test_derive__gear_up_gear_in_transit(self, at):
         at.get_gear_transition_times.return_value = (15, 15)
         # Gear Up changed to Up - following Gear In Transit
