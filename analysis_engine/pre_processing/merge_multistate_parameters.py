@@ -1,6 +1,8 @@
 from analysis_engine.library import (
     any_deps,
     vstack_params_where_state,
+    runs_of_ones,
+    slices_remove_small_gaps,
 )
 
 from analysis_engine.node import (
@@ -59,6 +61,12 @@ class GearUp(MultistateDerivedParameterNode):
             (gr, 'Up'),
             (gc, 'Up'),
         ).all(axis=0)
+        # remove any spikes
+        _slices = runs_of_ones(self.array == 'Down')
+        _slices = slices_remove_small_gaps(_slices, 2, self.hz)
+        for _slice in _slices:
+            self.array[_slice] = 'Down'        
+        
 
 
 class GearInTransit(MultistateDerivedParameterNode):

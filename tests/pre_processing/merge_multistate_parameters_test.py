@@ -99,6 +99,18 @@ class TestGearUp(unittest.TestCase):
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
+        
+    def test_derive_spike(self):
+        # combine individal (L/R/C/N) params
+        left = M('Gear (L) Up', array=np.ma.array([0]*3 + [1]*1 + [0]*11 + [1]*30 + [0]*15),
+                 values_mapping=self.values_mapping)
+        right = M('Gear (R) Up', array=np.ma.array([0]*3 + [1]*1 + [0]*10 + [1]*31 + [0]*15),
+                  values_mapping=self.values_mapping)
+        node = self.node_class()
+        node.derive(left, None, right, None)
+
+        np.testing.assert_array_equal(node.array, self.expected.array)
+        self.assertEqual(node.values_mapping, self.values_mapping)
 
 
 class TestGearDownInTransit(unittest.TestCase):
