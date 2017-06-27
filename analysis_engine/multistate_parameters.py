@@ -1483,7 +1483,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
         if gears_available:
             return True
 
-        if all_of(('Model', 'Series', 'Family'), available) \
+        if all_of(('Model', 'Series', 'Family', 'Airborne'), available) \
            and any_of(('Gear Down Selected', 'Gear Up', 'Gear Down'), available):
             # Check dependancies before checking if transition times are available to save necessary lookups
             if model and series and family:
@@ -1512,6 +1512,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
                gear_in_transit=M('Gear In Transit'),
                gear_red=M('Gear (*) Red Warning'),
                gear_position=M('Gear Position'),
+               airborne=S('Airborne'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
         combine_params = [(x, 'Extending') for x in (gear_L, gear_R, gear_N, gear_C) if x]
@@ -1533,16 +1534,16 @@ class GearDownInTransit(MultistateDerivedParameterNode):
 
         # find stating points.
         if gear_down:
-            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array))
+            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array), phase=airborne)
         if gear_up:
-            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array), change='leaving')
+            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array), change='leaving', phase=airborne)
         if gear_down_sel:
-            gear_sels = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down_sel.array))
+            gear_sels = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down_sel.array), phase=airborne)
 
         # create slices indicating Gear Extending
         if gear_position:
-            downs = find_edges_on_state_change('Down', gear_position.array)
-            transits = find_edges_on_state_change('In Transit', gear_position.array)
+            downs = find_edges_on_state_change('Down', gear_position.array, phase=airborne)
+            transits = find_edges_on_state_change('In Transit', gear_position.array, phase=airborne)
             for stop in downs:
                 start = max(x for x in transits if x < stop)
                 runs.append(slice(math.ceil(start), stop+1))
@@ -1551,7 +1552,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(start, stop+1))
         elif gear_down and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array))
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), phase=airborne)
             for stop in gear_downs:
                 start = max([x for x in transits if x < stop] or (None,))
                 if start is not None:
@@ -1569,7 +1570,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(math.ceil(stop-fallback), stop+1))
         elif gear_up and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving', phase=airborne)
             for start in gear_ups:
                 stop = min([x for x in transits if x > start] or (None,))
                 if stop is not None:
@@ -1582,7 +1583,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(math.ceil(start), start+fallback+1))
         elif gear_down_sel and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving', phase=airborne)
             for start in gear_sels:
                 stop = min([x for x in transits if x > start] or (None,))
                 if stop is not None:
@@ -1625,7 +1626,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
         if gears_available:
             return True
 
-        if all_of(('Model', 'Series', 'Family'), available) \
+        if all_of(('Model', 'Series', 'Family', 'Airborne'), available) \
            and any_of(('Gear Up Selected', 'Gear Up', 'Gear Down'), available):
             # Check dependancies before checking if transition times are available to save necessary lookups
             if model and series and family:
@@ -1650,6 +1651,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                gear_in_transit=M('Gear In Transit'),
                gear_red=M('Gear (*) Red Warning'),
                gear_position=M('Gear Position'),
+               airborne=S('Airborne'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
         combine_params = [(x, 'Retracting') for x in (gear_L, gear_R, gear_N, gear_C) if x]
@@ -1671,16 +1673,16 @@ class GearUpInTransit(MultistateDerivedParameterNode):
 
         # find stating points.
         if gear_down:
-            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array), change='leaving')
+            gear_downs = find_edges_on_state_change('Down', nearest_neighbour_mask_repair(gear_down.array), change='leaving', phase=airborne)
         if gear_up:
-            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array))
+            gear_ups = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up.array), phase=airborne)
         if gear_up_sel:
-            gear_sels = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up_sel.array))
+            gear_sels = find_edges_on_state_change('Up', nearest_neighbour_mask_repair(gear_up_sel.array), phase=airborne)
 
         # create slices indicating Gear Retracting
         if gear_position:
-            ups = find_edges_on_state_change('Up', gear_position.array)
-            transits = find_edges_on_state_change('In Transit', nearest_neighbour_mask_repair(gear_position.array))
+            ups = find_edges_on_state_change('Up', gear_position.array, phase=airborne)
+            transits = find_edges_on_state_change('In Transit', nearest_neighbour_mask_repair(gear_position.array), phase=airborne)
             for stop in ups:
                 start = math.ceil(max(x for x in transits if x < stop))
                 runs.append(slice(start, stop+1))
@@ -1689,7 +1691,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(math.ceil(start), stop+1))
         elif gear_down and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving', phase=airborne)
             for start in gear_downs:
                 stop = min([x for x in transits if x > start] or (None,))
                 _start = math.floor(start) if param.array[math.floor(start)] != '-' else math.ceil(start)
@@ -1708,7 +1710,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(math.ceil(start), start+fallback+1))
         elif gear_up and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, param.array)
+            transits = find_edges_on_state_change(state, param.array, phase=airborne)
             for stop in gear_ups:
                 start = max([x for x in transits if x < stop] or (None,))
                 if start is not None:
@@ -1721,7 +1723,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                 runs.append(slice(math.ceil(stop-fallback), stop+1))
         elif gear_up_sel and (gear_in_transit or gear_red):
             param, state = (gear_in_transit, 'In Transit') if gear_in_transit else (gear_red, 'Warning')
-            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving')
+            transits = find_edges_on_state_change(state, nearest_neighbour_mask_repair(param.array), change='leaving', phase=airborne)
             for start in gear_sels:
                 stop = min([x for x in transits if x > start] or (None,))
                 if stop is not None:
