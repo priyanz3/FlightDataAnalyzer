@@ -7700,6 +7700,16 @@ PR11 = (T11 / T0) ** ((-g) / (Rd * L0))
 P11 = PR11 * P0
 
 #---------------------------------------------------------------------------
+# Added function to correct for non-ISA temperatures. See blog article.
+#---------------------------------------------------------------------------
+
+def alt_sat2alt(alt, sat):
+    return np.ma.where(
+        alt < H1,
+        ((sat+273.15)/-L0)*((T0/(T0+L0*alt))-1),
+        np.ma.masked)
+
+#---------------------------------------------------------------------------
 # Computation modules use AeroCalc structure and are called from the Derived
 # Parameters as required.
 #---------------------------------------------------------------------------
