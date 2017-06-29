@@ -1780,7 +1780,7 @@ class GearUp(MultistateDerivedParameterNode):
             gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
             self.array = (gear_sel_array == 'Up') & ~(gear_transit.array == 'Retracting')
             _slices = runs_of_ones(self.array == 'Down')
-            _slices = slices_remove_small_gaps(_slices, 3, self.hz)
+            _slices = slices_remove_small_gaps(_slices, 6, self.hz)
             for _slice in _slices:
                 self.array[_slice] = 'Down'
         else:
