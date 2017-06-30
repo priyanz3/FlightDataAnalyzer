@@ -24,6 +24,7 @@ from analysis_engine.library import (air_track,
                                      align,
                                      all_of,
                                      any_of,
+                                     alt_sat2alt,
                                      alt2press,
                                      alt2sat,
                                      bearing_and_distance,
@@ -111,6 +112,8 @@ from analysis_engine.settings import (
     AZ_WASHOUT_TC,
     BOUNCED_LANDING_THRESHOLD,
     CLIMB_THRESHOLD,
+    FEET_PER_NM,
+    FEET_PER_NM_3_DEG,
     HYSTERESIS_FPROC,
     GRAVITY_IMPERIAL,
     GRAVITY_METRIC,
@@ -1019,13 +1022,13 @@ class AltitudeDensity(DerivedParameterNode):
 
     units = ut.FT
 
-    can_operate = helicopter_only
+    # can_operate = helicopter_only
 
     def derive(self, alt_std=P('Altitude STD'), sat=P('SAT'),
                isa_temp=P('SAT International Standard Atmosphere')):
         # TODO: libary function to convert to Alitude Density see Aero Calc.
         # pressure altitude + [120 x (OAT - ISA Temp)]
-        #isa_temp = 15 - 1.98 / 1000 * std_array
+        # isa_temp = 15 - 1.98 / 1000 * std_array
         self.array = alt_std.array + (120 * (sat.array - isa_temp.array))
 
 
@@ -4308,13 +4311,21 @@ class SlopeToLanding(DerivedParameterNode):
     Flight Data and Ranking their Impact on the Flight' by Dr Edward Smart,
     Institute of Industrial Research, University of Portsmouth.
     http://eprints.port.ac.uk/4141/
+    
+    Amended July 2017 to allow for changes in SAT from ISA standard.
     '''
 
-    units = None
+    units = None # This is computed as a ratio of distances, so the tangent of the descent path angle.
 
-    def derive(self, alt_aal=P('Altitude AAL'), dist=P('Distance To Landing')):
+    def derive(self, alt_aal=P('Altitude AAL'), 
+               dist=P('Distance To Landing'), 
+               sat=P('SAT'), 
+               apps=S('Approach And Landing')):
 
-        self.array = alt_aal.array / ut.convert(dist.array, ut.NM, ut.FT)
+        self.array = np_ma_masked_zeros_like(alt_aal.array)
+        for app in apps:
+            alt = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice], window=121))            
+            self.array[app.slice] = alt / ut.convert(dist.array[app.slice], ut.NM, ut.FT)
 
 
 class SlopeAngleToLanding(DerivedParameterNode):
@@ -4328,6 +4339,46 @@ class SlopeAngleToLanding(DerivedParameterNode):
 
         self.array = np.degrees(np.arctan(slope_to_ldg.array))
 
+
+class SlopeMexico(DerivedParameterNode):
+
+    units = ut.DEGREE
+    align_frequency = 1.0
+    align_offset = 0.0    
+    
+    def derive(self, alt_aal=P('Altitude AAL'), 
+               dist=P('Distance To Landing'), 
+               sat=P('SAT'), 
+               apps=S('Approach And Landing')):
+
+        self.array = np_ma_masked_zeros_like(alt_aal.array)
+        for app in apps:
+            glide_height = dist.array[app.slice] * FT_PER_NM_3_DEG
+            corr_height = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice],window=121))
+            # This is degrees error from 3 deg which is not the same as ILS  dots
+            self.array[app.slice] = np.degrees(np.arctan((corr_height-glide_height) / 
+                                                         (dist.array[app.slice] * FEET_PER_NM)))
+            self.array[app.slice] /= 0.2959 # Convert to dots
+            
+
+class SlopeMexicoNotCorrected(DerivedParameterNode):
+
+    units = ut.DEGREE
+    align_frequency = 1.0
+    align_offset = 0.0    
+    
+    def derive(self, alt_aal=P('Altitude AAL'), 
+               dist=P('Distance To Landing'), 
+               sat=P('SAT'), 
+               apps=S('Approach And Landing')):
+
+        self.array = np_ma_masked_zeros_like(alt_aal.array)
+        for app in apps:
+            glide_height = dist.array[app.slice] * FEET_PER_NM
+            self.array[app.slice] = np.degrees(np.arctan((alt_aal.array[app.slice]-glide_height) / 
+                                                         (dist.array[app.slice] * FEET_PER_NM)))
+            self.array[app.slice] /= 0.2959 # Convert to dots
+            
 
 class SlopeToAimingPoint(DerivedParameterNode):
     '''

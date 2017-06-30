@@ -121,7 +121,7 @@ WRAPPING_PARAMS = (
     'IRU Heading (C)',
     'IRU Heading (R)',
     # Longitude
-    'Longitude',  # When flying past the Baring Sea (-180 to +180)
+    'Longitude',  # When flying past the Bering Sea (-180 to +180)
     'Longitude (FO)',
     'Longitude (Capt)',
     'Longitude Recorded',
