@@ -13710,19 +13710,23 @@ class PitchWhileAirborneMin(KeyPointValueNode):
         self.create_kpvs_within_slices(pitch.array, airborne, min_value)
 
 
-class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
+class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     '''
-    Maximum pitch rate at point of touchdown until airspeed reaches 60 kts.
+    Maximum pitch recorded between the point of touchdown and the point
+    where aircraft reached 60kts IAS during landing rollout.
     '''
 
-    units = ut.DEGREE_S
-
-    def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
+    units = ut.DEGREE
+    
+    def derive(self,
+               pitch=P('Pitch'),
+               airspeed=P('Airspeed'),
                touchdowns=KTI('Touchdown')):
+        
         for tdwn in touchdowns:
-            stop = index_at_value(airspeed.array.data, 60, 
+            stop = index_at_value(airspeed.array.data, 60,
                                   slice(tdwn.index, None), endpoint='nearest')
-            self.create_kpv(*max_value(pitchrate.array,
+            self.create_kpv(*max_value(pitch.array,
                                        slice(tdwn.index, stop)))
 
 
@@ -13848,6 +13852,21 @@ class PitchRate2DegPitchTo35FtMin(KeyPointValueNode):
         )
 
 
+
+class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
+    '''
+    Maximum pitch rate at point of touchdown until airspeed reaches 60 kts.
+    '''
+
+    units = ut.DEGREE_S
+
+    def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
+               touchdowns=KTI('Touchdown')):
+        for tdwn in touchdowns:
+            stop = index_at_value(airspeed.array.data, 60, 
+                                  slice(tdwn.index, None), endpoint='nearest')
+            self.create_kpv(*max_value(pitchrate.array,
+                                       slice(tdwn.index, stop)))
 ##############################################################################
 # Vertical Speed (Rate of Climb/Descent) Helpers
 

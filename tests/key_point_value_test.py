@@ -540,6 +540,7 @@ from analysis_engine.key_point_values import (
     PitchOnGroundMin,
     PitchWhileAirborneMax,
     PitchWhileAirborneMin,
+    PitchTouchdownTo60KtsAirspeedMax,
     PitchRateTouchdownTo60KtsAirspeedMax,
     PitchRate20FtToTouchdownMax,
     PitchRate20FtToTouchdownMin,
@@ -14170,26 +14171,26 @@ class TestPitchWhileAirborneMin(unittest.TestCase):
         self.assertEqual(node[0].value, 2)
 
 
-class TestPitchRateTouchdownTo60KtsAirspeedMax(unittest.TestCase):
+class TestPitchTouchdownTo60KtsAirspeedMax(unittest.TestCase):
     def setUp(self):
-        self.node_class = PitchRateTouchdownTo60KtsAirspeedMax
-
+        self.node_class = PitchTouchdownTo60KtsAirspeedMax
+        
     def test_attributes(self):
         node = self.node_class()
-        self.assertEqual(node.name,
-                         'Pitch Rate Touchdown To 60 Kts Airspeed Max')
-        self.assertEqual(node.units, 'deg/s')
-
+        self.assertEqual(node.name, 
+                         'Pitch Touchdown To 60 Kts Airspeed Max')
+        self.assertEqual(node.units, 'deg')
+        
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
         self.assertEqual(len(opts), 1)
         self.assertEqual(len(opts[0]), 3)
-        self.assertIn('Pitch Rate', opts[0])
+        self.assertIn('Pitch', opts[0])
         self.assertIn('Airspeed', opts[0])
-        self.assertIn('Touchdown', opts[0])
-
+        self.assertIn('Touchdown', opts[0])    
+        
     def test_derive(self):
-        pitch = P('Pitch Rate', np.ma.array([0.7, 1.1, 0.2, -0.8, -1.2,
+        pitch = P('Pitch', np.ma.array([0.7, 1.1, 0.2, -0.8, -1.2,
                                              -0.7, -0.1, 0.1, 0.5, -0.5,
                                              -0.1, -0.1, -0.1, 1.0, 0.0]))
         
@@ -14201,8 +14202,7 @@ class TestPitchRateTouchdownTo60KtsAirspeedMax(unittest.TestCase):
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 8)
-        self.assertEqual(node[0].value, 0.5)
-
+        self.assertEqual(node[0].value, 0.5)    
 
 ##############################################################################
 # Pitch Rate
@@ -14327,6 +14327,38 @@ class TestPitchRateWhileAirborneMax(unittest.TestCase):
         self.assertAlmostEqual(node[0].value, -7.915, places=3)
 
 
+class TestPitchRateTouchdownTo60KtsAirspeedMax(unittest.TestCase):
+    def setUp(self):
+        self.node_class = PitchRateTouchdownTo60KtsAirspeedMax
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name,
+                         'Pitch Rate Touchdown To 60 Kts Airspeed Max')
+        self.assertEqual(node.units, 'deg/s')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertEqual(len(opts[0]), 3)
+        self.assertIn('Pitch Rate', opts[0])
+        self.assertIn('Airspeed', opts[0])
+        self.assertIn('Touchdown', opts[0])
+
+    def test_derive(self):
+        pitch = P('Pitch Rate', np.ma.array([0.7, 1.1, 0.2, -0.8, -1.2,
+                                             -0.7, -0.1, 0.1, 0.5, -0.5,
+                                             -0.1, -0.1, -0.1, 1.0, 0.0]))
+        
+        airspeed = P('Airspeed', np.ma.array(np.linspace(110, 47, 15)))
+        touchdown = KTI('Touchdown', items=[KeyTimeInstance(3, 'Touchdown')])
+
+        node = self.node_class()
+        node.derive(pitch, airspeed, touchdown)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 8)
+        self.assertEqual(node[0].value, 0.5)
 ##############################################################################
 # Rate of Climb
 
