@@ -8,6 +8,13 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.34.2
+-------
+
+Fixes:
+ - Gear Up: Removes spikes that are causing a bad creation of the derived parameter Gear Down In Transit
+ - Gear Up/Down In Transit: In transit state can only happen in airborne phase
+
 v0.34.1
 -------
 
@@ -1494,4 +1501,3 @@ v0.0.1
 ------
 
  - Initial release directed at B737.
-
