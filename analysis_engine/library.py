@@ -7706,7 +7706,7 @@ P11 = PR11 * P0
 def alt_sat2alt(alt, sat):
     return np.ma.where(
         alt < H1,
-        ((sat+273.15)/-L0)*((T0/(T0+L0*alt))-1),
+        (ut.convert(sat, ut.CELSIUS, ut.KELVIN)/-L0)*((T0/(T0+L0*alt))-1),
         np.ma.masked)
 
 #---------------------------------------------------------------------------
@@ -7739,7 +7739,7 @@ def cas2dp(cas_kt):
     if np.ma.max(cas_kt) > 661.48:
         raise ValueError('Supersonic airspeed compuations not included')
     cas_mps = ut.convert(np.ma.masked_greater(cas_kt, 661.48), ut.KT, ut.METER_S)
-    p = P0*100 # pascal not mBar inside the calculation
+    p = ut.convert(P0, ut.MILLIBAR, ut.PASCAL)
     return P0 * (((Rhoref * cas_mps*cas_mps)/(7.* p) + 1.)**3.5 - 1.)
 
 def cas_alt2mach(cas, alt_ft):
@@ -7779,7 +7779,7 @@ def dp2cas(dp):
 def dp2tas(dp, alt_ft, sat):
     P = alt2press(alt_ft)
     press_ratio = alt2press_ratio(alt_ft)
-    temp_ratio = (sat + 273.15) / 288.15
+    temp_ratio = ut.convert(sat, ut.CELSIUS, ut.KELVIN) / 288.15
     # FIXME: FloatingPointError: underflow encountered in multiply
     density_ratio = press_ratio / temp_ratio
     Rho = Rhoref * density_ratio
@@ -7803,8 +7803,8 @@ def machtat2sat(mach, tat, recovery_factor=0.995):
     # Default fill of zero produces runtime divide by zero errors in Numpy.
     # Hence force fill to >0.
     denominator = np.ma.array(1.0 + (0.2*recovery_factor) * mach * mach)
-    ambient_temp = (tat + 273.15) / denominator
-    sat = ambient_temp - 273.15
+    ambient_temp = ut.convert(tat, ut.CELSIUS, ut.KELVIN) / denominator
+    sat = ut.convert(ambient_temp, ut.KELVIN, ut.CELSIUS)
     return sat
 
 def machsat2tat(mach, sat, recovery_factor=0.995):
@@ -7812,8 +7812,8 @@ def machsat2tat(mach, sat, recovery_factor=0.995):
     The inverse of machtat2sat, using the same assumptions.
     """
     numerator = np.ma.array(1.0 + (0.2*recovery_factor) * mach * mach)
-    ambient_temp = sat + 273.15
-    tat = (ambient_temp * numerator) - 273.15
+    ambient_temp = ut.convert(sat, ut.CELSIUS, ut.KELVIN)
+    tat = ut.convert(ambient_temp * numerator, ut.KELVIN, ut.CELSIUS)
     return tat
 
 def _alt2press_ratio_gradient(H):
@@ -7832,7 +7832,7 @@ def press2alt(P):
 
     Pressure is assumed to be in psi, and height is returned in feet.
     """
-    Pmb = P * 68.947
+    Pmb = ut.convert(P, ut.PSI, ut.MILLIBAR)
     H = np.ma.where(
         Pmb > P11,
         _press2alt_gradient(Pmb),

@@ -235,9 +235,6 @@ CONTROL_COLUMN_IN_USE_RATIO = 1.30  # %
 # approaches, go-around and touch-and-go phases and instances derive.
 DESCENT_LOW_CLIMB_THRESHOLD = 500 #ft
 
-# This strange conversion is for the tail clearance calculation
-FEET_PER_NM = 6076
-
 # This is the ratio of distances for a 3 deg approach
 FEET_PER_NM_3_DEG = 318.435
 
