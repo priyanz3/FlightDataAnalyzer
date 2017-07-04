@@ -9,6 +9,10 @@ import os
 import six
 import sys
 
+import numpy as np
+
+from flightdatautilities import units as ut
+
 # Note: Create an analyser_custom_settings.py module to override settings for
 # your local environment and append customised modules.
 
@@ -236,7 +240,8 @@ CONTROL_COLUMN_IN_USE_RATIO = 1.30  # %
 DESCENT_LOW_CLIMB_THRESHOLD = 500 #ft
 
 # This is the ratio of distances for a 3 deg approach
-FEET_PER_NM_3_DEG = 318.435
+# https://www.pilotsofamerica.com/community/threads/loc-dme-approach-surprised-to-see-glide-slope.82344/#post-1785334
+FEET_PER_NM_3_DEG = ut.multiplier(ut.NM, ut.FT) * np.tan(3)
 
 # Acceleration due to gravity
 GRAVITY_IMPERIAL = 32.2  # ft/sec^2 - used for combining acceleration and height terms
