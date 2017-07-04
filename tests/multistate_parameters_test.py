@@ -2336,14 +2336,14 @@ class TestMasterCaution(unittest.TestCase, NodeTest):
             offset=0.1,
         )
         warn_capt_2 = M(
-            name='Master Caution (Capt)(2)',
+            name='Master Caution (Capt) (2)',
             array=np.ma.array(data=[0, 0, 0, 1, 0, 0]),
             values_mapping={0: '-', 1: 'Caution'},
             frequency=1,
             offset=0.1,
         )
         warn_fo_2 = M(
-            name='Master Caution (FO)(2)',
+            name='Master Caution (FO) (2)',
             array=np.ma.array(data=[0, 0, 0, 0, 1, 0]),
             values_mapping={0: '-', 1: 'Caution'},
             frequency=1,
