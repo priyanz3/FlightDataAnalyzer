@@ -1048,7 +1048,8 @@ def scan_ils(beam, ils_dots, height, scan_slice, frequency,
             # never went below 2.5 dots
             return None
         else:
-            ils_lost_idx = last_25_idx
+            # Round down to nearest integer
+            ils_lost_idx = int(last_25_idx)
 
     if beam == 'glideslope':
         # If Glideslope find index of height last passing 200ft and use the
