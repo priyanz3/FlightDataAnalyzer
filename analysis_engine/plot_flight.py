@@ -49,7 +49,12 @@ logger = logging.getLogger(name=__name__)
 SKIP_KPVS = []
 KEEP_KPVS = ['ILS Frequency During Approach']
 SKIP_KTIS = ['Transmit']
-KEEP_KTIS = ['Takeoff Start','Liftoff', 'Touchdown', 'Localizer Established Start', 'Localizer Established End', 'Glideslope Established End']
+KEEP_KTIS = ['Takeoff Start','Liftoff', 'Touchdown', 
+             'Localizer Established Start', 'Localizer Established End', 
+             'Glideslope Established Start', 'Glideslope Established End',
+             'IAN Final Approach Established Start', 'IAN Final Approach Established End',
+             'IAN Glidepath Established Start', 'IAN Glidepath Established End',
+             ]
 
 class TypedWriter(object):
     """
