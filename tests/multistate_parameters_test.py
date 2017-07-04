@@ -2318,6 +2318,9 @@ class TestMasterCaution(unittest.TestCase, NodeTest):
             ('Master Caution (Capt)',),
             ('Master Caution (FO)',),
             ('Master Caution (Capt)', 'Master Caution (FO)'),
+            ('Master Caution (Capt) (2)',),
+            ('Master Caution (FO) (2)',),
+            ('Master Caution (Capt) (2)', 'Master Caution (FO) (2)'),
         ]
 
     def test_derive(self):
