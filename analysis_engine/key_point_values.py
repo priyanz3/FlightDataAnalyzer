@@ -15843,9 +15843,14 @@ class MasterWarningDuration(KeyPointValueNode):
 
     def derive(self,
                warning=M('Master Warning'),
-               any_engine=M('Eng (*) Any Running')):
-
-        if any_engine:
+               any_engine=M('Eng (*) Any Running'),
+               family=A('Family'),
+               airborne=S('Airborne')):
+        
+        if family and family.value is 'AW139':
+            self.create_kpvs_where(warning.array == 'Warning', warning.hz, phase=airborne)
+        
+        elif any_engine:
             self.create_kpvs_where(np.ma.logical_and(warning.array == 'Warning',
                                                      any_engine.array == 'Running'),
                                    warning.hz)
