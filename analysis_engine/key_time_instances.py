@@ -1977,7 +1977,7 @@ class Autoland(KeyTimeInstanceNode):
 
 
 #################################################################
-# ILS Established Markers (primarily for development)
+# ILS & IAN Established Markers (primarily for development)
 
 class LocalizerEstablishedStart(KeyTimeInstanceNode):
     def derive(self, ilss=S('ILS Localizer Established')):
@@ -1989,17 +1989,42 @@ class LocalizerEstablishedEnd(KeyTimeInstanceNode):
         for ils in ilss:
             self.create_kti(ils.slice.stop)
 
-
 class GlideslopeEstablishedStart(KeyTimeInstanceNode):
     def derive(self, ilss=S('ILS Glideslope Established')):
         for ils in ilss:
             self.create_kti(ils.slice.start)
 
-
 class GlideslopeEstablishedEnd(KeyTimeInstanceNode):
     def derive(self, ilss=S('ILS Glideslope Established')):
         for ils in ilss:
             self.create_kti(ils.slice.stop)
+
+
+class IANFinalApproachEstablishedStart(KeyTimeInstanceNode):
+    name = 'IAN Final Approach Established Start'
+    def derive(self, ilss=S('IAN Final Approach Established')):
+        for ils in ilss:
+            self.create_kti(ils.slice.start)
+
+class IANFinalApproachEstablishedEnd(KeyTimeInstanceNode):
+    name = 'IAN Final Approach Established End'
+    def derive(self, ilss=S('IAN Final Approach Established')):
+        for ils in ilss:
+            self.create_kti(ils.slice.stop)
+
+class IANGlidepathEstablishedStart(KeyTimeInstanceNode):
+    name = 'IAN Glidepath Established Start'
+    def derive(self, ilss=S('IAN Glidepath Established')):
+        for ils in ilss:
+            self.create_kti(ils.slice.start)
+
+class IANGlidepathEstablishedEnd(KeyTimeInstanceNode):
+    name = 'IAN Glidepath Established End'
+    def derive(self, ilss=S('IAN Glidepath Established')):
+        for ils in ilss:
+            self.create_kti(ils.slice.stop)
+
+#################################################################
 
 
 class MovementStart(KeyTimeInstanceNode):
