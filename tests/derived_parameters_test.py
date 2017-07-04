@@ -1231,8 +1231,7 @@ class TestAltitudeDensity(unittest.TestCase):
 
     def test_can_operate(self):
         available = ('Altitude STD', 'SAT', 'SAT International Standard Atmosphere')
-        self.assertTrue(self.node_class.can_operate(available, ac_type=helicopter))
-        self.assertFalse(self.node_class.can_operate(available, ac_type=aeroplane))
+        self.assertTrue(self.node_class.can_operate(available))
 
     def test_derive(self):
 

@@ -1022,8 +1022,6 @@ class AltitudeDensity(DerivedParameterNode):
 
     units = ut.FT
 
-    # can_operate = helicopter_only
-
     def derive(self, alt_std=P('Altitude STD'), sat=P('SAT'),
                isa_temp=P('SAT International Standard Atmosphere')):
         # TODO: libary function to convert to Alitude Density see Aero Calc.
