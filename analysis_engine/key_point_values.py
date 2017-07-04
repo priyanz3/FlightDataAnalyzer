@@ -13636,7 +13636,7 @@ class PitchOnGroundMax(KeyPointValueNode):
                grounded=S('Grounded'), on_deck=S('On Deck')):
 
         my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(my_slices, low_coll)
         self.create_kpvs_within_slices(pitch.array,
                                        my_slices,
@@ -13652,7 +13652,7 @@ class PitchOnDeckMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, pitch=P('Pitch'), coll=P('Collective'), on_deck=S('On Deck')):
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(pitch.array,
                                        my_slices,
@@ -13667,7 +13667,7 @@ class PitchOnGroundMin(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, pitch=P('Pitch'), coll=P('Collective'), grounded=S('Grounded'), on_deck=S('On Deck')):
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(on_deck.get_slices(), low_coll)
         my_slices = slices_and_not(grounded.get_slices(), my_slices)
         self.create_kpvs_within_slices(pitch.array,
@@ -13683,7 +13683,7 @@ class PitchOnDeckMin(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, pitch=P('Pitch'), coll=P('Collective'), on_deck=S('On Deck')):
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(pitch.array,
                                        my_slices,
@@ -14737,7 +14737,7 @@ class RollOnGroundMax(KeyPointValueNode):
 
     def derive(self, roll=P('Roll'), coll=P('Collective'), grounded=S('Grounded'), on_deck=S('On Deck')):
         my_slices = slices_and_not(grounded.get_slices(), on_deck.get_slices())
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(my_slices, low_coll)
         self.create_kpvs_within_slices(roll.array,
                                        my_slices,
@@ -14755,7 +14755,7 @@ class RollOnDeckMax(KeyPointValueNode):
 
     def derive(self, roll=P('Roll'), coll=P('Collective'), on_deck=S('On Deck')):
 
-        _, low_coll = slices_below(coll.array, 40.0)
+        _, low_coll = slices_below(coll.array, 25.0)
         my_slices = slices_and(on_deck.get_slices(), low_coll)
         self.create_kpvs_within_slices(roll.array,
                                        my_slices,
