@@ -4350,7 +4350,7 @@ class SlopeMexico(DerivedParameterNode):
 
         self.array = np_ma_masked_zeros_like(alt_aal.array)
         for app in apps:
-            glide_height = dist.array[app.slice] * FT_PER_NM_3_DEG
+            glide_height = dist.array[app.slice] * FEET_PER_NM_3_DEG
             corr_height = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice],window=121))
             # This is degrees error from 3 deg which is not the same as ILS  dots
             self.array[app.slice] = np.degrees(np.arctan((corr_height-glide_height) / 
