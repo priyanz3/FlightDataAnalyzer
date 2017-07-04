@@ -4985,7 +4985,6 @@ class CoordinatesSmoothed(object):
                 runway = approach.approach_runway
             else:
                 raise ValueError('Unknown approach type')
-                runway = None
             
             if not runway:
                 continue
