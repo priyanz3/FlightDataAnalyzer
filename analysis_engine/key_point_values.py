@@ -17717,8 +17717,15 @@ class SATMin(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, sat=P('SAT')):
-        self.create_kpv(*min_value(sat.array))
+    def derive(self, 
+               sat=P('SAT'),
+               family=A('Family'),
+               rotors_turning=S('Rotors Turning')):
+        
+        if family and family.value == 'S92':
+            self.create_kpvs_within_slices(sat.array, rotors_turning, min_value)
+        else:
+            self.create_kpv(*min_value(sat.array))
 
 
 class SATRateOfChangeMax(KeyPointValueNode):
