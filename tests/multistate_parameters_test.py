@@ -1516,9 +1516,9 @@ class TestFlap(unittest.TestCase, NodeTest):
         self.assertTrue(self.node_class.can_operate(
             ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation')))
         self.assertFalse(self.node_class.can_operate(
-            tuple(), family=A('Family', 'Citation VLG')))
+            tuple(), family=A('Family', 'Citation VLJ')))
         self.assertTrue(self.node_class.can_operate(
-            ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation VLG')))
+            ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation VLJ')))
 
     @patch('analysis_engine.library.at')
     def test_derive(self, at):
@@ -1628,7 +1628,7 @@ class TestFlap(unittest.TestCase, NodeTest):
         _hd = A('HDF Duration', 18)
         _to = buildsections('Takeoff', (2, 4), (10, 12))
         _ld = buildsections('Landing', (6, 8), (14, 16))
-        for family_name in ('Citation', 'Citation VLG'):
+        for family_name in ('Citation', 'Citation VLJ'):
             node = self.node_class()
             node.derive(None, _am, _as, A('Family', family_name), _fr, None, _hd, _to, _ld)
             self.assertEqual(node.units, ut.DEGREE)

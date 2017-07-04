@@ -1086,7 +1086,7 @@ class Flap(MultistateDerivedParameterNode):
         if frame_name == 'L382-Hercules' or family_name == 'C208':
             return 'Altitude AAL' in available
 
-        if family_name in ('Citation', 'Citation VLG'):
+        if family_name in ('Citation', 'Citation VLJ'):
             return all_of(('HDF Duration', 'Landing', 'Takeoff'), available)
 
         if not all_of(('Flap Angle', 'Model', 'Series', 'Family'), available):
@@ -1132,7 +1132,7 @@ class Flap(MultistateDerivedParameterNode):
             self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
             return
 
-        if family_name in ('Citation', 'Citation VLG') and duration:
+        if family_name in ('Citation', 'Citation VLJ') and duration:
             self.values_mapping = {0: '0', 15: '15', 30: '30'}
             self.array = np.ma.zeros(duration * self.frequency)
             for toff in toffs:
@@ -3091,16 +3091,17 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             # based on data seen for G450, clean handle signal with no armed position.
             self.array = np.ma.where((handle.array >= 1.0) | (spdbrk.array > 25.0),
                                 'Deployed/Cmd Up', 'Stowed')
-        elif family_name in ['G-IV',
+        elif family_name in ('G-IV',
                              'G-V',
                              'G-VI',
                              'Global',
                              'CL-600',
                              'Citation',
+                             'Citation VLJ',
                              'BAE 146',
                              'ERJ-170/175',
                              'ERJ-190/195',
-                             'Phenom 300'] and spdbrk:
+                             'Phenom 300') and spdbrk:
             array = np.ma.zeros(len(spdbrk.array), dtype=np.short)
             if armed:
                 # G550 seen with recorded Speedbrake Armed parameter
