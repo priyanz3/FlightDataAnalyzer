@@ -1081,9 +1081,13 @@ class Flap(MultistateDerivedParameterNode):
                     model=A('Model'), series=A('Series'), family=A('Family')):
 
         frame_name = frame.value if frame else None
+        family_name = family.value if family else None
 
-        if frame_name == 'L382-Hercules':
+        if frame_name == 'L382-Hercules' or family_name == 'C208':
             return 'Altitude AAL' in available
+
+        if family_name in ('Citation', 'Citation VLG'):
+            return all_of(('HDF Duration', 'Landing', 'Takeoff'), available)
 
         if not all_of(('Flap Angle', 'Model', 'Series', 'Family'), available):
             return False
@@ -1100,9 +1104,13 @@ class Flap(MultistateDerivedParameterNode):
 
     def derive(self, flap=P('Flap Angle'),
                model=A('Model'), series=A('Series'), family=A('Family'),
-               frame=A('Frame'), alt_aal=P('Altitude AAL')):
+               frame=A('Frame'), alt_aal=P('Altitude AAL'),
+               hdf_duration=A('HDF Duration'),
+               toffs=S('Takeoff'), lands=S('Landing')):
 
         frame_name = frame.value if frame else None
+        family_name = family.value if family else None
+        duration = hdf_duration.value if hdf_duration else None
 
         if frame_name == 'L382-Hercules':
             self.values_mapping = {0: '0', 50: '50', 100: '100'}
@@ -1124,13 +1132,24 @@ class Flap(MultistateDerivedParameterNode):
             self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
             return
 
+        if family_name in ('Citation', 'Citation VLG') and duration:
+            self.values_mapping = {0: '0', 15: '15', 30: '30'}
+            self.array = np.ma.zeros(duration * self.frequency)
+            for toff in toffs:
+                self.array[toff.slice] = 15
+            for land in lands:
+                self.array[land.slice] = 30
+            return
+        
+        if family_name == 'C208':
+            self.values_mapping = {0: '0', 10: '10', 20: '20', 40: '40'}
+            self.array = np_ma_zeros_like(alt_aal.array)
+            self.array[alt_aal.array > 1000.0] = 40
+            self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
+            return
+
         self.values_mapping, self.array, self.frequency, self.offset = calculate_flap(
-            'lever',
-            flap,
-            model,
-            series,
-            family,
-        )
+            'lever', flap, model, series, family)
 
 
 class FlapLever(MultistateDerivedParameterNode):
@@ -1213,7 +1232,7 @@ class FlapIncludingTransition(MultistateDerivedParameterNode):
             # if we do not have flap angle use flap, use states as values
             # will vary between frames
             array = MappedArray(np_ma_masked_zeros_like(flap.array),
-                                 values_mapping=self.values_mapping)
+                                values_mapping=self.values_mapping)
             for value, state in six.iteritems(self.values_mapping):
                 array[flap.array == state] = state
             self.array = array
@@ -1249,12 +1268,7 @@ class FlapExcludingTransition(MultistateDerivedParameterNode):
     def derive(self, flap_angle=P('Flap Angle'),
                model=A('Model'), series=A('Series'), family=A('Family')):
         self.values_mapping, self.array, self.frequency, self.offset = calculate_flap(
-            'excluding',
-            flap_angle,
-            model,
-            series,
-            family,
-        )
+            'excluding', flap_angle, model, series, family)
 
 
 class FlapLeverSynthetic(MultistateDerivedParameterNode):

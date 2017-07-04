@@ -10,10 +10,8 @@ from hdfaccess.parameter import MappedArray
 from flightdatautilities import aircrafttables as at, units as ut
 from flightdatautilities.aircrafttables.constants import AVAILABLE_CONF_STATES
 from flightdatautilities import masked_array_testutils as ma_test
-from flight_phase_test import buildsection
-from analysis_engine.library import (
-    unique_values,
-)
+from flight_phase_test import buildsection, buildsections
+from analysis_engine.library import unique_values
 from analysis_engine.node import (
     aeroplane,
     Attribute,
@@ -1505,10 +1503,22 @@ class TestFlap(unittest.TestCase, NodeTest):
             series=A('Series', None),
             family=A('Family', None),
         ))
+        self.assertFalse(self.node_class.can_operate(
+            tuple(), frame=A('Frame', 'L382-Hercules')))
         self.assertTrue(self.node_class.can_operate(
-            ('Altitude AAL',),
-            frame=A('Frame', 'L382-Hercules'),
-        ))
+            ('Altitude AAL',), frame=A('Frame', 'L382-Hercules')))
+        self.assertFalse(self.node_class.can_operate(
+            tuple(), family=A('Family', 'C208')))
+        self.assertTrue(self.node_class.can_operate(
+            ('Altitude AAL',), family=A('Family', 'C208')))
+        self.assertFalse(self.node_class.can_operate(
+            tuple(), family=A('Family', 'Citation')))
+        self.assertTrue(self.node_class.can_operate(
+            ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation')))
+        self.assertFalse(self.node_class.can_operate(
+            tuple(), family=A('Family', 'Citation VLG')))
+        self.assertTrue(self.node_class.can_operate(
+            ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation VLG')))
 
     @patch('analysis_engine.library.at')
     def test_derive(self, at):
@@ -1596,6 +1606,36 @@ class TestFlap(unittest.TestCase, NodeTest):
         self.assertEqual(node.units, ut.PERCENT)
         self.assertIsInstance(node.array, MappedArray)
         ma_test.assert_masked_array_equal(node.array, np.ma.array((50, 50, 50, 0, 0, 0, 0, 0, 50, 50, 100, 100)))
+
+    def test_derive__c208(self):
+        at.get_flap_map.return_value = {0: '0', 10: '10', 20: '20', 40: '40'}
+        _am = A('Model', None)
+        _as = A('Series', None)
+        _af = A('Family', 'C208')
+        _fr = A('Frame', None)
+        array = np.ma.array((0, 0, 50, 1500, 1500, 1500, 2500, 2500, 1500, 1500, 50, 50))
+        alt_aal = P(name='Altitude AAL', array=array)
+        node = self.node_class()
+        node.derive(None, _am, _as, _af, _fr, alt_aal)
+        self.assertEqual(node.units, ut.DEGREE)
+        self.assertIsInstance(node.array, MappedArray)
+        ma_test.assert_masked_array_equal(node.array, np.ma.array((0, 0, 0, 40, 40, 40, 40, 40, 40, 40, 0, 0)))
+
+    def test_derive__citation(self):
+        _am = A('Model', None)
+        _as = A('Series', None)
+        _fr = A('Frame', None)
+        _hd = A('HDF Duration', 18)
+        _to = buildsections('Takeoff', (2, 4), (10, 12))
+        _ld = buildsections('Landing', (6, 8), (14, 16))
+        for family_name in ('Citation', 'Citation VLG'):
+            node = self.node_class()
+            node.derive(None, _am, _as, A('Family', family_name), _fr, None, _hd, _to, _ld)
+            self.assertEqual(node.units, ut.DEGREE)
+            self.assertIsInstance(node.array, MappedArray)
+            self.assertEqual(node.frequency, 1)
+            self.assertEqual(node.offset, 0)
+            ma_test.assert_masked_array_equal(node.array, np.ma.array((0, 0, 15, 15, 15, 0, 30, 30, 30, 0, 15, 15, 15, 0, 30, 30, 30, 0)))
 
 
 class TestFlapExcludingTransition(unittest.TestCase, NodeTest):
