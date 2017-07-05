@@ -1512,10 +1512,6 @@ class TestFlap(unittest.TestCase, NodeTest):
         self.assertTrue(self.node_class.can_operate(
             ('Altitude AAL',), family=A('Family', 'C208')))
         self.assertFalse(self.node_class.can_operate(
-            tuple(), family=A('Family', 'Citation')))
-        self.assertTrue(self.node_class.can_operate(
-            ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation')))
-        self.assertFalse(self.node_class.can_operate(
             tuple(), family=A('Family', 'Citation VLJ')))
         self.assertTrue(self.node_class.can_operate(
             ('HDF Duration', 'Landing', 'Takeoff'), family=A('Family', 'Citation VLJ')))
@@ -1625,17 +1621,17 @@ class TestFlap(unittest.TestCase, NodeTest):
         _am = A('Model', None)
         _as = A('Series', None)
         _fr = A('Frame', None)
+        _af = A('Family', 'Citation VLJ')
         _hd = A('HDF Duration', 18)
         _to = buildsections('Takeoff', (2, 4), (10, 12))
         _ld = buildsections('Landing', (6, 8), (14, 16))
-        for family_name in ('Citation', 'Citation VLJ'):
-            node = self.node_class()
-            node.derive(None, _am, _as, A('Family', family_name), _fr, None, _hd, _to, _ld)
-            self.assertEqual(node.units, ut.DEGREE)
-            self.assertIsInstance(node.array, MappedArray)
-            self.assertEqual(node.frequency, 1)
-            self.assertEqual(node.offset, 0)
-            ma_test.assert_masked_array_equal(node.array, np.ma.array((0, 0, 15, 15, 15, 0, 30, 30, 30, 0, 15, 15, 15, 0, 30, 30, 30, 0)))
+        node = self.node_class()
+        node.derive(None, _am, _as, _af, _fr, None, _hd, _to, _ld)
+        self.assertEqual(node.units, ut.DEGREE)
+        self.assertIsInstance(node.array, MappedArray)
+        self.assertEqual(node.frequency, 1)
+        self.assertEqual(node.offset, 0)
+        ma_test.assert_masked_array_equal(node.array, np.ma.array((0, 0, 15, 15, 15, 0, 30, 30, 30, 0, 15, 15, 15, 0, 30, 30, 30, 0)))
 
 
 class TestFlapExcludingTransition(unittest.TestCase, NodeTest):

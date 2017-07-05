@@ -6843,7 +6843,7 @@ class TestHeadingDuringTakeoff(unittest.TestCase, NodeTest):
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,2,4,7,9,8,6,3]))
         toff = buildsection('Takeoff', 2,5)
-        kpv = HeadingDuringTakeoff()
+        kpv = self.node_class()
         kpv.derive(head, toff)
         expected = [KeyPointValue(index=4, value=7.5,
                                   name='Heading During Takeoff')]
@@ -6852,7 +6852,7 @@ class TestHeadingDuringTakeoff(unittest.TestCase, NodeTest):
     def test_derive_modulus(self):
         head = P('Heading Continuous',np.ma.array([0,2,4,7,9,8,6,3])*-1.0)
         toff = buildsection('Takeoff', 2,5)
-        kpv = HeadingDuringTakeoff()
+        kpv = self.node_class()
         kpv.derive(head, toff)
         expected = [KeyPointValue(index=4, value=360-7.5,
                                   name='Heading During Takeoff')]

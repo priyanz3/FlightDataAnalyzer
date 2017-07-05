@@ -1086,7 +1086,7 @@ class Flap(MultistateDerivedParameterNode):
         if frame_name == 'L382-Hercules' or family_name == 'C208':
             return 'Altitude AAL' in available
 
-        if family_name in ('Citation', 'Citation VLJ'):
+        if family_name == 'Citation VLJ':
             return all_of(('HDF Duration', 'Landing', 'Takeoff'), available)
 
         if not all_of(('Flap Angle', 'Model', 'Series', 'Family'), available):
@@ -1132,7 +1132,7 @@ class Flap(MultistateDerivedParameterNode):
             self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
             return
 
-        if family_name in ('Citation', 'Citation VLJ') and duration:
+        if family_name == 'Citation VLJ' and duration:
             self.values_mapping = {0: '0', 15: '15', 30: '30'}
             self.array = np.ma.zeros(duration * self.frequency)
             for toff in toffs:
