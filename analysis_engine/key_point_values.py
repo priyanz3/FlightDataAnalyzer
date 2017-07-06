@@ -842,13 +842,13 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
                          mods.value)
             return
         roll_repaired = repair_mask(roll.array, frequency=roll.frequency,
-                                    repair_duration=2)
+                                    extrapolate=True, repair_duration=6)
         weight_threshold = mlw + 1133.981  # 2500LB --> 1133.981KG
         freq_8hz = land_vert_acc.frequency == 8.0
         freq_16hz = land_vert_acc.frequency == 16.0
         for idx, tdwn in enumerate(tdwns):
             # not interested in direction of roll
-            roll_tdwn = abs(value_at_index(roll.array, tdwn.index))
+            roll_tdwn = abs(value_at_index(roll_repaired, tdwn.index))
 
             gw_value = [k.value for k in gw_kpv if k.index == tdwn.index]
             if not gw_value:
