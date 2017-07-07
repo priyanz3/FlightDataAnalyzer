@@ -3790,6 +3790,29 @@ class AirspeedDuringLevelFlightMax(KeyPointValueNode):
             self.create_kpv(*max_value(air_spd.array, section.slice))
 
 
+class AirspeedAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum airspeed above FL200 (Alt STD Smoothed)
+    '''
+    
+    units = ut.KT
+
+    def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        self.create_kpvs_within_slices(air_spd.array,
+                                       alt.slices_above(20000), max_value)    
+        
+class AirspeedAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum airspeed above FL200 (Alt STD Smoothed)
+    '''
+  
+    units = ut.KT
+
+    def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        self.create_kpvs_within_slices(air_spd.array,
+                                       alt.slices_above(20000), min_value)  
+        
+
 ##############################################################################
 # Airspeed Autorotation
 class AirspeedDuringAutorotationMax(KeyPointValueNode):
@@ -7953,6 +7976,32 @@ class MachDuringCruiseAvg(KeyPointValueNode):
                             np.ma.mean(mach.array[_slice]))
 
 
+class MachAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum Mach speed above FL200 (Alt STD Smoothed)
+    '''
+    units = ut.MACH
+
+    def derive(self,
+               mach=P('Mach'),
+               alt=P('Altitude STD Smoothed')):
+
+        self.create_kpvs_within_slices(mach.array, 
+                                       alt.slices_above(20000), max_value)
+        
+class MachAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum Mach speed above FL200 (Alt STD Smoothed)
+    '''
+
+    units = ut.MACH
+
+    def derive(self,
+               mach=P('Mach'),
+               alt=P('Altitude STD Smoothed')):
+
+        self.create_kpvs_within_slices(mach.array, 
+                                       alt.slices_above(20000), min_value)
 ########################################
 # Mach: Flap
 
@@ -13748,6 +13797,28 @@ class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
                                        slice(tdwn.index, stop)))
 
 
+class PitchAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum pitch angle above FL200 (Alt STD Smoothed)
+    '''
+    
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_above(20000), max_value)        
+    
+class PitchAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum pitch angle above FL200 (Alt STD Smoothed)
+    '''
+    
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_above(20000), min_value)    
+    
 ##############################################################################
 # Pitch Rate
 class PitchRateWhileAirborneMax(KeyPointValueNode):
@@ -15103,6 +15174,23 @@ class RollRateMax(KeyPointValueNode):
                 if abs(roll_rate) > 5.0:
                     self.create_kpv(index+air.slice.start, roll_rate)
 
+
+class RollAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum bank angle above FL200  (Alt STD Smoothed) (absolute value)
+    '''
+    
+    units = ut.DEGREE
+
+    def derive(self,
+               roll=P('Roll'),
+               alt=P('Altitude STD Smoothed')):
+
+        self.create_kpvs_within_slices(
+            roll.array,
+            alt.slices_above(20000),
+            max_abs_value,
+        )
 
 ##############################################################################
 # Rotor
@@ -17891,3 +17979,5 @@ class DriftAtTouchdown(KeyPointValueNode):
     def derive(self, drift=P('Drift'), touchdown=KTI('Touchdown')):
         self.create_kpvs_at_ktis(drift.array, touchdown)
 
+
+       

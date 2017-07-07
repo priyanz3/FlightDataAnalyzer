@@ -170,6 +170,8 @@ from analysis_engine.key_point_values import (
     AirspeedWithGearDownMax,
     AirspeedWithSpeedbrakeDeployedMax,
     AirspeedWithThrustReversersDeployedMin,
+    AirspeedAboveFL200Max,
+    AirspeedAboveFL200Min,
     AlphaFloorDuration,
     AlternateLawDuration,
     AltitudeAtAPDisengagedSelection,
@@ -485,6 +487,8 @@ from analysis_engine.key_point_values import (
     MachWhileGearRetractingMax,
     MachWithFlapMax,
     MachWithGearDownMax,
+    MachAboveFL200Max,
+    MachAboveFL200Min,
     MagneticVariationAtLandingTurnOffRunway,
     MagneticVariationAtTakeoffTurnOntoRunway,
     MainGearOnGroundToNoseGearOnGroundDuration,
@@ -542,6 +546,8 @@ from analysis_engine.key_point_values import (
     PitchWhileAirborneMax,
     PitchWhileAirborneMin,
     PitchTouchdownTo60KtsAirspeedMax,
+    PitchAboveFL200Min,
+    PitchAboveFL200Max,
     PitchRateTouchdownTo60KtsAirspeedMax,
     PitchRate20FtToTouchdownMax,
     PitchRate20FtToTouchdownMin,
@@ -600,6 +606,7 @@ from analysis_engine.key_point_values import (
     RollLiftoffTo20FtMax,
     RollOnDeckMax,
     RollOnGroundMax,
+    RollAboveFL200Max,
     RollRateMax,
     RollWithAFCSDisengagedMax,
     RotorSpeedDuringAutorotationAbove108KtsMin,
@@ -4764,6 +4771,38 @@ class TestAirspeedWithSpeedbrakeDeployedMax(unittest.TestCase, NodeTest):
         self.assertEqual(node[0].name, 'Airspeed With Speedbrake Deployed Max')
 
 
+
+##############################################################################
+# Airspeed: Cruise
+class TestAirspeedAboveFL200Max(unittest.TestCase):
+    def can_operate(self):
+        opts = AirspeedAboveFL200Max.get_operational_combinations()
+        self.assertEqual(opts, [('Airspeed', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        airspeed = P('Airspeed', array=[238, 240, 236, 234, 236, 237, 235, 239, 240])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = AirspeedAboveFL200Max()
+        node.derive(airspeed, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 237)
+     
+class TestAirspeedAboveFL200Min(unittest.TestCase):
+    def can_operate(self):
+        opts = AirspeedAboveFL200Min.get_operational_combinations()
+        self.assertEqual(opts, [('Airspeed', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        airspeed = P('Airspeed', array=[238, 240, 236, 234, 236, 237, 235, 239, 240])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = AirspeedAboveFL200Min()
+        node.derive(airspeed, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 236)     
+
+
 ##############################################################################
 # Angle of Attack
 
@@ -7451,6 +7490,34 @@ class TestMachDuringCruiseAvg(unittest.TestCase, NodeTest):
         self.assertAlmostEqual(node[0].value,0.7)
         self.assertEqual(node[0].name, 'Mach During Cruise Avg')
 
+
+class TestMachAboveFL200Max(unittest.TestCase):
+    def can_operate(self):
+        opts = MachAboveFL200Max.get_operational_combinations()
+        self.assertEqual(opts, [('Mach', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        mach = P('Mach', array=[0.85, 0.86, 0.84, 0.82, 0.84, 0.85, 0.87, 0.90, 0.91])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = MachAboveFL200Max()
+        node.derive(mach, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 0.85)
+     
+class TestMachAboveFL200Min(unittest.TestCase):
+    def can_operate(self):
+        opts = MachAboveFL200Min.get_operational_combinations()
+        self.assertEqual(opts, [('Mach', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        mach = P('Mach', array=[0.85, 0.86, 0.84, 0.82, 0.84, 0.85, 0.87, 0.90, 0.91])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = MachAboveFL200Min()
+        node.derive(mach, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 0.84)    
 
 ########################################
 # Mach: Flap
@@ -14215,7 +14282,40 @@ class TestPitchTouchdownTo60KtsAirspeedMax(unittest.TestCase):
 
         self.assertEqual(len(node), 1)
         self.assertEqual(node[0].index, 8)
-        self.assertEqual(node[0].value, 0.5)    
+        self.assertEqual(node[0].value, 0.5)
+
+
+class TestPitchAboveFL200Max(unittest.TestCase):
+
+    def can_operate(self):
+        opts = PitchAboveFL200Max.get_operational_combinations()
+        self.assertEqual(opts, [('Pitch', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        pitch = P('Pitch', array=[10, 10, 10, 12, 13, 8, 14, 6, 5])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = PitchAboveFL200Max()
+        node.derive(pitch, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 13)
+
+
+class TestPitchAboveFL200Min(unittest.TestCase):
+
+    def can_operate(self):
+        opts = PitchAboveFL200Min.get_operational_combinations()
+        self.assertEqual(opts, [('Pitch', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        pitch = P('Pitch', array=[10, 10, 10, 12, 13, 8, 14, 6, 5])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = PitchAboveFL200Min()
+        node.derive(pitch, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, 8)
+
 
 ##############################################################################
 # Pitch Rate
@@ -15824,6 +15924,20 @@ class TestRollRateMax(unittest.TestCase):
         self.assertEqual(len(node), 2)
         self.assertEqual(node[0].index, 32)
         self.assertEqual(node[1].index, 157)
+
+class TestRollAboveFL200Max(unittest.TestCase):
+    def can_operate(self):
+        opts = RollAboveFL200Max.get_operational_combinations()
+        self.assertEqual(opts, [('Roll', 'Altitude STD Smoothed')])
+
+    def test_derive(self):
+        roll = P('Pitch', array=[4, 3, 1.5, 0, -2.5, 2, 1, -1, -3])
+        alt = P('Altitude STD Smoothed',
+                array=[1000, 2000, 7000, 10000, 40000, 22000, 11000, 9000, 8000])
+        node = RollAboveFL200Max()
+        node.derive(roll, alt)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].value, -2.5)
 
 ##############################################################################
 # Rotor
@@ -19404,6 +19518,7 @@ class TestDriftAtTouchdown(unittest.TestCase):
         self.assertEqual(node[0].value, -4.7)
 
 
+        
+        
 if __name__ == '__main__':
     unittest.main()
-
