@@ -2229,9 +2229,10 @@ class TestGearOnGround(unittest.TestCase):
     def test_derive__columbia234(self):
         vert_spd = load(os.path.join(test_data_path, "gear_on_ground__columbia234_vert_spd.nod"))
         torque = load(os.path.join(test_data_path, "gear_on_ground__columbia234_torque.nod"))
+        collective = load(os.path.join(test_data_path, "gear_on_ground__columbia234_collective.nod"))
         ac_series = A("Series", value="Columbia 234")
         wow=GearOnGround()
-        wow.derive(None, None, vert_spd, torque, helicopter, ac_series)
+        wow.derive(None, None, vert_spd, torque, helicopter, ac_series, collective)
         self.assertTrue(all(wow.array[:252] == 'Ground'))
         self.assertTrue(all(wow.array[254:540] == 'Air'))
         self.assertTrue(all(wow.array[1040:1200] == 'Air'))
@@ -2246,6 +2247,22 @@ class TestGearOnGround(unittest.TestCase):
         self.assertTrue(all(wow.array[3366:3376] == 'Air'))
         self.assertTrue(all(wow.array[3425:] == 'Ground')) 
 
+    def test_derive__columbia234_collective(self):
+        vert_spd = load(os.path.join(test_data_path, "gear_on_ground__columbia234_vert_spd_flight2.nod"))
+        torque = load(os.path.join(test_data_path, "gear_on_ground__columbia234_torque_flight2.nod"))
+        collective = load(os.path.join(test_data_path, "gear_on_ground__columbia234_collective_flight2.nod"))
+        ac_series = A("Series", value="Columbia 234")
+        wow=GearOnGround()
+        wow.derive(None, None, vert_spd, torque, helicopter, ac_series, collective)
+        self.assertTrue(all(wow.array[:277] == 'Ground'))
+        self.assertTrue(all(wow.array[300:1272] == 'Air'))
+        self.assertTrue(all(wow.array[1275:1470] == 'Ground'))
+        self.assertTrue(all(wow.array[1474:1772] == 'Air'))
+        self.assertTrue(all(wow.array[1775:1803] == 'Ground'))
+        self.assertTrue(all(wow.array[1806:2107] == 'Air'))
+        self.assertTrue(all(wow.array[2109:2200] == 'Ground'))
+        self.assertTrue(all(wow.array[2203:3894] == 'Air'))
+        self.assertTrue(all(wow.array[3896:] == 'Ground'))
 
 class TestGear_RedWarning(unittest.TestCase):
 
