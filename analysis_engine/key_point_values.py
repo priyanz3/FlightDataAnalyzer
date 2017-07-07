@@ -78,6 +78,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      moving_average,
                                      repair_mask,
                                      np_ma_masked_zeros_like,
+                                     np_ma_zeros_like,
                                      peak_curvature,
                                      rate_of_change_array,
                                      runs_of_ones,
@@ -4541,6 +4542,23 @@ class AltitudeSTDMax(KeyPointValueNode):
 
     def derive(self, alt_std=P('Altitude STD')):
         self.create_kpv(*max_value(alt_std.array))
+
+
+class AltitudeInCruiseAverage(KeyPointValueNode):
+    '''
+    Average pressure altitude (not smoothed) during all the cruise phases.
+    '''
+
+    units = ut.FT
+
+    def derive(self, alt_std=P('Altitude STD'), cruises=S('Cruise')):
+
+        av_array = np_ma_zeros_like(alt_std.array, mask=True)
+        for cruise in [c.slice for c in cruises]:
+            av_array[cruise] = alt_std.array[cruise]
+        value = np.ma.mean(av_array)
+        index = cruises[-1].slice.stop - 1
+        self.create_kpv(index, value)
 
 
 ########################################
