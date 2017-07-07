@@ -3794,7 +3794,7 @@ class AirspeedAboveFL200Max(KeyPointValueNode):
     '''
     Maximum airspeed above FL200 (Alt STD Smoothed)
     '''
-    
+    name = 'Airspeed Above FL200 Max'
     units = ut.KT
 
     def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
@@ -3805,7 +3805,7 @@ class AirspeedAboveFL200Min(KeyPointValueNode):
     '''
     Minimum airspeed above FL200 (Alt STD Smoothed)
     '''
-  
+    name = 'Airspeed Above FL200 Min'
     units = ut.KT
 
     def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
@@ -7980,6 +7980,8 @@ class MachAboveFL200Max(KeyPointValueNode):
     '''
     Maximum Mach speed above FL200 (Alt STD Smoothed)
     '''
+
+    name = 'Mach Above FL200 Max'
     units = ut.MACH
 
     def derive(self,
@@ -7994,6 +7996,7 @@ class MachAboveFL200Min(KeyPointValueNode):
     Minimum Mach speed above FL200 (Alt STD Smoothed)
     '''
 
+    name = 'Mach Above FL200 Min'
     units = ut.MACH
 
     def derive(self,
@@ -13801,7 +13804,7 @@ class PitchAboveFL200Max(KeyPointValueNode):
     '''
     Maximum pitch angle above FL200 (Alt STD Smoothed)
     '''
-    
+    name = 'Pitch Above FL200 Max'
     units = ut.DEGREE
 
     def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
@@ -13812,7 +13815,7 @@ class PitchAboveFL200Min(KeyPointValueNode):
     '''
     Minimum pitch angle above FL200 (Alt STD Smoothed)
     '''
-    
+    name = 'Pitch Above FL200 Min'
     units = ut.DEGREE
 
     def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
@@ -15180,6 +15183,7 @@ class RollAboveFL200Max(KeyPointValueNode):
     Maximum bank angle above FL200  (Alt STD Smoothed) (absolute value)
     '''
     
+    name = 'Roll Above FL200 Max'
     units = ut.DEGREE
 
     def derive(self,
