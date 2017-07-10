@@ -210,6 +210,7 @@ from analysis_engine.key_point_values import (
     AltitudeSTDWithGearDownMax,
     AltitudeSTDMax,
     AltitudeWithGearDownMax,
+    AltitudeInCruiseAverage,
     ATEngagedAPDisengagedOutsideClimbDuration,
     AutobrakeRejectedTakeoffNotSetDuringTakeoff,
     BrakePressureInTakeoffRollMax,
@@ -5525,6 +5526,18 @@ class TestAltitudeSTDMax(unittest.TestCase):
         self.assertEqual(node[0].index, 10)
         self.assertEqual(node[0].value, 10)
 
+
+class TestAltitudeInCruiseAverage(unittest.TestCase):
+    def test_can_operate(self):
+        combinations = AltitudeInCruiseAverage.get_operational_combinations()
+        self.assertTrue(('Altitude STD','Cruise') in combinations)
+
+    def test_basic(self):
+        alt = P('Altitude STD', array=np.ma.array([25000]*50+[35000]*50))
+        cruises = buildsections('Cruise', [5, 35], [65,95])
+        spd = AltitudeInCruiseAverage()
+        spd.get_derived((alt, cruises))
+        self.assertAlmostEqual(spd[0].value, 30000)
 
 ####class TestAltitudeAtCabinPressureLowWarningDuration(unittest.TestCase,
 ####                                                    CreateKPVsWhereTest):
