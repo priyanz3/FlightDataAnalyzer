@@ -917,7 +917,7 @@ class AccelerationNormalOffset(KeyPointValueNode):
     
     @classmethod
     def can_operate(cls, available):
-        return any_of(('Acceleration Normal', 'Taxiing'), available)
+        return all_of(('Acceleration Normal', 'Taxiing'), available)
     
     def derive(self,
                acc_norm=P('Acceleration Normal'),
