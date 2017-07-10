@@ -4871,8 +4871,7 @@ class CoordinatesSmoothed(object):
                 # speeds to be masked, so we pretend to accelerate smoothly from
                 # standstill.
                 if speed[toff_slice][0] is np.ma.masked:
-                    speed.data[toff_slice][0] = 0.0
-                    speed.mask[toff_slice][0]=False
+                    speed[toff_slice][0] = 0
                     speed[toff_slice] = interpolate(speed[toff_slice])
 
                 # Compute takeoff track from start of runway using integrated
