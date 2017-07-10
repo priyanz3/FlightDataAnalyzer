@@ -52,7 +52,7 @@ from analysis_engine.key_point_values import (
     AccelerationLongitudinalDuringLandingMin,
     AccelerationLongitudinalDuringTakeoffMax,
     AccelerationLongitudinalOffset,
-    AccelerationNormal20FtToFlareMax,
+    AccelerationNormal20FtTo5FtMax,
     AccelerationNormalAtLiftoff,
     AccelerationNormalAtTouchdown,
     AccelerationNormalMinusLoadFactorThresholdAtTouchdown,
@@ -1424,10 +1424,10 @@ class TestAccelerationNormalMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertTrue(False, msg='Test Not Implemented')
 
 
-class TestAccelerationNormal20FtToFlareMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
+class TestAccelerationNormal20FtTo5FtMax(unittest.TestCase, CreateKPVsWithinSlicesTest):
 
     def setUp(self):
-        self.node_class = AccelerationNormal20FtToFlareMax
+        self.node_class = AccelerationNormal20FtTo5FtMax
         self.can_operate_kwargs = {'ac_type': aeroplane}
         self.operational_combinations = [('Acceleration Normal Offset Removed', 'Altitude AAL For Flight Phases')]
         self.function = max_value
@@ -1440,14 +1440,14 @@ class TestAccelerationNormal20FtToFlareMax(unittest.TestCase, CreateKPVsWithinSl
         # Test height range limit:
         alt_aal = P('Altitude AAL For Flight Phases', np.ma.arange(48, 0, -3))
         acc_norm = P('Acceleration Normal', np.ma.array(list(range(10, 18)) + list(range(18, 10, -1))) / 10.0)
-        node = AccelerationNormal20FtToFlareMax()
+        node = AccelerationNormal20FtTo5FtMax()
         node.derive(acc_norm, alt_aal)
         self.assertEqual(node, [
             KeyPointValue(index=10, value=1.6, name='Acceleration Normal 20 Ft To Flare Max'),
         ])
         # Test peak acceleration:
         alt_aal = P('Altitude AAL For Flight Phases', np.ma.arange(32, 0, -2))
-        node = AccelerationNormal20FtToFlareMax()
+        node = AccelerationNormal20FtTo5FtMax()
         node.derive(acc_norm, alt_aal)
         self.assertEqual(node, [
             KeyPointValue(index=8, value=1.8, name='Acceleration Normal 20 Ft To Flare Max'),

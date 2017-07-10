@@ -579,7 +579,7 @@ class AccelerationNormalMax(KeyPointValueNode):
         self.create_kpv_from_slices(acc_norm.array, mobile, max_value)
 
 
-class AccelerationNormal20FtToFlareMax(KeyPointValueNode):
+class AccelerationNormal20FtTo5FtMax(KeyPointValueNode):
     '''
     '''
 
