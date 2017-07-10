@@ -59,6 +59,7 @@ from analysis_engine.derived_parameters import (
     AccelerationLateralSmoothed,
     AccelerationSideways,
     AccelerationVertical,
+    AccelerationNormalOffsetRemoved,
     Aileron,
     AileronLeft,
     AileronRight,
@@ -4163,14 +4164,19 @@ class TestAOA(unittest.TestCase):
         self.assertAlmostEqual(aoa.array[1], 0.257)
 
 class TestAccelerationNormalOffsetRemoved(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
+    
     def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-    @unittest.skip('Test Not Implemented')
+        opts = AccelerationNormalOffsetRemoved.get_operational_combinations()
+        self.assertEqual(opts, [('Acceleration Normal',), ('Acceleration Normal', 'Acceleration Normal Offset')])
+    
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
+        self.acc_norm_offset = KPV([KeyPointValue(index=0, value=1.2, name='Acceleration Normal Offset')])
+        acceleration_normal=P('Acceleration Normal', array=np.ma.array([1]*20 + [1.5]*20 + [1]*10), frequency=1.0)
+        acc = AccelerationNormalOffsetRemoved()
+        acc.derive(acceleration_normal, self.acc_norm_offset)
+        assert_array_equal(acc.array, acceleration_normal.array - self.acc_norm_offset[0].value + 1.0)
+        # could as well be acceleration_normal.array - 0.2
+        
 # Also Accelerations Lateral and Longitudinal are not tested yet.
 
 class TestAileron(unittest.TestCase):

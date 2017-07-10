@@ -914,10 +914,14 @@ class AccelerationNormalOffset(KeyPointValueNode):
     '''
 
     units = ut.G
-
+    
+    @classmethod
+    def can_operate(cls, available):
+        return any_of(('Acceleration Normal', 'Taxiing'), available)
+    
     def derive(self,
                acc_norm=P('Acceleration Normal'),
-               taxiing=S('Taxiing')):
+               taxiing = S('Taxiing')):
 
         total_sum = 0.0
         total_count = 0

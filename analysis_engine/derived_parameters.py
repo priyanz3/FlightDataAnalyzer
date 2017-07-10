@@ -187,7 +187,6 @@ class AccelerationNormalOffsetRemoved(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return 'Acceleration Normal' in available
 
     def derive(self,
