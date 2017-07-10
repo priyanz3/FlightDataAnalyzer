@@ -13742,7 +13742,7 @@ class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
                touchdowns=KTI('Touchdown')):
         
         for tdwn in touchdowns:
-            stop = index_at_value(airspeed.array.data, 60,
+            stop = index_at_value(airspeed.array, 60,
                                   slice(tdwn.index, None), endpoint='nearest')
             self.create_kpv(*max_value(pitch.array,
                                        slice(tdwn.index, stop)))
@@ -13881,10 +13881,12 @@ class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
                touchdowns=KTI('Touchdown')):
         for tdwn in touchdowns:
-            stop = index_at_value(airspeed.array.data, 60, 
+            stop = index_at_value(airspeed.array, 60, 
                                   slice(tdwn.index, None), endpoint='nearest')
             self.create_kpv(*max_value(pitchrate.array,
                                        slice(tdwn.index, stop)))
+
+
 ##############################################################################
 # Vertical Speed (Rate of Climb/Descent) Helpers
 
@@ -16991,7 +16993,7 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
                tdwns=KTI('Touchdown')):
         for tdwn in tdwns:
             # get index where airspeed is 60 Kts
-            air_spd_end = index_at_value(airspeed.array.data, 60,
+            air_spd_end = index_at_value(airspeed.array, 60,
                                          slice(tdwn.index, None))
             pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
             stop = index_at_value(pitch.array, pitch_ref,
