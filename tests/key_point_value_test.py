@@ -440,6 +440,7 @@ from analysis_engine.key_point_values import (
     HeadingVacatingRunway,
     HeadingVariation300To50Ft,
     HeadingVariation500To50Ft,
+    HeadingVariation800To50Ft,
     HeadingVariationAbove80KtsAirspeedDuringTakeoff,
     HeadingVariationAbove100KtsAirspeedDuringLanding,
     HeadingVariationTouchdownPlus4SecTo60KtsAirspeed,
@@ -11756,7 +11757,26 @@ class TestHeadingVariation500To50Ft(unittest.TestCase, NodeTest):
     def test_derive(self):
         self.assertTrue(False, msg='Test not implemented.')
 
+class TestHeadingVariation800To50Ft(unittest.TestCase, NodeTest):
 
+    def setUp(self):
+        self.node_class = HeadingVariation500To50Ft
+        self.operational_combinations = [(
+            'Heading Continuous',
+            'Altitude AAL For Flight Phases',
+        )]
+
+    def test_derive(self):
+        hdg = P('Heading Continuous',             array=[100, 100, 101, 102, 103, 102, 101, 100, 99, 98, 98, 96])
+        alt = P('Altitude AAL For Flight Phases', array=[1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 50, 25])
+        name = self.node_class.get_name()
+        node = self.node_class()
+        node.derive(hdg, alt)
+        self.assertEqual(node[0].index, 10)
+        self.assertEqual(node[0].value, 3)
+        
+        #self.assertTrue(False, msg='Test not implemented.')
+        
 class TestHeadingVariationAbove100KtsAirspeedDuringLanding(unittest.TestCase, NodeTest):
 
     def setUp(self):

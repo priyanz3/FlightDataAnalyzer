@@ -11700,6 +11700,20 @@ class HeadingVariation500To50Ft(KeyPointValueNode):
             dev = np.ma.ptp(head.array[band])
             self.create_kpv(band.stop, dev)
 
+class HeadingVariation800To50Ft(KeyPointValueNode):
+    '''
+    Heading variation between 800ft AAL and 50ft AAL.
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self,
+               head=P('Heading Continuous'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        for band in alt_aal.slices_from_to(800, 50):
+            dev = np.ma.ptp(head.array[band])
+            self.create_kpv(band.stop, dev)
 
 class HeadingVariationAbove100KtsAirspeedDuringLanding(KeyPointValueNode):
     '''
