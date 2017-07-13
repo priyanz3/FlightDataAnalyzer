@@ -1443,14 +1443,14 @@ class TestAccelerationNormal20FtTo5FtMax(unittest.TestCase, CreateKPVsWithinSlic
         node = AccelerationNormal20FtTo5FtMax()
         node.derive(acc_norm, alt_aal)
         self.assertEqual(node, [
-            KeyPointValue(index=10, value=1.6, name='Acceleration Normal 20 Ft To Flare Max'),
+            KeyPointValue(index=10, value=1.6, name='Acceleration Normal 20 Ft To 5 Ft Max'),
         ])
         # Test peak acceleration:
         alt_aal = P('Altitude AAL For Flight Phases', np.ma.arange(32, 0, -2))
         node = AccelerationNormal20FtTo5FtMax()
         node.derive(acc_norm, alt_aal)
         self.assertEqual(node, [
-            KeyPointValue(index=8, value=1.8, name='Acceleration Normal 20 Ft To Flare Max'),
+            KeyPointValue(index=8, value=1.8, name='Acceleration Normal 20 Ft To 5 Ft Max'),
         ])
 
 
