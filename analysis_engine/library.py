@@ -7263,7 +7263,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
         # covers the whole array so is allowed.
         return None
 
-    elif not np.ma.count(test_array):
+    elif not np.ma.count(test_array) or np.ma.all(np.isnan(test_array)):
         # The parameter does not pass through threshold in the period in
         # question, so return empty-handed.
         if endpoint in ['closing', 'first_closing']:
@@ -7319,7 +7319,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
         b = array[begin + (step * (n + 1))]
         # Force threshold to float as often passed as an integer.
         # Also check for b=a as otherwise we get a divide by zero condition.
-        if (a is np.ma.masked or b is np.ma.masked or a == b):
+        if (a is np.ma.masked or b is np.ma.masked or np.isnan(a) or np.isnan(b) or a == b):
             r = 0.5
         else:
             r = (float(threshold) - a) / (b - a)

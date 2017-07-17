@@ -3120,32 +3120,32 @@ class TestIndexAtValue(unittest.TestCase):
 
     def test_index_at_value_basic(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 1.5, slice(0, 3)), 1.5)
+        self.assertEquals(index_at_value(array, 1.5, slice(0, 3)), 1.5)
 
     def test_index_at_value_no_slice(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 1.5), 1.5)
-        self.assertEquals (index_at_value(array, 1.5, slice(None, None, None)), 1.5)
+        self.assertEquals(index_at_value(array, 1.5), 1.5)
+        self.assertEquals(index_at_value(array, 1.5, slice(None, None, None)), 1.5)
 
     def test_index_at_value_backwards(self):
         array = np.ma.arange(8)
-        self.assertEquals (index_at_value(array, 3.2, slice(6, 2, -1)), 3.2)
+        self.assertEquals(index_at_value(array, 3.2, slice(6, 2, -1)), 3.2)
 
     def test_index_at_value_backwards_with_negative_values_a(self):
         array = np.ma.arange(8)*(-1.0)
-        self.assertEquals (index_at_value(array, -3.2, slice(6, 2, -1)), 3.2)
+        self.assertEquals(index_at_value(array, -3.2, slice(6, 2, -1)), 3.2)
 
     def test_index_at_value_backwards_with_negative_values_b(self):
         array = np.ma.arange(8)-10
-        self.assertEquals (index_at_value(array, -5.2, slice(6, 2, -1)), 4.8)
+        self.assertEquals(index_at_value(array, -5.2, slice(6, 2, -1)), 4.8)
 
     def test_index_at_value_right_at_start(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 1.0, slice(1, 3)), 1.0)
+        self.assertEquals(index_at_value(array, 1.0, slice(1, 3)), 1.0)
 
     def test_index_at_value_right_at_end(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 3.0, slice(1, 4)), 3.0)
+        self.assertEquals(index_at_value(array, 3.0, slice(1, 4)), 3.0)
 
     #==================================================================
     # Indexing from the end of the array results in an array length
@@ -3153,38 +3153,43 @@ class TestIndexAtValue(unittest.TestCase):
     # with array[:end:-1] construct, but using slices appears insoluble.
     def test_index_at_value_backwards_from_end_minus_one(self):
         array = np.ma.arange(8)
-        self.assertEquals (index_at_value(array, 7, slice(8, 3, -1)), 7)
+        self.assertEquals(index_at_value(array, 7, slice(8, 3, -1)), 7)
     #==================================================================
 
     def test_index_at_value_backwards_to_start(self):
         array = np.ma.arange(8)
-        self.assertEquals (index_at_value(array, 0, slice(5, 0, -1)), 0)
+        self.assertEquals(index_at_value(array, 0, slice(5, 0, -1)), 0)
 
     def test_index_at_value_backwards_floating_point_end(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 1.0, slice(3.4, 0.5, -1)), 1.0)
+        self.assertEquals(index_at_value(array, 1.0, slice(3.4, 0.5, -1)), 1.0)
 
     def test_index_at_value_forwards_floating_point_end(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 3.0, slice(0.6, 3.5)), 3.0)
+        self.assertEquals(index_at_value(array, 3.0, slice(0.6, 3.5)), 3.0)
 
     def test_index_at_value_threshold_not_crossed(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 7.5, slice(0, 3)), None)
+        self.assertEquals(index_at_value(array, 7.5, slice(0, 3)), None)
 
     def test_index_at_value_threshold_closing(self):
         array = np.ma.arange(4)
-        self.assertEquals (index_at_value(array, 99, slice(1, None), endpoint='closing'), 3)
+        self.assertEquals(index_at_value(array, 99, slice(1, None), endpoint='closing'), 3)
 
     def test_index_at_value_threshold_closing_backwards(self):
         array = 6-np.ma.arange(6)
         # array [6,5,4,3,2,1] with slice(None, 4, -1) = [1] which is index 5.
-        self.assertEquals (index_at_value(array, 99, slice(None, 4, -1), endpoint='closing'), 5)
+        self.assertEquals(index_at_value(array, 99, slice(None, 4, -1), endpoint='closing'), 5)
 
     def test_index_at_value_masked(self):
         array = np.ma.arange(4)
         array[1] = np.ma.masked
-        self.assertEquals (index_at_value(array, 1.5, slice(0, 3)), None)
+        self.assertEquals(index_at_value(array, 1.5, slice(0, 3)), None)
+
+    def test_index_at_value_nan(self):
+        array = np.ma.arange(4, dtype=np.float64)
+        array[1] = np.NaN
+        self.assertEquals(index_at_value(array, 1.5, slice(0, 3)), None)
 
     def test_index_at_value_slice_too_small(self):
         '''
@@ -3223,19 +3228,19 @@ class TestIndexAtValue(unittest.TestCase):
 
     def test_index_at_value_nearest(self):
         array = np.ma.array([0,1,2,1,2,3,2,1])
-        self.assertEquals (index_at_value(array, 3.1, slice(1, 8), endpoint='nearest'), 5.0)
+        self.assertEquals(index_at_value(array, 3.1, slice(1, 8), endpoint='nearest'), 5.0)
         # For comparison...
-        self.assertEquals (index_at_value(array, 3.1, slice(1, 8), endpoint='exact'), None)
-        self.assertEquals (index_at_value(array, 3.1, slice(1, 8), endpoint='closing'), 2.0)
+        self.assertEquals(index_at_value(array, 3.1, slice(1, 8), endpoint='exact'), None)
+        self.assertEquals(index_at_value(array, 3.1, slice(1, 8), endpoint='closing'), 2.0)
 
     def test_index_at_value_closing(self):
         array = np.ma.array([0,1,2,2,2,2,2,2])
-        self.assertEquals (index_at_value(array, 3.1, slice(0, 8), endpoint='first_closing'), 2)
-        self.assertEquals (index_at_value(array, 3.1, slice(0, 8), endpoint='closing'), 7)
+        self.assertEquals(index_at_value(array, 3.1, slice(0, 8), endpoint='first_closing'), 2)
+        self.assertEquals(index_at_value(array, 3.1, slice(0, 8), endpoint='closing'), 7)
 
     def test_index_at_value_nearest_backwards(self):
         array = np.ma.array([0,1,2,3,2,1,2,1])
-        self.assertEquals (index_at_value(array, 3.1, slice(7, 0, -1), endpoint='nearest'), 3.0)
+        self.assertEquals(index_at_value(array, 3.1, slice(7, 0, -1), endpoint='nearest'), 3.0)
 
     def test_index_at_value_all_masked(self):
         array = np.ma.array(data=[1.,2.,3.],mask=[1,1,1])
@@ -3244,6 +3249,7 @@ class TestIndexAtValue(unittest.TestCase):
     def test_index_at_value_closing_to_start(self):
         array = np.ma.array(data=[6, 5, 4])
         self.assertEqual(index_at_value(array, 10, _slice=slice(3, 0, -1), endpoint='closing'), 0)
+
 
 class TestIndexClosestValue(unittest.TestCase):
     def test_index_closest_value(self):
