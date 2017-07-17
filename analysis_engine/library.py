@@ -2796,7 +2796,11 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
 
     for track_slice in track_slices:
         straights = slices_remove_small_slices(slices_and(all_straights, [track_slice]))
-        curves = slices_not(straights, begin_at=track_slice.start, end_at=track_slice.stop)
+        curves = slices_remove_small_slices(
+            slices_not(
+                straights, begin_at=track_slice.start, end_at=track_slice.stop),
+            count=1,
+        )
 
         for straight in straights:
             # We compute an average ground track from heading and groundspeed.
