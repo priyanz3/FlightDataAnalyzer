@@ -10417,20 +10417,12 @@ class EngNpFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
 class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
     '''
-    Records the duration from touchdown until Throttle leaver is reduced in
-    seconds, negative seconds indicates throttle reduced before touchdown.
+    Records the duration from touchdown until throttle lever is reduced in
+    seconds. Negative seconds indicates throttle reduced before touchdown.
 
-    The original algorithm used reduction through 18deg throttle angle, but
-    in cases where little power is being applied it was found that the
-    throttle lever may not reach this setting. Also, this implies an
-    aircraft-dependent threshold which would be difficult to maintain, and
-    requires consistent throttle lever sensor rigging which may not be
-    reliable on some types.
-
-    For these reasons the algorithm has been adapted to use the peak
-    curvature technique, scanning from 5 seconds before the start of the
-    landing (passing 50ft) to the minimum throttle setting prior to
-    application of reverse thrust.
+    The algorithm uses the peak curvature technique, scanning from 5 seconds
+    before the start of the landing phase to the minimum throttle setting prior
+    to application of reverse thrust.
     '''
 
     can_operate = aeroplane_only
@@ -10444,39 +10436,20 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
                eng_n1=P('Eng (*) N1 Avg'),
                frame=A('Frame')):
 
-        dt = 5 / tla.hz  # 5 second counter
+        delta = 5 * tla.hz
         for landing in landings:
             for touchdown in touchdowns.get(within_slice=landing.slice):
-                begin = landing.slice.start - dt
                 # Seek the throttle reduction before thrust reverse is applied:
-                scope = slice(begin, landing.slice.stop)
+                scope = slice(landing.slice.start - delta, landing.slice.stop)
                 dn1 = rate_of_change_array(eng_n1.array[scope], eng_n1.hz)
                 dtla = rate_of_change_array(tla.array[scope], tla.hz)
-                dboth = dn1 * dtla
-                peak_decel = np.ma.argmax(dboth)
-                reduced_scope = slice(begin, landing.slice.start + peak_decel)
+                peak_decel = np.ma.argmax(dn1 * dtla)
+                reduced_scope = slice(scope.start, scope.start + peak_decel)
                 # Now see where the power is reduced:
                 reduce_idx = peak_curvature(tla.array, reduced_scope,
                                             curve_sense='Convex', gap=1, ttp=3)
                 if reduce_idx:
-
-                    '''
-                    import matplotlib.pyplot as plt
-                    plt.plot(eng_n1.array[scope])
-                    plt.plot(tla.array[scope])
-                    plt.plot(reduce_idx-begin, eng_n1.array[reduce_idx],'db')
-                    output_dir = os.path.join('C:\\Users\\Dave Jesse\\FlightDataRunner\\test_data\\88-Results\\',
-                                              'Throttle reduction graphs'+frame.name)
-                    if not os.path.exists(output_dir):
-                        os.mkdir(output_dir)
-                    plt.savefig(os.path.join(output_dir, frame.value + ' '+ str(int(reduce_idx)) +'.png'))
-                    plt.clf()
-                    print(int(reduce_idx))
-                    '''
-
-                    if reduce_idx:
-                        value = (reduce_idx - touchdown.index) / tla.hz
-                        self.create_kpv(reduce_idx, value)
+                    self.create_kpv(reduce_idx, (reduce_idx - touchdown.index) / tla.hz)
 
 
 ################################################################################
