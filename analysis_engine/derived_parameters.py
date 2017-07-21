@@ -5987,9 +5987,9 @@ class Rudder(DerivedParameterNode):
                src_C=P('Rudder (Lower)'),
                ):
 
-        sources = [src_A, src_B, src_C]
+        sources = [s for s in (src_A, src_B, src_C) if s is not None]
         self.offset = 0.0
-        self.frequency = src_A.frequency
+        self.frequency = sources[0].frequency
         self.array = blend_parameters(sources, offset=self.offset,
                                       frequency=self.frequency)
 
