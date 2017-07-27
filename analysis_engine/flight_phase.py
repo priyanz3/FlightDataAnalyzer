@@ -199,7 +199,9 @@ class Airborne(FlightPhaseNode):
         else:
             # During data validation we can select just sensible flights;
             # short hops make parameter validation tricky!
-            self.create_phases(slices_remove_small_slices(gear_off_grounds, time_limit=300))
+            self.create_phases(
+                slices_remove_small_gaps(
+                    slices_remove_small_slices(gear_off_grounds, time_limit=300) ) )
 
 
     def derive(self,
