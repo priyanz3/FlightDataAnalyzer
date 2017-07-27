@@ -3802,6 +3802,8 @@ class AirspeedAboveFL200Max(KeyPointValueNode):
     units = ut.KT
 
     def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(air_spd.array,
                                        alt.slices_above(20000), max_value)    
         
@@ -3813,6 +3815,8 @@ class AirspeedAboveFL200Min(KeyPointValueNode):
     units = ut.KT
 
     def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(air_spd.array,
                                        alt.slices_above(20000), min_value)  
         
@@ -7991,7 +7995,8 @@ class MachAboveFL200Max(KeyPointValueNode):
     def derive(self,
                mach=P('Mach'),
                alt=P('Altitude STD Smoothed')):
-
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(mach.array, 
                                        alt.slices_above(20000), max_value)
         
@@ -8006,7 +8011,8 @@ class MachAboveFL200Min(KeyPointValueNode):
     def derive(self,
                mach=P('Mach'),
                alt=P('Altitude STD Smoothed')):
-
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(mach.array, 
                                        alt.slices_above(20000), min_value)
 ########################################
@@ -13799,6 +13805,8 @@ class PitchAboveFL200Max(KeyPointValueNode):
     units = ut.DEGREE
 
     def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(pitch.array,
                                        alt.slices_above(20000), max_value)        
     
@@ -13810,6 +13818,8 @@ class PitchAboveFL200Min(KeyPointValueNode):
     units = ut.DEGREE
 
     def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(pitch.array,
                                        alt.slices_above(20000), min_value)    
     
@@ -15181,6 +15191,7 @@ class RollAboveFL200Max(KeyPointValueNode):
                roll=P('Roll'),
                alt=P('Altitude STD Smoothed')):
 
+        alt.array = repair_mask(alt.array)
         self.create_kpvs_within_slices(
             roll.array,
             alt.slices_above(20000),
