@@ -6293,6 +6293,8 @@ class DecelerationFromTouchdownToStopOnRunway(KeyPointValueNode):
 
     units = ut.G
 
+    can_operate = aeroplane_only
+
     def derive(self,
                gspd=P('Groundspeed'),
                tdwns=S('Touchdown'),
@@ -6341,6 +6343,7 @@ class DistanceFromRunwayCentrelineAtTouchdown(KeyPointValueNode):
 
     name = 'Distance From Runway Centreline At Touchdown'
     units = ut.METER
+    can_operate = aeroplane_only
 
     def derive(self,
                lat_dist=P('ILS Lateral Distance'),
@@ -13717,6 +13720,8 @@ class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
     '''
 
     units = ut.DEGREE
+
+    can_operate = aeroplane_only
     
     def derive(self,
                pitch=P('Pitch'),
@@ -13860,6 +13865,8 @@ class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
 
     units = ut.DEGREE_S
 
+    can_operate = aeroplane_only
+    
     def derive(self, pitchrate=P('Pitch Rate'), airspeed=P('Airspeed'),
                touchdowns=KTI('Touchdown')):
         for tdwn in touchdowns:
