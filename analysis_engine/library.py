@@ -980,7 +980,7 @@ def coreg(y, indep_var=None, force_zero=False):
         p = np.abs((n*sxy - sx*sy)/(np.sqrt(n*sx2-sx*sx)*np.sqrt(n*sy2-sy*sy)))
     except ValueError:
         return None, None, None
-    
+
     if np.isinf(p) or np.isnan(p):
         # known to be caused by negative sqrt in np.sqrt(n*sx2-sx*sx)
         return None, None, None
@@ -2651,12 +2651,12 @@ def runway_snap(runway, lat, lon):
 def groundspeed_from_position(lat, lon, hz):
     '''
     Calculation of Groundspeed from latitude and longitude
-    
+
     :param lat: Latitude Prepared array
     :type lat: numpy array
     :param lon: Longitude Prepared array
     :type lon: numpy array
-    
+
     :returns
     :param gs: groundspeed in knots
     :type gs: numpy array
@@ -2746,7 +2746,7 @@ def ground_track(lat_fix, lon_fix, gspd, hdg, frequency, mode):
 
     return gt_lat, gt_lon
 
-    
+
 def ground_track_precise(lat, lon, speed, hdg, frequency):
     """
     Computation of the ground track.
@@ -2772,7 +2772,7 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     :error conditions
     :Mismatched array lengths fails with ValueError
     """
-   
+
     # Build arrays to return the computed track.
     lat_return = np_ma_masked_zeros_like(lat)
     lon_return = np_ma_masked_zeros_like(lat)
@@ -2783,24 +2783,28 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     # First check that the gspd/hdg arrays are sensible.
     if (len(speed) != len(hdg)) or (len(speed) != len(lat)) or (len(speed) != len(lon)):
         raise ValueError('Ground_track_precise requires equi-length arrays')
-    
+
     # We use the period where the speed was over 1kn and just leave the position at lower speeds unchanged.
     spd_above_1 = np.ma.masked_less_equal(np.ma.abs(speed), 1.0)
     track_slices = slices_remove_small_slices(np.ma.clump_unmasked(spd_above_1))
 
-    # import matplotlib.pyplot as plt    
+    # import matplotlib.pyplot as plt
     # plt.plot(lon, lat, '-k')
 
     hdg_hyst_chg = np.ma.ediff1d(hysteresis(hdg, 10.0))
     all_straights = np.ma.clump_unmasked(np.ma.masked_not_equal(hdg_hyst_chg, 0.0))
-      
+
     for track_slice in track_slices:
         straights = slices_remove_small_slices(slices_and(all_straights, [track_slice]))
-        curves = slices_not(straights, begin_at=track_slice.start, end_at=track_slice.stop)
+        curves = slices_remove_small_slices(
+            slices_not(
+                straights, begin_at=track_slice.start, end_at=track_slice.stop),
+            count=1,
+        )
 
         for straight in straights:
             # We compute an average ground track from heading and groundspeed.
-            # This is computed in each direction, then blended progressively so that it meets the 
+            # This is computed in each direction, then blended progressively so that it meets the
             # endpoints exactly thereby cancelling out the errors in integrating the ground track.
             lat_model[straight], lon_model[straight] = av_gnd_trk(lat[straight], lon[straight], speed[straight], hdg[straight], frequency)
             # plt.plot(lon_model[straight], lat_model[straight], 'o-b')
@@ -2821,14 +2825,14 @@ def ground_track_precise(lat, lon, speed, hdg, frequency):
     # we leave it stationary at the point where the last movement stopped.
     lat_return = repair_mask(lat_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
     lon_return = repair_mask(lon_model, repair_duration=None, extrapolate=True, method='fill_start', raise_entirely_masked=False)
-    
+
     return lat_return, lon_return
 
 def gtp_blend_curve(array):
     '''
     The first data point for a ground track with ILS localizer correction is set from the localizer
     track computation, so we blend in this point across the curve turning off the runway.
-    
+
     We can do this for the first track leaving the stand as it makes no difference and saves
     the complexity of knowing which piece of track we are calculating.
     '''
@@ -2840,7 +2844,7 @@ def gtp_blend_curve(array):
 def av_gnd_trk(lat, lon, gspd, hdg, hz):
     '''
     Computation of an average ground track from the start forwards, and the end backwards, averaged.
-    
+
     Helper function for ground_track_precise calling ground_track twice per segment.
     '''
     lat1, lon1 = ground_track(lat[0], lon[0], gspd, hdg, hz, 'landing')
@@ -2849,7 +2853,7 @@ def av_gnd_trk(lat, lon, gspd, hdg, hz):
     my_lat = lat1 * scale + lat2 * (1.0-scale)
     my_lon = lon1 * scale + lon2 * (1.0-scale)
     return my_lat, my_lon
-    
+
 
 def hash_array(array, sections, min_samples):
     '''
@@ -4316,14 +4320,14 @@ def blend_nonequispaced_sensors(array_one, array_two, padding):
     '''
     assert len(array_one) == len(array_two)
     both = merge_sources(array_one, array_two)
-    
+
     new_both = both
     mask_array = np.ma.getmaskarray(both)
     for i in range(1, len(both)-1):
         if mask_array[i]:
             new_both[i] = (both[i-1]+both[i+1])/2
     both = new_both
-    
+
     # A simpler technique than trying to append to the averaged array.
     av_pairs = np.ma.empty_like(both)
     if padding == 'Follow':
@@ -7263,7 +7267,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
         # covers the whole array so is allowed.
         return None
 
-    elif not np.ma.count(test_array):
+    elif not np.ma.count(test_array) or np.ma.all(np.isnan(test_array)):
         # The parameter does not pass through threshold in the period in
         # question, so return empty-handed.
         if endpoint in ['closing', 'first_closing']:
@@ -7319,7 +7323,7 @@ def index_at_value(array, threshold, _slice=slice(None), endpoint='exact'):
         b = array[begin + (step * (n + 1))]
         # Force threshold to float as often passed as an integer.
         # Also check for b=a as otherwise we get a divide by zero condition.
-        if (a is np.ma.masked or b is np.ma.masked or a == b):
+        if (a is np.ma.masked or b is np.ma.masked or np.isnan(a) or np.isnan(b) or a == b):
             r = 0.5
         else:
             r = (float(threshold) - a) / (b - a)

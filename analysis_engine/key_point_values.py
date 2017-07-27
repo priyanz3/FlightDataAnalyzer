@@ -78,6 +78,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      moving_average,
                                      repair_mask,
                                      np_ma_masked_zeros_like,
+                                     np_ma_zeros_like,
                                      peak_curvature,
                                      rate_of_change_array,
                                      runs_of_ones,
@@ -578,7 +579,7 @@ class AccelerationNormalMax(KeyPointValueNode):
         self.create_kpv_from_slices(acc_norm.array, mobile, max_value)
 
 
-class AccelerationNormal20FtToFlareMax(KeyPointValueNode):
+class AccelerationNormal20FtTo5FtMax(KeyPointValueNode):
     '''
     '''
 
@@ -842,13 +843,13 @@ class AccelerationNormalMinusLoadFactorThresholdAtTouchdown(KeyPointValueNode):
                          mods.value)
             return
         roll_repaired = repair_mask(roll.array, frequency=roll.frequency,
-                                    repair_duration=2)
+                                    extrapolate=True, repair_duration=6)
         weight_threshold = mlw + 1133.981  # 2500LB --> 1133.981KG
         freq_8hz = land_vert_acc.frequency == 8.0
         freq_16hz = land_vert_acc.frequency == 16.0
         for idx, tdwn in enumerate(tdwns):
             # not interested in direction of roll
-            roll_tdwn = abs(value_at_index(roll.array, tdwn.index))
+            roll_tdwn = abs(value_at_index(roll_repaired, tdwn.index))
 
             gw_value = [k.value for k in gw_kpv if k.index == tdwn.index]
             if not gw_value:
@@ -913,10 +914,14 @@ class AccelerationNormalOffset(KeyPointValueNode):
     '''
 
     units = ut.G
-
+    
+    @classmethod
+    def can_operate(cls, available):
+        return all_of(('Acceleration Normal', 'Taxiing'), available)
+    
     def derive(self,
                acc_norm=P('Acceleration Normal'),
-               taxiing=S('Taxiing')):
+               taxiing = S('Taxiing')):
 
         total_sum = 0.0
         total_count = 0
@@ -3789,6 +3794,33 @@ class AirspeedDuringLevelFlightMax(KeyPointValueNode):
             self.create_kpv(*max_value(air_spd.array, section.slice))
 
 
+class AirspeedAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum airspeed above FL200 (Alt STD Smoothed)
+    '''
+    name = 'Airspeed Above FL200 Max'
+    units = ut.KT
+
+    def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(air_spd.array,
+                                       alt.slices_above(20000), max_value)    
+        
+class AirspeedAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum airspeed above FL200 (Alt STD Smoothed)
+    '''
+    name = 'Airspeed Above FL200 Min'
+    units = ut.KT
+
+    def derive(self, air_spd= P('Airspeed'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(air_spd.array,
+                                       alt.slices_above(20000), min_value)  
+        
+
 ##############################################################################
 # Airspeed Autorotation
 class AirspeedDuringAutorotationMax(KeyPointValueNode):
@@ -4541,6 +4573,23 @@ class AltitudeSTDMax(KeyPointValueNode):
 
     def derive(self, alt_std=P('Altitude STD')):
         self.create_kpv(*max_value(alt_std.array))
+
+
+class AltitudeInCruiseAverage(KeyPointValueNode):
+    '''
+    Average pressure altitude (not smoothed) during all the cruise phases.
+    '''
+
+    units = ut.FT
+
+    def derive(self, alt_std=P('Altitude STD'), cruises=S('Cruise')):
+
+        av_array = np_ma_zeros_like(alt_std.array, mask=True)
+        for cruise in [c.slice for c in cruises]:
+            av_array[cruise] = alt_std.array[cruise]
+        value = np.ma.mean(av_array)
+        index = cruises[-1].slice.stop - 1
+        self.create_kpv(index, value)
 
 
 ########################################
@@ -7938,6 +7987,37 @@ class MachDuringCruiseAvg(KeyPointValueNode):
                             np.ma.mean(mach.array[_slice]))
 
 
+class MachAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum Mach speed above FL200 (Alt STD Smoothed)
+    '''
+
+    name = 'Mach Above FL200 Max'
+    units = ut.MACH
+
+    def derive(self,
+               mach=P('Mach'),
+               alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(mach.array, 
+                                       alt.slices_above(20000), max_value)
+        
+class MachAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum Mach speed above FL200 (Alt STD Smoothed)
+    '''
+
+    name = 'Mach Above FL200 Min'
+    units = ut.MACH
+
+    def derive(self,
+               mach=P('Mach'),
+               alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(mach.array, 
+                                       alt.slices_above(20000), min_value)
 ########################################
 # Mach: Flap
 
@@ -10346,20 +10426,12 @@ class EngNpFor5SecDuringMaximumContinuousPowerMax(KeyPointValueNode):
 
 class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
     '''
-    Records the duration from touchdown until Throttle leaver is reduced in
-    seconds, negative seconds indicates throttle reduced before touchdown.
+    Records the duration from touchdown until throttle lever is reduced in
+    seconds. Negative seconds indicates throttle reduced before touchdown.
 
-    The original algorithm used reduction through 18deg throttle angle, but
-    in cases where little power is being applied it was found that the
-    throttle lever may not reach this setting. Also, this implies an
-    aircraft-dependent threshold which would be difficult to maintain, and
-    requires consistent throttle lever sensor rigging which may not be
-    reliable on some types.
-
-    For these reasons the algorithm has been adapted to use the peak
-    curvature technique, scanning from 5 seconds before the start of the
-    landing (passing 50ft) to the minimum throttle setting prior to
-    application of reverse thrust.
+    The algorithm uses the peak curvature technique, scanning from 5 seconds
+    before the start of the landing phase to the minimum throttle setting prior
+    to application of reverse thrust.
     '''
 
     can_operate = aeroplane_only
@@ -10373,39 +10445,20 @@ class ThrottleReductionToTouchdownDuration(KeyPointValueNode):
                eng_n1=P('Eng (*) N1 Avg'),
                frame=A('Frame')):
 
-        dt = 5 / tla.hz  # 5 second counter
+        delta = 5 * tla.hz
         for landing in landings:
             for touchdown in touchdowns.get(within_slice=landing.slice):
-                begin = landing.slice.start - dt
                 # Seek the throttle reduction before thrust reverse is applied:
-                scope = slice(begin, landing.slice.stop)
+                scope = slice(landing.slice.start - delta, landing.slice.stop)
                 dn1 = rate_of_change_array(eng_n1.array[scope], eng_n1.hz)
                 dtla = rate_of_change_array(tla.array[scope], tla.hz)
-                dboth = dn1 * dtla
-                peak_decel = np.ma.argmax(dboth)
-                reduced_scope = slice(begin, landing.slice.start + peak_decel)
+                peak_decel = np.ma.argmax(dn1 * dtla)
+                reduced_scope = slice(scope.start, scope.start + peak_decel)
                 # Now see where the power is reduced:
                 reduce_idx = peak_curvature(tla.array, reduced_scope,
                                             curve_sense='Convex', gap=1, ttp=3)
                 if reduce_idx:
-
-                    '''
-                    import matplotlib.pyplot as plt
-                    plt.plot(eng_n1.array[scope])
-                    plt.plot(tla.array[scope])
-                    plt.plot(reduce_idx-begin, eng_n1.array[reduce_idx],'db')
-                    output_dir = os.path.join('C:\\Users\\Dave Jesse\\FlightDataRunner\\test_data\\88-Results\\',
-                                              'Throttle reduction graphs'+frame.name)
-                    if not os.path.exists(output_dir):
-                        os.mkdir(output_dir)
-                    plt.savefig(os.path.join(output_dir, frame.value + ' '+ str(int(reduce_idx)) +'.png'))
-                    plt.clf()
-                    print(int(reduce_idx))
-                    '''
-
-                    if reduce_idx:
-                        value = (reduce_idx - touchdown.index) / tla.hz
-                        self.create_kpv(reduce_idx, value)
+                    self.create_kpv(reduce_idx, (reduce_idx - touchdown.index) / tla.hz)
 
 
 ################################################################################
@@ -11656,6 +11709,20 @@ class HeadingVariation500To50Ft(KeyPointValueNode):
             dev = np.ma.ptp(head.array[band])
             self.create_kpv(band.stop, dev)
 
+class HeadingVariation800To50Ft(KeyPointValueNode):
+    '''
+    Heading variation between 800ft AAL and 50ft AAL.
+    '''
+
+    units = ut.DEGREE
+
+    def derive(self,
+               head=P('Heading Continuous'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        for band in alt_aal.slices_from_to(800, 50):
+            dev = np.ma.ptp(head.array[band])
+            self.create_kpv(band.stop, dev)
 
 class HeadingVariationAbove100KtsAirspeedDuringLanding(KeyPointValueNode):
     '''
@@ -13735,6 +13802,32 @@ class PitchTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
                                        slice(tdwn.index, stop)))
 
 
+class PitchAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum pitch angle above FL200 (Alt STD Smoothed)
+    '''
+    name = 'Pitch Above FL200 Max'
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_above(20000), max_value)        
+    
+class PitchAboveFL200Min(KeyPointValueNode):
+    '''
+    Minimum pitch angle above FL200 (Alt STD Smoothed)
+    '''
+    name = 'Pitch Above FL200 Min'
+    units = ut.DEGREE
+
+    def derive(self, pitch=P('Pitch'), alt=P('Altitude STD Smoothed')):
+        
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(pitch.array,
+                                       alt.slices_above(20000), min_value)    
+    
 ##############################################################################
 # Pitch Rate
 class PitchRateWhileAirborneMax(KeyPointValueNode):
@@ -13874,6 +13967,8 @@ class PitchRateTouchdownTo60KtsAirspeedMax(KeyPointValueNode):
                                   slice(tdwn.index, None), endpoint='nearest')
             self.create_kpv(*max_value(pitchrate.array,
                                        slice(tdwn.index, stop)))
+
+
 ##############################################################################
 # Vertical Speed (Rate of Climb/Descent) Helpers
 
@@ -15091,6 +15186,25 @@ class RollRateMax(KeyPointValueNode):
                     self.create_kpv(index+air.slice.start, roll_rate)
 
 
+class RollAboveFL200Max(KeyPointValueNode):
+    '''
+    Maximum bank angle above FL200  (Alt STD Smoothed) (absolute value)
+    '''
+    
+    name = 'Roll Above FL200 Max'
+    units = ut.DEGREE
+
+    def derive(self,
+               roll=P('Roll'),
+               alt=P('Altitude STD Smoothed')):
+
+        alt.array = nearest_neighbour_mask_repair(alt.array)
+        self.create_kpvs_within_slices(
+            roll.array,
+            alt.slices_above(20000),
+            max_abs_value,
+        )
+
 ##############################################################################
 # Rotor
 
@@ -15850,9 +15964,14 @@ class MasterWarningDuration(KeyPointValueNode):
 
     def derive(self,
                warning=M('Master Warning'),
-               any_engine=M('Eng (*) Any Running')):
-
-        if any_engine:
+               any_engine=M('Eng (*) Any Running'),
+               family=A('Family'),
+               airborne=S('Airborne')):
+        
+        if family and family.value is 'AW139':
+            self.create_kpvs_where(warning.array == 'Warning', warning.hz, phase=airborne)
+        
+        elif any_engine:
             self.create_kpvs_where(np.ma.logical_and(warning.array == 'Warning',
                                                      any_engine.array == 'Running'),
                                    warning.hz)
@@ -17873,3 +17992,5 @@ class DriftAtTouchdown(KeyPointValueNode):
     def derive(self, drift=P('Drift'), touchdown=KTI('Touchdown')):
         self.create_kpvs_at_ktis(drift.array, touchdown)
 
+
+       

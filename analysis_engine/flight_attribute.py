@@ -812,13 +812,15 @@ class FlightType(FlightAttributeNode):
                     #self.set_flight_attr('LIFTOFF_ONLY')
                     #return
 
-            if afr_type in {types.FERRY,
+            if afr_type in {types.COMMERCIAL,
+                            types.FERRY,
                             types.LINE_TRAINING,
                             types.POSITIONING,
                             types.TEST,
                             types.TRAINING}:
                 flight_type = afr_type
             else:
+                # TODO: Raise exception if AFR flight type was one of the below?
                 flight_type = types.COMPLETE
         elif rejected_to:
             # Rejected takeoff but no takeoff or landing

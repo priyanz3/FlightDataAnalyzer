@@ -59,6 +59,7 @@ from analysis_engine.derived_parameters import (
     AccelerationLateralSmoothed,
     AccelerationSideways,
     AccelerationVertical,
+    AccelerationNormalOffsetRemoved,
     Aileron,
     AileronLeft,
     AileronRight,
@@ -4163,14 +4164,19 @@ class TestAOA(unittest.TestCase):
         self.assertAlmostEqual(aoa.array[1], 0.257)
 
 class TestAccelerationNormalOffsetRemoved(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
+    
     def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-    @unittest.skip('Test Not Implemented')
+        opts = AccelerationNormalOffsetRemoved.get_operational_combinations()
+        self.assertEqual(opts, [('Acceleration Normal',), ('Acceleration Normal', 'Acceleration Normal Offset')])
+    
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
+        self.acc_norm_offset = KPV([KeyPointValue(index=0, value=1.2, name='Acceleration Normal Offset')])
+        acceleration_normal=P('Acceleration Normal', array=np.ma.array([1]*20 + [1.5]*20 + [1]*10), frequency=1.0)
+        acc = AccelerationNormalOffsetRemoved()
+        acc.derive(acceleration_normal, self.acc_norm_offset)
+        assert_array_equal(acc.array, acceleration_normal.array - self.acc_norm_offset[0].value + 1.0)
+        # could as well be acceleration_normal.array - 0.2
+        
 # Also Accelerations Lateral and Longitudinal are not tested yet.
 
 class TestAileron(unittest.TestCase):
@@ -5383,32 +5389,27 @@ class TestSlopeAngleToLanding(unittest.TestCase):
 
 class TestSpeedbrake(unittest.TestCase):
     def test_can_operate(self):
-        family = A(name='Family', value='B737 Classic')
+        def family(value):
+            return A('Family', value)
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (4)', 'Spoiler (R) (4)'),
-                                               family=family))
-        family = A(name='Family', value='B737 NG')
+                                               family=A('Family', 'B737 Classic')))
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (4)', 'Spoiler (R) (4)'),
-                                               family=family))
-        family = A(name='Family', value='A320')
+                                               family=A('Family', 'B737 NG')))
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (3)', 'Spoiler (R) (3)'),
-                                               family=family))
-        family = A(name='Family', value='B787')
+                                               family=A('Family', 'A320')))
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L) (7)', 'Spoiler (R) (7)'),
-                                               family=family))
-        family = A(name='Family', value='Learjet')
+                                               family=A('Family', 'B787')))
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L)', 'Spoiler (R)'),
-                                               family=family))
-        family = A(name='Family', value='CRJ 900')
+                                               family=A('Family', 'Learjet')))
         self.assertTrue(Speedbrake.can_operate(
             ('Spoiler (L) (3)', 'Spoiler (L) (4)',
-             'Spoiler (R) (3)', 'Spoiler (R) (4)'), family=family))
-        family = A(name='Family', value='Phenom 300')
+             'Spoiler (R) (3)', 'Spoiler (R) (4)'), family=A('Family', 'CRJ 900')))
         self.assertTrue(Speedbrake.can_operate(('Spoiler (L)', 'Spoiler (R)'),
-                                               family=family))
-        family = A(name='Family', value='ERJ-190/195')
+                                               family=A('Family', 'Phenom 300')))
         self.assertTrue(Speedbrake.can_operate(
             ('Spoiler (L) (3)', 'Spoiler (L) (4)', 'Spoiler (L) (5)',
-             'Spoiler (R) (3)', 'Spoiler (R) (4)', 'Spoiler (R) (5)'), family=family))
+             'Spoiler (R) (3)', 'Spoiler (R) (4)', 'Spoiler (R) (5)'),
+            family=A('Family', 'ERJ-190/195')))
         family = A(name='Family', value='CL-600')
         self.assertTrue(Speedbrake.can_operate(
             ('Spoiler (L) (3)', 'Spoiler (L) (4)',
@@ -5417,9 +5418,12 @@ class TestSpeedbrake(unittest.TestCase):
             ('Spoiler (L) (3)', 'Spoiler (R) (3)',), family=family))
         self.assertTrue(Speedbrake.can_operate(
             ('Spoiler (L) (2)', 'Spoiler (R) (2)',), family=family))
-        family = A(name='Family', value='G-VI')
         self.assertTrue(Speedbrake.can_operate(
-            ('Spoiler (L) (1)', 'Spoiler (R) (1)',), family=family))
+            ('Spoiler (L) (1)', 'Spoiler (R) (1)',), family=A('Family', 'G-VI')))
+        self.assertTrue(Speedbrake.can_operate(
+            ('Spoiler (L)', 'Spoiler (R)',), family=A('Family', 'Citation')))
+        self.assertTrue(Speedbrake.can_operate(
+            ('Spoiler (L)', 'Spoiler (R)',), family=A('Family', 'Citation VLJ')))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

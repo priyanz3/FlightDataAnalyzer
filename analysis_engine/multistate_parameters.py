@@ -1086,7 +1086,7 @@ class Flap(MultistateDerivedParameterNode):
         if frame_name == 'L382-Hercules' or family_name == 'C208':
             return 'Altitude AAL' in available
 
-        if family_name in ('Citation', 'Citation VLG'):
+        if family_name == 'Citation VLJ':
             return all_of(('HDF Duration', 'Landing', 'Takeoff'), available)
 
         if not all_of(('Flap Angle', 'Model', 'Series', 'Family'), available):
@@ -1132,7 +1132,7 @@ class Flap(MultistateDerivedParameterNode):
             self.frequency, self.offset = alt_aal.frequency, alt_aal.offset
             return
 
-        if family_name in ('Citation', 'Citation VLG') and duration:
+        if family_name == 'Citation VLJ' and duration:
             self.values_mapping = {0: '0', 15: '15', 30: '30'}
             self.array = np.ma.zeros(duration * self.frequency)
             for toff in toffs:
@@ -1914,7 +1914,8 @@ class GearOnGround(MultistateDerivedParameterNode):
                vert_spd=P('Vertical Speed'),
                torque=P('Eng (*) Torque Avg'),
                ac_type=A('Aircraft Type'),
-               ac_series=A('Series')):
+               ac_series=A('Series'),
+               collective=P('Collective')):
 
         # Note that this is not needed on the following frames which record
         # this parameter directly: 737-4, 737-i
@@ -1946,19 +1947,49 @@ class GearOnGround(MultistateDerivedParameterNode):
             if ac_series and ac_series.value == 'Columbia 234':
                 vert_spd_limit = 125.0
                 torque_limit = 22.0
-            vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
-            # Introducted for S76 and Bell 212 which do not have Gear On Ground available
-            vert_spd_array = moving_average(vert_spd_array)
-            torque_array = moving_average(torque.array)
-            grounded = slices_and(runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1), 
-                                  runs_of_ones(torque_array < torque_limit, min_samples=1))
-            array = np_ma_zeros_like(vert_spd_array)
-            for _slice in slices_remove_small_slices(grounded, count=2):
-                array[_slice] = 1
-            array.mask = vert_spd_array.mask | torque_array.mask
-            self.array = nearest_neighbour_mask_repair(array)
-            self.frequency = torque.frequency
-            self.offset = torque.offset
+                collective_limit = 15.0
+                
+                vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
+                collective_array = align(collective, torque) if collective.hz != torque.hz else collective.array
+                
+                vert_spd_array = moving_average(vert_spd_array)
+                torque_array = moving_average(torque.array)                
+                collective_array = moving_average(collective_array)
+                
+                roo_vs_array = runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1)
+                roo_torque_array = runs_of_ones(torque_array < torque_limit, min_samples=1)
+                roo_collective_array = runs_of_ones(collective_array < collective_limit, min_samples=1)
+                
+                vs_and_torque = slices_and(roo_vs_array, roo_torque_array)
+                grounded = slices_and(vs_and_torque, roo_collective_array)
+                
+                array = np_ma_zeros_like(vert_spd_array)
+                for _slice in slices_remove_small_slices(grounded, count=2):
+                    array[_slice] = 1
+                array.mask = vert_spd_array.mask | torque_array.mask
+                array.mask = array.mask | collective_array.mask
+                self.array = nearest_neighbour_mask_repair(array)
+                self.frequency = torque.frequency
+                self.offset = torque.offset                
+                
+            else:
+                vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
+                # Introducted for S76 and Bell 212 which do not have Gear On Ground available
+                
+                vert_spd_array = moving_average(vert_spd_array)
+                torque_array = moving_average(torque.array)
+                
+                grounded = slices_and(runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1), 
+                                      runs_of_ones(torque_array < torque_limit, min_samples=1))
+                
+                array = np_ma_zeros_like(vert_spd_array)
+                for _slice in slices_remove_small_slices(grounded, count=2):
+                    array[_slice] = 1
+                array.mask = vert_spd_array.mask | torque_array.mask
+                self.array = nearest_neighbour_mask_repair(array)
+                self.frequency = torque.frequency
+                self.offset = torque.offset
+                
         else:
             # should not get here if can_operate is correct
             raise NotImplementedError()
@@ -3091,16 +3122,17 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             # based on data seen for G450, clean handle signal with no armed position.
             self.array = np.ma.where((handle.array >= 1.0) | (spdbrk.array > 25.0),
                                 'Deployed/Cmd Up', 'Stowed')
-        elif family_name in ['G-IV',
+        elif family_name in ('G-IV',
                              'G-V',
                              'G-VI',
                              'Global',
                              'CL-600',
                              'Citation',
+                             'Citation VLJ',
                              'BAE 146',
                              'ERJ-170/175',
                              'ERJ-190/195',
-                             'Phenom 300'] and spdbrk:
+                             'Phenom 300') and spdbrk:
             array = np.ma.zeros(len(spdbrk.array), dtype=np.short)
             if armed:
                 # G550 seen with recorded Speedbrake Armed parameter

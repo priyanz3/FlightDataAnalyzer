@@ -112,7 +112,6 @@ from analysis_engine.settings import (
     AZ_WASHOUT_TC,
     BOUNCED_LANDING_THRESHOLD,
     CLIMB_THRESHOLD,
-    FEET_PER_NM_3_DEG,
     HYSTERESIS_FPROC,
     GRAVITY_IMPERIAL,
     GRAVITY_METRIC,
@@ -188,7 +187,6 @@ class AccelerationNormalOffsetRemoved(DerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-
         return 'Acceleration Normal' in available
 
     def derive(self,
@@ -4337,46 +4335,6 @@ class SlopeAngleToLanding(DerivedParameterNode):
         self.array = np.degrees(np.arctan(slope_to_ldg.array))
 
 
-class SlopeMexico(DerivedParameterNode):
-
-    units = ut.DEGREE
-    align_frequency = 1.0
-    align_offset = 0.0    
-    
-    def derive(self, alt_aal=P('Altitude AAL'), 
-               dist=P('Distance To Landing'), 
-               sat=P('SAT'), 
-               apps=S('Approach And Landing')):
-
-        self.array = np_ma_masked_zeros_like(alt_aal.array)
-        for app in apps:
-            glide_height = dist.array[app.slice] * FEET_PER_NM_3_DEG
-            corr_height = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice],window=121))
-            # This is degrees error from 3 deg which is not the same as ILS  dots
-            self.array[app.slice] = np.degrees(np.arctan((corr_height-glide_height) / 
-                                                         ut.convert(dist.array[app.slice], ut.NM, ut.FT)))
-            self.array[app.slice] /= 0.2959 # Convert to dots
-            
-
-class SlopeMexicoNotCorrected(DerivedParameterNode):
-
-    units = ut.DEGREE
-    align_frequency = 1.0
-    align_offset = 0.0    
-    
-    def derive(self, alt_aal=P('Altitude AAL'), 
-               dist=P('Distance To Landing'), 
-               sat=P('SAT'), 
-               apps=S('Approach And Landing')):
-
-        self.array = np_ma_masked_zeros_like(alt_aal.array)
-        for app in apps:
-            glide_height = ut.convert(dist.array[app.slice], ut.NM, ut.FT)
-            self.array[app.slice] = np.degrees(np.arctan((alt_aal.array[app.slice]-glide_height) / 
-                                                         ut.convert(dist.array[app.slice], ut.NM, ut.FT)))
-            self.array[app.slice] /= 0.2959 # Convert to dots
-            
-
 class SlopeToAimingPoint(DerivedParameterNode):
     '''
 
@@ -4912,8 +4870,7 @@ class CoordinatesSmoothed(object):
                 # speeds to be masked, so we pretend to accelerate smoothly from
                 # standstill.
                 if speed[toff_slice][0] is np.ma.masked:
-                    speed.data[toff_slice][0] = 0.0
-                    speed.mask[toff_slice][0]=False
+                    speed[toff_slice][0] = 0
                     speed[toff_slice] = interpolate(speed[toff_slice])
 
                 # Compute takeoff track from start of runway using integrated
@@ -6030,9 +5987,9 @@ class Rudder(DerivedParameterNode):
                src_C=P('Rudder (Lower)'),
                ):
 
-        sources = [src_A, src_B, src_C]
+        sources = [s for s in (src_A, src_B, src_C) if s is not None]
         self.offset = 0.0
-        self.frequency = src_A.frequency
+        self.frequency = sources[0].frequency
         self.array = blend_parameters(sources, offset=self.offset,
                                       frequency=self.frequency)
 
@@ -6709,7 +6666,7 @@ class Speedbrake(DerivedParameterNode):
                 'Spoiler (L) (7)' in available and
                 'Spoiler (R) (7)' in available
             ) or
-            family_name in ('Learjet', 'Phenom 300', 'Citation') and all_of((
+            family_name in ('Learjet', 'Phenom 300', 'Citation', 'Citation VLJ') and all_of((
                 'Spoiler (L)',
                 'Spoiler (R)'),
                 available
@@ -6797,9 +6754,9 @@ class Speedbrake(DerivedParameterNode):
             self.merge_spoiler(spoiler_l5, spoiler_r5)
         elif family_name == 'B787':
             self.merge_spoiler(spoiler_l7, spoiler_r7)
-        elif family_name in ['Learjet', 'Phenom 300', 'Citation']:
+        elif family_name in ('Learjet', 'Phenom 300', 'Citation', 'Citation VLJ'):
             self.merge_spoiler(spoiler_l, spoiler_r)
-        elif family_name in ['CRJ 900', 'CL-600', 'G-IV']:
+        elif family_name in ('CRJ 900', 'CL-600', 'G-IV'):
             # First blend inboard and outboard, then merge
             spoiler_L = DerivedParameterNode(
                 'Spoiler (L)', *blend_two_parameters(spoiler_l3, spoiler_l4))
@@ -6813,8 +6770,7 @@ class Speedbrake(DerivedParameterNode):
             spoiler_R = DerivedParameterNode(
                 'Spoiler (R)', *blend_two_parameters(spoiler_r3, spoiler_r5))
             self.merge_spoiler(spoiler_L, spoiler_R)
-
-        elif family_name in ['ERJ-170/175', 'ERJ-190/195']:
+        elif family_name in ('ERJ-170/175', 'ERJ-190/195'):
             # First blend inboard, middle and outboard, then merge
             spoiler_L = DerivedParameterNode(
                 'Spoiler (L)',

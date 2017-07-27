@@ -235,9 +235,6 @@ CONTROL_COLUMN_IN_USE_RATIO = 1.30  # %
 # approaches, go-around and touch-and-go phases and instances derive.
 DESCENT_LOW_CLIMB_THRESHOLD = 500 #ft
 
-# This is the ratio of distances for a 3 deg approach
-FEET_PER_NM_3_DEG = 318.435
-
 # Acceleration due to gravity
 GRAVITY_IMPERIAL = 32.2  # ft/sec^2 - used for combining acceleration and height terms
 

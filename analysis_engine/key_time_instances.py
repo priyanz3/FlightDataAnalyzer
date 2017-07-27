@@ -1164,7 +1164,8 @@ class TakeoffAccelerationStart(KeyTimeInstanceNode):
                 p, m, c = coreg(speed.array[takeoff.slice])
                 start_accel = max(takeoff.slice.start - c / m, 0.0)
 
-            if start_accel is not None:
+            # FIXME: coreg can return values larger than the parameter size (segment hash 18c141e479fc2412539b017b9340e67f78c86e6443c3cabd8f9839be0eadfbd5)
+            if start_accel is not None and start_accel <= takeoff.slice.stop:
                 self.create_kti(start_accel)
 
 

@@ -18,6 +18,7 @@ from analysis_engine.node import P
 from analysis_engine.library import (align,
                                      blend_parameters,
                                      calculate_timebase,
+                                     closest_unmasked_value,
                                      hash_array,
                                      min_value,
                                      normalise,
@@ -127,9 +128,21 @@ def _segment_type_and_slice(speed_array, speed_frequency,
         # if any gear params use them
         gog = next(iter([hdf.get(name) for name in ('Gear On Ground', 'Gear (R) On Ground', 'Gear (L) On Ground')]))
         if gog:
-            gog_start = start * gog.frequency
-            gog_stop = stop * gog.frequency
-            temp = np.ma.array(gog.array[gog_start:gog_stop].data, mask=gog.array[gog_start:gog_stop].mask)
+            gog_start_idx = start * gog.frequency
+            gog_stop_idx = stop * gog.frequency
+            gog_samples = 120 * gog.frequency
+            gog_start = closest_unmasked_value(gog.array, gog_start_idx,
+                                               gog_start_idx - gog_samples,
+                                               gog_start_idx + gog_samples)
+            gog_stop = closest_unmasked_value(gog.array, gog_stop_idx,
+                                              gog_stop_idx - gog_samples,
+                                              gog_stop_idx + gog_samples)
+            if gog_start is not None and gog_stop is not None:
+                # Use Gear on Ground rather than rotor speed as rotors may be
+                # 90+% at beginning or end of segment.
+                slow_start = (gog_start.value == 'Ground')
+                slow_stop = (gog_stop.value == 'Ground')
+            temp = np.ma.array(gog.array[gog_start_idx:gog_stop_idx].data, mask=gog.array[gog_start_idx:gog_stop_idx].mask)
             gog_test = np.ma.masked_less(temp, 1.0)
             # We have seeen 12-second spurious gog='Air' signals during rotor rundown. Hence increased limit.
             did_move = slices_remove_small_slices(np.ma.clump_masked(gog_test),
