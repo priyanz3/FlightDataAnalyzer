@@ -464,7 +464,8 @@ class Approach(FlightPhaseNode):
             end = index_at_value(alt_agl.array, 0.0,
                                  _slice=slice(app.stop, next_app.start),
                                  endpoint='first_closing')
-            self.create_phase(slice(begin, end))
+            if begin and end:
+                self.create_phase(slice(begin, end))
 
     def derive(self,
                ac_type=A('Aircraft Type'),
