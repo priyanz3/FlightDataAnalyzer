@@ -1253,7 +1253,7 @@ class InitialApproach(FlightPhaseNode):
             ini_app = np.ma.masked_where(alt_AAL.array[app_land.slice]<1000,
                                          alt_AAL.array[app_land.slice])
             if not len(ini_app):
-                return
+                continue
             phases = np.ma.clump_unmasked(ini_app)
             for phase in phases:
                 begin = phase.start
