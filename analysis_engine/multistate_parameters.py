@@ -2078,7 +2078,7 @@ class Gear_RedWarning(MultistateDerivedParameterNode):
     #store in hdf = False! glimpse into the future ;)
 
     @classmethod
-    def can_operate(self, available):
+    def can_operate(cls, available):
         return 'Airborne' in available and any_of((
             'Gear (L) Red Warning',
             'Gear (N) Red Warning',

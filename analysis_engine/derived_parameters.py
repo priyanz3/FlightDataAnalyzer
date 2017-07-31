@@ -6110,7 +6110,7 @@ class ThrottleLevers(DerivedParameterNode):
     units = ut.DEGREE
 
     @classmethod
-    def can_operate(self, available):
+    def can_operate(cls, available):
         return any_of((
             'Eng (1) Throttle Lever',
             'Eng (2) Throttle Lever',
@@ -6148,7 +6148,7 @@ class ThrustAsymmetry(DerivedParameterNode):
     units = ut.PERCENT
 
     @classmethod
-    def can_operate(self, available):
+    def can_operate(cls, available):
         return all_of(('Eng (*) EPR Max', 'Eng (*) EPR Min'), available) or\
                all_of(('Eng (*) N1 Max', 'Eng (*) N1 Min'), available)
 
