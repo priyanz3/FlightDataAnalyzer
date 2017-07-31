@@ -10959,7 +10959,7 @@ class EngTorque7FtToTouchdownMax(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available, eng_type=A('Engine Propulsion')):
-        turbo_prop = eng_type.value == 'PROP'
+        turbo_prop = eng_type and eng_type.value == 'PROP'
         required_params = all_of(['Eng (*) Torque Max',
                                   'Altitude AAL For Flight Phases',
                                   'Touchdown'], available)
