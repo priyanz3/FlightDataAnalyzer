@@ -201,7 +201,7 @@ class Airborne(FlightPhaseNode):
             # short hops make parameter validation tricky!
             self.create_phases(
                 slices_remove_small_gaps(
-                    slices_remove_small_slices(gear_off_grounds, time_limit=300) ) )
+                    slices_remove_small_slices(gear_off_grounds, time_limit=30) ) )
 
 
     def derive(self,
