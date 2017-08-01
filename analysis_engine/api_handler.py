@@ -189,7 +189,7 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
         :raises: TypeError -- if the provided lat/lon are none/masked.
         :raises: ValueError -- if the provided lat/lon are oustside of valid ranges
         '''
-        if {latitude, longitude} & {np.nan, np.ma.masked, None}:
+        if any(x is None or x is np.ma.masked or np.isnan(x) for x in (latitude, longitude)):
             raise TypeError('Latitude and Longitude must be numeric.')
         if not -90 <= latitude <= 90:
             raise ValueError(u'Latitude must be between -90° and 90°: %s.', latitude)
