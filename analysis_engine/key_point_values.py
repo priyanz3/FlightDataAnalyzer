@@ -17885,7 +17885,7 @@ class SATRateOfChangeMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, sat=P('SAT'), airborne=S('Airborne')):
-        width = 4 if sat.frequency <= 0.25 else None
+        width = None if sat.frequency <= 0.25 else 4
         sat_roc = rate_of_change_array(sat.array, sat.frequency, width=width)
         self.create_kpv_from_slices(sat_roc, airborne, max_value)
 
