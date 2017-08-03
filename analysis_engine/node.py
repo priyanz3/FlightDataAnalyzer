@@ -626,7 +626,7 @@ class DerivedParameterNode(Node):
     lfl = False
 
     def __init__(self, name='', array=np.ma.array([], dtype=float),
-                 frequency=1.0, offset=0.0, data_type=None, *args, **kwargs):
+                 frequency=1.0, offset=0.0, data_type=None, lfl=False, *args, **kwargs):
 
         # Set the array on the derive parameter first. Some subclasses of this
         # class will handle appropriate type conversion of the provided array
@@ -639,6 +639,10 @@ class DerivedParameterNode(Node):
 
         if data_type:
             self.data_type = data_type
+        if lfl:
+            # Where derived parameter is created to represent an LFL parameter, allow
+            # it to declare it came from the LFL.
+            self.lfl = True
 
         super(DerivedParameterNode, self).__init__(
             name=name, frequency=frequency, offset=offset, *args, **kwargs)
@@ -680,6 +684,7 @@ class DerivedParameterNode(Node):
             name=self.name,
             frequency=param.frequency,
             offset=param.offset,
+            lfl=self.lfl,
         )
 
         # Align the array for the temporary parameter:
@@ -978,7 +983,7 @@ def derived_param_from_hdf(hdf_parameter, cache=None):
             frequency=hdf_parameter.frequency, offset=hdf_parameter.offset,
             data_type=hdf_parameter.data_type,
             values_mapping=hdf_parameter.values_mapping,
-            cache=cache,
+            cache=cache, lfl=hdf_parameter.lfl,
         )
         return result
 
@@ -986,7 +991,7 @@ def derived_param_from_hdf(hdf_parameter, cache=None):
         return Parameter(
             name=hdf_parameter.name, array=hdf_parameter.array,
             frequency=hdf_parameter.frequency, offset=hdf_parameter.offset,
-            data_type=hdf_parameter.data_type, cache=cache,
+            data_type=hdf_parameter.data_type, cache=cache, lfl=hdf_parameter.lfl,
         )
 
 

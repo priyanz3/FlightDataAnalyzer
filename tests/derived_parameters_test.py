@@ -4032,35 +4032,37 @@ class TestHeadwind(unittest.TestCase):
     def test_can_operate(self):
         opts = Headwind.get_operational_combinations()
         self.assertEqual(opts, [
-            ('Wind Speed', 'Wind Direction', 'Heading', 'Altitude AAL'),
-            ('Airspeed True', 'Wind Speed', 'Wind Direction', 'Heading', 'Altitude AAL'),
-            ('Wind Speed', 'Wind Direction', 'Heading', 'Altitude AAL', 'Groundspeed'),
-            ('Airspeed True', 'Wind Speed', 'Wind Direction', 'Heading', 'Altitude AAL', 'Groundspeed'),
+            ('Wind Speed', 'Wind Direction', 'Heading True', 'Altitude AAL'),
+            ('Airspeed True', 'Wind Speed', 'Wind Direction', 'Heading True', 'Altitude AAL'),
+            ('Wind Speed', 'Wind Direction', 'Heading True', 'Altitude AAL', 'Groundspeed'),
+            ('Airspeed True', 'Wind Speed', 'Wind Direction', 'Heading True', 'Altitude AAL', 'Groundspeed'),
         ])
 
     def test_real_example(self):
         ws = P('Wind Speed', np.ma.array([84.0]))
-        wd = P('Wind Direction', np.ma.array([300]))
-        head=P('Heading', np.ma.array([329]))
+        wd = P('Wind Direction', np.ma.array([350]))
+        head=P('Heading True', np.ma.array([50]))
         hw = Headwind()
         hw.derive(None, ws, wd, head, None, None)
-        expected = np.ma.array([73.468055399709243])
+        expected = np.ma.array([42])
         self.assertAlmostEqual(hw.array.data, expected.data)
 
     def test_odd_angles(self):
-        ws = P('Wind Speed', np.ma.array([20.0]*8))
-        wd = P('Wind Direction', np.ma.array([0, 90, 180, -180, -90, 360, 23, -23], dtype=float))
-        head=P('Heading', np.ma.array([-180, -90, 0, 180, 270, 360*15, 361*23, 359*23], dtype=float))
+        ws = P('Wind Speed', np.ma.array([20.0]*5))
+        # using only multiplies of 60 as a difference as that ensures we get
+        # nice, round values from cos()
+        wd = P('Wind Direction', np.ma.array([340, 270, 270, 350, 5], dtype=float))
+        head=P('Heading True', np.ma.array([340, 90, 210, 50, 245], dtype=float))        
         hw = Headwind()
         hw.derive(None, ws, wd, head, None, None)
-        expected = np.ma.array([-20]*3+[20]*5)
+        expected = np.ma.array([20, -20, 10, 10, -10])
         ma_test.assert_masked_array_almost_equal (hw.array, expected)
 
     def test_headwind_below_100ft(self):
         # create consistent 20 kt windspeed on the tail
         wspd = P('Wind Speed', np.ma.array([20.0]*40))
         wdir = P('Wind Direction', np.ma.array([180.0]*40))
-        head = P('Heading', np.ma.array([0.0]*40))
+        head = P('Heading True', np.ma.array([0.0]*40))
         # create a 40 kt difference between Airspeed and speed over ground
         gspd = P('Groundspeed', np.ma.array([220.0]*40))
         gspd.array[4] = 200.0
@@ -5717,11 +5719,6 @@ class TestWindDirection(unittest.TestCase):
         self.assertTrue(WindDirection.can_operate(('Wind Direction (2)',)))
         self.assertTrue(WindDirection.can_operate(('Wind Direction (1)',
                                                    'Wind Direction (2)',)))
-        self.assertTrue(WindDirection.can_operate(('Wind Direction True',
-                                                   'Magnetic Variation',)))
-        self.assertTrue(WindDirection.can_operate((
-            'Wind Direction (1)', 'Wind Direction (2)', 'Wind Direction True',
-            'Magnetic Variation')))
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):

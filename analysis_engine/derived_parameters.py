@@ -6189,6 +6189,7 @@ class Turbulence(DerivedParameterNode):
 
 
 class WindDirectionContinuous(DerivedParameterNode):
+    # TODO: Get rid of that parameter
     '''
     Like the aircraft heading, this does not jump as it passes through North.
     '''
@@ -6201,6 +6202,7 @@ class WindDirectionContinuous(DerivedParameterNode):
 
 
 class WindDirectionTrueContinuous(DerivedParameterNode):
+    # TODO: Get rid of that parameter
     '''
     Like the aircraft heading, this does not jump as it passes through North.
     '''
@@ -6226,23 +6228,25 @@ class Headwind(DerivedParameterNode):
     '''
 
     units = ut.KT
-
+    
     @classmethod
     def can_operate(cls, available):
         return all_of((
             'Wind Speed',
             'Wind Direction',
-            'Heading',
+            'Heading True',
             'Altitude AAL',
         ), available)
 
     def derive(self, aspd=P('Airspeed True'),
                windspeed=P('Wind Speed'),
                wind_dir=P('Wind Direction'),
-               head=P('Heading'),
+               head=P('Heading True'),
                alt_aal=P('Altitude AAL'),
                gspd=P('Groundspeed')):
-
+        
+        
+        
         if aspd:
             # mask windspeed data while going slow
             windspeed.array[aspd.array.mask] = np.ma.masked
@@ -7116,6 +7120,7 @@ class WindSpeed(DerivedParameterNode):
 
 
 class WindDirectionTrue(DerivedParameterNode):
+    # TODO: Get rid of that, wind direction is always true
     '''
     Compensates for magnetic variation, which will have been computed
     previously.
@@ -7138,6 +7143,8 @@ class WindDirectionTrue(DerivedParameterNode):
 
 class WindDirection(DerivedParameterNode):
     '''
+    Recorded wind direction is always True.
+    
     Either combines two separate Wind Direction parameters.
     The Embraer 135-145 data frame includes two sources.
     '''
@@ -7148,22 +7155,14 @@ class WindDirection(DerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         return (('Wind Direction (1)' in available or
-                 'Wind Direction (2)' in available) or
-                ('Wind Direction True' in available and
-                 'Magnetic Variation' in available))
+                 'Wind Direction (2)' in available))
 
     def derive(self, wind_1=P('Wind Direction (1)'),
-               wind_2=P('Wind Direction (2)'),
-               wind_true=P('Wind Direction True'),
-               mag_var=P('Magnetic Variation')):
+               wind_2=P('Wind Direction (2)')):
 
         if wind_1 or wind_2:
             self.array, self.frequency, self.offset = \
                 blend_two_parameters(wind_1, wind_2)
-        else:
-            self.frequency = wind_true.frequency
-            self.offset = wind_true.offset
-            self.array = (wind_true.array - align(mag_var, wind_true)) % 360.0
 
 
 class WheelSpeedLeft(DerivedParameterNode):
