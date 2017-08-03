@@ -6231,15 +6231,15 @@ class Headwind(DerivedParameterNode):
     def can_operate(cls, available):
         return all_of((
             'Wind Speed',
-            'Wind Direction Continuous',
-            'Heading True Continuous',
+            'Wind Direction',
+            'Heading',
             'Altitude AAL',
         ), available)
 
     def derive(self, aspd=P('Airspeed True'),
                windspeed=P('Wind Speed'),
-               wind_dir=P('Wind Direction Continuous'),
-               head=P('Heading True Continuous'),
+               wind_dir=P('Wind Direction'),
+               head=P('Heading'),
                alt_aal=P('Altitude AAL'),
                gspd=P('Groundspeed')):
 
