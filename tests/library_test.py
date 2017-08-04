@@ -7419,7 +7419,7 @@ class TestAltDev2Alt(unittest.TestCase):
         alt = np.ma.array([1400.0, 7000, 30000])
         # We just add the temperature offset to the ISA conditions.
         dev = np.ma.array([-65.0,-20.0,-5.0])
-        result = np.ma.array([1400-408, 6490, 31312.0])
+        result = np.ma.array([1084, 6514, 29479])
         ma_test.assert_masked_array_almost_equal(alt_dev2alt(alt, dev), result,
                                                  decimal=0)
 
