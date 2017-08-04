@@ -2534,6 +2534,38 @@ def runway_length(runway):
         raise ValueError("runway_length unable to compute length of runway id='%s'" %runway['id'])
 
 
+def runway_touchdown(runway):
+    '''
+    Distance from runway start to centre of touchdown markings.
+    ref: https://www.icao.int/safety/Implementation/Library/Manual%20Aerodrome%20Stds.pdf
+    page 68, taking lenth to beginning of marking plus half the minimum length of stripe.
+    
+    :param runway: Runway location details dictionary.
+    :type runway: Dictionary
+    
+    :return
+    :param tdn_dist: distance from start of runway to touchdown point
+    :type tdn_dist: float, units = metres.
+    :param aiming_point: aiming point on runways
+    :type aiming_point: dict, with keys 'latitude' and 'longitude' both units = degrees
+    '''
+    length = runway_length(runway)
+    if length < 800:
+        tdn_dist = 165
+    elif length < 1200:
+        tdn_dist = 265
+    elif length < 2400:
+        tdn_dist = 322.5
+    elif length > 2400:
+        tdn_dist = 422.5
+    
+    r = tdn_dist / length
+    
+    lat = (1.0-r) * runway['start']['latitude'] + r * runway['end']['latitude']
+    lon = (1.0-r) * runway['start']['longitude'] + r * runway['end']['longitude']
+    return tdn_dist, {'latitude':lat, 'longitude':lon}
+    
+
 def runway_heading(runway):
     '''
     Computation of the runway heading from endpoints.
@@ -7707,11 +7739,20 @@ P11 = PR11 * P0
 # Added function to correct for non-ISA temperatures. See blog article.
 #---------------------------------------------------------------------------
 
-def alt_sat2alt(alt, sat):
+def alt_dev2alt(alt, dev):
     return np.ma.where(
         alt < H1,
-        (ut.convert(sat, ut.CELSIUS, ut.KELVIN)/-L0)*((T0/(T0+L0*alt))-1),
+        alt * (T0+dev)/T0,
         np.ma.masked)
+
+def from_isa(alt, sat):
+    '''
+    Temperature variation from ISA standard at given altitude and temperature.
+    '''
+    if alt < H1:
+        return sat - (15.0+L0*alt)
+    else:
+        return None
 
 #---------------------------------------------------------------------------
 # Computation modules use AeroCalc structure and are called from the Derived

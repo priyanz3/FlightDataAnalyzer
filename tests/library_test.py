@@ -7407,23 +7407,33 @@ class TestAlt2Sat(unittest.TestCase):
         truth = np.ma.array(data=[15.0, -14.718, -56.5])
         ma_test.assert_masked_array_almost_equal(value, truth)
 
-class TestAltSat2Alt(unittest.TestCase):
+class TestAltDev2Alt(unittest.TestCase):
     
     def test_on_ISA(self):
         alt = np.ma.array([0.0, 3000.0, 30000.0])
-        sat = alt2sat(alt)
+        dev = np.ma.array([0.0, 0.0, 0.0])
         # On ISA conditions, no change in altitude.
-        ma_test.assert_masked_array_almost_equal(alt_sat2alt(alt, sat), alt)
+        ma_test.assert_masked_array_almost_equal(alt_dev2alt(alt, dev), alt)
 
     def test_off_ISA(self):
-        alt = np.ma.array([12000.0, 7000, 30000])
+        alt = np.ma.array([1400.0, 7000, 30000])
         # We just add the temperature offset to the ISA conditions.
-        sat = alt2sat(alt) + np.ma.array([-40.0, -20.0, 10.0])
-        result = np.ma.array([10184, 6490, 31312.0])
-        ma_test.assert_masked_array_almost_equal(alt_sat2alt(alt, sat), result,
+        dev = np.ma.array([-65.0,-20.0,-5.0])
+        result = np.ma.array([1400-408, 6490, 31312.0])
+        ma_test.assert_masked_array_almost_equal(alt_dev2alt(alt, dev), result,
                                                  decimal=0)
 
 
+class TestFromIsa(unittest.TestCase):
+    
+    def test_from_ISA(self):
+        self.assertEqual(from_isa(0.0, 15.0), 0.0)
+        self.assertEqual(from_isa(0.0, 0.0), -15.0)
+        self.assertAlmostEqual(from_isa(5000.0, 0.0), -5.094)
+        self.assertAlmostEqual(from_isa(5000.0, -30), -35.094)
+        self.assertEqual(from_isa(40000.0, 0.0), None)
+                
+        
 class TestLevelOffIndex(unittest.TestCase):
     def test_level_off_index_index_array_too_small(self):
         self.assertEqual(level_off_index(np.ma.arange(5), 1, 10, 1), None)
