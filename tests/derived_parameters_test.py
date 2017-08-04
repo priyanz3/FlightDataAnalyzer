@@ -4379,23 +4379,23 @@ class TestElevator(unittest.TestCase):
 class TestElevatorLeft(unittest.TestCase):
     def test_can_operate(self):
         opts = ElevatorLeft.get_operational_combinations()
-        self.assertEqual(opts, [('Elevator (L) Potentiometer',),
-                                ('Elevator (L) Synchro',),
-                                ('Elevator (L) Potentiometer','Elevator (L) Synchro'),
-                                ])
+        self.assertTrue(('Elevator (L) Synchro',) in opts)
+        self.assertTrue(('Elevator (L) Potentiometer',) in opts)
+        self.assertTrue(('Elevator (L) Inboard',) in opts)
+        self.assertTrue(('Elevator (L) Outboard',) in opts)        
 
     def test_synchro(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
                                                   mask=[0,0,1,0]))
         elevator=ElevatorLeft()
-        elevator.derive(None, syn)
+        elevator.derive(None, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
 
     def test_pot(self):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,0,0]))
         elevator=ElevatorLeft()
-        elevator.derive(pot, None)
+        elevator.derive(pot, None, None, None)
         assert_array_equal(elevator.array, pot.array)
 
     def test_both_prefer_syn(self):
@@ -4404,7 +4404,7 @@ class TestElevatorLeft(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,1,0]))
         elevator=ElevatorLeft()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
 
     def test_both_prefer_pot(self):
@@ -4413,7 +4413,7 @@ class TestElevatorLeft(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,0,1,0]))
         elevator=ElevatorLeft()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, pot.array)
 
     def test_both_equally_good(self):
@@ -4423,29 +4423,43 @@ class TestElevatorLeft(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,0,0,0]))
         elevator=ElevatorLeft()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
+    
+    def test_inboard_and_outboard(self):
+        l_in=P('Elevator (L) Inboard', np.ma.array([1,2,3]))
+        l_out=P('Elevator (L) Outboard', np.ma.array([5,4,3]))
+        elevator=ElevatorLeft()
+        elevator.get_derived([None, None, l_in, l_out])
+        assert_array_equal(elevator.array, l_in.array)
 
+    def test_outboard_only(self):
+        l_in=P('Elevator (L) Inboard', np.ma.array([1,2,3]))
+        l_out=P('Elevator (L) Outboard', np.ma.array([5,4,3]))
+        elevator=ElevatorLeft()
+        elevator.get_derived([None, None, None, l_out])
+        assert_array_equal(elevator.array, l_out.array)
+        
 class TestElevatorRight(unittest.TestCase):
     def test_can_operate(self):
         opts = ElevatorRight.get_operational_combinations()
-        self.assertEqual(opts, [('Elevator (R) Potentiometer',),
-                                ('Elevator (R) Synchro',),
-                                ('Elevator (R) Potentiometer','Elevator (R) Synchro'),
-                                ])
+        self.assertTrue(('Elevator (R) Synchro',) in opts)
+        self.assertTrue(('Elevator (R) Potentiometer',) in opts)
+        self.assertTrue(('Elevator (R) Inboard',) in opts)
+        self.assertTrue(('Elevator (R) Outboard',) in opts)  
 
     def test_synchro(self):
         syn=P('Elevator (L) Synchro', np.ma.array(data=[1,2,3,4],
                                                   mask=[0,0,1,0]))
         elevator=ElevatorRight()
-        elevator.derive(None, syn)
+        elevator.derive(None, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
 
     def test_pot(self):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,0,0]))
         elevator=ElevatorRight()
-        elevator.derive(pot, None)
+        elevator.derive(pot, None, None, None)
         assert_array_equal(elevator.array, pot.array)
 
     def test_both_prefer_syn(self):
@@ -4454,7 +4468,7 @@ class TestElevatorRight(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,1,1,0]))
         elevator=ElevatorRight()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
 
     def test_both_prefer_pot(self):
@@ -4463,7 +4477,7 @@ class TestElevatorRight(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,0,1,0]))
         elevator=ElevatorRight()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, pot.array)
 
     def test_both_equally_good(self):
@@ -4473,10 +4487,24 @@ class TestElevatorRight(unittest.TestCase):
         pot=P('Elevator (L) Potentiometer', np.ma.array(data=[5,6,7,8],
                                                   mask=[0,0,0,0]))
         elevator=ElevatorRight()
-        elevator.derive(pot, syn)
+        elevator.derive(pot, syn, None, None)
         assert_array_equal(elevator.array, syn.array)
 
+    def test_inboard_and_outboard(self):
+        r_in=P('Elevator (R) Inboard', np.ma.array([1,2,3]))
+        r_out=P('Elevator (R) Outboard', np.ma.array([5,4,3]))
+        elevator=ElevatorRight()
+        elevator.get_derived([None, None, r_in, r_out])
+        assert_array_equal(elevator.array, r_in.array)
 
+    def test_outboard_only(self):
+        r_in=P('Elevator (R) Inboard', np.ma.array([1,2,3]))
+        r_out=P('Elevator (R) Outboard', np.ma.array([5,4,3]))
+        elevator=ElevatorRight()
+        elevator.get_derived([None, None, None, r_out])
+        assert_array_equal(elevator.array, r_out.array)
+        
+        
 class TestEng_FuelFlow(unittest.TestCase):
     def test_can_operate(self):
         for n in range(1, 5):

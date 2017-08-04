@@ -6555,6 +6555,8 @@ class ElevatorLeft(DerivedParameterNode):
     replace potentiometers with synchros. The data validity tests will mark
     whole parameters invalid, or if both are valid, we want to pick the best
     option.
+    
+    Extended to cater for aircraft with split elevators instrumented separately.
     '''
 
     name = 'Elevator (L)'
@@ -6563,10 +6565,14 @@ class ElevatorLeft(DerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         return any_of(('Elevator (L) Potentiometer',
-                       'Elevator (L) Synchro'), available)
+                       'Elevator (L) Synchro',
+                       'Elevator (L) Inboard',
+                       'Elevator (L) Outboard'), available)        
 
     def derive(self, pot=P('Elevator (L) Potentiometer'),
-               synchro=P('Elevator (L) Synchro')):
+               synchro=P('Elevator (L) Synchro'),
+               inboard=P('Elevator (L) Inboard'),
+               outboard=P('Elevator (L) Outboard')):
 
         synchro_samples = 0
 
@@ -6578,6 +6584,12 @@ class ElevatorLeft(DerivedParameterNode):
             pot_samples = np.ma.count(pot.array)
             if pot_samples>synchro_samples:
                 self.array = pot.array
+                
+        # If Inboard available, use this in preference
+        if inboard:
+            self.array = inboard.array
+        elif outboard:
+            self.array = outboard.array
 
 
 class ElevatorRight(DerivedParameterNode):
@@ -6590,10 +6602,15 @@ class ElevatorRight(DerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         return any_of(('Elevator (R) Potentiometer',
-                       'Elevator (R) Synchro'), available)
+                       'Elevator (R) Synchro',
+                       'Elevator (R) Inboard',
+                       'Elevator (R) Outboard'), available)
 
     def derive(self, pot=P('Elevator (R) Potentiometer'),
-               synchro=P('Elevator (R) Synchro')):
+               synchro=P('Elevator (R) Synchro'),
+               inboard=P('Elevator (R) Inboard'),
+               outboard=P('Elevator (R) Outboard')):
+        
         synchro_samples = 0
         if synchro:
             synchro_samples = np.ma.count(synchro.array)
@@ -6602,7 +6619,12 @@ class ElevatorRight(DerivedParameterNode):
             pot_samples = np.ma.count(pot.array)
             if pot_samples>synchro_samples:
                 self.array = pot.array
-
+            
+        # If Inboard available, use this in preference
+        if inboard:
+            self.array = inboard.array
+        elif outboard:
+            self.array = outboard.array
 
 ##############################################################################
 # Speedbrake
