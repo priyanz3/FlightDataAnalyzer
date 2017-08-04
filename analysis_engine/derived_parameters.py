@@ -24,9 +24,9 @@ from analysis_engine.library import (air_track,
                                      align,
                                      all_of,
                                      any_of,
-                                     alt_sat2alt,
                                      alt2press,
                                      alt2sat,
+                                     alt_dev2alt,
                                      bearing_and_distance,
                                      bearings_and_distances,
                                      blend_parameters,
@@ -41,6 +41,7 @@ from analysis_engine.library import (air_track,
                                      first_valid_sample,
                                      first_order_lag,
                                      first_order_washout,
+                                     from_isa,
                                      ground_track,
                                      ground_track_precise,
                                      groundspeed_from_position,
@@ -4319,7 +4320,10 @@ class SlopeToLanding(DerivedParameterNode):
 
         self.array = np_ma_masked_zeros_like(alt_aal.array)
         for app in apps:
-            alt = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice], window=121))
+            # What's the temperature deviation from ISA at landing?
+            dev = from_isa(alt_aal.array[app.slice][-1], sat.array[app.slice][-1])
+            # now correct the altitude for temperature deviation.
+            alt = alt_dev2alt(alt_aal.array[app.slice], dev)            
             self.array[app.slice] = alt / ut.convert(dist.array[app.slice], ut.NM, ut.FT)
 
 
