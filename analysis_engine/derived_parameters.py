@@ -24,6 +24,7 @@ from analysis_engine.library import (air_track,
                                      align,
                                      all_of,
                                      any_of,
+                                     alt_sat2alt,
                                      alt2press,
                                      alt2sat,
                                      bearing_and_distance,
@@ -4318,7 +4319,7 @@ class SlopeToLanding(DerivedParameterNode):
 
         self.array = np_ma_masked_zeros_like(alt_aal.array)
         for app in apps:
-            alt = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice], window=121))            
+            alt = alt_sat2alt(alt_aal.array[app.slice], moving_average(sat.array[app.slice], window=121))
             self.array[app.slice] = alt / ut.convert(dist.array[app.slice], ut.NM, ut.FT)
 
 
