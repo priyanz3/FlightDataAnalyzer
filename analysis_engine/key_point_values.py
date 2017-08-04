@@ -10959,7 +10959,7 @@ class EngTorque7FtToTouchdownMax(KeyPointValueNode):
 
     @classmethod
     def can_operate(cls, available, eng_type=A('Engine Propulsion')):
-        turbo_prop = eng_type.value == 'PROP'
+        turbo_prop = eng_type and eng_type.value == 'PROP'
         required_params = all_of(['Eng (*) Torque Max',
                                   'Altitude AAL For Flight Phases',
                                   'Touchdown'], available)
@@ -17885,8 +17885,8 @@ class SATRateOfChangeMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self, sat=P('SAT'), airborne=S('Airborne')):
-
-        sat_roc = rate_of_change_array(sat.array, sat.frequency, width=4)
+        width = None if sat.frequency <= 0.25 else 4
+        sat_roc = rate_of_change_array(sat.array, sat.frequency, width=width)
         self.create_kpv_from_slices(sat_roc, airborne, max_value)
 
 

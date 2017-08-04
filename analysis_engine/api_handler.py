@@ -189,21 +189,19 @@ class HTTPHandler(MethodInterface, api.HTTPHandler):
         :raises: TypeError -- if the provided lat/lon are none/masked.
         :raises: ValueError -- if the provided lat/lon are oustside of valid ranges
         '''
-        invalid_values = (np.nan, np.ma.masked, None)
-        if latitude in invalid_values or longitude in invalid_values:
-            raise TypeError(u"Latitude and Longitude must be numeric")
+        if any(x is None or x is np.ma.masked or np.isnan(x) for x in (latitude, longitude)):
+            raise TypeError('Latitude and Longitude must be numeric.')
         if not -90 <= latitude <= 90:
-            raise ValueError(u"Latitude must be between -90° and 90°: \'%s\'.", latitude)
+            raise ValueError(u'Latitude must be between -90° and 90°: %s.', latitude)
         if not -180 <= longitude <= 180:
-            raise ValueError(u"Longitude must be between -180° and 180°: \'%s\'.", longitude)
+            raise ValueError(u'Longitude must be between -180° and 180°: %s.', longitude)
         url = '%(base_url)s/api/airport/nearest/' % {
             'base_url': settings.API_HTTP_BASE_URL.rstrip('/'),
         }
         # Note: Only need three decimal places as sufficiently accurate.
         #       Also more opportunity for caching similar responses.
         #       See https://gis.stackexchange.com/a/8674 for details.
-        params = {'ll': '%.3f,%.3f' % (latitude, longitude),
-                  'all': True}
+        params = {'ll': '%.3f,%.3f' % (latitude, longitude), 'all': 1}
         return self.request(url, params=params)
 
 

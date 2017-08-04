@@ -201,7 +201,7 @@ class Airborne(FlightPhaseNode):
             # short hops make parameter validation tricky!
             self.create_phases(
                 slices_remove_small_gaps(
-                    slices_remove_small_slices(gear_off_grounds, time_limit=300) ) )
+                    slices_remove_small_slices(gear_off_grounds, time_limit=30) ) )
 
 
     def derive(self,
@@ -1253,7 +1253,7 @@ class InitialApproach(FlightPhaseNode):
             ini_app = np.ma.masked_where(alt_AAL.array[app_land.slice]<1000,
                                          alt_AAL.array[app_land.slice])
             if not len(ini_app):
-                return
+                continue
             phases = np.ma.clump_unmasked(ini_app)
             for phase in phases:
                 begin = phase.start

@@ -429,6 +429,8 @@ def process_order(gr_all, node_mgr, raise_inoperable_requested=False):
     return gr_all, gr_st, process_order[:-1] # exclude 'root'
 
 
+
+
 def remove_floating_nodes(graph):
     """
     Remove all nodes which aren't referenced within the dependency tree
