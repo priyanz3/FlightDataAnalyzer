@@ -15968,7 +15968,7 @@ class MasterWarningDuration(KeyPointValueNode):
                family=A('Family'),
                airborne=S('Airborne')):
         
-        if family and family.value is 'AW139':
+        if family and family.value in 'AW139':
             self.create_kpvs_where(warning.array == 'Warning', warning.hz, phase=airborne)
         
         elif any_engine:
