@@ -5357,13 +5357,15 @@ def peak_curvature(array, _slice=slice(None), curve_sense='Concave',
                 if val == 0:
                     # No curve
                     continue
-            # Add 1 to move into middle of 3 element curve and add slice positions back on
-            index = curve_index + 1 + valid_slice.start + (_slice.start or 0)
-            if _slice.step is not None and _slice.step < 0:
+            if _slice.step and _slice.step < 0 and (_slice.start and _slice.stop):
                 # stepping backwards through data, change index
-                return len(array) - index
+                return _slice.stop - curve_index - valid_slice.stop + 1
+            elif _slice.step and _slice.step < 0:
+                # stepping backwards without slices
+                return len(array) - (curve_index + 1 + valid_slice.start + (_slice.start or 0))
             else:
-                return index
+                # step == 0 or 1, return index + 1 to get to the middle of the curve
+                return curve_index + 1 + valid_slice.start + (_slice.start or 0)
         #endif
     else:  #endfor
         # did not find curve in valid data
