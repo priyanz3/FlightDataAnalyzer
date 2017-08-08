@@ -9309,17 +9309,20 @@ class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unit
 # Engine N1
 
 
-class TestEngN1DuringTaxiMax(unittest.TestCase, CreateKPVFromSlicesTest):
+class TestEngN1DuringTaxiMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngN1DuringTaxiMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Taxiing')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
+        taxi = buildsections('Taxiing', (10, 130), (160, 200))
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
+        node = EngN1DuringTaxiMax()
+        node.get_derived((eng_n1, taxi))
+        self.assertEqual(node[0].value, 55)
+        
 class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
 
     def setUp(self):
@@ -9332,16 +9335,19 @@ class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestEngN1DuringTaxiOutMax(unittest.TestCase, CreateKPVFromSlicesTest):
+class TestEngN1DuringTaxiOutMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngN1DuringTaxiOutMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Taxi Out')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        taxi = buildsection('Taxi Out', 10, 130)
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10))
+        node = EngN1DuringTaxiMax()
+        node.get_derived((eng_n1, taxi))
+        self.assertEqual(node[0].value, 55)
 
 
 class TestEngN1DuringApproachMax(unittest.TestCase, CreateKPVFromSlicesTest):
