@@ -6440,7 +6440,8 @@ class Aileron(DerivedParameterNode):
             # on both signals is maintained as positive control, where as
             # any flaperon action (left positive, right negative) will
             # average out as no roll control.
-            faster, slower = sorted((al, ar), key=attrgetter('frequency'))
+            faster, slower = sorted((al, ar), key=attrgetter('frequency'),
+                                    reverse=True)
             self.frequency = faster.frequency * 2
             self.offset = faster.offset
             self.array = (align(faster, self) + align(slower, self)) / 2
