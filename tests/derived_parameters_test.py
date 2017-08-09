@@ -4196,10 +4196,11 @@ class TestAileron(unittest.TestCase):
         right = P('Aileron (R)', np.ma.array([2.0]*2+[1.0]*2), frequency=0.5, offset=1.1)
         aileron = Aileron()
         aileron.get_derived([left, right])
-        expected_data = np.ma.array([0.0, 1.5, 1.75, 1.5])
+        expected_data = np.ma.array([0, 1.5, 1.5, 1.75, 1.75, 1.5, 0, 0])
         expected_data[0] = np.ma.masked
+        expected_data[-2:] = np.ma.masked
         assert_array_equal(aileron.array, expected_data)
-        self.assertEqual(aileron.frequency, 0.5)
+        self.assertEqual(aileron.frequency, 1)
         self.assertEqual(aileron.offset, 0.1)
 
     def test_left_only(self):
@@ -4226,10 +4227,10 @@ class TestAileron(unittest.TestCase):
         ail = Aileron()
         ail.derive(al, ar)
         # this section is averaging 4.833 degrees on the way in
-        self.assertAlmostEqual(np.ma.average(ail.array[160:600]), 0.04, 1)
+        self.assertAlmostEqual(np.ma.average(ail.array[160:600]), -0.04, 1)
         # this section is averaging 9.106 degrees, ensure it gets moved to 0
         #self.assertAlmostEqual(np.ma.average(ail.array[800:1000]), 0.2, 1)
-        assert_array_within_tolerance(ail.array[800:1000], 0, 4, 90)
+        assert_array_within_tolerance(ail.array[800:1000], 0, 4, 80)
 
 
 class TestAileronLeft(unittest.TestCase):

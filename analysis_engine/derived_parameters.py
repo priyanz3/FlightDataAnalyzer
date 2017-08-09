@@ -9,6 +9,7 @@ import six
 from copy import deepcopy
 from datetime import date
 from math import radians
+from operator import attrgetter
 from scipy import interp
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.signal import medfilt
@@ -6426,7 +6427,7 @@ class Aileron(DerivedParameterNode):
     Note: This is NOT a multistate parameter - see Flaperon.
     '''
 
-    align = True
+    align = False
     units = ut.DEGREE
 
     @classmethod
@@ -6439,10 +6440,15 @@ class Aileron(DerivedParameterNode):
             # on both signals is maintained as positive control, where as
             # any flaperon action (left positive, right negative) will
             # average out as no roll control.
-            self.array = (al.array + ar.array) / 2
+            faster, slower = sorted((al, ar), key=attrgetter('frequency'))
+            self.frequency = faster.frequency * 2
+            self.offset = faster.offset
+            self.array = (align(faster, self) + align(slower, self)) / 2
         else:
             ail = al or ar
             self.array = ail.array
+            self.frequency = ail.frequency
+            self.offset = ail.offset
 
 
 class AileronLeft(DerivedParameterNode):
