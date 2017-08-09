@@ -5867,12 +5867,15 @@ class ControlWheelForceMax(KeyPointValueNode):
 Compute the total travel of each control during the interval between first engine
 start and takeoff start of acceleration, as % of full travel for that control.
 """
-def PreflightCheck(self, firsts, accels, disp, full_disp):
+def PreflightCheck(self, firsts, accels, disp, full_disp, absolute=False):
     for first in firsts:
         acc=accels.get_next(first.index)
         travel = np.ma.ptp(disp.array[first.index:acc.index])
         # Mark the point where this control displacement was greatest.
-        index = np.ma.argmax(disp.array[first.index:acc.index])+first.index
+        disp_array = disp.array[first.index:acc.index]
+        if absolute:
+            disp_array = np.ma.abs(disp_array)
+        index = np.ma.argmax(disp_array) + first.index
         self.create_kpv(index, (travel/full_disp)*100.0)
 
 
@@ -5918,7 +5921,9 @@ class AileronPreflightCheck(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
 
-        if not all_of(('Aileron', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family'), available):
+        if not (any_of(('Aileron', 'Aileron (L)', 'Aileron (R)'), available) and
+                all_of(('First Eng Start Before Liftoff', 'Takeoff Acceleration Start',
+                        'Model', 'Series', 'Family'), available)):
             return False
 
         try:
@@ -5930,15 +5935,21 @@ class AileronPreflightCheck(KeyPointValueNode):
 
         return True
 
-    def derive(self, disp=P('Aileron'),
+    def derive(self, ail=P('Aileron'),
+               ail_l=P('Aileron (L)'),
+               ail_r=P('Aileron (R)'),
                firsts=KTI('First Eng Start Before Liftoff'),
                accels=KTI('Takeoff Acceleration Start'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
+        if ail_l or ail_r:
+            disp = max((a for a in (ail_l, ail_r) if a), key=lambda a: a.array.ptp())
+        else:
+            disp = ail
         disp_range = at.get_aileron_range(model.value, series.value, family.value)
         full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
 
-        PreflightCheck(self, firsts, accels, disp, full_disp)
+        PreflightCheck(self, firsts, accels, disp, full_disp, absolute=True)
 
 
 class RudderPreflightCheck(KeyPointValueNode):

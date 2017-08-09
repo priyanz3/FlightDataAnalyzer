@@ -1,4 +1,5 @@
 
+import itertools
 import os
 import numpy as np
 import sys
@@ -19277,9 +19278,15 @@ class TestAileronPreflightCheck(unittest.TestCase):
 
     @patch('analysis_engine.key_point_values.at')
     def test_can_operate(self, at):
-        at.get_aileron_range.side_effect = [self.return_value, KeyError('No Aileron range for model')]
-        self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
-                         [('Aileron', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family')])
+        at.get_aileron_range.return_value = self.return_value
+        required_deps = ['First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family']
+        ops = self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family)
+        self.assertIn(tuple(['Aileron'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (L)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (L)', 'Aileron (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron', 'Aileron (L)', 'Aileron (R)'] + required_deps), ops)
+        at.get_aileron_range.side_effect = KeyError('No Aileron range for model')
         self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
                          [])
 
@@ -19299,12 +19306,16 @@ class TestAileronPreflightCheck(unittest.TestCase):
         # Assume that lookup tables are found correctly...
         at.get_aileron_range.return_value = self.return_value
 
-        node = self.node_class()
-        node.derive(aileron, firsts, accels, self.model, self.series, self.family)
-
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 318)
-        self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
+        
+        for args in itertools.product(*[(None, aileron)] * 3):
+            if not any(args):
+                continue
+            node = self.node_class()
+            node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
+    
+            self.assertEqual(len(node), 1)
+            self.assertEqual(node[0].index, 318)
+            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
 class TestElevatorPreflightCheck(unittest.TestCase):
