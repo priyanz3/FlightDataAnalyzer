@@ -1350,12 +1350,12 @@ class TestIncludingTransition(unittest.TestCase):
     def test_including_transition_14(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_14.npz'))
         flap_inc = including_transition(array, self.flap_map_2)
-        self.assertEqual(flap_inc.tolist(), [0] * 12 + [1] * 21 + [5] * 28)
+        self.assertEqual(flap_inc.tolist(), [0] * 12 + [1] * 22 + [5] * 27)
 
     def test_including_transition_15(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_15.npz'))
         flap_inc = including_transition(array, self.flap_map_2)
-        self.assertEqual(flap_inc.tolist(), [5] * 32 + [1] * 29 + [0] * 11)
+        self.assertEqual(flap_inc.tolist(), [5] * 32 + [1] * 26 + [0] * 14)
 
     def test_including_transition_16(self):
         array = load_compressed(os.path.join(test_data_path, 'calculate_flap_16.npz'))
