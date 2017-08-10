@@ -1,8 +1,13 @@
 from analysis_engine.library import (
     any_deps,
-    vstack_params_where_state,
+    any_of,
+    first_valid_parameter,
+    nearest_neighbour_mask_repair,
+    np_ma_masked_zeros_like,
+    repair_mask,
     runs_of_ones,
     slices_remove_small_gaps,
+    vstack_params_where_state,
 )
 
 from analysis_engine.node import (
@@ -137,3 +142,53 @@ class GearUpInTransit(MultistateDerivedParameterNode):
         combine_params = [(x, 'Retracting') for x in (gear_L, gear_R, gear_N, gear_C) if x]
         if len(combine_params):
             self.array = vstack_params_where_state(*combine_params).any(axis=0)
+
+
+class GearPosition(MultistateDerivedParameterNode):
+
+    align = False
+    values_mapping = {
+        0: '-',
+        1: 'Up',
+        2: 'In Transit',
+        3: 'Down',
+    }
+
+
+    @classmethod
+    def can_operate(cls, available):
+        # Can operate with a any combination of parameters available
+        merge_position = any_of(('Gear (L) Position', 'Gear (N) Position',
+                                 'Gear (R) Position', 'Gear (C) Position'),
+                                available)
+        return merge_position
+
+    def derive(self,
+               gl=M('Gear (L) Position'),
+               gn=M('Gear (N) Position'),
+               gr=M('Gear (R) Position'),
+               gc=M('Gear (C) Position')):
+        up_state = vstack_params_where_state(
+            (gl, 'Up'),
+            (gn, 'Up'),
+            (gr, 'Up'),
+            (gc, 'Up'),
+        ).all(axis=0)
+        down_state = vstack_params_where_state(
+            (gl, 'Down'),
+            (gn, 'Down'),
+            (gr, 'Down'),
+            (gc, 'Down'),
+        ).all(axis=0)
+        transit_state = vstack_params_where_state(
+            (gl, 'In Transit'),
+            (gn, 'In Transit'),
+            (gr, 'In Transit'),
+            (gc, 'In Transit'),
+        ).any(axis=0)
+        param = first_valid_parameter(gl, gn, gr, gc)
+        self.array = np_ma_masked_zeros_like(param.array)
+        self.array[repair_mask(up_state, repair_duration=None)] = 'Up'
+        self.array[repair_mask(down_state, repair_duration=None)] = 'Down'
+        self.array[repair_mask(transit_state, repair_duration=None)] = 'In Transit'
+        self.array = nearest_neighbour_mask_repair(self.array)
