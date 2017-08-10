@@ -7081,12 +7081,12 @@ class TestTrackVariation100To50Ft(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Track Continuous', 'Altitude AGL')])
+        self.assertEqual(opts, [('Track', 'Altitude AGL')])
 
     def test_derive(self):
         x = np.linspace(0, 10, 50)
         track = P(
-            name='Track Continuous',
+            name='Track',
             array=-x*np.sin(x),
         )
         array = np.ma.arange(0, 250, 10)

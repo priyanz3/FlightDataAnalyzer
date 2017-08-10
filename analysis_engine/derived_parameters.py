@@ -7338,19 +7338,6 @@ class WheelSpeed(DerivedParameterNode):
             blend_two_parameters(ws_l, ws_r)
 
 
-class TrackContinuous(DerivedParameterNode):
-    '''
-    Magnetic Track Heading Continuous of the Aircraft by adding Drift from track
-    to the aircraft Heading.
-    '''
-
-    units = ut.DEGREE
-
-    def derive(self, heading=P('Heading Continuous'), drift=P('Drift')):
-        #Note: drift is to the right of heading, so: Track = Heading + Drift
-        self.array = heading.array + drift.array
-
-
 class Track(DerivedParameterNode):
     '''
     Magnetic Track Heading of the Aircraft by adding Drift from track to the
@@ -7361,46 +7348,23 @@ class Track(DerivedParameterNode):
 
     units = ut.DEGREE
 
-    def derive(self, track=P('Track Continuous')):
-        self.array = track.array % 360
-
-
-class TrackTrueContinuous(DerivedParameterNode):
-    '''
-    True Track Heading Continuous of the Aircraft by adding Drift from track to
-    the aircraft Heading.
-    '''
-
-    units = ut.DEGREE
-
-    @classmethod
-    def can_operate(cls, available):
-        return any_of(('Track True', 'Heading True Continuous'), available)
-
-    def derive(self, track=P('Track True'), heading=P('Heading True Continuous'), drift=P('Drift')):
-        if track:
-            self.array = track.array % 360
-        else:
-            #Note: drift is to the right of heading, so: Track = Heading + Drift
-            self.array = heading.array
-            if drift:
-                self.array += drift.array
-            else:
-                self.info('Drift is unavailable in Track True Continuous')
+    def derive(self, heading=P('Heading'), drift=P('Drift')):
+        self.array = (heading.array + drift.array) % 360.0
 
 
 class TrackTrue(DerivedParameterNode):
     '''
     True Track Heading of the Aircraft by adding Drift from track to the
-    aircraft Heading.
+    aircraft's True Heading.
 
     Range 0 to 360
     '''
 
     units = ut.DEGREE
 
-    def derive(self, track_true=P('Track True Continuous')):
-        self.array = track_true.array % 360
+    def derive(self, heading=P('Heading True'), drift=P('Drift')):
+        #Note: drift is to the right of heading, so: Track = Heading + Drift
+        self.array = (heading.array + drift.array) % 360.0
 
 
 class TrackDeviationFromRunway(DerivedParameterNode):
@@ -7408,10 +7372,10 @@ class TrackDeviationFromRunway(DerivedParameterNode):
     Difference from the aircraft's Track angle and that of the Runway
     centreline. Measured during Takeoff and Approach phases.
 
-    Based on Track True angle in order to avoid complications with magnetic
-    deviation values recorded at airports. The deviation from runway centre
-    line would be the same whether the calculation is based on Magnetic or
-    True measurements.
+    Based on Track True angle in preference to Track (magnetic) angle in
+    order to avoid complications with magnetic deviation values recorded at
+    airports. The deviation from runway centre line would be the same whether
+    the calculation is based on Magnetic or True measurements.
     '''
 
     # force offset for approach slice start consistency
@@ -7422,7 +7386,7 @@ class TrackDeviationFromRunway(DerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         return any_of(('Approach Information', 'FDR Takeoff Runway'), available) \
-               and any_of(('Track Continuous', 'Track True Continuous'), available)
+               and any_of(('Track', 'Track True'), available)
 
     def _track_deviation(self, array, _slice, rwy, magnetic=False):
         if magnetic:
@@ -7433,8 +7397,9 @@ class TrackDeviationFromRunway(DerivedParameterNode):
                      array[_slice], heading=rwy['magnetic_heading'])
                 return
             except KeyError:
-                # If magnetic heading is not know for runway fallback to
+                # If magnetic heading is not known for runway fallback to
                 # true heading
+                self.warning('Runway magnetic heading not available; using True heading. Note: not accounting for magnetic variation!')
                 pass
         try:
             self.array[_slice] = runway_deviation(array[_slice], runway=rwy)
@@ -7442,8 +7407,8 @@ class TrackDeviationFromRunway(DerivedParameterNode):
             # could not determine runway information
             return
 
-    def derive(self, track_true=P('Track True Continuous'),
-               track_mag=P('Track Continuous'),
+    def derive(self, track_true=P('Track True'),
+               track_mag=P('Track'),
                takeoff=S('Takeoff Roll Or Rejected Takeoff'),
                to_rwy=A('FDR Takeoff Runway'),
                apps=App('Approach Information')):

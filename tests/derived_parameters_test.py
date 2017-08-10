@@ -207,10 +207,8 @@ from analysis_engine.derived_parameters import (
     ThrustAsymmetry,
     TorqueAsymmetry,
     Track,
-    TrackContinuous,
     TrackDeviationFromRunway,
     TrackTrue,
-    TrackTrueContinuous,
     Turbulence,
     VMOLookup,
     Vapp,
@@ -3484,28 +3482,16 @@ class TestTrack(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = Track
-        self.operational_combinations = [('Track Continuous',)]
+        self.operational_combinations = [('Heading', 'Drift')]
 
     def test_derive_basic(self):
-        track = Parameter('Track Continuous', array=np.ma.arange(0, 1000, 100))
-        node = self.node_class()
-        node.derive(track)
-        expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
-        assert_equal(node.array, expected)
-
-
-class TestTrackContinuous(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = TrackContinuous
-        self.operational_combinations = [('Heading Continuous', 'Drift')]
-
-    def test_derive_basic(self):
-        heading = Parameter('Heading Continuous', array=np.ma.arange(0, 100, 10))
-        drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
+        heading = P('Heading',
+                    array=np.ma.array([14.1, 29.2, 59.3, 119.4, 239.5, 359.6, 449.7, 539.8, 629.9, 720.0]))
+        drift = P('Drift',
+                  array=np.ma.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]))
         node = self.node_class()
         node.derive(heading, drift)
-        expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
+        expected = [15.0, 30.0, 60.0, 120.0, 240.0, 0.0, 90.0, 180.0, 270.0, 0.0]
         assert_equal(node.array, expected)
 
 
@@ -3513,78 +3499,63 @@ class TestTrackTrue(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = TrackTrue
-        self.operational_combinations = [('Track True Continuous',)]
+        self.operational_combinations = [('Heading True', 'Drift')]
 
     def test_derive_basic(self):
-        track = Parameter('Track True Continuous', array=np.ma.arange(0, 1000, 100))
+        heading = P('Heading True',
+                    array=np.ma.array([14.1, 29.2, 59.3, 119.4, 239.5, 359.6, 449.7, 539.8, 629.9, 720.0]))
+        drift = P('Drift',
+                      array=np.ma.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]))        
         node = self.node_class()
-        node.derive(track)
-        expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
+        node.derive(heading, drift)
+        expected = [15.0, 30.0, 60.0, 120.0, 240.0, 0.0, 90.0, 180.0, 270.0, 0.0]
         assert_equal(node.array, expected)
 
-
-class TestTrackTrueContinuous(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = TrackTrueContinuous
-        self.operational_combinations = [
-            ('Track True',),
-            ('Heading True Continuous',),
-            ('Heading True Continuous', 'Drift'),
-            ('Track True', 'Heading True Continuous', 'Drift'),
-        ]
-
-    def test_derive_basic(self):
-        track = Parameter('Track True', array=np.ma.arange(0, 500, 50, dtype=np.float64))
-        heading = Parameter('Heading True Continuous', array=np.ma.arange(0, 100, 10, dtype=np.float64))
-        drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
-        node = self.node_class()
-        expected = [0, 50, 100, 150, 200, 250, 300, 350, 40, 90]
-        node.derive(track, None, None)
-        assert_equal(node.array, expected)
-        node.derive(track, heading, None)
-        assert_equal(node.array, expected)
-        node.derive(track, heading, drift)
-        assert_equal(node.array, expected)
-        node.derive(None, heading, None)
-        expected = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-        assert_equal(node.array, expected)
-        node.derive(None, heading, drift)
-        expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
-        assert_equal(node.array, expected)
+    #def test_derive_basic(self):
+        #heading = Parameter('Heading True', array=np.ma.arange(0, 100, 10, dtype=np.float64))
+        #drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
+        #node = self.node_class()
+        #node.derive(heading, None)
+        #expected = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+        #assert_equal(node.array, expected)
+        #node.derive(heading, drift)
+        #expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
+        #assert_equal(node.array, expected)
 
     def test_derive_heading_extra(self):
         # Compare IRU Track Angle True (recorded) against the derived:
         heading = load(os.path.join(test_data_path, 'HeadingTrack_Heading_True.nod'))
         drift = load(os.path.join(test_data_path, 'HeadingTrack_Drift.nod'))
         node = self.node_class()
-        node.derive(None, heading, drift)
+        node.derive(heading, drift)
         expected = load(os.path.join(test_data_path, 'HeadingTrack_IRU_Track_Angle_Recorded.nod'))
         assert_array_within_tolerance(node.array % 360, expected.array, 10, 98)
 
 
 class TestTrackDeviationFromRunway(unittest.TestCase):
+    
+    # TODO: For all these combination there is just one testcase calling a derive once
     def test_can_operate(self):
         self.assertEqual(
             TrackDeviationFromRunway.get_operational_combinations(),
-            [('Track True Continuous', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Approach Information'),
-             ('Track Continuous', 'FDR Takeoff Runway'),
-             ('Track Continuous', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Track Continuous', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track True Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information')
+            [('Track True', 'FDR Takeoff Runway'),
+             ('Track True', 'Approach Information'),
+             ('Track', 'FDR Takeoff Runway'),
+             ('Track', 'Approach Information'),
+             ('Track True', 'Track', 'FDR Takeoff Runway'),
+             ('Track True', 'Track', 'Approach Information'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track True', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track True', 'Track', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information')
              ]
         )
 
@@ -3646,7 +3617,7 @@ class TestTrackDeviationFromRunway(unittest.TestCase):
                         'magnetic_heading': 90.0},
                     landing_runway={
                         'magnetic_heading': 90.0})])
-        heading_track = P('Track Continuous', array=np.ma.array([45]*1500 + [90]*700))
+        heading_track = P('Track', array=np.ma.array([45]*1500 + [90]*700))
 
         deviation = TrackDeviationFromRunway()
         deviation.derive(None, heading_track, None, None, apps)

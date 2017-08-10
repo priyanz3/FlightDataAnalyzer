@@ -11848,7 +11848,7 @@ class TrackVariation100To50Ft(KeyPointValueNode):
 
     can_operate = helicopter_only
 
-    def derive(self, track=P('Track Continuous'),
+    def derive(self, track=P('Track'),
                alt_agl=P('Altitude AGL')):
 
         # The threshold applied here ensures that the altitude passes through this range and does not
