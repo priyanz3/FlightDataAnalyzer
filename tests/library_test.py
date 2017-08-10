@@ -1360,7 +1360,7 @@ class TestIncludingTransition(unittest.TestCase):
         flap_inc = including_transition(array, self.flap_map_2)
         # allow small variance in transition points
         self.assertTrue(np.ma.all(flap_inc[:31] == 5))
-        self.assertTrue(np.ma.all(flap_inc[33:60] == 1))
+        self.assertTrue(np.ma.all(flap_inc[35:58] == 1))
         self.assertTrue(np.ma.all(flap_inc[62:] == 0))
 
     def test_including_transition_16(self):
