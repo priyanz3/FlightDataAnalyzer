@@ -6443,7 +6443,7 @@ class Aileron(DerivedParameterNode):
             faster, slower = sorted((al, ar), key=attrgetter('frequency'),
                                     reverse=True)
             self.frequency = faster.frequency * 2
-            self.offset = faster.offset
+            self.offset = (faster.offset + slower.offset) / 4
             self.array = (align(faster, self) + align(slower, self)) / 2
         else:
             ail = al or ar

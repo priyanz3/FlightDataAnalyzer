@@ -4196,12 +4196,12 @@ class TestAileron(unittest.TestCase):
         right = P('Aileron (R)', np.ma.array([2.0]*2+[1.0]*2), frequency=0.5, offset=1.1)
         aileron = Aileron()
         aileron.get_derived([left, right])
-        expected_data = np.ma.array([0, 1.5, 1.5, 1.75, 1.75, 1.5, 0, 0])
+        expected_data = np.ma.array([0, 1.5, 1.55, 1.75, 1.7, 1.5, 0, 0])
         expected_data[0] = np.ma.masked
         expected_data[-2:] = np.ma.masked
         assert_array_equal(aileron.array, expected_data)
         self.assertEqual(aileron.frequency, 1)
-        self.assertEqual(aileron.offset, 0.1)
+        self.assertAlmostEqual(aileron.offset, 0.3, places=1)
 
     def test_left_only(self):
         left = P('Aileron (L)', np.ma.array([1.0]*2+[2.0]*2), frequency=0.5, offset=0.1)
