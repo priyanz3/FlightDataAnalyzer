@@ -45,9 +45,9 @@ class TestApproachInformation(unittest.TestCase):
             ('Approach And Landing', 'Altitude AAL',
              'Latitude Prepared', 'Longitude Prepared'), ac_type=aeroplane))
         self.assertFalse(ApproachInformation.can_operate(
-            ('Approach And Landing', 'Altitude AAL', 'Latitude Prepared'), ac_type=aeroplane))
+            ('Approach And Landing', 'Altitude AAL', 'Latitude Prepared (Lat Lon)'), ac_type=aeroplane))
         self.assertFalse(ApproachInformation.can_operate(
-            ('Approach And Landing', 'Altitude AAL', 'Longitude Prepared'), ac_type=aeroplane))
+            ('Approach And Landing', 'Altitude AAL', 'Longitude Prepared (Lat Lon)'), ac_type=aeroplane))
 
     @patch('analysis_engine.approaches.api')
     def test_ils_localizer_established_basic(self, api):

@@ -104,10 +104,10 @@ class ApproachInformation(ApproachNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Approach And Landing']
         required.append('Altitude AGL' if ac_type == helicopter else 'Altitude AAL')
+        lat = 'Latitude Prepared (Lat Lon)' in available
+        lon = 'Longitude Prepared (Lat Lon)' in available
         # Force both Latitude and Longitude to be available if one is available
-        if 'Latitude Prepared' in available and 'Longitude Prepared' not in available:
-            return False
-        elif 'Longitude Prepared' in available and 'Latitude Prepared' not in available:
+        if  lat != lon:
             return False
         return all_of(required, available)
 
@@ -262,8 +262,8 @@ class ApproachInformation(ApproachNode):
                ac_type=A('Aircraft Type'),
                app=S('Approach And Landing'),
                hdg=P('Heading Continuous'),
-               lat=P('Latitude Prepared'),
-               lon=P('Longitude Prepared'),
+               lat=P('Latitude Prepared (Lat Lon)'),
+               lon=P('Longitude Prepared (Lat Lon)'),
                ils_loc=P('ILS Localizer'),
                ils_gs=S('ILS Glideslope'),
                ils_freq=P('ILS Frequency'),
