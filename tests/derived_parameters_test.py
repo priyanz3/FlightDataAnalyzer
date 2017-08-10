@@ -6185,14 +6185,11 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
         super(TestApproachRange, self).setUp()
 
     def test_can_operate(self):
-        operational_combinations = ApproachRange.get_operational_combinations(ac_type=aeroplane)
-        self.assertTrue(('Heading True Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading True' combination")
-        self.assertTrue(('Track True Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track True' combination")
-        self.assertTrue(('Track Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track' combination")
-        self.assertTrue(('Heading Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading' combination")
-
-        operational_combinations = ApproachRange.get_operational_combinations(ac_type=helicopter)
-        self.assertTrue(('Altitude AAL', 'Latitude Smoothed', 'Longitude Smoothed', 'Touchdown') in operational_combinations, msg="Missing 'helicopter' combination")
+        operational_combinations = ApproachRange.get_operational_combinations()
+        self.assertTrue(('Heading True', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading True' combination")
+        self.assertTrue(('Track True', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track True' combination")
+        self.assertTrue(('Track', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track' combination")
+        self.assertTrue(('Heading', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading' combination")
 
     def test_range_basic(self):
         with hdf_file(self.test_file_path) as hdf:
@@ -6202,7 +6199,7 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
             glide = hdf['ILS Glideslope']
 
         ar = ApproachRange()
-        ar.derive(None, glide, None, None, None, hdg, tas, alt, self.approaches, None, None, None, aeroplane)
+        ar.derive(None, glide, None, None, None, hdg, tas, alt, self.approaches)
         result = ar.array
         chunks = np.ma.clump_unmasked(result)
         self.assertEqual(len(chunks),2)
@@ -6218,24 +6215,13 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
             gspd = hdf['Groundspeed']
 
         ar = ApproachRange()
-        ar.derive(gspd, glide, None, None, hdg, None, tas, alt, self.approaches, None, None, None, aeroplane)
+        ar.derive(gspd, glide, None, None, hdg, None, tas, alt, self.approaches)
         result = ar.array
         chunks = np.ma.clump_unmasked(result)
         self.assertEqual(len(chunks),2)
         self.assertEqual(chunks,[slice(3198, 3422, None),
                                  slice(12928, 13440, None)])
 
-    def test_helicopters(self):
-        d=1.0/60.0
-        lat = P('Latitude',  array=[0.0, d/2.0, d])
-        lon = P('Longitude', array=[0.0, 0.0, 0.0])
-        alt = P('Altitude AAL', array=[200, 100, 0.0])
-        tdn = KTI('Touchdown', items=[KeyTimeInstance(2, 'Touchdown'),])
-        ar = ApproachRange()
-        ar.derive(None, None, None, None, None, None, None, alt, None, lat, lon, tdn, helicopter)
-        result = ar.array
-        # Strictly, 1nm is 1852m, but this error arises from the haversine function.
-        self.assertEqual(int(result[0]), 1853)
 
 class TestZeroFuelWeight(unittest.TestCase, NodeTest):
 

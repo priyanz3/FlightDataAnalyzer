@@ -560,8 +560,12 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
 
     aircraft_info['Tail Number'] = tail_number
 
+    if aircraft_info['Aircraft Type'] == 'helicopter':
+        node_modules = settings.NODE_MODULES + \
+            settings.NODE_HELICOPTER_MODULE_PATHS + additional_modules
+    else:
+        node_modules = settings.NODE_MODULES + additional_modules
     # go through modules to get derived nodes
-    node_modules = settings.NODE_MODULES + additional_modules
     derived_nodes = get_derived_nodes(node_modules)
 
     if requested:
@@ -570,7 +574,8 @@ def process_flight(segment_info, tail_number, aircraft_info={}, achieved_flight_
     else:
         # if requested isn't set, try using ALL derived_nodes!
         logger.debug("No requested nodes declared, using all derived nodes")
-        requested = list(derived_nodes.keys())
+        # Enforce some sort of order in which the dependencies are traversed
+        requested = sorted(list(derived_nodes.keys()))
 
     # include all flight attributes as requested
     if include_flight_attributes:
@@ -816,6 +821,7 @@ def main():
     res = process_flight(
         segment_info, args.tail_number, aircraft_info=aircraft_info,
         requested=args.requested, required=args.required, initial=initial,
+        include_flight_attributes=False,
     )
     # Flatten results.
     res = {k: list(itertools.chain.from_iterable(six.itervalues(v)))

@@ -6944,18 +6944,14 @@ class TestHeadingTrueDuringTakeoff(unittest.TestCase, NodeTest):
 class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringLanding
-        self.can_operate_kwargs = {'ac_type':aeroplane}
-        self.operational_combinations = [
-            ('Touchdown', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Touchdown', 'Landing Roll', 'Aircraft Type', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Touchdown', 'Transition Flight To Hover', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Aircraft Type', 'Heading Continuous', 'Transition Flight To Hover', 'Touchdown', 'Landing Roll', 'Landing Turn Off Runway'),
-        ]
 
-    def test_can_operate__helicopter(self):
-        can_operate = self.node_class.can_operate
-        self.assertTrue(can_operate(('Heading Continuous', 'Transition Flight To Hover'), ac_type=helicopter))
-        self.assertFalse(can_operate(self.operational_combinations[0], ac_type=helicopter))
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations()
+        expected_combinations = [
+            ('Heading Continuous', 'Landing Roll', 'Touchdown',
+             'Landing Turn Off Runway')
+        ]
+        self.assertEqual(combinations, expected_combinations)
 
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,1,2,3,4,5,6,7,8,9,10,-1,-1,
@@ -6965,7 +6961,7 @@ class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
         touchdowns = KTI(name='Touchdown', items=[KeyTimeInstance(index=5, name='Touchdown')])
         turn_offs = KTI(name='Landing Turn Off Runway', items=[KeyTimeInstance(index=14, name='Landing Turn Off Runway')])
         kpv = self.node_class()
-        kpv.derive(head, landing, touchdowns, turn_offs, aeroplane)
+        kpv.derive(head, landing, touchdowns, turn_offs)
         expected = [KeyPointValue(index=10, value=6.0,
                                   name='Heading During Landing')]
         self.assertEqual(kpv, expected)

@@ -6963,213 +6963,183 @@ class ApproachRange(DerivedParameterNode):
     units = ut.METER
 
     @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        return (ac_type == helicopter and \
-                all_of(('Altitude AAL',
-                        'Latitude Smoothed',
-                        'Longitude Smoothed',
-                        'Touchdown'), available)) or \
-               (ac_type == aeroplane and \
-                all_of(('Airspeed True',
-                    'Altitude AAL',
-                        'Approach Information'), available) and \
-                any_of(('Heading True Continuous',
-                                   'Track True Continuous',
-                                   'Track Continuous',
-                        'Heading Continuous'), available))
+    def can_operate(cls, available):
+        return all_of(('Airspeed True',
+                       'Altitude AAL',
+                       'Approach Information'), available) and \
+               any_of(('Heading True',
+                       'Track True',
+                       'Track',
+                       'Heading'), available)
 
     def derive(self, gspd=P('Groundspeed'),
                glide=P('ILS Glideslope'),
-               trk_mag=P('Track Continuous'),
-               trk_true=P('Track True Continuous'),
-               hdg_mag=P('Heading Continuous'),
-               hdg_true=P('Heading True Continuous'),
+               trk_mag=P('Track'),
+               trk_true=P('Track True'),
+               hdg_mag=P('Heading'),
+               hdg_true=P('Heading True'),
                tas=P('Airspeed True'),
                alt_aal=P('Altitude AAL'),
                approaches=App('Approach Information'),
-               lat=P('Latitude Smoothed'),
-               lon=P('Longitude Smoothed'),
-               tdwns=KTI('Touchdown'),
-               ac_type=A('Aircraft Type'),
                ):
         app_range = np_ma_masked_zeros_like(alt_aal.array)
 
-        if ac_type==aeroplane:
-            for approach in approaches:
-                # We are going to reference the approach to a runway touchdown
-                # point. Without that it's pretty meaningless, so give up now.
-                runway = approach.landing_runway
-                if not runway:
-                    continue
+        for approach in approaches:
+            # We are going to reference the approach to a runway touchdown
+            # point. Without that it's pretty meaningless, so give up now.
+            runway = approach.landing_runway
+            if not runway:
+                continue
 
-                # Retrieve the approach slice
-                this_app_slice = approach.slice
+            # Retrieve the approach slice
+            this_app_slice = approach.slice
 
-                # Let's use the best available information for this approach
-                if trk_true and np.ma.count(trk_true.array[this_app_slice]):
-                    hdg = trk_true
-                    magnetic = False
-                elif trk_mag and np.ma.count(trk_mag.array[this_app_slice]):
-                    hdg = trk_mag
-                    magnetic = True
-                elif hdg_true and np.ma.count(hdg_true.array[this_app_slice]):
-                    hdg = hdg_true
-                    magnetic = False
-                else:
-                    hdg = hdg_mag
-                    magnetic = True
+            # Let's use the best available information for this approach
+            if trk_true and np.ma.count(trk_true.array[this_app_slice]):
+                hdg = trk_true
+                magnetic = False
+            elif trk_mag and np.ma.count(trk_mag.array[this_app_slice]):
+                hdg = trk_mag
+                magnetic = True
+            elif hdg_true and np.ma.count(hdg_true.array[this_app_slice]):
+                hdg = hdg_true
+                magnetic = False
+            else:
+                hdg = hdg_mag
+                magnetic = True
 
-                kwargs = {'runway': runway}
+            kwargs = {'runway': runway}
 
-                if magnetic:
-                    try:
-                        # If magnetic heading is being used get magnetic heading
-                        # of runway
-                        kwargs = {'heading': runway['magnetic_heading']}
-                    except KeyError:
-                        # If magnetic heading is not know for runway fallback to
-                        # true heading
-                        pass
-
-                # What is the heading with respect to the runway centreline for this approach?
-                off_cl = runway_deviation(hdg.array[this_app_slice], **kwargs)
-                off_cl = np.ma.filled(off_cl, fill_value=0.0)
-
-                # Use recorded groundspeed where available, otherwise
-                # estimate range using true airspeed. This is because there
-                # are aircraft which record ILS but not groundspeed data. In
-                # either case the speed is referenced to the runway heading
-                # in case of large deviations on the approach or runway.
-                if gspd:
-                    speed = gspd.array[this_app_slice] * \
-                        np.cos(np.radians(off_cl))
-                    freq = gspd.frequency
-
-                if not gspd or not np.ma.count(speed):
-                    speed = tas.array[this_app_slice] * \
-                        np.cos(np.radians(off_cl))
-                    freq = tas.frequency
-
-                # Estimate range by integrating back from zero at the end of the
-                # phase to high range values at the start of the phase.
-                spd_repaired = repair_mask(speed, repair_duration=None,
-                                           extrapolate=True)
-                app_range[this_app_slice] = integrate(spd_repaired, freq,
-                                                      scale=ut.multiplier(ut.KT, ut.METER_S),
-                                                      extend=True,
-                                                      direction='reverse')
-
-                _, app_slices = slices_between(alt_aal.array[this_app_slice],
-                                               100, 500)
-                # Computed locally, so app_slices do not need rescaling.
-                if len(app_slices) != 1:
-                    self.info(
-                        'Altitude AAL is not between 100-500 ft during an '
-                        'approach slice. %s will not be calculated for this '
-                        'section.', self.name)
-                    continue
-
-                # reg_slice is the slice of data over which we will apply a
-                # regression process to identify the touchdown point from the
-                # height and distance arrays.
-                reg_slice = shift_slice(app_slices[0], this_app_slice.start)
-
-                gs_est = approach.gs_est
-                # Check we have enough valid glideslope data for the regression slice.
-                if gs_est and np.ma.count(glide.array[reg_slice])>10:
-                    # Compute best fit glidepath. The term (1-0.13 x glideslope
-                    # deviation) caters for the aircraft deviating from the
-                    # planned flightpath. 1 dot low is about 7% of a 3 degree
-                    # glidepath. Not precise, but adequate accuracy for the small
-                    # error we are correcting for here, and empyrically checked.
-                    corr, slope, offset = coreg(app_range[reg_slice],
-                        alt_aal.array[reg_slice] * (1 - 0.13 * glide.array[reg_slice]))
-                    # This should correlate very well, and any drop in this is a
-                    # sign of problems elsewhere.
-                    if corr < 0.995:
-                        self.warning('Low convergence in computing ILS '
-                                     'glideslope offset.')
-
-                    # We can be sure there is a glideslope antenna because we
-                    # captured the glidepath.
-                    try:
-                        # Reference to the localizer as it is an ILS approach.
-                        extend = runway_distances(runway)[1]  # gs_2_loc
-                    except (KeyError, TypeError):
-                        # If ILS antennae coordinates not known, substitute the
-                        # touchdown point 1000ft from start of runway
-                        extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
-
-                else:
-                    # Just work off the height data assuming the pilot was aiming
-                    # to touchdown close to the glideslope antenna (for a visual
-                    # approach to an ILS-equipped runway) or at the touchdown
-                    # zone if no ILS glidepath is installed.
-                    corr, slope, offset = coreg(app_range[reg_slice],
-                                                alt_aal.array[reg_slice])
-                    # This should still correlate pretty well, though not quite
-                    # as well as for a directed approach.
-                    if corr < 0.990:
-                        self.warning('Low convergence in computing visual '
-                                     'approach path offset.')
-
-                    # If we have a glideslope antenna position, use this as the pilot will normally land abeam the antenna.
-                    try:
-                        # Reference to the end of the runway as it is treated as a visual approach later on.
-                        start_2_loc, gs_2_loc, end_2_loc, pgs_lat, pgs_lon = \
-                            runway_distances(runway)
-                        extend = gs_2_loc - end_2_loc
-                    except (KeyError, TypeError):
-                        # If no ILS antennae, put the touchdown point 1000ft from start of runway
-                        extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
-
-
-                # This plot code allows the actual flightpath and regression line
-                # to be viewed in case of concern about the performance of the
-                # algorithm.
-                # x-reference set to 0=g/s position or aiming point.
-                # blue = Altitude AAL
-                # red = corrected for glideslope deviations
-                # black = fitted slope.
-                '''
-                from analysis_engine.plot_flight import plot_parameter
-                import matplotlib.pyplot as plt
-                x1=app_range[gs_est.start:this_app_slice.stop] - offset
-                y1=alt_aal.array[gs_est.start:this_app_slice.stop]
-                x2=app_range[gs_est] - offset
-                #
-                y2=alt_aal.array[gs_est] * (1-0.13*glide.array[gs_est])
-                xnew = np.linspace(np.min(x2),np.max(x2),num=2)
-                ynew = (xnew)/slope
-                plt.plot(x1,y1,'b-',x2,y2,'r-',xnew,ynew,'k-')
-                plt.show()
-                '''
-
-
-                # Shift the values in this approach so that the range = 0 at
-                # 0ft on the projected ILS or approach slope.
-                app_range[this_app_slice] += extend - (offset or 0)
-
-            self.array = app_range
-
-        else:
-            '''
-            Helicopter compuation does not rely on runways!
-            '''
-            stop_delay = 10 # To make sure the helicopter has stopped moving
-
-            for tdwn in tdwns:
-                end = tdwn.index
-                endpoint = {'latitude': lat.array[end], 'longitude': lon.array[end]}
+            if magnetic:
                 try:
-                    begin = tdwns.get_previous(end).index+stop_delay
-                except:
-                    begin = 0
-                this_leg = slice(begin, end+stop_delay)
-                _, app_range[this_leg] = bearings_and_distances(lat.array[this_leg],
-                                                                lon.array[this_leg],
-                                                                endpoint)
-            self.array = app_range
+                    # If magnetic heading is being used get magnetic heading
+                    # of runway
+                    kwargs = {'heading': runway['magnetic_heading']}
+                except KeyError:
+                    # If magnetic heading is not know for runway fallback to
+                    # true heading
+                    pass
+
+            # What is the heading with respect to the runway centreline for this approach?
+            off_cl = runway_deviation(hdg.array[this_app_slice], **kwargs)
+            off_cl = np.ma.filled(off_cl, fill_value=0.0)
+
+            # Use recorded groundspeed where available, otherwise
+            # estimate range using true airspeed. This is because there
+            # are aircraft which record ILS but not groundspeed data. In
+            # either case the speed is referenced to the runway heading
+            # in case of large deviations on the approach or runway.
+            if gspd:
+                speed = gspd.array[this_app_slice] * \
+                    np.cos(np.radians(off_cl))
+                freq = gspd.frequency
+
+            if not gspd or not np.ma.count(speed):
+                speed = tas.array[this_app_slice] * \
+                    np.cos(np.radians(off_cl))
+                freq = tas.frequency
+
+            # Estimate range by integrating back from zero at the end of the
+            # phase to high range values at the start of the phase.
+            spd_repaired = repair_mask(speed, repair_duration=None,
+                                       extrapolate=True)
+            app_range[this_app_slice] = integrate(spd_repaired, freq,
+                                                  scale=ut.multiplier(ut.KT, ut.METER_S),
+                                                  extend=True,
+                                                  direction='reverse')
+
+            _, app_slices = slices_between(alt_aal.array[this_app_slice],
+                                           100, 500)
+            # Computed locally, so app_slices do not need rescaling.
+            if len(app_slices) != 1:
+                self.info(
+                    'Altitude AAL is not between 100-500 ft during an '
+                    'approach slice. %s will not be calculated for this '
+                    'section.', self.name)
+                continue
+
+            # reg_slice is the slice of data over which we will apply a
+            # regression process to identify the touchdown point from the
+            # height and distance arrays.
+            reg_slice = shift_slice(app_slices[0], this_app_slice.start)
+
+            gs_est = approach.gs_est
+            # Check we have enough valid glideslope data for the regression slice.
+            if gs_est and np.ma.count(glide.array[reg_slice])>10:
+                # Compute best fit glidepath. The term (1-0.13 x glideslope
+                # deviation) caters for the aircraft deviating from the
+                # planned flightpath. 1 dot low is about 7% of a 3 degree
+                # glidepath. Not precise, but adequate accuracy for the small
+                # error we are correcting for here, and empyrically checked.
+                corr, slope, offset = coreg(app_range[reg_slice],
+                    alt_aal.array[reg_slice] * (1 - 0.13 * glide.array[reg_slice]))
+                # This should correlate very well, and any drop in this is a
+                # sign of problems elsewhere.
+                if corr < 0.995:
+                    self.warning('Low convergence in computing ILS '
+                                 'glideslope offset.')
+
+                # We can be sure there is a glideslope antenna because we
+                # captured the glidepath.
+                try:
+                    # Reference to the localizer as it is an ILS approach.
+                    extend = runway_distances(runway)[1]  # gs_2_loc
+                except (KeyError, TypeError):
+                    # If ILS antennae coordinates not known, substitute the
+                    # touchdown point 1000ft from start of runway
+                    extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
+
+            else:
+                # Just work off the height data assuming the pilot was aiming
+                # to touchdown close to the glideslope antenna (for a visual
+                # approach to an ILS-equipped runway) or at the touchdown
+                # zone if no ILS glidepath is installed.
+                corr, slope, offset = coreg(app_range[reg_slice],
+                                            alt_aal.array[reg_slice])
+                # This should still correlate pretty well, though not quite
+                # as well as for a directed approach.
+                if corr < 0.990:
+                    self.warning('Low convergence in computing visual '
+                                 'approach path offset.')
+
+                # If we have a glideslope antenna position, use this as the pilot will normally land abeam the antenna.
+                try:
+                    # Reference to the end of the runway as it is treated as a visual approach later on.
+                    start_2_loc, gs_2_loc, end_2_loc, pgs_lat, pgs_lon = \
+                        runway_distances(runway)
+                    extend = gs_2_loc - end_2_loc
+                except (KeyError, TypeError):
+                    # If no ILS antennae, put the touchdown point 1000ft from start of runway
+                    extend = runway_length(runway) - ut.convert(1000, ut.FT, ut.METER)
+
+
+            # This plot code allows the actual flightpath and regression line
+            # to be viewed in case of concern about the performance of the
+            # algorithm.
+            # x-reference set to 0=g/s position or aiming point.
+            # blue = Altitude AAL
+            # red = corrected for glideslope deviations
+            # black = fitted slope.
+            '''
+            from analysis_engine.plot_flight import plot_parameter
+            import matplotlib.pyplot as plt
+            x1=app_range[gs_est.start:this_app_slice.stop] - offset
+            y1=alt_aal.array[gs_est.start:this_app_slice.stop]
+            x2=app_range[gs_est] - offset
+            #
+            y2=alt_aal.array[gs_est] * (1-0.13*glide.array[gs_est])
+            xnew = np.linspace(np.min(x2),np.max(x2),num=2)
+            ynew = (xnew)/slope
+            plt.plot(x1,y1,'b-',x2,y2,'r-',xnew,ynew,'k-')
+            plt.show()
+            '''
+
+
+            # Shift the values in this approach so that the range = 0 at
+            # 0ft on the projected ILS or approach slope.
+            app_range[this_app_slice] += extend - (offset or 0)
+
+        self.array = app_range
 
 
 ##############################################################################

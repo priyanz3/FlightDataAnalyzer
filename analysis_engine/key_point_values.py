@@ -6675,41 +6675,27 @@ class HeadingDuringLanding(KeyPointValueNode):
 
     units = ut.DEGREE
 
-    @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        if ac_type == helicopter:
-            return all_of(('Heading Continuous', 'Transition Flight To Hover'), available)
-        else:
-            return all_of(('Heading Continuous', 'Landing Roll', 'Touchdown', 'Landing Turn Off Runway'), available)
-
     def derive(self,
                hdg=P('Heading Continuous'),
                landings=S('Landing Roll'),
                touchdowns=KTI('Touchdown'),
-               ldg_turn_off=KTI('Landing Turn Off Runway'),
-               ac_type = A('Aircraft Type'),
-               land_helos=S('Transition Flight To Hover')):
+               ldg_turn_off=KTI('Landing Turn Off Runway')):
 
-        if ac_type == aeroplane:
-            for landing in landings:
-                # Check the slice is robust.
-                touchdown = touchdowns.get_first(within_slice=landing.slice)
-                turn_off = ldg_turn_off.get_first(within_slice=landing.slice)
-                start = touchdown.index if touchdown else landing.slice.start
-                stop = turn_off.index + 1 if turn_off else landing.slice.stop
-                if start and stop:
-                    index = (start + stop) / 2.0
-                    value = np.ma.median(hdg.array[start:stop])
-                    # median result is rounded as
-                    # -1.42108547152020037174224853515625E-14 == 360.0
-                    # which is an invalid value for Heading
-                    if not np.ma.is_masked(value):
-                        self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
+        for landing in landings:
+            # Check the slice is robust.
+            touchdown = touchdowns.get_first(within_slice=landing.slice)
+            turn_off = ldg_turn_off.get_first(within_slice=landing.slice)
+            start = touchdown.index if touchdown else landing.slice.start
+            stop = turn_off.index + 1 if turn_off else landing.slice.stop
+            if start and stop:
+                index = (start + stop) / 2.0
+                value = np.ma.median(hdg.array[start:stop])
+                # median result is rounded as
+                # -1.42108547152020037174224853515625E-14 == 360.0
+                # which is an invalid value for Heading
+                if not np.ma.is_masked(value):
+                    self.create_kpv(index, float(np.round(value.data, 8)) % 360.0)
 
-        elif ac_type and ac_type.value == 'helicopter':
-            for land_helo in land_helos:
-                index = land_helo.slice.start
-                self.create_kpv(index, float(round(hdg.array[index], 8)) % 360.0)
 
 
 class HeadingTrueDuringLanding(KeyPointValueNode):
