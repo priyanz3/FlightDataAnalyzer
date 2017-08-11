@@ -3710,24 +3710,13 @@ class TestHeading(unittest.TestCase):
 class TestHeadingTrue(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(HeadingTrue.get_operational_combinations(),
-            [('Heading Continuous', 'Magnetic Variation From Runway'),
-             ('Heading Continuous', 'Magnetic Variation'),
-             ('Heading Continuous', 'Magnetic Variation From Runway', 'Magnetic Variation')])
-
-    def test_basic_magnetic(self):
-        head = P('Heading Continuous', np.ma.array([0,5,6,355,356]))
-        var = P('Magnetic Variation',np.ma.array([2,3,-8,-7,9]))
-        true = HeadingTrue()
-        true.derive(head, None, var)
-        expected = P('Heading True', np.ma.array([2.0, 8.0, 358.0, 348.0, 5.0]))
-        assert_array_equal(true.array, expected.array)
+            [('Heading Continuous', 'Magnetic Variation From Runway'),])
 
     def test_from_runway_used_in_preference(self):
         head = P('Heading Continuous', np.ma.array([0,5,6,355,356]))
-        mag_var = P('Magnetic Variation',np.ma.array([2,3,-8,-7,9]))
         rwy_var = P('Magnetic Variation From Runway',np.ma.array([0,1,2,3,4]))
         true = HeadingTrue()
-        true.derive(head, rwy_var, mag_var)
+        true.derive(head, rwy_var)
         expected = P('Heading True', np.ma.array([0, 6, 8, 358, 0]))
         assert_array_equal(true.array, expected.array)
 

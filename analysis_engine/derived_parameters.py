@@ -4515,20 +4515,9 @@ class HeadingTrue(DerivedParameterNode):
 
     units = ut.DEGREE
 
-    @classmethod
-    def can_operate(cls, available):
-        return 'Heading Continuous' in available and \
-               any_of(('Magnetic Variation From Runway', 'Magnetic Variation'),
-                      available)
-
     def derive(self, head=P('Heading Continuous'),
-               rwy_var=P('Magnetic Variation From Runway'),
-               mag_var=P('Magnetic Variation')):
-        if rwy_var and np.ma.count(rwy_var.array):
-            # use this in preference
-            var = rwy_var.array
-        else:
-            var = mag_var.array
+               rwy_var=P('Magnetic Variation From Runway')):
+        var = rwy_var.array
         self.array = (head.array + var) % 360.0
 
 
