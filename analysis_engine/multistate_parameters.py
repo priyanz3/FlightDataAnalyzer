@@ -1824,41 +1824,16 @@ class GearOnGround(MultistateDerivedParameterNode):
 
 
 class GearDownSelected(MultistateDerivedParameterNode):
-    '''
-    Red warnings are included as the selection may first be indicated by one
-    of the red warning lights coming on, rather than the gear status
-    changing.
-
-    This is the basis for 'Gear Up Selected'.
-
-    TODO: Derive from "Gear Up" only if recorded.
-    '''
+    
+    
     align_frequency = 1
-
     values_mapping = {
         0: 'Up',
         1: 'Down',
     }
-
-    @classmethod
-    def can_operate(cls, available):
-        if 'Gear Down In Transit' in available:
-            return any_of(('Gear Down', 'Gear Position'), available)
-        else:
-            return 'Gear Up Selected' in available
-
-    def derive(self,
-               gear_down=M('Gear Down'),
-               gear_position=M('Gear Position'),
-               up_sel=M('Gear Up Selected'),
-               gear_down_transit=M('Gear Down In Transit')):
-
-        if gear_down and gear_down_transit:
-            self.array = (gear_down.array == 'Down') | (gear_down_transit.array == 'Extending')
-        elif gear_position and gear_down_transit:
-            self.array = (gear_position.array == 'Down') | (gear_down_transit.array == 'Extending')
-        else:
-            self.array = up_sel.array == 'Down'
+    
+    def derive(self, up_sel=M('Gear Up Selected')):
+        self.array = up_sel.array == 'Down'
 
 
 class GearUpSelected(MultistateDerivedParameterNode):
@@ -1868,7 +1843,6 @@ class GearUpSelected(MultistateDerivedParameterNode):
     Warnings.
     '''
     align_frequency = 1
-
     values_mapping = {
         0: 'Down',
         1: 'Up',
@@ -1876,23 +1850,21 @@ class GearUpSelected(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        up_trans = ('Gear Up In Transit' in available) and any_of(('Gear Up', 'Gear Position'), available)
-        return up_trans or ('Gear Down Selected' in available)
+        return all_of(('Gear Up', 'Gear Up In Transit'), available) or \
+               all_of(('Gear Down', 'Gear Down In Transit'), available)
 
     def derive(self,
                gear_up=M('Gear Up'),
-               gear_position=M('Gear Position'),
-               down_sel=M('Gear Down Selected'),
-               gear_up_transit=M('Gear Up In Transit')):
+               gear_up_transit=M('Gear Up In Transit'),
+               gear_down=M('Gear Down'),
+               gear_down_transit=M('Gear Down In Transit')):
 
         if gear_up and gear_up_transit:
-            self.array = (gear_up.array == 'Up') | (gear_up_transit.array == 'Retracting')
-        elif gear_position and gear_up_transit:
-            self.array = (gear_position.array == 'Up') | (gear_up_transit.array == 'Retracting')
-        else:
-            self.array = down_sel.array == 'Up'
-        ## Invert the Gear Down Selected array
-        # self.array = 1 - gear_dn_sel.array.raw
+            self.array = (gear_up.array == 'Up') | \
+                (gear_up_transit.array == 'Retracting')
+        if gear_down and gear_down_transit:
+            self.array = 1 - ((gear_down.array == 'Down') | \
+                              (gear_down_transit.array == 'Extending'))
 
 
 class Gear_RedWarning(MultistateDerivedParameterNode):
