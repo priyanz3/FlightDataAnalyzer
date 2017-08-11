@@ -71,7 +71,6 @@ from analysis_engine.multistate_parameters import (
     GearDownSelected,
     GearInTransit,
     GearOnGround,
-    GearPosition,
     GearUp,
     GearUpInTransit,
     GearUpSelected,
