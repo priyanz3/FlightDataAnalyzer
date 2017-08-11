@@ -914,11 +914,11 @@ class AccelerationNormalOffset(KeyPointValueNode):
     '''
 
     units = ut.G
-    
+
     @classmethod
     def can_operate(cls, available):
         return all_of(('Acceleration Normal', 'Taxiing'), available)
-    
+
     def derive(self,
                acc_norm=P('Acceleration Normal'),
                taxiing = S('Taxiing')):
@@ -8149,6 +8149,8 @@ class EngGasTempOverThresholdDuration(KeyPointValueNode):
             cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
                         eng_series.value, eng_type.value, mods.value)
             return False
+        except AttributeError:
+            return False
 
         return any_of((
             'Eng (1) Gas Temp',
@@ -8437,6 +8439,8 @@ class EngTorqueOverThresholdDuration(KeyPointValueNode):
         except KeyError:
             cls.warning("No engine thresholds available for '%s', '%s', '%s'.",
                         eng_series.value, eng_type.value, mods.value)
+            return False
+        except AttributeError:
             return False
 
         base = any_of((

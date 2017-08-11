@@ -7312,10 +7312,8 @@ class AirspeedSelected(DerivedParameterNode):
 class WheelSpeed(DerivedParameterNode):
     '''
     Merge Left and Right wheel speeds.
-
-    Q: Should wheel speed Centre (C) be merged too?
     '''
-
+    # Q: Should wheel speed Centre (C) be merged too?
     align = False
     units = ut.METER_S
 
