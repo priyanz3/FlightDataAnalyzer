@@ -1769,31 +1769,11 @@ class GearInTransit(MultistateDerivedParameterNode):
         1: 'In Transit',
     }
 
-    @classmethod
-    def can_operate(cls, available):
-        # Can operate with a any combination of parameters available
-        merge_transit = ('Gear (L) In Transit', 'Gear (N) In Transit', 'Gear (R) In Transit', 'Gear (C) In Transit')
-
-        return any_of(merge_transit, available) \
-               or all_of(('Gear Down In Transit', 'Gear Up In Transit'), available)
-
     def derive(self,
-               gl=M('Gear (L) In Transit'),
-               gn=M('Gear (N) In Transit'),
-               gr=M('Gear (R) In Transit'),
-               gc=M('Gear (C) In Transit'),
                gear_down_transit=M('Gear Down In Transit'),
                gear_up_transit=M('Gear Up In Transit')):
-
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'In Transit'),
-                (gn, 'In Transit'),
-                (gr, 'In Transit'),
-                (gc, 'In Transit'),
-            ).any(axis=0)
-        else:
-            self.array = (gear_down_transit.array == 'Extending') | (gear_up_transit.array == 'Retracting')
+        self.array = (gear_down_transit.array == 'Extending') | \
+            (gear_up_transit.array == 'Retracting')
 
 
 class GearOnGround(MultistateDerivedParameterNode):

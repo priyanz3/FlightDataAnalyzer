@@ -4399,43 +4399,30 @@ class TestGearInTransit(unittest.TestCase):
             0: '-',
             1: 'In Transit',
         }
-        self.expected = M('Gear In Transition', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
-                          values_mapping=self.values_mapping)
+        self.expected = M(
+            'Gear In Transition',
+            array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
+            values_mapping=self.values_mapping
+        )
 
     def test_can_operate(self):
         combinations = self.node_class.get_operational_combinations()
 
         possible_combinations = (
-            ('Gear (L) In Transit', 'Gear (N) In Transit', 'Gear (R) In Transit'), # any one will do
             ('Gear Down In Transit', 'Gear Up In Transit'),
         )
-
         for params in possible_combinations:
             self.assertTrue(params in combinations)
 
-    def test_derive__combine(self):
-        # combine individal (L/R/C/N) params
-        left = M('Gear (L) In Transit', array=np.ma.array([0]*6 + [1]*9 + [0]*30 + [1]*9 + [0]*6),
-                 values_mapping=self.values_mapping)
-        right = M('Gear (R) In Transit', array=np.ma.array([0]*5 + [1]*9 + [0]*32 + [1]*9 + [0]*5),
-                  values_mapping=self.values_mapping)
+    def test_derive(self):
+        gear_down_transit = M('Gear Down In Transit',
+                              array=np.ma.array([0]*45 + [1]*10 + [0]*5),
+                              values_mapping={0: '-', 1: 'Extending'})
+        gear_up_transit = M('Gear Up In Transit',
+                            array=np.ma.array([0]*5 + [1]*10 + [0]*45),
+                            values_mapping={0: '-', 1: 'Retracting'})
         node = self.node_class()
-        node.derive(left, None, right, None, None, None)
-
-        np.testing.assert_array_equal(node.array, self.expected.array)
-        self.assertEqual(node.values_mapping, self.values_mapping)
-
-    def test_derive__up_down_in_transit(self):
-        up_transit = M('Gear Up In Transit', array=np.ma.array([0]*5 + [1]*10 + [0]*45),
-                      values_mapping={0: '-', 1: 'Retracting'})
-        down_transit = M('Gear Down In Transit', array=np.ma.array([0]*45 + [1]*10 + [0]*5),
-                          values_mapping={0: '-', 1: 'Extending'})
-        node = self.node_class()
-        node.derive(None, None, None, None, down_transit, up_transit)
-
-        np.testing.assert_array_equal(node.array, self.expected.array)
-        self.assertEqual(node.values_mapping, self.values_mapping)
-        node = self.node_class()
+        node.derive(gear_down_transit, gear_up_transit)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
