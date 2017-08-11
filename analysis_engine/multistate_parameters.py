@@ -1770,27 +1770,15 @@ class GearUp(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        merge_gear_up = any_of(('Gear (L) Up', 'Gear (N) Up', 'Gear (R) Up', 'Gear (C) Up'), available)
         calc_gear_up = all_of(('Gear Up Selected', 'Gear Up In Transit'), available)
         gear_pos = 'Gear Position' in available
-        return merge_gear_up or calc_gear_up or gear_pos
+        return calc_gear_up or gear_pos
 
     def derive(self,
-               gl=M('Gear (L) Up'),
-               gn=M('Gear (N) Up'),
-               gr=M('Gear (R) Up'),
-               gc=M('Gear (C) Up'),
                gear_transit=M('Gear Up In Transit'),
                gear_sel=M('Gear Up Selected'),
                gear_pos=M('Gear Position')):
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'Up'),
-                (gn, 'Up'),
-                (gr, 'Up'),
-                (gc, 'Up'),
-            ).all(axis=0)
-        elif gear_sel and gear_transit:
+        if gear_sel and gear_transit:
             gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
             self.array = (gear_sel_array == 'Up') & ~(gear_transit.array == 'Retracting')
             _slices = runs_of_ones(self.array == 'Down')

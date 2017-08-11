@@ -4252,7 +4252,6 @@ class TestGearDown(unittest.TestCase):
 class TestGearUp(unittest.TestCase):
 
     #Gear Up
-    # combine individal (L/R/C/N) params
     # Gear Up Selected - Gear Up In Transit
 
     def setUp(self):
@@ -4269,7 +4268,6 @@ class TestGearUp(unittest.TestCase):
         combinations = self.node_class.get_operational_combinations()
 
         possible_combinations = (
-            ('Gear (L) Up', 'Gear (N) Up', 'Gear (R) Up'), # any one will do
             ('Gear Up In Transit', 'Gear Up Selected'),
             ('Gear Position',),
         )
@@ -4277,25 +4275,13 @@ class TestGearUp(unittest.TestCase):
         for params in possible_combinations:
             self.assertTrue(params in combinations)
 
-    def test_derive__combine(self):
-        # combine individal (L/R/C/N) params
-        left = M('Gear (L) Up', array=np.ma.array([0]*15 + [1]*30 + [0]*15),
-                 values_mapping=self.values_mapping)
-        right = M('Gear (R) Up', array=np.ma.array([0]*14 + [1]*31 + [0]*15),
-                  values_mapping=self.values_mapping)
-        node = self.node_class()
-        node.derive(left, None, right, None, None, None, None)
-
-        np.testing.assert_array_equal(node.array, self.expected.array)
-        self.assertEqual(node.values_mapping, self.values_mapping)
-
     def test_derive__up_sel_up_in_transit(self):
         up_sel = M('Gear Up Selected', array=np.ma.array([0]*5 + [1]*40 + [0]*15),
            values_mapping={0: 'Down', 1: 'Up'})
         up_trans = M('Gear Up In Transit', array=np.ma.array([0]*5 + [1]*10 + [0]*45),
                       values_mapping={0: '-', 1: 'Retracting'})
         node = self.node_class()
-        node.derive(None, None, None, None, up_trans, up_sel, None)
+        node.derive(up_trans, up_sel, None)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4304,7 +4290,7 @@ class TestGearUp(unittest.TestCase):
         gear_pos = M('Gear Position', array=np.ma.array([1]*5 + [3]*10 + [2]*30 + [3]*10 + [1]*5),
                       values_mapping={0: '-', 1: 'Down', 2: 'Up', 3: 'In Transit'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, None, gear_pos)
+        node.derive(None, None, gear_pos)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
