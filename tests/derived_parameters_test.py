@@ -5200,11 +5200,12 @@ class TestMagneticVariation(unittest.TestCase):
             np.ma.array([-6.425, -6.427, -6.428, -6.43, -6.432, -6.434, -6.435,
                          -6.437, -6.439, -6.44]), decimal=3)
 
-class TestMagneticVariationFromRunway(unittest.TestCase):
+
+class TestMagneticVariationFromRunway(unittest.TestCase): 
     def test_can_operate(self):
         opts = MagneticVariationFromRunway.get_operational_combinations()
         self.assertEqual(opts,
-                    [('HDF Duration',
+                    [('Magnetic Variation',
                      'Heading During Takeoff',
                      'Heading During Landing',
                      'FDR Takeoff Runway',
@@ -5212,52 +5213,62 @@ class TestMagneticVariationFromRunway(unittest.TestCase):
                      )])
 
     def test_derive_both_runways(self):
-        toff_rwy = {'end': {'elevation': 10,
-                            'latitude': 52.7100630002283,
-                            'longitude': -8.907803520515461},
-                    'start': {'elevation': 43,
-                              'latitude': 52.69327604095164,
-                              'longitude': -8.943465355819775},
-                    'strip': {'id': 2014, 'length': 10495,
+        # Updates to the derived parameter. New data from 
+        # segment: d9785fefb912dc77b6e936a4c16de96e5fad868c8cc4cff4e568fb1cff8b87a5
+        toff_rwy = {'end': {'elevation': 76,
+                            'latitude': 28.45938337469715,
+                            'longitude': -13.863540217017873},
+                    'id': 9893,
+                    'identifier': '01',
+                    'magnetic_heading': 6.0,
+                    'start': {'elevation': 24,
+                              'latitude': 28.441860630699686,
+                              'longitude': -13.86412042467909},
+                    'strip': {'id': 4947, 'length': 11175,
                               'surface': 'ASP', 'width': 147}}
-        land_rwy = {'end': {'elevation': 374,
-                            'latitude': 49.024719,
-                            'longitude': 2.524892},
-                    'start': {'elevation': 377,
-                              'latitude': 49.026694,
-                              'longitude': 2.561689},
-                    'strip': {'id': 2322, 'length': 8858,
-                              'surface': 'ASP', 'width': 197}}
+        land_rwy = {'end': {'elevation': -12,
+                            'latitude': 52.32863339288183,
+                            'longitude': 4.70886201465568},
+                    'id': 8089,
+                    'identifier': '18R',
+                    'magnetic_heading': 183.0,
+                    'start': {'elevation': -13,
+                              'latitude': 52.36023790740991,
+                              'longitude': 4.7117260390982185},
+                    'strip': {'id': 4045, 'length': 12467,
+                              'surface': 'ASP', 'width': 183}}
+        mag_var = load(os.path.join(test_data_path, 'magnetic_variation_from_runway__mag_vari.nod'))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 14272),
-            KPV([KeyPointValue(index=62.143, value=58.014, name='Heading During Takeoff')]),
-            KPV([KeyPointValue(index=213.869, value=266.5128, name='Heading During Landing')]),
+            mag_var,
+            KPV([KeyPointValue(index=222.0546875, value=9.4921875, name='Heading During Takeoff')]),
+            KPV([KeyPointValue(index=3626.3046875, value=185.9765625, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
             A('FDR Landing Runway', land_rwy)
         )
         # 0 to takeoff index variation
-        self.assertAlmostEqual(mag_var_rwy.array[0], -5.87, places=2)
-        self.assertAlmostEqual(mag_var_rwy.array[62], -5.87, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[0], -7.83, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[222], -7.82, places=2)
         # landing index to end
-        self.assertAlmostEqual(mag_var_rwy.array[213], -1.18, places=2)
-        self.assertAlmostEqual(mag_var_rwy.array[-1], -1.18, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[3626], -2.81, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[-1], -2.79, places=2)
 
     def test_derive_only_takeoff_available(self):
         toff_rwy = {'end': {'elevation': 10,
-                            'latitude': 52.7100630002283,
-                            'longitude': -8.907803520515461},
-                    'start': {'elevation': 43,
-                              'latitude': 52.69327604095164,
-                              'longitude': -8.943465355819775},
-                    'strip': {'id': 2014, 'length': 10495,
+                                'latitude': 52.7100630002283,
+                                'longitude': -8.907803520515461},
+                        'start': {'elevation': 43,
+                                  'latitude': 52.69327604095164,
+                                  'longitude': -8.943465355819775},
+                        'strip': {'id': 2014, 'length': 10495,
                               'surface': 'ASP', 'width': 147}}
         land_rwy = {# MISSING VITAL LAT/LONG INFORMATION
                     'strip': {'id': 2322, 'length': 8858,
                               'surface': 'ASP', 'width': 197}}
+        mag_var = P('Magnetic Variation', np.ma.array([0.0]*14272))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 14272),
+            mag_var,
             KPV([KeyPointValue(index=62.143, value=58.014, name='Heading During Takeoff')]),
             KPV([KeyPointValue(index=213.869, value=266.5128, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
@@ -5287,9 +5298,10 @@ class TestMagneticVariationFromRunway(unittest.TestCase):
                               'latitude': 36.899355805,
                               'longitude': -94.0129958013},
                     'strip': {'id': 12132, 'length': 5000, 'surface': 'ASPH', 'width': 75}}
+        mag_var = P('Magnetic Variation', np.ma.array([0.0]*9336))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 9336),
+            mag_var,
             KPV([KeyPointValue(index=148.9833984375, value=53.00950000000029, name='Heading During Takeoff')]),
             KPV([KeyPointValue(index=1580.7333984375, value=359.8320000000002, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
