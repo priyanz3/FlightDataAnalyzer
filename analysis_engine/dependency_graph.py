@@ -60,6 +60,48 @@ class RequiredNodesMissing(KeyError):
     pass
 
 
+class CircularDependency(KeyError):
+    pass
+
+
+def print_ordered_tree(tree_path):
+    '''
+    This is tool that prints the order and the intended tree in which nodes are traversed. 
+    It shows: 
+    -	The path depth that the node appears
+    -	Where the node will be included into the process_order. It will show the number in the processing order that the node will be created, indicated by Node Name (order)
+    -	If node's dependencies not satisfied the can_operate, indicated by [Node Name] (INOP)
+    -	If node reappears into the tree path (a circular dependency), indicated by <<< Node Name CIRCULAR >>>
+
+    example:
+    6:							- <<< 'Gear Up In Transit CIRCULAR' >>> (438) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear Up' > 'Gear Up In Transit'><<< 'Gear Up In Transit' CIRCULAR >>>
+    5:						- ['Gear Position'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear Up' > 'Gear Position'
+    4:					- ['Gear Up'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear Up'
+    6:							- <<< 'Gear Up In Transit' CIRCULAR >>> (439) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear In Transit' > 'Gear Up In Transit'><<< Gear Up In Transit CIRCULAR >>>
+    4:					- ['Gear In Transit'] (INOP) 	 'root'>'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear In Transit'
+    5:						- ['Gear (L) Red Warning'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear (*) Red Warning' > 'Gear (L) Red Warning'
+    5:						- ['Gear (N) Red Warning'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear (*) Red Warning' > 'Gear (N) Red Warning'
+    5:						- ['Gear (R) Red Warning'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear (*) Red Warning' > 'Gear (R) Red Warning'
+    4:					- ['Gear (*) Red Warning'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear (*) Red Warning'
+    4:					- ['Gear Position'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit' > 'Gear Position'
+    3:				- ['Gear Up In Transit'] (INOP) 	 'root' > 'Mach While Gear Retracting Max' > 'Gear Retracting' > 'Gear Up In Transit'
+    2:			- ['Gear Retracting'] (INOP) 	 'root' > 'Mach While Gear Retracting Max > Gear Retracting'
+    1:		- ['Mach While Gear Retracting Max'] (INOP) 	 'root' > 'Mach While Gear Retracting Max'
+    1:		- 'Turbulence During Cruise Max' (440) 	 'root' > 'Turbulence During Cruise Max'
+    0:	- 'root' (713) 	 'root'
+    '''
+    order = 0
+    for path in tree_path[:]:
+        if path[-1] == 'NOT OPERATIONAL':
+            path.pop()
+            print("%d:%s- ['%s'] (INOP) \t '%s'" % (len(path)-1, '\t'*len(path), path[-1], "' > '".join(path)))
+        elif path[-1] == 'CIRCULAR':
+            path.pop()
+            print("%d:%s- <<< '%s' CIRCULAR >>> \t '%s' ><<< '%s' CIRCULAR >>>" % (len(path)-1, '\t'*len(path), path[-1], "' > '".join(path), path[-1]))
+        else:
+            print("%d:%s- '%s' (%d) \t '%s'" % (len(path)-1, '\t'*len(path), path[-1], order, "' > '".join(path)))    
+            order += 1
+
 def indent_tree(graph, node, level=0, space='  ', delim='- ', label=True, 
                 recurse_active=True):
     '''
@@ -125,7 +167,7 @@ def print_tree(graph, node='root', **kwargs):
     print('\n'.join(indent_tree(graph, node, **kwargs)))
 
 
-def dependencies3(di_graph, root, node_mgr):
+def dependencies3(di_graph, root, node_mgr, raise_cir_dep=False):
     '''
     Performs a Depth First Search down each dependency node in the tree
     (di_graph) until each branch's dependencies are best satisfied.
@@ -145,19 +187,28 @@ def dependencies3(di_graph, root, node_mgr):
     :type di_graph: nx.DiGraph
     :param root: Root node to start traversing from, usually named 'root'
     :type root: String
-    :param node_mgr: Node manager which can assess whether nodes are operational with the available dependencies at each layer of the tree.
+    :param node_mgr: Node manager which can assess whether nodes are 
+                     operational with the available dependencies at each 
+                     layer of the tree.
     :type node_mgr: analysis_engine.node.NodeManager
+    :raise_cir_dep: Stop and raise a CircularDependency error if a circular
+                    dependency on the node is encountered. 
     '''
     log_stuff = logger.getEffectiveLevel() >= logging.INFO
     def traverse_tree(node):
-        "Begin the recursion at this node's position in the dependency tree"
+        "Begin the recursion at this node's position in the dependency tree"     
         if node in path:
             # add node for it to be removed (pop'd) in a moment
             path.append(node)
             # we've met this node before; start of circular dependency?
+            tree_path.append(list(path) + ['CIRCULAR',])
             if log_stuff:
                 logger.info("Circular dependency avoided at node '%s'. "
                             "Branch path: %s", node, path)
+            if raise_cir_dep:
+                raise CircularDependency("Circular Dependency In Path "
+                                         "(node: '%s', path: '%s')"
+                                         % (node,"' > '".join(path)))
             return False  # establishing if available; cannot yet be available
         # we're recursing down
         path.append(node)
@@ -180,14 +231,21 @@ def dependencies3(di_graph, root, node_mgr):
             # node will work at this level with the available dependencies
             active_nodes.add(node)
             ordering.append(node)
+            
+            if node not in node_mgr.hdf_keys:
+                tree_path.append(list(path))
             return True  # layer below works
         else:
             # node will not work with available dependencies
+            tree_path.append(list(path) + ['NOT OPERATIONAL',])
             return False
         
     ordering = []
     path = deque()  # current branch path
     active_nodes = set()  # operational nodes visited for fast lookup
+    path_start_param = []#set()
+    path_start_kpv = []#set()
+    tree_path = [] # For viewing the tree in which nodes are add to path
     traverse_tree(root)  # start recursion
     return ordering
 
@@ -377,7 +435,7 @@ def graph_nodes(node_mgr):
     return gr_all
 
 
-def process_order(gr_all, node_mgr, raise_inoperable_requested=False):
+def process_order(gr_all, node_mgr, raise_inoperable_requested=False, raise_cir_dep=False):
     """
     :param gr_all:
     :type gr_all: nx.DiGraph
@@ -386,7 +444,7 @@ def process_order(gr_all, node_mgr, raise_inoperable_requested=False):
     :returns:
     :rtype: 
     """
-    process_order = dependencies3(gr_all, 'root', node_mgr)
+    process_order = dependencies3(gr_all, 'root', node_mgr, raise_cir_dep=raise_cir_dep)
     logger.debug("Processing order of %d nodes is: %s", len(process_order), process_order)
     
     for n, node in enumerate(process_order):
@@ -443,7 +501,7 @@ def remove_floating_nodes(graph):
      
      
 def dependency_order(node_mgr, draw=not_windows,
-                     raise_inoperable_requested=False):
+                     raise_inoperable_requested=False, raise_cir_dep=False):
     """
     Main method for retrieving processing order of nodes.
     
@@ -455,7 +513,9 @@ def dependency_order(node_mgr, draw=not_windows,
     :rtype: (list of strings, dict)
     """
     _graph = graph_nodes(node_mgr)
-    gr_all, gr_st, order = process_order(_graph, node_mgr, raise_inoperable_requested)
+    gr_all, gr_st, order = process_order(_graph, node_mgr,
+                                         raise_inoperable_requested=raise_inoperable_requested,
+                                         raise_cir_dep=raise_cir_dep)
     
     if draw:
         from json import dumps

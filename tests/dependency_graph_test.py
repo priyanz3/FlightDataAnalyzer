@@ -6,11 +6,16 @@ import os
 import networkx as nx
 import six
 import unittest
+import yaml
+import sys
+import traceback
 
 from datetime import datetime
 
 from analysis_engine.node import (DerivedParameterNode, Node, NodeManager, P)
 from analysis_engine.dependency_graph import (
+    CircularDependency,
+    InoperableDependencies,
     any_predecessors_in_requested,
     dependency_order, 
     graph_nodes, 
@@ -19,7 +24,10 @@ from analysis_engine.dependency_graph import (
     process_order,
 )
 from analysis_engine.utils import get_derived_nodes
+from analysis_engine import settings
 
+test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              'test_data')
 
 def flatten(l):
     "Flatten an iterable of many levels of depth (generator)"
@@ -358,7 +366,163 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
              'Gear Down Selected', 'Airspeed', 'Airspeed At Gear Down Selected'])
 
         # try a bigger cyclic dependency on top of the above one
-        
+
+    def _avoiding_circular_dependancy(self, requested, aircraft_info, lfl_params,
+                                      draw=False, raise_cir_dep=True):
+        #derived_nodes = get_derived_nodes(settings.NODE_MODULES)
+        if aircraft_info['Aircraft Type'] == 'helicopter':
+            node_modules = settings.NODE_MODULES + settings.NODE_HELICOPTER_MODULE_PATHS
+        else:
+            node_modules = settings.NODE_MODULES
+        # go through modules to get derived nodes
+        derived_nodes = get_derived_nodes(node_modules)
+
+        if requested == []:
+            # Use all derived nodes if requested is empty
+            requested = [p for p in derived_nodes.keys() if p not in lfl_params]
+
+        node_mgr= NodeManager({'Start Datetime': datetime.now()}, 10, lfl_params,
+                              requested, [], derived_nodes, aircraft_info, {})
+        try:
+            order, _ = dependency_order(node_mgr, draw=draw,
+                                            raise_cir_dep=raise_cir_dep)
+        except CircularDependency as err:
+            self.assertFalse(True, msg=err.message)
+
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')
+    def test_avoiding_circular_dependency_gear_up_selected(self):
+        '''
+        <<< Gear Up Selected CIRCULAR >>> (218)
+        root>Altitude At First Gear Up Selection>Gear Up Selection>Gear Up Selected>Gear Up>Gear Up Selected><<< Gear Up Selected CIRCULAR >>>
+        '''
+        lfl_params = [
+            "Gear (L) Down", 
+            "Gear (L) On Ground",
+            "Gear (L) Red Warning",
+            "Gear (N) Down",
+            "Gear (N) On Ground",
+            "Gear (N) Red Warning",
+            "Gear (R) Down",
+            "Gear (R) On Ground",
+            "Gear (R) Red Warning",
+            "Gear On Ground"
+        ]
+        requested = ['Gear Up Selection',]
+        aircraft_info = {u'Aircraft Type': u'aeroplane',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)
+
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')
+    def test_avoiding_circular_dependency_track_true(self):
+        '''
+        <<< Track True Continuous CIRCULAR >>> (197) 
+        root>Holding Duration>Holding>Latitude Smoothed>Approach Range>Track True Continuous>Track True>Track True Continuous><<< Track True Continuous CIRCULAR >>>
+        '''
+        lfl_params = ['Altitude STD', 'Airspeed','Heading']
+        requested = ['Approach Range',]
+        aircraft_info = {u'Aircraft Type': u'aeroplane',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)
+
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')
+    def test_avoiding_circular_dependency_approach_range(self):
+        '''
+        <<< Approach Range CIRCULAR >>> (200)
+        root>Holding Duration>Holding>Latitude Smoothed>Approach Range>Longitude Smoothed>Approach Range><<< Approach Range CIRCULAR >>>
+        '''
+        lfl_params = ['Altitude STD', 'Airspeed','Heading']
+        requested = ['Latitude Smoothed',]
+        aircraft_info = {u'Aircraft Type': u'aeroplane',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)
+
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')    
+    def test_avoiding_circular_dependency_approach_range_helicopter(self):
+        '''
+        <<< Approach Range CIRCULAR >>> (200)
+        root>Holding Duration>Holding>Latitude Smoothed>Approach Range>Longitude Smoothed>Approach Range><<< Approach Range CIRCULAR >>>
+        '''
+        lfl_params = ['Altitude STD', 'Airspeed','Heading']
+        requested = ['Latitude Smoothed',]
+        aircraft_info = {u'Aircraft Type': u'helicopter',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)    
+    
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')
+    def test_avoiding_circular_dependency_approach_information(self):
+        '''
+        <<< Approach Information CIRCULAR >>> (60)
+        root>Airspeed Top Of Descent To 4000 Ft Min>FDR Landing Airport>Approach Information>Latitude Prepared>Heading True>Magnetic Variation From Runway>FDR Landing Runway>Approach Information><<< Approach Information CIRCULAR >>>
+        '''
+        lfl_params = []
+        requested = ['FDR Landing Airport',]
+        aircraft_info = {u'Aircraft Type': u'aeroplane',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)        
+
+    @unittest.skip('Need to improve testcase, exception still being rasie. with a diferent circular dependancy.')
+    def test_avoiding_circular_dependency_approach_information_helicopter(self):
+        '''
+        <<< Approach Information CIRCULAR >>> (60)
+        root>Airspeed Top Of Descent To 4000 Ft Min>FDR Landing Airport>Approach Information>Latitude Prepared>Heading True>Magnetic Variation From Runway>FDR Landing Runway>Approach Information><<< Approach Information CIRCULAR >>>
+        '''
+        lfl_params = ['Altitude STD', 'Airspeed','Heading', 
+                      'Altitude AGL',
+                      'Approach And Landing',
+                      #'Latitude Prepared (Lat Lon)',
+                      'Longitude Prepared (Lat Lon)',
+                      ]
+        requested = ['Approach Information',]
+        aircraft_info = {u'Aircraft Type': u'helicopter',}
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params) 
+
+    @unittest.skip('Need to completely remove circular dependencies before this test could be use by Jenkins.')
+    def test_avoiding_all_circular_dependencies_by_having_nothing_recorded(self):
+        # not realistic use case; but let's see if we can avoid all circular dependencies in the theoretical deriving tree structure things
+        lfl_params = []#['Altitude STD', 'Airspeed', 'Heading'] # Core parameters
+        aircraft_info = {u'Aircraft Type': u'aeroplane',}
+        requested = []
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)
+
+    @unittest.skip('Need to completely remove circular dependencies before this test could be use by Jenkins.')
+    def test_avoiding_all_circular_dependencies_with_recorded_lfls(self):
+        # A more realistic tree, for finding circular dependencies, using the
+        # recorded parameter names and aircraft_info (de-identified) from AE-214.
+        # Segment Hash: 141ef6749191d5aecb6b3dc5f6d2c341276aa9bce61ee38b1f5ccf4f825329f4         
+        aircraft_info = {
+            u'Aircraft Type': u'aeroplane',
+            u'Data Type': None,
+            u'QAR Serial Number': u'',
+            u'Data Source': u'FDR',
+            u'Ground To Lowest Point Of Tail': 2.57712,
+            u'Dry Operating Weight': None, u'Data Rate': 256,
+            u'Fleet Code': None,
+            u'Engine Count': 2,
+            u'Engine Manufacturer': u'CFM International',
+            u'Frame Type': None,
+            u'Modifications': [],
+            u'Tail Number': None,
+            u'Precise Positioning': True,
+            u'Recorder Name': u'MEDIAPREP',
+            u'Main Gear To Lowest Point Of Tail': 9.8234,
+            u'Frame Doubled': False,
+            u'Engine Series': u'CFM56-7B',
+            u'Model': u'B737-7CN(BBJ)',
+            u'Identifier': u'',
+            u'Frame Name': u'737-3A',
+            u'Family': u'B737 NG',
+            u'Series': u'B737-700',
+            u'Frame': u'737-3A',
+            u'Engine Propulsion': u'JET',
+            u'Manufacturer Serial Number': None,
+            u'Processing Format': u'tdwgl',
+            u'Stretched': None,
+            u'Main Gear To Radio Altimeter Antenna': None,
+            u'Engine Type': u'CFM56-7B26',
+            u'Manufacturer': u'Boeing',
+            u'Payload': None,
+            u'Maximum Landing Weight': None
+        }
+        with open(os.path.join(test_data_path, "circular_dependency_lfl_list.yaml")) as f:
+            lfl_params = yaml.load(f)
+        lfl_params = list(set(lfl_params + ['Groundspeed', 'Gear (L) Down', 'Gear (N) Down', 'Gear (R) Down', 'Gear Down',]))
+        requested = []
+        self._avoiding_circular_dependancy(requested, aircraft_info, lfl_params)
 
 
 class TestGraphAdjacencies(unittest.TestCase):
