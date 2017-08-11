@@ -1604,9 +1604,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
         # Can operate with a any combination of parameters available
-        gear_transits = ('Gear (L) Up In Transit', 'Gear (N) Up In Transit', 'Gear (R) Up In Transit', 'Gear (C) Up In Transit')
-        gears_available = any_of(gear_transits, available) \
-            or all_of(('Gear Up', 'Gear Up Selected'), available) \
+        gears_available = all_of(('Gear Up', 'Gear Up Selected'), available) \
             or all_of(('Gear Down', 'Gear Up'), available) \
             or all_of(('Gear Up Selected', 'Gear In Transit'), available) \
             or all_of(('Gear Up', 'Gear In Transit'), available) \
@@ -1634,10 +1632,6 @@ class GearUpInTransit(MultistateDerivedParameterNode):
             return False
 
     def derive(self,
-               gear_L=M('Gear (L) Up In Transit'),
-               gear_N=M('Gear (N) Up In Transit'),
-               gear_R=M('Gear (R) Up In Transit'),
-               gear_C=M('Gear (C) Up In Transit'),
                gear_down=M('Gear Down'),
                gear_up=M('Gear Up'),
                gear_up_sel=M('Gear Up Selected'),
@@ -1646,11 +1640,6 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                gear_position=M('Gear Position'),
                fast=S('Fast'),
                model=A('Model'), series=A('Series'), family=A('Family')):
-
-        combine_params = [(x, 'Retracting') for x in (gear_L, gear_R, gear_N, gear_C) if x]
-        if len(combine_params):
-            self.array = vstack_params_where_state(*combine_params).any(axis=0)
-            return
 
         gear_sels = gear_ups = gear_downs = runs = []
         self.array = np_ma_zeros_like(first_valid_parameter(gear_down, gear_up, gear_up_sel, gear_position).array)
