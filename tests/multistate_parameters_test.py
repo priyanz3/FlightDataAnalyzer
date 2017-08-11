@@ -3940,10 +3940,7 @@ class TestGearUpInTransit(unittest.TestCase):
 
 
 class TestGearDownInTransit(unittest.TestCase):
-
-    
     #Gear Down In Transit
-    # combine individal (L/R/C/N) params
     # Gear Down Selected changed to Down to Gear Up
     # Gear Up nolonger Up to Gear Down changing to Down
     # Gear Down Selected changed to Down + following Gear In Transit
@@ -3970,14 +3967,12 @@ class TestGearDownInTransit(unittest.TestCase):
         combinations = self.node_class.get_operational_combinations()
 
         possible_combinations = (
-            ('Gear (L) Down In Transit', 'Gear (N) Down In Transit', 'Gear (R) Down In Transit'), # any one will do
             ('Gear Down', 'Gear Down Selected'),
             ('Gear Down', 'Gear Up'),
             ('Gear Down Selected', 'Gear In Transit'),
             ('Gear Up', 'Gear In Transit'),
             ('Gear Down', 'Gear In Transit'),
             ('Gear Position',),
-            ('Gear (L) Down In Transit',),
         )
 
         for params in possible_combinations:
@@ -3992,20 +3987,6 @@ class TestGearDownInTransit(unittest.TestCase):
                                                     family=A('Family',value='B737 Classic')))
 
     @patch('analysis_engine.multistate_parameters.at')
-    def test_derive__combine(self, at):
-        at.get_gear_transition_times.return_value = (15, 15)
-        # combine individal (L/R/C/N) params
-        left = M('Gear (L) Down In Transit', array=np.ma.array([0]*46 + [1]*9 + [0]*5),
-                 values_mapping=self.values_mapping)
-        right = M('Gear (R) Down In Transit', array=np.ma.array([0]*45 + [1]*9 + [0]*6),
-                  values_mapping=self.values_mapping)
-        node = self.node_class()
-        node.derive(left, None, right, None, None, None, None, None, None, None, self.airborne, self.model, self.series, self.family)
-
-        np.testing.assert_array_equal(node.array, self.expected.array)
-        self.assertEqual(node.values_mapping, self.values_mapping)
-
-    @patch('analysis_engine.multistate_parameters.at')
     def test_derive__down_sel_gear_down(self, at):
         at.get_gear_transition_times.return_value = (15, 15)
         # Gear Down Selected changed to Up to Gear Down
@@ -4014,7 +3995,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_down = M('Gear Down', array=np.ma.array([1]*5 + [0]*50 + [1]*5),
                       values_mapping={0: 'Up', 1: 'Down'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(gear_down, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4028,7 +4009,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_down = M('Gear Down', array=np.ma.array([1]*5 + [0]*50 + [1]*5),
                       values_mapping={0: 'Up', 1: 'Down'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, gear_up, None, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(gear_down, gear_up, None, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4042,7 +4023,7 @@ class TestGearDownInTransit(unittest.TestCase):
         in_trans = M('Gear In Transition', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'In Transit'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, None, down_sel, in_trans, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, None, down_sel, in_trans, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4055,7 +4036,7 @@ class TestGearDownInTransit(unittest.TestCase):
         down_sel = M('Gear Down Selected', array=np.ma.array([1]*5 + [0]*40 + [1]*15),
                      values_mapping={0: 'Up', 1: 'Down'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4068,7 +4049,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_down = M('Gear Down', array=np.ma.array([1]*5 + [0]*50 + [1]*5),
                    values_mapping={0: 'Up', 1: 'Down'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, None, None, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(gear_down, None, None, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4081,7 +4062,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_up = M('Gear Up', array=np.ma.array([0]*15 + [1]*30 + [0]*15),
                    values_mapping={0: 'Down', 1: 'Up'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, gear_up, None, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, gear_up, None, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4095,7 +4076,7 @@ class TestGearDownInTransit(unittest.TestCase):
         in_trans = M('Gear In Transition', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'In Transit'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, None, None, in_trans, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(gear_down, None, None, in_trans, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4109,7 +4090,7 @@ class TestGearDownInTransit(unittest.TestCase):
         in_trans = M('Gear In Transition', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'In Transit'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, gear_up, None, in_trans, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, gear_up, None, in_trans, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4121,7 +4102,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_pos = M('Gear Position', array=np.ma.array([1]*5 + [3]*10 + [2]*30 + [3]*10 + [1]*5),
                       values_mapping={0: '-', 1: 'Down', 2: 'Up', 3: 'In Transit'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, None, None, None, None, gear_pos, self.airborne, self.model, self.series, self.family)
+        node.derive(None, None, None, None, None, gear_pos, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4136,7 +4117,7 @@ class TestGearDownInTransit(unittest.TestCase):
         gear_red_warn = M('Gear (*) Red Warning', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'Warning'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, None, down_sel, None, None, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4151,7 +4132,7 @@ class TestGearDownInTransit(unittest.TestCase):
         red_warn = M('Gear (*) Red Warning', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'Warning'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, None, None, None, red_warn, None, self.airborne, self.model, self.series, self.family)
+        node.derive(gear_down, None, None, None, red_warn, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4166,7 +4147,7 @@ class TestGearDownInTransit(unittest.TestCase):
         red_warn = M('Gear (*) Red Warning', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                       values_mapping={0: '-', 1: 'Warning'})
         node = self.node_class()
-        node.derive(None, None, None, None, None, gear_up, None, None, red_warn, None, self.airborne, self.model, self.series, self.family)
+        node.derive(None, gear_up, None, None, red_warn, None, self.airborne, self.model, self.series, self.family)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
@@ -4181,7 +4162,7 @@ class TestGearDownInTransit(unittest.TestCase):
         red_warn = M('Gear (*) Red Warning', array=np.ma.array([0]*5 + [1]*10 + [0]*25 + [1]*15 + [0]*5),
                       values_mapping={0: '-', 1: 'Warning'})
         node = self.node_class()
-        node.derive(None, None, None, None, gear_down, None, None, None, red_warn, None, self.airborne, self.model, self.series, A('Family', value='B737 Classic'))
+        node.derive(gear_down, None, None, None, red_warn, None, self.airborne, self.model, self.series, A('Family', value='B737 Classic'))
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
