@@ -1442,27 +1442,15 @@ class GearDown(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        combine_gears = any_of(('Gear (L) Down', 'Gear (N) Down', 'Gear (R) Down', 'Gear (C) Down'), available)
         gear_lever = all_of(('Gear Down Selected', 'Gear Down In Transit'), available)
-        return 'Gear Position' in available or combine_gears or gear_lever
+        return 'Gear Position' in available or gear_lever
 
     def derive(self,
-               gl=M('Gear (L) Down'),
-               gn=M('Gear (N) Down'),
-               gr=M('Gear (R) Down'),
-               gc=M('Gear (C) Down'),
                gear_transit=M('Gear Down In Transit'),
                gear_sel=M('Gear Down Selected'),
                gear_pos=M('Gear Position')):
         # Join all available gear parameters and use whichever are available.
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'Down'),
-                (gn, 'Down'),
-                (gr, 'Down'),
-                (gc, 'Down'),
-            ).all(axis=0)
-        elif gear_sel and gear_transit:
+        if gear_sel and gear_transit:
             gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
             self.array = (gear_sel_array == 'Down') & ~(gear_transit.array == 'Extending')
         else:
