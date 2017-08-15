@@ -5867,16 +5867,16 @@ class ControlWheelForceMax(KeyPointValueNode):
 Compute the total travel of each control during the interval between first engine
 start and takeoff start of acceleration, as % of full travel for that control.
 """
-def PreflightCheck(self, firsts, accels, disp, full_disp, absolute=False):
+def PreflightCheck(self, firsts, accels, disps, full_disp):
     for first in firsts:
-        acc=accels.get_next(first.index)
-        travel = np.ma.ptp(disp.array[first.index:acc.index])
+        acc = accels.get_next(first.index)
+        disps = [d.array[first.index:acc.index] for d in disps]
+        disps = [(np.ma.ptp(d), d) for d in disps]
+        travel = sum(min(ptp, full_disp / 2.) if len(disps) > 1 else ptp
+                     for ptp, d in disps)
+        index = np.argmax(np.ma.abs(max(disps, key=itemgetter(0))[1])) + first.index
         # Mark the point where this control displacement was greatest.
-        disp_array = disp.array[first.index:acc.index]
-        if absolute:
-            disp_array = np.ma.abs(disp_array)
-        index = np.ma.argmax(disp_array) + first.index
-        self.create_kpv(index, (travel/full_disp)*100.0)
+        self.create_kpv(index, (travel / full_disp) * 100.0)
 
 
 class ElevatorPreflightCheck(KeyPointValueNode):
@@ -5889,7 +5889,9 @@ class ElevatorPreflightCheck(KeyPointValueNode):
     @classmethod
     def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
 
-        if not all_of(('Elevator', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family'), available):
+        if not (any_of(('Elevator', 'Elevator (L)', 'Elevator (R)'), available) and
+                    all_of(('First Eng Start Before Liftoff', 'Takeoff Acceleration Start',
+                            'Model', 'Series', 'Family'), available)):
             return False
 
         try:
@@ -5901,15 +5903,18 @@ class ElevatorPreflightCheck(KeyPointValueNode):
 
         return True
 
-    def derive(self, disp=P('Elevator'),
+    def derive(self, elev=P('Elevator'),
+               elev_l=P('Elevator (L)'),
+               elev_r=P('Elevator (R)'),
                firsts=KTI('First Eng Start Before Liftoff'),
                accels=KTI('Takeoff Acceleration Start'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
+        disps = [e for e in (elev_l, elev_r) if e] if elev_l or elev_r else [elev]
         disp_range = at.get_elevator_range(model.value, series.value, family.value)
         full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
 
-        PreflightCheck(self, firsts, accels, disp, full_disp)
+        PreflightCheck(self, firsts, accels, disps, full_disp)
 
 
 class AileronPreflightCheck(KeyPointValueNode):
@@ -5942,14 +5947,11 @@ class AileronPreflightCheck(KeyPointValueNode):
                accels=KTI('Takeoff Acceleration Start'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
-        if ail_l or ail_r:
-            disp = max((a for a in (ail_l, ail_r) if a), key=lambda a: a.array.ptp())
-        else:
-            disp = ail
+        disps = [a for a in (ail_l, ail_r) if a] if ail_l or ail_r else [ail]
         disp_range = at.get_aileron_range(model.value, series.value, family.value)
         full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
 
-        PreflightCheck(self, firsts, accels, disp, full_disp, absolute=True)
+        PreflightCheck(self, firsts, accels, disps, full_disp)
 
 
 class RudderPreflightCheck(KeyPointValueNode):
@@ -5981,7 +5983,7 @@ class RudderPreflightCheck(KeyPointValueNode):
         disp_range = at.get_rudder_range(model.value, series.value, family.value)
         full_disp = disp_range * 2 if isinstance(disp_range, (float, int)) else disp_range[1] - disp_range[0]
 
-        PreflightCheck(self, firsts, accels, disp, full_disp)
+        PreflightCheck(self, firsts, accels, [disp], full_disp)
 
 
 class FlightControlPreflightCheck(KeyPointValueNode):

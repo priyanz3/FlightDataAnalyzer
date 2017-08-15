@@ -19289,10 +19289,9 @@ class TestAileronPreflightCheck(unittest.TestCase):
     @patch('analysis_engine.key_point_values.at')
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
-                       items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-
+                     items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
         accels = KTI('Takeoff Acceleration Start',
-                       items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
+                     items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
         aileron = P(
             name='Aileron',
@@ -19302,16 +19301,15 @@ class TestAileronPreflightCheck(unittest.TestCase):
         # Assume that lookup tables are found correctly...
         at.get_aileron_range.return_value = self.return_value
 
-        
         for args in itertools.product(*[(None, aileron)] * 3):
             if not any(args):
                 continue
             node = self.node_class()
             node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
-    
             self.assertEqual(len(node), 1)
             self.assertEqual(node[0].index, 318)
-            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
+            self.assertAlmostEqual(
+                node[0].value, 100 if args[1] and args[2] else 90, delta=1) # 90% of total movement
 
 
 class TestElevatorPreflightCheck(unittest.TestCase):
@@ -19323,21 +19321,27 @@ class TestElevatorPreflightCheck(unittest.TestCase):
         self.family = A('Family', 'Family')
         self.return_value = (-17, 25)
 
+
     @patch('analysis_engine.key_point_values.at')
     def test_can_operate(self, at):
-        at.get_elevator_range.side_effect = [self.return_value, KeyError('No Elevator range for model')]
-        self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
-                         [('Elevator', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family')])
+        at.get_aileron_range.return_value = self.return_value
+        required_deps = ['First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family']
+        ops = self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family)
+        self.assertIn(tuple(['Elevator'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (L)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (L)', 'Elevator (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator', 'Elevator (L)', 'Elevator (R)'] + required_deps), ops)
+        at.get_elevator_range.side_effect = KeyError('No Elevator range for model')
         self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
                          [])
 
     @patch('analysis_engine.key_point_values.at')
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
-                       items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-
+                     items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
         accels = KTI('Takeoff Acceleration Start',
-                       items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
+                     items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
         elevator = P(
             name='Elevator',
@@ -19347,12 +19351,15 @@ class TestElevatorPreflightCheck(unittest.TestCase):
         # Assume that lookup tables are found correctly...
         at.get_elevator_range.return_value = self.return_value
 
-        node = self.node_class()
-        node.derive(elevator, firsts, accels, self.model, self.series, self.family)
-
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 318)
-        self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
+        for args in itertools.product(*[(None, elevator)] * 3):
+            if not any(args):
+                continue
+            node = self.node_class()
+            node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
+            self.assertEqual(len(node), 1)
+            self.assertEqual(node[0].index, 318)
+            self.assertAlmostEqual(
+                node[0].value, 100 if args[1] and args[2] else 90, delta=1) # 90% of total movement
 
 
 class TestRudderPreflightCheck(unittest.TestCase):
