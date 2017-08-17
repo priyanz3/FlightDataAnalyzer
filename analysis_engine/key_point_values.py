@@ -5871,12 +5871,10 @@ def PreflightCheck(self, firsts, accels, disps, full_disp):
     for first in firsts:
         acc = accels.get_next(first.index)
         disps = [d.array[first.index:acc.index] for d in disps]
-        disps = [(np.ma.ptp(d), d) for d in disps]
-        travel = sum(min(ptp, full_disp / 2.) if len(disps) > 1 else ptp
-                     for ptp, d in disps)
-        index = np.argmax(np.ma.abs(max(disps, key=itemgetter(0))[1])) + first.index
+        ptp = max(np.ma.max(d) for d in disps) - min(np.ma.min(d) for d in disps)
+        index = np.argmax(np.ma.abs(max(disps, key=lambda d: np.ma.ptp(d)))) + first.index
         # Mark the point where this control displacement was greatest.
-        self.create_kpv(index, (travel / full_disp) * 100.0)
+        self.create_kpv(index, (ptp / full_disp) * 100.0)
 
 
 class ElevatorPreflightCheck(KeyPointValueNode):

@@ -19293,10 +19293,7 @@ class TestAileronPreflightCheck(unittest.TestCase):
         accels = KTI('Takeoff Acceleration Start',
                      items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
-        aileron = P(
-            name='Aileron',
-            array=x*np.sin(x)*3,
-        )
+        aileron = P(name='Aileron', array=x*np.sin(x)*3)
 
         # Assume that lookup tables are found correctly...
         at.get_aileron_range.return_value = self.return_value
@@ -19308,8 +19305,7 @@ class TestAileronPreflightCheck(unittest.TestCase):
             node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
             self.assertEqual(len(node), 1)
             self.assertEqual(node[0].index, 318)
-            self.assertAlmostEqual(
-                node[0].value, 100 if args[1] and args[2] else 90, delta=1) # 90% of total movement
+            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
 class TestElevatorPreflightCheck(unittest.TestCase):
@@ -19343,10 +19339,7 @@ class TestElevatorPreflightCheck(unittest.TestCase):
         accels = KTI('Takeoff Acceleration Start',
                      items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
-        elevator = P(
-            name='Elevator',
-            array=x*np.sin(x)*3,
-        )
+        elevator = P(name='Elevator', array=x*np.sin(x)*3)
 
         # Assume that lookup tables are found correctly...
         at.get_elevator_range.return_value = self.return_value
@@ -19358,8 +19351,7 @@ class TestElevatorPreflightCheck(unittest.TestCase):
             node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
             self.assertEqual(len(node), 1)
             self.assertEqual(node[0].index, 318)
-            self.assertAlmostEqual(
-                node[0].value, 100 if args[1] and args[2] else 90, delta=1) # 90% of total movement
+            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
 class TestRudderPreflightCheck(unittest.TestCase):
