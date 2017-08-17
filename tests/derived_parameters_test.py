@@ -40,6 +40,12 @@ from analysis_engine.settings import GRAVITY_IMPERIAL
 
 from flight_phase_test import buildsection, buildsections
 
+# Use pre-processed version 
+from analysis_engine.pre_processing.merge_parameters import (
+    LatitudePrepared as LatitudePreparedLatLon,
+    LongitudePrepared as LongitudePreparedLatLon,
+)
+
 from analysis_engine.derived_parameters import (
     # Velocity Speeds:
     #ATEngaged,
@@ -3635,23 +3641,6 @@ class TestHeadingIncreasing(unittest.TestCase):
         expected = np.ma.array([0.0, 1.0, 5.0])
         assert_array_equal(head_inc.array, expected)
 
-
-class TestLatitudeAndLongitudePrepared(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LatitudePrepared.get_operational_combinations()
-        self.assertEqual(
-            combinations,
-            [('Latitude Prepared (Lat Lon)',),
-             ('Latitude Prepared (Heading)',),
-             ('Latitude Prepared (Lat Lon)', 'Latitude Prepared (Heading)')]
-        )
-        combinations = LongitudePrepared.get_operational_combinations()
-        self.assertEqual(
-            combinations,
-            [('Longitude Prepared (Lat Lon)',),
-             ('Longitude Prepared (Heading)',),
-             ('Longitude Prepared (Lat Lon)', 'Longitude Prepared (Heading)')]
-        )
 
     def test_latitude_smoothing_basic(self):
         lat = P('Latitude',np.ma.array([0,0,1,2,1,0,0],dtype=float))
