@@ -173,12 +173,8 @@ from analysis_engine.derived_parameters import (
     ILSFrequency,
     KineticEnergy,
     LatitudePrepared,
-    LatitudePreparedHeading,
-    LatitudePreparedLatLon,
     LatitudeSmoothed,
     LongitudePrepared,
-    LongitudePreparedHeading,
-    LongitudePreparedLatLon,
     LongitudeSmoothed,
     MMOLookup,
     Mach,
@@ -5016,21 +5012,6 @@ class TestILSLocalizer(unittest.TestCase):
 class TestLatitudePrepared(unittest.TestCase):
     def test_can_operate(self):
         combinations = LatitudePrepared.get_operational_combinations()
-        self.assertEqual(
-            combinations,
-            [('Latitude Prepared (Lat Lon)',),
-             ('Latitude Prepared (Heading)',),
-             ('Latitude Prepared (Lat Lon)', 'Latitude Prepared (Heading)')]
-        )
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestLatitudePreparedHeading(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LatitudePreparedHeading.get_operational_combinations()
         expected_combinations = [
             ('Heading', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
              'Latitude At Touchdown', 'Longitude At Touchdown'),
@@ -5057,17 +5038,6 @@ class TestLatitudePreparedHeading(unittest.TestCase):
             ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL',
              'Latitude At Liftoff', 'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown')
         ]
-        self.assertEqual(combinations, expected_combinations)
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestLatitudePrepareLatLon(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LatitudePreparedLatLon.get_operational_combinations()
-        expected_combinations = [('Longitude', 'Latitude', 'Aircraft Type')]
         self.assertEqual(combinations, expected_combinations)
 
     @unittest.skip('Test Not Implemented')
@@ -5088,21 +5058,6 @@ class TestLatitudeSmoothed(unittest.TestCase):
 class TestLongitudePrepared(unittest.TestCase):
     def test_can_operate(self):
         combinations = LongitudePrepared.get_operational_combinations()
-        self.assertEqual(
-            combinations,
-            [('Longitude Prepared (Lat Lon)',),
-             ('Longitude Prepared (Heading)',),
-             ('Longitude Prepared (Lat Lon)', 'Longitude Prepared (Heading)')]
-        )
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
-
-class TestLongitudePreparedHeading(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LongitudePreparedHeading.get_operational_combinations()
         expected_combinations = [
             ('Heading', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
              'Latitude At Touchdown', 'Longitude At Touchdown'),
@@ -5129,17 +5084,6 @@ class TestLongitudePreparedHeading(unittest.TestCase):
             ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL',
              'Latitude At Liftoff', 'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown')
         ]
-        self.assertEqual(combinations, expected_combinations)
-
-    @unittest.skip('Test Not Implemented')
-    def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented')
-
-
-class TestLongitudePreparedLatLon(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LongitudePreparedLatLon.get_operational_combinations()
-        expected_combinations = [('Longitude', 'Latitude', 'Aircraft Type')]
         self.assertEqual(combinations, expected_combinations)
 
     @unittest.skip('Test Not Implemented')

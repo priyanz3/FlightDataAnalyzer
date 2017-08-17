@@ -540,9 +540,18 @@ Node: Start Datetime 	Pre: [] 	Succ: [] 	Neighbors: [] 	Edges: []
         with open(os.path.join(test_data_path, "dependency_graph_example_recorded_lfl_parameters.yaml")) as f:
             lfl_params = yaml.load(f)
         # Pre-processed order
-        lfl_params = list(set(lfl_params + ['Groundspeed', 'Gear (L) Down',
-                                            'Gear (N) Down', 'Gear (R) Down',
-                                            'Gear Down',]))
+        lfl_params = list(set(lfl_params + [
+            'Groundspeed',
+            'Gear (L) Down',
+            'Gear (N) Down',
+            'Gear (R) Down',
+            'Gear Down',
+            'Latitude Prepared',
+            'Longitude Prepared',
+            'Aircraft Type',
+            'Longitude',
+            'Latitude',
+        ]))
         return aircraft_info, lfl_params
 
     @unittest.skip('Need to completely remove circular dependencies before this test could be use by Jenkins.')

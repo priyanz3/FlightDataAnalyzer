@@ -5665,51 +5665,51 @@ class CoordinatesStraighten(object):
         return array
 
 
-class LongitudePrepared(DerivedParameterNode):
+#class LongitudePrepared(DerivedParameterNode):
+    #"""
+    #See Latitude Smoothed for notes.
+    #"""
+
+    #align_frequency = 1
+    #units = ut.DEGREE
+
+    #@classmethod
+    #def can_operate(cls, available):
+        #return any_of(('Longitude Prepared (Heading)',
+                       #'Longitude Prepared (Lat Lon)'), available)
+
+    ## Note force to 1Hz operation as latitude & longitude can be only
+    ## recorded at 0.25Hz.
+    #def derive(self,
+               #from_latlong = P('Longitude Prepared (Lat Lon)'),
+               #from_heading = P('Longitude Prepared (Heading)')):
+        #self.array = from_latlong.array if from_latlong else from_heading.array
+
+
+#class LongitudePreparedLatLon(DerivedParameterNode, CoordinatesStraighten):
+    #"""
+    #See Latitude Smoothed for notes.
+    #"""
+    #name = 'Longitude Prepared (Lat Lon)'
+    #align_frequency = 1
+    #units = ut.DEGREE
+
+    #def derive(self,
+               ## align to longitude to avoid wrap around artifacts
+               #lon=P('Longitude'), lat=P('Latitude'),
+               #ac_type=A('Aircraft Type')):
+        #"""
+        #This removes the jumps in longitude arising from the poor resolution of
+        #the recorded signal.
+        #"""
+        #self.array = self._smooth_coordinates(lon, lat, ac_type)
+
+
+class LongitudePrepared(DerivedParameterNode, CoordinatesStraighten):
     """
     See Latitude Smoothed for notes.
     """
-
-    align_frequency = 1
-    units = ut.DEGREE
-
-    @classmethod
-    def can_operate(cls, available):
-        return any_of(('Longitude Prepared (Heading)',
-                       'Longitude Prepared (Lat Lon)'), available)
-
-    # Note force to 1Hz operation as latitude & longitude can be only
-    # recorded at 0.25Hz.
-    def derive(self,
-               from_latlong = P('Longitude Prepared (Lat Lon)'),
-               from_heading = P('Longitude Prepared (Heading)')):
-        self.array = from_latlong.array if from_latlong else from_heading.array
-
-
-class LongitudePreparedLatLon(DerivedParameterNode, CoordinatesStraighten):
-    """
-    See Latitude Smoothed for notes.
-    """
-    name = 'Longitude Prepared (Lat Lon)'
-    align_frequency = 1
-    units = ut.DEGREE
-
-    def derive(self,
-               # align to longitude to avoid wrap around artifacts
-               lon=P('Longitude'), lat=P('Latitude'),
-               ac_type=A('Aircraft Type')):
-        """
-        This removes the jumps in longitude arising from the poor resolution of
-        the recorded signal.
-        """
-        self.array = self._smooth_coordinates(lon, lat, ac_type)
-
-
-class LongitudePreparedHeading(DerivedParameterNode, CoordinatesStraighten):
-    """
-    See Latitude Smoothed for notes.
-    """
-    name = 'Longitude Prepared (Heading)'
+    name = 'Longitude Prepared'
     align_frequency = 1
     units = ut.DEGREE
 
@@ -5744,52 +5744,52 @@ class LongitudePreparedHeading(DerivedParameterNode, CoordinatesStraighten):
         self.array = lon_array
 
 
-class LatitudePrepared(DerivedParameterNode):
-    """
-    See Latitude Smoothed for notes.
-    """
+#class LatitudePrepared(DerivedParameterNode):
+    #"""
+    #See Latitude Smoothed for notes.
+    #"""
 
-    align_frequency = 1
-    units = ut.DEGREE
+    #align_frequency = 1
+    #units = ut.DEGREE
 
-    @classmethod
-    def can_operate(cls, available):
-        return any_of(('Latitude Prepared (Lat Lon)',
-                       'Latitude Prepared (Heading)'), available)
+    #@classmethod
+    #def can_operate(cls, available):
+        #return any_of(('Latitude Prepared (Lat Lon)',
+                       #'Latitude Prepared (Heading)'), available)
 
-    # Note force to 1Hz operation as latitude & longitude can be only
-    # recorded at 0.25Hz.
-    def derive(self,
-               from_latlong = P('Latitude Prepared (Lat Lon)'),
-               from_heading = P('Latitude Prepared (Heading)')):
-        self.array = from_latlong.array if from_latlong else from_heading.array
+    ## Note force to 1Hz operation as latitude & longitude can be only
+    ## recorded at 0.25Hz.
+    #def derive(self,
+               #from_latlong = P('Latitude Prepared (Lat Lon)'),
+               #from_heading = P('Latitude Prepared (Heading)')):
+        #self.array = from_latlong.array if from_latlong else from_heading.array
 
 
-class LatitudePreparedLatLon(DerivedParameterNode, CoordinatesStraighten):
-    """
-    Creates Latitude Prepared from smoothed Latitude and Longitude parameters.
-    See Latitude Smoothed for notes.
-    """
-    name = 'Latitude Prepared (Lat Lon)'
-    align_frequency = 1
-    units = ut.DEGREE
+#class LatitudePreparedLatLon(DerivedParameterNode, CoordinatesStraighten):
+    #"""
+    #Creates Latitude Prepared from smoothed Latitude and Longitude parameters.
+    #See Latitude Smoothed for notes.
+    #"""
+    #name = 'Latitude Prepared (Lat Lon)'
+    #align_frequency = 1
+    #units = ut.DEGREE
 
-    # Note force to 1Hz operation as latitude & longitude can be only
-    # recorded at 0.25Hz.
-    def derive(self,
-               # align to longitude to avoid wrap around artifacts
-               lon=P('Longitude'),
-               lat=P('Latitude'),
-               ac_type=A('Aircraft Type')):
-        self.array = self._smooth_coordinates(lat, lon, ac_type)
+    ## Note force to 1Hz operation as latitude & longitude can be only
+    ## recorded at 0.25Hz.
+    #def derive(self,
+               ## align to longitude to avoid wrap around artifacts
+               #lon=P('Longitude'),
+               #lat=P('Latitude'),
+               #ac_type=A('Aircraft Type')):
+        #self.array = self._smooth_coordinates(lat, lon, ac_type)
         
             
-class LatitudePreparedHeading(DerivedParameterNode, CoordinatesStraighten):
+class LatitudePrepared(DerivedParameterNode, CoordinatesStraighten):
     """
     Creates 'Latitude Prepared' from Heading and Airspeed between the 
     takeoff and landing locations.
     """
-    name = 'Latitude Prepared (Heading)'
+    name = 'Latitude Prepared'
     align_frequency = 1
     units = ut.DEGREE
 

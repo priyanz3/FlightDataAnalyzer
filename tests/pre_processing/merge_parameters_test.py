@@ -7,6 +7,8 @@ from analysis_engine.node import P
 
 from analysis_engine.pre_processing.merge_parameters import (
     Groundspeed,
+    LatitudePrepared,
+    LongitudePrepared,
 )
 from numpy.ma.testutils import assert_array_equal
 
@@ -29,3 +31,25 @@ class TestGroundspeed(unittest.TestCase):
         assert_array_equal(gs.array[1:-1], np.array([150, 200, 250, 300]))
         self.assertEqual(gs.frequency, 1.0)
         self.assertEqual(gs.offset, 0.0)
+
+
+class TestLatitudePrepared(unittest.TestCase):
+    def test_can_operate(self):
+        combinations = LatitudePrepared.get_operational_combinations()
+        expected_combinations = [('Longitude', 'Latitude', 'Aircraft Type')]
+        self.assertEqual(combinations, expected_combinations)
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented.')
+
+
+class TestLongitudePrepared(unittest.TestCase):
+    def test_can_operate(self):
+        combinations = LongitudePrepared.get_operational_combinations()
+        expected_combinations = [('Longitude', 'Latitude', 'Aircraft Type')]
+        self.assertEqual(combinations, expected_combinations)
+
+    @unittest.skip('Test Not Implemented')
+    def test_derive(self):
+        self.assertTrue(False, msg='Test not implemented')
