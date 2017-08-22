@@ -756,7 +756,7 @@ def has_constant_time(hdf):
     return samples > 5 and duration > 5 and np.ptp(minutes.array) == 0
 
 
-def calculate_fallback_dt(hdf, fallback_dt=None, validation_dt=None, fallback_relative_to_start=True):
+def calculate_fallback_dt(hdf, fallback_dt=None, validation_dt=None, fallback_relative_to_start=True, frame_doubled=False):
     """
     Check the time parameters in the HDF5 file and update the fallback_dt.
 
@@ -773,10 +773,12 @@ def calculate_fallback_dt(hdf, fallback_dt=None, validation_dt=None, fallback_re
                     secs // 86400, secs % 86400 // 3600,
                     secs % 86400 % 3600 // 60, fallback_dt)
 
-    if not has_constant_time(hdf):
+    if not frame_doubled or not has_constant_time(hdf):
         # we don't need to do any further corrections
         return fallback_dt
 
+    # Only use this for certain recorders where we use timestamps from headers
+    # to provide a fallback which happens to be a constant value.
     try:
         timebase = calculate_timebase(*get_dt_arrays(hdf, fallback_dt, validation_dt))
     except (KeyError, ValueError):
@@ -1011,8 +1013,9 @@ def split_hdf_to_segments(hdf_path, aircraft_info, fallback_dt=None,
         boundary = 64 if hdf.superframe_present else 4
 
         segment_tuples = split_segments(hdf, aircraft_info)
+        frame_doubled = aircraft_info.get('Frame Doubled', False)
 
-        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, validation_dt, fallback_relative_to_start)
+        fallback_dt = calculate_fallback_dt(hdf, fallback_dt, validation_dt, fallback_relative_to_start, frame_doubled)
 
     # process each segment (into a new file) having closed original hdf_path
     segments = []
