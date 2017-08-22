@@ -15305,7 +15305,6 @@ class RollCyclesNotDuringFinalApproach(KeyPointValueNode):
                 5.0, 10.0, roll.hz,
                 not_fa.start,
             ))
-            cycle_counter(array, min_step, max_time, hz)
 
 
 class RollAtLowAltitude(KeyPointValueNode):
