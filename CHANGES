@@ -8,6 +8,102 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.35.1
+-------
+
+ - New KPVs:
+    - Airspeed Above FL200 Max (AE-222)
+    - Airspeed Above FL200 Min (AE-222)
+    - Mach Above FL200 Max (AE-223)
+    - Mach Above FL200 Max (AE-223)
+    - Pitch Above FL200 Max (AE-220)
+    - Pitch Above FL200 Min (AE-220)
+    - Roll Above FL200 Max (AE-221)
+    - Heading Variation 800 to 50 Ft (AE-216)
+    - Altitude In Cruise Average (AE-217)
+    - Pitch Touchdown To 60 Kts Airspeed Max (AE-25)
+ - New KTIs:
+    - IAN Final Approach Established Start
+    - IAN Final Approach Established End
+    - IAN Glidepath Established Start
+    - IAN Glidepath Established End
+
+ - Dependency Tree / Circular Dependency Issues from last release:
+   - Remove Track Continous and Track True Continous. Use Track or Track True. Reducing Circular denpendency. (AE-1472)
+   - Move Gear Poistion to preprocessing (AE-1472)
+   - Reduce node complexity: (AE-1472)
+     - Derive Latitude Prepared and Longitude Prepared in pre-processing if Latitude and Longitude recorded parameters are present.
+     - Derive 'Gear Up' in pre-processing if recorded parameters 'Gear (*) Up' are available
+     - Derive 'Gear Down' in pre-processing if recorded parameters 'Gear (*) Down' are available
+     - Derive 'Gear Down In Transit' in pre-processing if recorded parameters 'Gear (*) Down In Transit' are available
+     - Derive 'Gear Up In Transit' in pre-processing if recorded parameters 'Gear (*) Up In Transit' are available
+     - Derive 'Gear In Transit' in pre-processing if recorded parameters 'Gear (*) In Transit' are available
+   - 'Gear Up Selected': Make this node do the deriving and 'Gear Down Selected' simply inverts this parameter. (AE-1472)
+   - Separate helicopter calculations to an overriding node. (AE-1472)
+       - Some nodes, have completely different calculations depending on aircraft type, which seems to be affecting the dependency tree order
+         due the extra complexity of more dependencies.
+       - The helicopter calculations have been moved to a helicopter module which can override the node when processing helicopter flights.
+         This is an initial stage.
+   - Fixes: KPV 'Acceleration Normal Offset' not being created, causing no offset in 'Acceleration Normal Offset Removed' (AE-214)
+   - Fixes: KPV 'Acceleration Lateral Offset' not being created, causing no offset in 'Acceleration Lateral Offset Removed' (AE-214)
+   - Fixes: 'Magnetic Variation From Runway' being derived but too late to be used in deriving 'Heading True' (AE-1460)
+   - Improvement: Simplify 'Heading True' by just using ‘Heading Continuous’ and ‘Magnetic Variation From Runway’. No optional dependencies. (AE-1460)
+   - Improvement: 'Magnetic Variation From Runway' now fits the 'Magnetic Variation' profile to the Magnetic Variation of the takeoff and  (AE-1460)
+                  landing runways instead of being just a linear line.
+
+ - Updates:
+    - Flap: Add Citation & VLJ families
+    - KPV docstrings reviewed and updated (AE-162)
+    - renamed AccelerationNormal20FtToFlare KPV to AccelerationNormal20FtTo5Ft (AE-1424)
+
+ - Improvements:
+    - PreflightCheck: do not split the range into multiple parameters (AE-132)
+    - AccelerationNormalMinusLoadFactorThresholdAtTouchdown: Repair Roll
+    - Gear On Ground: Added condition for Collective to be <15% for Columbia 234 (AE-224)
+    - Ground track: remove small straight slices.
+    - MasterWaningDuration: For AW139, only trigger when airborne. (AE-226)
+    - CoordinatesSmoothed: Better exception handling.
+    - SATMin: added condition for S92 to only work for RotorsTurning phase. Created unit test. (AE-1420)
+    - GearUpInTransit: Use Fast phase instead of Airborne
+    - Changed the threshold for pitch and roll parameters on ground and deck from 40% to 25% (AE-1368)
+    - Some KPVs that relate only to aeroplane operations (e.g. deceleration on runway) made aeroplane specific to avoid calculation for helicopters.
+    - For helicopters, trap for Initial Approach to ignore short hops above 500ft.
+    - Approach phase for helicopters to be created only when beginning and end of approach phase have been identified.
+    - Short periods showing gear on ground to be ignored - can arise from data dropouts in the cruise. (Helicopter specific).
+    - AileronPreflightCheck: use Aileron (L) or (R) in preference to avoid averaged Flaperon
+    - Aileron: upscale to 2x frequency to better match signals
+    - Elevator combination for inboard and outboard sensors. For example, ERJ 170 & 190 types have this form of instrumentation.
+    - Slope To Landing: Introduction of deviation from ISA temperatures.
+    - Headwind: use non continuous parameters.
+       - Changed Heading True to Heading in Headwind derived parameter
+       - Continuous parameters no longer in use
+       - Changes made to node.py so that  recorded parameter keeps lfl label
+       - Modified Heading derived parameter to use Heading True.
+       - Changed the way WindDirection derived parameter is calculated, now it blends two recorded parameters.
+    - Changed Airborne phase for helicopter settings
+    - phases: check all approaches for initial approach
+    - split_segments: identify heli segments with Gear on Ground
+
+ - Fixes:
+    - splitter: fix fallback if date and time parameters constant.
+    - ElevatorPreFlightCheck: added L and R sources, travel includes L and R (AE-132)
+    - derived_parameters.Aileron: fix invalid offset
+    - N1 During Taxi: Cut taxi out slice by 20 seconds in order to prevent false event triggers. (AE-93)
+    - peak_curvature method in library.py
+    - api: fix handling of nan
+    - api: minor code tidying.
+    - Correction to make ISA altitude correction operate in the right sense.
+    - conf: fix engine propulsion for community example.
+    - kpv: various fixes to ThrottleReductionToTouchdownDuration
+       - Removed obsolete descriptions from docstrings.
+       - 5 second delta was incorrectly calculated.
+       - End of reduced scope was incorrect relative to landing start.
+       - Removed redundant if-statement and ploting code.
+    - TakeoffAccelerationStart: Don't create KTI if coreg returns idx larger than parameter.
+    - attributes: fix handling of commercial flight type.
+    - fixes to units
+    - index_at_value: handle NaN arrays
+
 v0.34.2
 -------
 
