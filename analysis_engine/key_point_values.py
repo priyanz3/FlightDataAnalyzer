@@ -14577,7 +14577,7 @@ class RateOfDescent100To20FtMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self,
-               vrt_spd=P('Vertical Speed'),
+               vrt_spd=P('Vertical Speed Inertial'),
                alt_agl=P('Altitude AGL'),
                descending=S('Descent')):
 
@@ -14604,7 +14604,7 @@ class RateOfDescent500To100FtMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self,
-               vrt_spd=P('Vertical Speed'),
+               vrt_spd=P('Vertical Speed Inertial'),
                alt_agl=P('Altitude AGL'),
                descending=S('Descent')):
 
@@ -14690,7 +14690,7 @@ class RateOfDescent20FtToTouchdownMax(KeyPointValueNode):
 class RateOfDescent50FtToTouchdownMax(KeyPointValueNode):
     '''
     Measures the most negative vertical speed (rate of descent) between 20ft
-    and touchdown. Uses altitude AGL. Helicopter only.
+    and touchdown. Uses altitude AGL/AAL.
     '''
 
     units = ut.FPM
@@ -14779,7 +14779,7 @@ class RateOfDescentBelow500FtMax(KeyPointValueNode):
     can_operate = helicopter_only
 
     def derive(self,
-               vrt_spd=P('Vertical Speed'),
+               vrt_spd=P('Vertical Speed Inertial'),
                alt_agl=P('Altitude AGL For Flight Phases'),
                descending=S('Descending')):
         height_bands = slices_and(descending.get_slices(),
