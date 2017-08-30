@@ -2099,6 +2099,9 @@ class DistanceFromLocationMixin(object):
             repair_mask_duration=None, _slice=slice(None, None, None)):
         assert direction in ('forward', 'backward'), 'Unsupported direction: "%s"' % direction
 
+        if lat.array.mask.all() or lon.array.mask.all():
+            return # Either Latitude or Longitude are entirely masked
+
         # We can only handle single liftoffs or touchdowns at this time:
         lat_array = lat.array
         lon_array = lon.array
