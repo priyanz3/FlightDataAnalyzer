@@ -581,6 +581,7 @@ from analysis_engine.key_point_values import (
     RateOfDescentBelow500FtMax,
     RateOfDescentBelow10000FtMax,
     RateOfDescentMax,
+    RateOfDescentAbove3000FtMax,
     RateOfDescentTopOfDescentTo10000FtMax,
     RateOfDescentAtHeightBeforeLevelFlight,
     VerticalSpeedAtAltitude,
@@ -14682,6 +14683,29 @@ class TestRateOfDescentTopOfDescentTo10000FtMax(unittest.TestCase):
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestRateOfDescentAbove3000FtMax(unittest.TestCase):
+
+    def test_can_operate(self):
+        opts = RateOfDescentAbove3000FtMax.get_operational_combinations()
+        self.assertEqual(opts, [('Vertical Speed', 'Altitude AAL For Flight Phases', 'Descent')])
+
+    def test_derive(self):
+        array = np.ma.concatenate((np.ma.arange(0, 3500, 350), [3500]*10))
+        array = np.ma.concatenate((array, array[::-1]))
+        alt = P('Altitude AAL For Flight Phases', array)
+        roc_array = np.ma.concatenate(([437, 625, 812, 1000, 1125, 625, 475, 500, 125, 375], [0]*10))
+        roc_array = np.ma.concatenate((1-roc_array, roc_array[::-1]))
+        vert_spd = P('Vertical Speed', -roc_array)
+        airs = buildsection('Descent', 30, 39)
+        node = RateOfDescentAbove3000FtMax()
+        node.derive(vert_spd, alt, airs)
+
+        expected = KPV('Rate Of Descent Above 3000 Ft Max', items=[
+            KeyPointValue(name='Rate Of Descent Above 3000 Ft Max', index=30, value=-375),
+        ])
+        self.assertEqual(node, expected)
+        
+    
 class TestRateOfDescentBelow10000FtMax(unittest.TestCase):
 
     def test_can_operate(self):

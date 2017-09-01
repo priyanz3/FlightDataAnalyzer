@@ -14488,6 +14488,28 @@ class RateOfDescent5000To3000FtMax(KeyPointValueNode):
             min_value
         )
 
+class RateOfDescentAbove3000FtMax(KeyPointValueNode):
+    '''
+    Measures the most negative vertical speed (rate of descent) above
+    3000ft AAL during Descent phase.
+    '''
+
+    units = ut.FPM
+    
+    def derive(self,
+               vrt_spd=P('Vertical Speed'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               descents=S('Descent')):
+        
+        alt_band = np.ma.masked_inside(alt_aal.array, 0, 3000)
+        alt_descent_sections = valid_slices_within_array(alt_band, descents)
+        
+        self.create_kpv_from_slices(
+            vrt_spd.array,
+            alt_descent_sections,
+            min_value
+        )
+
 
 class RateOfDescent3000To2000FtMax(KeyPointValueNode):
     '''
