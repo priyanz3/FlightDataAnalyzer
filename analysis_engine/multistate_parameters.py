@@ -2775,9 +2775,9 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             If there is no handle position recorded, the default 'Stowed'
             value is retained.
             '''
-            armed = np.ma.where((2.0 < handle.array) & (handle.array < 35.0),
+            armed = np.ma.where((2.0 < handle.array) & (handle.array < 15.0),
                                 'Armed/Cmd Dn', 'Stowed')
-            array = np.ma.where((handle.array >= 35.0) | (spdbrk.array > 1.0),
+            array = np.ma.where((handle.array >= 15.0) | (spdbrk.array > 1.0),
                                 'Deployed/Cmd Up', armed)
         elif spdbrk and not handle:
             # Speedbrake only
@@ -2785,9 +2785,9 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                                 'Deployed/Cmd Up', 'Stowed')
         elif handle and not spdbrk:
             # Speedbrake Handle only
-            armed = np.ma.where((2.0 < handle.array) & (handle.array < 35.0),
+            armed = np.ma.where((2.0 < handle.array) & (handle.array < 15.0),
                                 'Armed/Cmd Dn', 'Stowed')
-            array = np.ma.where(handle.array >= 35.0,
+            array = np.ma.where(handle.array >= 15.0,
                                 'Deployed/Cmd Up', armed)
         else:
             raise ValueError("Can't work without either Speedbrake or Handle")

@@ -2968,11 +2968,11 @@ class TestSpeedbrakeSelected(unittest.TestCase):
         # Follow the handle only
         res = spd_sel.b737_speedbrake(None, handle)
         self.assertEqual(list(res),
-                        ['Stowed']*3 + ['Armed/Cmd Dn']*32 + ['Deployed/Cmd Up']*5)
+                        ['Stowed']*3 + ['Armed/Cmd Dn']*12 + ['Deployed/Cmd Up']*25)
         # Follow the combination
         res = spd_sel.b737_speedbrake(spdbrk, handle)
         self.assertEqual(list(res),
-                        ['Stowed']*3 + ['Armed/Cmd Dn']*7 + ['Deployed/Cmd Up']*20 + ['Armed/Cmd Dn']*5 + ['Deployed/Cmd Up']*5)
+                        ['Stowed']*3 + ['Armed/Cmd Dn']*7 + ['Deployed/Cmd Up']*30)
 
     def test_derive_from_armed_and_speedbrake(self):
         self.maxDiff = None
