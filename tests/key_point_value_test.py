@@ -9311,23 +9311,27 @@ class TestEngN1DuringTaxiMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngN1DuringTaxiMax
-        self.operational_combinations = [('Eng (*) N1 Max', 'Taxiing')]
+        self.operational_combinations = [('Eng (*) N1 Max', 'Taxi Out', 'Taxi In', 'Taxiing')]
         self.function = max_value
 
     def test_derive(self):
         taxi = buildsections('Taxiing', (10, 130), (160, 200))
+        taxi_out = buildsections('Taxi Out', (10, 130))
+        taxi_in = buildsections('Taxi In', (160, 200))
         eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
         node = EngN1DuringTaxiMax()
-        node.get_derived((eng_n1, taxi))
+        node.get_derived((eng_n1, taxi_out, taxi_in, taxi))
         self.assertEqual(node[0].value, 55)
         
-    def test_index_OOR(self):
-        taxi = buildsection('Taxiing', 10, 15)
-        taxi.pop() # pop the slice so that get_slices() returns empty array
+    def test_taxiOut_too_short(self):
+        taxi = buildsections('Taxiing', (10, 25), (160, 200))
+        taxi_out = buildsections('Taxi Out', (10, 25))
+        taxi_in = buildsections('Taxi In', (160, 200))
         eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
         node = EngN1DuringTaxiMax()
-        node.get_derived((eng_n1, taxi))
-        self.assertEqual(node, [])
+        node.get_derived((eng_n1, taxi_out, taxi_in, taxi))
+        self.assertEqual(node[0].value, 50)   
+        
         
 class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
 

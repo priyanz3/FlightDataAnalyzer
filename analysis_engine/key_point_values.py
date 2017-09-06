@@ -9595,14 +9595,21 @@ class EngN1DuringTaxiMax(KeyPointValueNode):
     
     def derive(self,
                eng_n1_max=P('Eng (*) N1 Max'),
+               taxi_out=S('Taxi Out'),
+               taxi_in=S('Taxi In'),
                taxiing=S('Taxiing')):
-        
-        # ignores last 20 seconds of taxi before takeoff in order to prevent  
-        # false event triggers in case of immediate takeoff  
-        if len(taxiing.get_slices()) > 0:
-            taxi_slices = [slice(taxiing[0].slice.start, taxiing[0].slice.stop - 
-                                 (20 * taxiing.hz))] + taxiing.get_slices()[1:]
+        '''
+        ignores last 20 seconds of taxi out before takeoff in order to prevent  
+        false event triggers in case of immediate takeoff
+        '''
+       
+        #check if taxi out is longer than 20 seconds
+        if taxi_out[0].slice.stop - (20 * taxi_out.hz) - taxi_out[0].slice.start > 0:
+            taxi_slices = [slice(taxi_out[0].slice.start, taxi_out[0].slice.stop - 
+                                 (20 * taxi_out.hz))] + taxi_in.get_slices()
             self.create_kpv_from_slices(eng_n1_max.array, taxi_slices, max_value)
+        else:
+            self.create_kpv_from_slices(eng_n1_max.array, taxiing, max_value)
 
 class EngN1DuringTaxiOutMax(KeyPointValueNode):
     '''
