@@ -2693,7 +2693,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
         '''
         x = available
         if family and family.value == 'BD-100':
-            return 'Speedbrake Handle' in x and 'Spoiler Ground Armed' in x
+            return 'Speedbrake Handle' in x and 'Ground Spoiler Armed' in x
         elif family and family.value == 'Global':
             return any_of(('Speedbrake', 'Speedbrake Handle'), available)
         elif family and family.value in ('CRJ 100/200', 'B777'):
@@ -2794,7 +2794,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
         return array
 
     @classmethod
-    def bd100_speedbrake(cls, handle_array, spoiler_gnd_armed_array):
+    def bd100_speedbrake(cls, handle_array, gnd_spoiler_armed_array):
         '''
         Speedbrake Handle non-zero is deployed, Spoiler Ground Armed is
         armed.
@@ -2802,8 +2802,8 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
         # Default is stowed.
         array = MappedArray(np_ma_masked_zeros_like(handle_array, dtype=np.short),
                             values_mapping=cls.values_mapping)
-        array[spoiler_gnd_armed_array != 'Armed'] = 'Stowed'
-        array[spoiler_gnd_armed_array == 'Armed'] = 'Armed/Cmd Dn'
+        array[gnd_spoiler_armed_array != 'Armed'] = 'Stowed'
+        array[gnd_spoiler_armed_array == 'Armed'] = 'Armed/Cmd Dn'
         array[handle_array >= 1] = 'Deployed/Cmd Up'
         return array
 
@@ -2850,7 +2850,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                handle=P('Speedbrake Handle'),
                spdbrk=P('Speedbrake'),
                spdsw=M('Speedbrake Switch'),
-               spoiler_gnd_armed=M('Spoiler Ground Armed'),
+               gnd_spoiler_armed=M('Ground Spoiler Armed'),
                family=A('Family')):
 
         family_name = family.value if family else ''
@@ -2959,7 +2959,7 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
 
         elif family_name == 'BD-100':
             self.array = self.bd100_speedbrake(handle.array,
-                                               spoiler_gnd_armed.array)
+                                               gnd_spoiler_armed.array)
         else:
             raise NotImplementedError("No Speedbrake mapping for '%s'" % family_name)
 
