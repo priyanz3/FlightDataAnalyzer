@@ -12398,8 +12398,13 @@ class FuelQtyAtLiftoff(KeyPointValueNode):
                fuel_qty=P('Fuel Qty'),
                liftoffs=KTI('Liftoff')):
 
-        self.create_kpvs_at_ktis(
-            moving_average(repair_mask(fuel_qty.array), 19), liftoffs)
+        try:
+            self.create_kpvs_at_ktis(
+                moving_average(repair_mask(fuel_qty.array), 19), liftoffs)
+        except ValueError:
+            self.warning("KPV '%s' will not be created because '%s' array "
+                         "could not be repaired.", self.name, fuel_qty.name)
+            return
 
 
 class FuelQtyAtTouchdown(KeyPointValueNode):
@@ -12413,8 +12418,13 @@ class FuelQtyAtTouchdown(KeyPointValueNode):
                fuel_qty=P('Fuel Qty'),
                touchdowns=KTI('Touchdown')):
 
-        self.create_kpvs_at_ktis(
-            moving_average(repair_mask(fuel_qty.array), 19), touchdowns)
+        try:
+            self.create_kpvs_at_ktis(
+                moving_average(repair_mask(fuel_qty.array), 19), touchdowns)
+        except ValueError:
+            self.warning("KPV '%s' will not be created because '%s' array "
+                         "could not be repaired.", self.name, fuel_qty.name)
+            return
 
 
 class FuelQtyWingDifferenceMax(KeyPointValueNode):
