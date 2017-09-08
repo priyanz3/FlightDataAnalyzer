@@ -47,6 +47,7 @@ from analysis_engine.flight_phase import (
     OnDeck,
     RejectedTakeoff,
     RotorsTurning,
+    Stationary,
     StraightAndLevel,
     Takeoff,
     Takeoff5MinRating,
@@ -1949,6 +1950,30 @@ class TestLevelFlight(unittest.TestCase, NodeTest):
         ])
 
 
+class TestStationary(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = Stationary
+        self.operational_combinations = [('Groundspeed',)]
+
+    def test_stationary_basic(self):
+        data = [0]*30+list(range(0, 60, 1)) + list(range(60,0,-2) + [0]*20)
+        gspd = Parameter('Groundspeed',array=np.ma.array(data))
+        station = Stationary()
+        station.derive(gspd)
+        self.assertEqual(station[0].slice, slice(0, 32, None))
+        self.assertEqual(station[1].slice, slice(120, 140, None))
+
+    def test_stationary_reject_short_periods(self):
+        data = [0]*10+[5]*4+[0]*6+[5]*6+[0]*14
+        gspd = Parameter('Groundspeed',array=np.ma.array(data))
+        station = Stationary()
+        station.derive(gspd)
+        self.assertEqual(len(station), 2)
+        self.assertEqual(station[0].slice, slice(0, 20, None))
+        self.assertEqual(station[1].slice, slice(26, 40, None))
+        
+        
 class TestStraightAndLevel(unittest.TestCase, NodeTest):
 
     def setUp(self):

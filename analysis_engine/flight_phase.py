@@ -1505,7 +1505,7 @@ class Stationary(FlightPhaseNode):
     def derive(self,
                gspd=P('Groundspeed')):
         not_moving = runs_of_ones(gspd.array < GROUNDSPEED_FOR_MOBILE)
-        self.create_phases(not_moving)
+        self.create_phases(slices_remove_small_gaps(not_moving, time_limit=5, hz=gspd.frequency))
 
 
 class Landing(FlightPhaseNode):
