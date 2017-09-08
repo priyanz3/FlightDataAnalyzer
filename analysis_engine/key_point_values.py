@@ -2316,13 +2316,14 @@ class AirspeedMinusV235ToClimbAccelerationStartMin(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.start_edge,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(spd_v2.array, (_slice,), min_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.start_edge,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(spd_v2.array, (_slice,), min_value)
 
 
 class AirspeedMinusV235ToClimbAccelerationStartMax(KeyPointValueNode):
@@ -2340,13 +2341,14 @@ class AirspeedMinusV235ToClimbAccelerationStartMax(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.start_edge,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(spd_v2.array, (_slice,), max_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.start_edge,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(spd_v2.array, (_slice,), max_value)
 
 
 class AirspeedMinusV2For3Sec35ToClimbAccelerationStartMin(KeyPointValueNode):
@@ -2364,13 +2366,14 @@ class AirspeedMinusV2For3Sec35ToClimbAccelerationStartMin(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(spd_v2.array, (_slice,), min_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(spd_v2.array, (_slice,), min_value)
 
 
 class AirspeedMinusV2For3Sec35ToClimbAccelerationStartMax(KeyPointValueNode):
@@ -2388,13 +2391,14 @@ class AirspeedMinusV2For3Sec35ToClimbAccelerationStartMax(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(spd_v2.array, (_slice,), max_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(spd_v2.array, (_slice,), max_value)
 
 
 class AirspeedMinusV235To1000FtMax(KeyPointValueNode):
@@ -4584,12 +4588,13 @@ class AltitudeInCruiseAverage(KeyPointValueNode):
 
     def derive(self, alt_std=P('Altitude STD'), cruises=S('Cruise')):
 
-        av_array = np_ma_zeros_like(alt_std.array, mask=True)
-        for cruise in [c.slice for c in cruises]:
-            av_array[cruise] = alt_std.array[cruise]
-        value = np.ma.mean(av_array)
-        index = cruises[-1].slice.stop - 1
-        self.create_kpv(index, value)
+        if len(cruises):
+            av_array = np_ma_zeros_like(alt_std.array, mask=True)
+            for cruise in [c.slice for c in cruises]:
+                av_array[cruise] = alt_std.array[cruise]
+            value = np.ma.mean(av_array)
+            index = cruises[-1].slice.stop - 1
+            self.create_kpv(index, value)
 
 
 ########################################
@@ -5870,10 +5875,11 @@ start and takeoff start of acceleration, as % of full travel for that control.
 def PreflightCheck(self, firsts, accels, disp, full_disp):
     for first in firsts:
         acc=accels.get_next(first.index)
-        travel = np.ma.ptp(disp.array[first.index:acc.index])
-        # Mark the point where this control displacement was greatest.
-        index = np.ma.argmax(disp.array[first.index:acc.index])+first.index
-        self.create_kpv(index, (travel/full_disp)*100.0)
+        if acc:
+            travel = np.ma.ptp(disp.array[first.index:acc.index])
+            # Mark the point where this control displacement was greatest.
+            index = np.ma.argmax(disp.array[first.index:acc.index])+first.index
+            self.create_kpv(index, (travel/full_disp)*100.0)
 
 
 class ElevatorPreflightCheck(KeyPointValueNode):
@@ -6540,6 +6546,8 @@ class RunwayOverrunWithoutSlowingDuration(KeyPointValueNode):
                         lon_tdn.get_last().value)
                     dist_from_td = integrate(gspd.array[land_roll], gspd.hz, scale=scale)
                     time_to_end = (distance_at_tdn - dist_from_td) / speed
+                if len(time_to_end) == 0:
+                    continue
                 limit_point = np.ma.argmin(time_to_end)
                 if limit_point < 0.0:  # Some error conditions lead to rogue negative results.
                     continue
@@ -13072,13 +13080,14 @@ class Pitch35ToClimbAccelerationStartMin(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(pitch.array, (_slice,), min_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(pitch.array, (_slice,), min_value)
 
 
 class Pitch35ToClimbAccelerationStartMax(KeyPointValueNode):
@@ -13096,13 +13105,14 @@ class Pitch35ToClimbAccelerationStartMax(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(pitch.array, (_slice,), max_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(pitch.array, (_slice,), max_value)
 
 
 class Pitch35To400FtMax(KeyPointValueNode):
@@ -13871,13 +13881,14 @@ class PitchRate35ToClimbAccelerationStartMax(KeyPointValueNode):
                climb_accel_start=KTI('Climb Acceleration Start')):
 
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(pitch_rate.array, (_slice,), max_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(pitch_rate.array, (_slice,), max_value)
 
 
 class PitchRate20FtToTouchdownMax(KeyPointValueNode):
@@ -14017,13 +14028,14 @@ class RateOfClimb35ToClimbAccelerationStartMin(KeyPointValueNode):
                climbs=S('Initial Climb'),
                climb_accel_start=KTI('Climb Acceleration Start')):
         init_climb = climbs.get_first()
-        if len(climb_accel_start):
-            _slice = slice(init_climb.slice.start,
-                           climb_accel_start.get_first().index + 1)
-        else:
-            _slice = init_climb.slice
-
-        self.create_kpvs_within_slices(vrt_spd.array, (_slice,), min_value)
+        if init_climb:
+            if len(climb_accel_start):
+                _slice = slice(init_climb.slice.start,
+                               climb_accel_start.get_first().index + 1)
+            else:
+                _slice = init_climb.slice
+    
+            self.create_kpvs_within_slices(vrt_spd.array, (_slice,), min_value)
 
 
 class RateOfClimb35To1000FtMin(KeyPointValueNode):
@@ -15945,10 +15957,10 @@ class TailwindDuringTakeoffMax(KeyPointValueNode):
             if first_spd_idx:
                 first_spd_idx = first_spd_idx + toff.slice.start
                 liftoff = liftoffs.get_first(within_slice=toff.slice)
-
-                self.create_kpvs_within_slices(tailwind.array,
-                                               (slice(first_spd_idx, liftoff.index),),
-                                               max_value)
+                if liftoff:
+                    self.create_kpvs_within_slices(tailwind.array,
+                                                   (slice(first_spd_idx, liftoff.index),),
+                                                   max_value)
             else:
                 self.warning('No Valid Airspeed True in takeof phase?')
 
@@ -17109,7 +17121,10 @@ class TouchdownToPitch2DegreesAbovePitchAt60KtsDuration(KeyPointValueNode):
             # get index where airspeed is 60 Kts
             air_spd_end = index_at_value(airspeed.array.data, 60,
                                          slice(tdwn.index, None))
-            pitch_ref = value_at_index(pitch.array, air_spd_end) + 2
+            pitch_at_60 = value_at_index(pitch.array, air_spd_end)
+            if not pitch_at_60:
+                continue
+            pitch_ref = pitch_at_60 + 2
             stop = index_at_value(pitch.array, pitch_ref,
                                   slice(air_spd_end, tdwn.index, -1))
             if stop:
