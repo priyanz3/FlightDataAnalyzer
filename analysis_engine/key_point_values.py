@@ -15807,6 +15807,19 @@ class TailClearanceDuringLandingMin(KeyPointValueNode):
         self.create_kpvs_within_slices(alt_tail.array, landings, min_value)
 
 
+class TailClearanceDuringGoAroundMin(KeyPointValueNode):
+    '''
+    '''
+
+    units = ut.FT
+
+    def derive(self,
+               alt_tail=P('Altitude Tail'),
+               go_arounds=S('Go Around And Climbout')):
+
+        self.create_kpvs_within_slices(alt_tail.array, go_arounds, min_value)
+
+
 class TailClearanceDuringApproachMin(KeyPointValueNode):
     '''
     This finds abnormally low tail clearance during the approach down to 100ft.
