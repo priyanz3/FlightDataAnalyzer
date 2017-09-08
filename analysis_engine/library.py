@@ -5306,7 +5306,7 @@ def overflow_correction(param, fast=None, max_val=8191):
 
     # remove small masks (up to 10 samples) which may be related to the
     # overflow.
-    old_mask = array.mask
+    old_mask = array.mask.copy()
     good_slices = slices_remove_small_gaps(
         np.ma.clump_unmasked(array), time_limit=25.0,
         hz=hz)
