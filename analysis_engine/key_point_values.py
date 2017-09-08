@@ -5963,6 +5963,8 @@ def PreflightCheck(self, firsts, accels, disps, full_disp):
     """    
     for first in firsts:
         acc = accels.get_next(first.index)
+        if acc is None or int(first.index) == int(acc.index): #avoid 0 length slice
+            continue
         disps = [d.array[first.index:acc.index] for d in disps]
         ptp = max(np.ma.max(d) for d in disps) - min(np.ma.min(d) for d in disps)
         index = np.argmax(np.ma.abs(max(disps, key=lambda d: np.ma.ptp(d)))) + first.index
