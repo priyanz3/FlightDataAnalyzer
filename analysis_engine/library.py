@@ -4683,6 +4683,23 @@ def blend_parameters_linear(params, frequency, offset=0):
 
 def blend_parameters_cubic(this_valid, frequency, min_ip_freq, offset, params, p_freq, p_offset, result_slice):
     '''
+    :param this_valid: slice for data to be processed; assumed all valid data
+    :type this_valid: slice
+    :param frequency: the frequency of the output parameter
+    :type frequency: float
+    :param min_ip_freq: the lowest frequency of the contributing parameters
+    :type min_ip_freq: float
+    :param offset: the offset of the output parameter
+    :type offset: float
+    :param params: list of input parameters to be merged, can be None if not available
+    :type params: [Parameter]
+    :param p_freq: a list of frequencies of the input parameters
+    :type p_freq: [float]
+    :param p_offset: a list of offsets of the input parameters
+    :type p_offset: [float]
+    :param result_slice: the slice where results will be returned
+    :type result_slice: slice
+    
     This provides cubic spline interpolation to support the generic routine
     blend_parameters. It uses cubic spline interpolation for each of the
     component parameters, then applies weighting to reflect both the
