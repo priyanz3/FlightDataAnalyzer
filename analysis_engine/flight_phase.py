@@ -91,49 +91,46 @@ from analysis_engine.settings import (
 
 class Airborne(FlightPhaseNode):
     '''
-    Periods where the aircraft is in the air.
+    Periods where the aircraft is in the air, includes periods where on the
+    ground for short periods (touch and go).
+
+    TODO: Review whether depending upon the "dips" calculated by Altitude AAL
+    would be more sensible as this will allow for negative AAL values longer
+    than the remove_small_gaps time_limit.
     '''
 
     @classmethod
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT'):
             return False
-        elif ac_type == helicopter:
-            return all_of(('Gear On Ground',), available)
         else:
             return 'Altitude AAL For Flight Phases' in available
 
-    def _derive_aircraft(self, alt_aal, fast):
-        '''
-        Periods where the aircraft is in the air, includes periods where on the
-        ground for short periods (touch and go).
-
-        TODO: Review whether depending upon the "dips" calculated by Altitude AAL
-        would be more sensible as this will allow for negative AAL values longer
-        than the remove_small_gaps time_limit.
-        '''
+    def derive(self,
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               fast=S('Fast')):
         # Remove short gaps in going fast to account for aerobatic manoeuvres
         speedy_slices = slices_remove_small_gaps(fast.get_slices(),
                                                  time_limit=60, hz=fast.frequency)
-
+    
         # Just find out when altitude above airfield is non-zero.
         for speedy in speedy_slices:
             # Stop here if the aircraft never went fast.
             if speedy.start is None and speedy.stop is None:
                 break
-
+    
             start_point = speedy.start or 0
             stop_point = speedy.stop or len(alt_aal.array)
             # Restrict data to the fast section (it's already been repaired)
             working_alt = alt_aal.array[start_point:stop_point]
-
+    
             # Stop here if there is inadequate airborne data to process.
             if working_alt is None or np.ma.ptp(working_alt)==0.0:
                 continue
             airs = slices_remove_small_gaps(
-                np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 1.0)),
-                time_limit=40, # 10 seconds was too short for Herc which flies below 0  AAL for 30 secs.
-                hz=alt_aal.frequency)
+                    np.ma.clump_unmasked(np.ma.masked_less_equal(working_alt, 1.0)),
+                    time_limit=40, # 10 seconds was too short for Herc which flies below 0  AAL for 30 secs.
+                    hz=alt_aal.frequency)
             # Make sure we propogate None ends to data which starts or ends in
             # midflight.
             for air in airs:
@@ -145,79 +142,12 @@ class Airborne(FlightPhaseNode):
                     end = None
                 if begin is None or end is None:
                     self.create_phase(shift_slice(slice(begin, end),
-                                                  start_point))
+                                                      start_point))
                 else:
                     duration = end - begin
                     if (duration / alt_aal.hz) > AIRBORNE_THRESHOLD_TIME:
                         self.create_phase(shift_slice(slice(begin, end),
-                                                      start_point))
-
-    def _derive_helicopter(self, alt_rad, alt_agl, gog, rtr):
-        '''
-        We do not use Altitude AGL as the smoothing function causes values close to the
-        ground to be elevated.
-
-        On the AS330 Puma, the Gear On Ground signal is only sampled once per frame
-        so is only used to confirm validity of the radio altimeter signal and for
-        preliminary data validation flight phase computation.
-        '''
-        # When was the gear in the air?
-        gear_off_grounds = runs_of_ones(gog.array == 'Air')
-
-        if alt_rad and alt_agl and rtr:
-            # We can do a full analysis.
-            # First, confirm that the rotors were turning at this time:
-            gear_off_grounds = slices_and(gear_off_grounds, rtr.get_slices())
-
-            # When did the radio altimeters indicate airborne?
-            airs = slices_remove_small_gaps(
-                np.ma.clump_unmasked(np.ma.masked_less_equal(alt_agl.array, 1.0)),
-                time_limit=AIRBORNE_THRESHOLD_TIME_RW, hz=alt_agl.frequency)
-            # Both is a reliable indication of being in the air.
-            for air in airs:
-                for goff in gear_off_grounds:
-                    # Providing they relate to each other :o)
-                    if slices_overlap(air, goff):
-                        start_index = max(air.start, goff.start)
-                        end_index = min(air.stop, goff.stop)
-
-                        better_begin = index_at_value(alt_rad.array, 1.0, _slice=slice(max(start_index-5*alt_rad.frequency, 0), start_index+5*alt_rad.frequency))
-                        if better_begin:
-                            begin = better_begin
-                        else:
-                            begin = start_index
-
-                        better_end = index_at_value(alt_rad.array, 1.0, _slice=slice(max(end_index+5*alt_rad.frequency, 0), end_index-5*alt_rad.frequency, -1))
-                        if better_end:
-                            end = better_end
-                        else:
-                            end = end_index
-
-                        duration = end - begin
-                        if (duration / alt_rad.hz) > AIRBORNE_THRESHOLD_TIME_RW:
-                            self.create_phase(slice(begin, end))
-        else:
-            # During data validation we can select just sensible flights;
-            # short hops make parameter validation tricky!
-            self.create_phases(
-                slices_remove_small_gaps(
-                    slices_remove_small_slices(gear_off_grounds, time_limit=30) ) )
-
-
-    def derive(self,
-               ac_type=A('Aircraft Type'),
-               # aircraft
-               alt_aal=P('Altitude AAL For Flight Phases'),
-               fast=S('Fast'),
-               # helicopter
-               alt_rad=P('Altitude Radio'),
-               alt_agl=P('Altitude AGL'),
-               gog=M('Gear On Ground'),
-               rtr=S('Rotors Turning')):
-        if ac_type == helicopter:
-            self._derive_helicopter(alt_rad, alt_agl, gog, rtr)
-        else:
-            self._derive_aircraft(alt_aal, fast)
+                                                          start_point))
 
 
 class Autorotation(FlightPhaseNode):
@@ -1734,12 +1664,15 @@ class Takeoff(FlightPhaseNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type'), seg_type=A('Segment Type')):
         if seg_type and seg_type.value in ('GROUND_ONLY', 'NO_MOVEMENT', 'STOP_ONLY'):
             return False
-        elif ac_type == helicopter:
-            return all_of(('Altitude AGL', 'Collective', 'Liftoff'), available)
         else:
             return all_of(('Heading Continuous', 'Altitude AAL For Flight Phases', 'Fast', 'Airborne'), available)
 
-    def _derive_aircraft(self, head, alt_aal, fast, airs):
+    def derive(self,
+               head=P('Heading Continuous'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               fast=S('Fast'),
+               airs=S('Airborne'), # If never airborne, didnt takeoff.
+               ):
         # Note: This algorithm works across the entire data array, and
         # not just inside the speedy slice, so the final indexes are
         # absolute and not relative references.
@@ -1800,28 +1733,6 @@ class Takeoff(FlightPhaseNode):
             #-------------------------------------------------------------------
             # Create a phase for this takeoff
             self.create_phase(slice(takeoff_begin, takeoff_end))
-
-    def _derive_helicopter(self, alt_agl, coll, lifts):
-        for lift in lifts:
-            begin = max(lift.index - TAKEOFF_PERIOD * alt_agl.frequency, 0)
-            end = min(lift.index + TAKEOFF_PERIOD * alt_agl.frequency, len(alt_agl.array) - 1)
-            self.create_phase(slice(begin, end))
-
-    def derive(self,
-               ac_type=A('Aircraft Type'),
-               # aircraft
-               head=P('Heading Continuous'),
-               alt_aal=P('Altitude AAL For Flight Phases'),
-               fast=S('Fast'),
-               airs=S('Airborne'), # If never airborne didnt takeoff.
-               # helicopter
-               alt_agl=P('Altitude AGL'),
-               coll=P('Collective'),
-               lifts=S('Liftoff')):
-        if ac_type == helicopter:
-            self._derive_helicopter(alt_agl, coll, lifts)
-        else:
-            self._derive_aircraft(head, alt_aal, fast, airs)
 
 
 class TakeoffRoll(FlightPhaseNode):

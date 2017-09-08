@@ -104,10 +104,10 @@ class ApproachInformation(ApproachNode):
     def can_operate(cls, available, ac_type=A('Aircraft Type')):
         required = ['Approach And Landing']
         required.append('Altitude AGL' if ac_type == helicopter else 'Altitude AAL')
+        lat = 'Latitude Prepared' in available
+        lon = 'Longitude Prepared' in available
         # Force both Latitude and Longitude to be available if one is available
-        if 'Latitude Prepared' in available and 'Longitude Prepared' not in available:
-            return False
-        elif 'Longitude Prepared' in available and 'Latitude Prepared' not in available:
+        if  lat != lon:
             return False
         return all_of(required, available)
 

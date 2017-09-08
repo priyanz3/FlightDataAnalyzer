@@ -2537,8 +2537,10 @@ class NodeManager(object):
             # can_operate expects attributes.
             res = derived_node.can_operate(available, *attributes)
             ##if not res:
-            ##    logger.debug("Derived Node %s cannot operate with available nodes: %s",
+            ##    logger.debug("Derived Node '%s' cannot operate with available nodes: %s",
             ##                 name, available)
+            ##else:
+                ##logger.debug("Node '%s' derived with available nodes: %s",name, available)
             return res
         else:
             ##logger.debug("Node '%s' is unavailable", name)

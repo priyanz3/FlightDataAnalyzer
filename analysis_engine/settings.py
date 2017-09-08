@@ -33,6 +33,15 @@ NODE_MODULES = [
     'analysis_engine.flight_attribute',
     'analysis_engine.flight_phase',
 ]
+NODE_HELICOPTER_MODULE_PATHS = [
+    #'analysis_engine.helicopter.approaches',
+    'analysis_engine.helicopter.derived_parameters',
+    'analysis_engine.helicopter.multistate_parameters',
+    'analysis_engine.helicopter.key_point_values',
+    #'analysis_engine.helicopter.key_time_instances',
+    #'analysis_engine.helicopter.flight_attribute',
+    'analysis_engine.helicopter.flight_phase',
+]
 PRE_PROCESSING_MODULE_PATHS = [ # Cant end with _MODULES as will be added to NODE_MODULES
     'analysis_engine.pre_processing.merge_multistate_parameters',
     'analysis_engine.pre_processing.merge_parameters',

@@ -40,6 +40,12 @@ from analysis_engine.settings import GRAVITY_IMPERIAL
 
 from flight_phase_test import buildsection, buildsections
 
+# Use pre-processed version 
+from analysis_engine.pre_processing.merge_parameters import (
+    LatitudePrepared as LatitudePreparedLatLon,
+    LongitudePrepared as LongitudePreparedLatLon,
+)
+
 from analysis_engine.derived_parameters import (
     # Velocity Speeds:
     #ATEngaged,
@@ -76,6 +82,8 @@ from analysis_engine.derived_parameters import (
     AirspeedMinusVappFor3Sec,
     AirspeedMinusVref,
     AirspeedMinusVrefFor3Sec,
+    AirspeedMinusVLS,
+    AirspeedMinusVLSFor3Sec,
     AirspeedRelative,
     AirspeedRelativeFor3Sec,
     AirspeedSelected,
@@ -203,10 +211,8 @@ from analysis_engine.derived_parameters import (
     ThrustAsymmetry,
     TorqueAsymmetry,
     Track,
-    TrackContinuous,
     TrackDeviationFromRunway,
     TrackTrue,
-    TrackTrueContinuous,
     Turbulence,
     VMOLookup,
     Vapp,
@@ -3480,28 +3486,16 @@ class TestTrack(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = Track
-        self.operational_combinations = [('Track Continuous',)]
+        self.operational_combinations = [('Heading', 'Drift')]
 
     def test_derive_basic(self):
-        track = Parameter('Track Continuous', array=np.ma.arange(0, 1000, 100))
-        node = self.node_class()
-        node.derive(track)
-        expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
-        assert_equal(node.array, expected)
-
-
-class TestTrackContinuous(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = TrackContinuous
-        self.operational_combinations = [('Heading Continuous', 'Drift')]
-
-    def test_derive_basic(self):
-        heading = Parameter('Heading Continuous', array=np.ma.arange(0, 100, 10))
-        drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
+        heading = P('Heading',
+                    array=np.ma.array([14.1, 29.2, 59.3, 119.4, 239.5, 359.6, 449.7, 539.8, 629.9, 720.0]))
+        drift = P('Drift',
+                  array=np.ma.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]))
         node = self.node_class()
         node.derive(heading, drift)
-        expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
+        expected = [15.0, 30.0, 60.0, 120.0, 240.0, 0.0, 90.0, 180.0, 270.0, 0.0]
         assert_equal(node.array, expected)
 
 
@@ -3509,78 +3503,63 @@ class TestTrackTrue(unittest.TestCase, NodeTest):
 
     def setUp(self):
         self.node_class = TrackTrue
-        self.operational_combinations = [('Track True Continuous',)]
+        self.operational_combinations = [('Heading True', 'Drift')]
 
     def test_derive_basic(self):
-        track = Parameter('Track True Continuous', array=np.ma.arange(0, 1000, 100))
+        heading = P('Heading True',
+                    array=np.ma.array([14.1, 29.2, 59.3, 119.4, 239.5, 359.6, 449.7, 539.8, 629.9, 720.0]))
+        drift = P('Drift',
+                      array=np.ma.array([0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]))        
         node = self.node_class()
-        node.derive(track)
-        expected = [0, 100, 200, 300, 40, 140, 240, 340, 80, 180]
+        node.derive(heading, drift)
+        expected = [15.0, 30.0, 60.0, 120.0, 240.0, 0.0, 90.0, 180.0, 270.0, 0.0]
         assert_equal(node.array, expected)
 
-
-class TestTrackTrueContinuous(unittest.TestCase, NodeTest):
-
-    def setUp(self):
-        self.node_class = TrackTrueContinuous
-        self.operational_combinations = [
-            ('Track True',),
-            ('Heading True Continuous',),
-            ('Heading True Continuous', 'Drift'),
-            ('Track True', 'Heading True Continuous', 'Drift'),
-        ]
-
-    def test_derive_basic(self):
-        track = Parameter('Track True', array=np.ma.arange(0, 500, 50, dtype=np.float64))
-        heading = Parameter('Heading True Continuous', array=np.ma.arange(0, 100, 10, dtype=np.float64))
-        drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
-        node = self.node_class()
-        expected = [0, 50, 100, 150, 200, 250, 300, 350, 40, 90]
-        node.derive(track, None, None)
-        assert_equal(node.array, expected)
-        node.derive(track, heading, None)
-        assert_equal(node.array, expected)
-        node.derive(track, heading, drift)
-        assert_equal(node.array, expected)
-        node.derive(None, heading, None)
-        expected = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-        assert_equal(node.array, expected)
-        node.derive(None, heading, drift)
-        expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
-        assert_equal(node.array, expected)
+    #def test_derive_basic(self):
+        #heading = Parameter('Heading True', array=np.ma.arange(0, 100, 10, dtype=np.float64))
+        #drift = Parameter('Drift', array=np.ma.arange(0, 1, 0.1))
+        #node = self.node_class()
+        #node.derive(heading, None)
+        #expected = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+        #assert_equal(node.array, expected)
+        #node.derive(heading, drift)
+        #expected = [0, 10.1, 20.2, 30.3, 40.4, 50.5, 60.6, 70.7, 80.8, 90.9]
+        #assert_equal(node.array, expected)
 
     def test_derive_heading_extra(self):
         # Compare IRU Track Angle True (recorded) against the derived:
         heading = load(os.path.join(test_data_path, 'HeadingTrack_Heading_True.nod'))
         drift = load(os.path.join(test_data_path, 'HeadingTrack_Drift.nod'))
         node = self.node_class()
-        node.derive(None, heading, drift)
+        node.derive(heading, drift)
         expected = load(os.path.join(test_data_path, 'HeadingTrack_IRU_Track_Angle_Recorded.nod'))
         assert_array_within_tolerance(node.array % 360, expected.array, 10, 98)
 
 
 class TestTrackDeviationFromRunway(unittest.TestCase):
+    
+    # TODO: For all these combination there is just one testcase calling a derive once
     def test_can_operate(self):
         self.assertEqual(
             TrackDeviationFromRunway.get_operational_combinations(),
-            [('Track True Continuous', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Approach Information'),
-             ('Track Continuous', 'FDR Takeoff Runway'),
-             ('Track Continuous', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Track Continuous', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track True Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
-             ('Track True Continuous', 'Track Continuous', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information')
+            [('Track True', 'FDR Takeoff Runway'),
+             ('Track True', 'Approach Information'),
+             ('Track', 'FDR Takeoff Runway'),
+             ('Track', 'Approach Information'),
+             ('Track True', 'Track', 'FDR Takeoff Runway'),
+             ('Track True', 'Track', 'Approach Information'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track True', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'Approach Information'),
+             ('Track True', 'Track', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information'),
+             ('Track True', 'Track', 'Takeoff Roll Or Rejected Takeoff', 'FDR Takeoff Runway', 'Approach Information')
              ]
         )
 
@@ -3642,7 +3621,7 @@ class TestTrackDeviationFromRunway(unittest.TestCase):
                         'magnetic_heading': 90.0},
                     landing_runway={
                         'magnetic_heading': 90.0})])
-        heading_track = P('Track Continuous', array=np.ma.array([45]*1500 + [90]*700))
+        heading_track = P('Track', array=np.ma.array([45]*1500 + [90]*700))
 
         deviation = TrackDeviationFromRunway()
         deviation.derive(None, heading_track, None, None, apps)
@@ -3665,39 +3644,11 @@ class TestHeadingIncreasing(unittest.TestCase):
         assert_array_equal(head_inc.array, expected)
 
 
-class TestLatitudeAndLongitudePrepared(unittest.TestCase):
-    def test_can_operate(self):
-        combinations = LatitudePrepared.get_operational_combinations()
-        # Longitude should be the same list
-        self.assertEqual(combinations, LongitudePrepared.get_operational_combinations())
-        # only lat long
-        self.assertTrue(('Longitude', 'Latitude',
-                         'Aircraft Type') in combinations)
-        # with lat long and all the rest
-        self.assertTrue(('Longitude',
-                         'Latitude',
-                         'Heading True',
-                         'Airspeed True',
-                         'Latitude At Liftoff',
-                         'Longitude At Liftoff',
-                         'Latitude At Touchdown',
-                         'Longitude At Touchdown',
-                         'Aircraft Type') in combinations)
-
-        # without lat long
-        self.assertTrue(('Heading True',
-                         'Airspeed True',
-                         'Latitude At Liftoff',
-                         'Longitude At Liftoff',
-                         'Latitude At Touchdown',
-                         'Longitude At Touchdown',
-                         'Aircraft Type') in combinations)
-
     def test_latitude_smoothing_basic(self):
         lat = P('Latitude',np.ma.array([0,0,1,2,1,0,0],dtype=float))
         lon = P('Longitude', np.ma.array([0,0,0,0,0,0,0.001],dtype=float))
-        smoother = LatitudePrepared()
-        smoother.get_derived([lon, lat] + [None] * 10)
+        smoother = LatitudePreparedLatLon()
+        smoother.get_derived([lon, lat, aeroplane])
         # An output warning of smooth cost function closing with cost > 1 is
         # normal and arises because the data sample is short.
         expected = [0.0, 0.0, 0.00088, 0.00088, 0.00088, 0.0, 0.0]
@@ -3706,22 +3657,23 @@ class TestLatitudeAndLongitudePrepared(unittest.TestCase):
     def test_latitude_smoothing_masks_static_data(self):
         lat = P('Latitude',np.ma.array([0,0,1,2,1,0,0],dtype=float))
         lon = P('Longitude', np.ma.zeros(7,dtype=float))
-        smoother = LatitudePrepared()
-        smoother.get_derived([lon, lat] + [None] * 10)
+        smoother = LatitudePreparedLatLon()
+        smoother.get_derived([lon, lat, aeroplane])
         self.assertEqual(np.ma.count(smoother.array),0) # No non-masked values.
 
-    @unittest.skip('Need proper assertions')
+    #@unittest.skip('Need proper assertions')
     def test_latitude_smoothing_short_array(self):
         lat = P('Latitude',np.ma.array([0,0],dtype=float))
         lon = P('Longitude', np.ma.zeros(2,dtype=float))
-        smoother = LatitudePrepared()
-        smoother.get_derived([lon, lat] + [None] * 10)
+        smoother = LatitudePreparedLatLon()
+        smoother.get_derived([lon, lat, aeroplane])
+        self.assertTrue(smoother.array.mask.all())
 
     def test_longitude_smoothing_basic(self):
         lat = P('Latitude',np.ma.array([0,0,1,2,1,0,0],dtype=float))
         lon = P('Longitude', np.ma.array([0,0,-2,-4,-2,0,0],dtype=float))
-        smoother = LongitudePrepared()
-        smoother.get_derived([lon, lat] + [None] * 10)
+        smoother = LongitudePreparedLatLon()
+        smoother.get_derived([lon, lat, aeroplane])
         # An output warning of smooth cost function closing with cost > 1 is
         # normal and arises because the data sample is short.
         expected = [0.0, 0.0, -0.00176, -0.00176, -0.00176, 0.0, 0.0]
@@ -3745,24 +3697,13 @@ class TestHeading(unittest.TestCase):
 class TestHeadingTrue(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(HeadingTrue.get_operational_combinations(),
-            [('Heading Continuous', 'Magnetic Variation From Runway'),
-             ('Heading Continuous', 'Magnetic Variation'),
-             ('Heading Continuous', 'Magnetic Variation From Runway', 'Magnetic Variation')])
-
-    def test_basic_magnetic(self):
-        head = P('Heading Continuous', np.ma.array([0,5,6,355,356]))
-        var = P('Magnetic Variation',np.ma.array([2,3,-8,-7,9]))
-        true = HeadingTrue()
-        true.derive(head, None, var)
-        expected = P('Heading True', np.ma.array([2.0, 8.0, 358.0, 348.0, 5.0]))
-        assert_array_equal(true.array, expected.array)
+            [('Heading Continuous', 'Magnetic Variation From Runway'),])
 
     def test_from_runway_used_in_preference(self):
         head = P('Heading Continuous', np.ma.array([0,5,6,355,356]))
-        mag_var = P('Magnetic Variation',np.ma.array([2,3,-8,-7,9]))
         rwy_var = P('Magnetic Variation From Runway',np.ma.array([0,1,2,3,4]))
         true = HeadingTrue()
-        true.derive(head, rwy_var, mag_var)
+        true.derive(head, rwy_var)
         expected = P('Heading True', np.ma.array([0, 6, 8, 358, 0]))
         assert_array_equal(true.array, expected.array)
 
@@ -4196,11 +4137,12 @@ class TestAileron(unittest.TestCase):
         right = P('Aileron (R)', np.ma.array([2.0]*2+[1.0]*2), frequency=0.5, offset=1.1)
         aileron = Aileron()
         aileron.get_derived([left, right])
-        expected_data = np.ma.array([0.0, 1.5, 1.75, 1.5])
+        expected_data = np.ma.array([0, 1.5, 1.55, 1.75, 1.7, 1.5, 0, 0])
         expected_data[0] = np.ma.masked
+        expected_data[-2:] = np.ma.masked
         assert_array_equal(aileron.array, expected_data)
-        self.assertEqual(aileron.frequency, 0.5)
-        self.assertEqual(aileron.offset, 0.1)
+        self.assertEqual(aileron.frequency, 1)
+        self.assertAlmostEqual(aileron.offset, 0.3, places=1)
 
     def test_left_only(self):
         left = P('Aileron (L)', np.ma.array([1.0]*2+[2.0]*2), frequency=0.5, offset=0.1)
@@ -4226,10 +4168,10 @@ class TestAileron(unittest.TestCase):
         ail = Aileron()
         ail.derive(al, ar)
         # this section is averaging 4.833 degrees on the way in
-        self.assertAlmostEqual(np.ma.average(ail.array[160:600]), 0.04, 1)
+        self.assertAlmostEqual(np.ma.average(ail.array[160:600]), -0.04, 1)
         # this section is averaging 9.106 degrees, ensure it gets moved to 0
         #self.assertAlmostEqual(np.ma.average(ail.array[800:1000]), 0.2, 1)
-        assert_array_within_tolerance(ail.array[800:1000], 0, 4, 90)
+        assert_array_within_tolerance(ail.array[800:1000], 0, 4, 80)
 
 
 class TestAileronLeft(unittest.TestCase):
@@ -5059,9 +5001,35 @@ class TestILSLocalizer(unittest.TestCase):
 
 
 class TestLatitudePrepared(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
     def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        combinations = LatitudePrepared.get_operational_combinations()
+        expected_combinations = [
+            ('Heading', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
+             'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
+             'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Groundspeed', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL',
+             'Latitude At Liftoff', 'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown')
+        ]
+        self.assertEqual(combinations, expected_combinations)
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
@@ -5079,13 +5047,39 @@ class TestLatitudeSmoothed(unittest.TestCase):
 
 
 class TestLongitudePrepared(unittest.TestCase):
-    @unittest.skip('Test Not Implemented')
     def test_can_operate(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        combinations = LongitudePrepared.get_operational_combinations()
+        expected_combinations = [
+            ('Heading', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
+             'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Latitude At Liftoff', 'Longitude At Liftoff',
+             'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Airspeed True', 'Groundspeed', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL', 'Latitude At Liftoff',
+             'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown'),
+            ('Heading', 'Heading True', 'Airspeed True', 'Groundspeed', 'Altitude AAL',
+             'Latitude At Liftoff', 'Longitude At Liftoff', 'Latitude At Touchdown', 'Longitude At Touchdown')
+        ]
+        self.assertEqual(combinations, expected_combinations)
 
     @unittest.skip('Test Not Implemented')
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
+        self.assertTrue(False, msg='Test not implemented')
 
 
 class TestLongitudeSmoothed(unittest.TestCase):
@@ -5130,11 +5124,12 @@ class TestMagneticVariation(unittest.TestCase):
             np.ma.array([-6.425, -6.427, -6.428, -6.43, -6.432, -6.434, -6.435,
                          -6.437, -6.439, -6.44]), decimal=3)
 
-class TestMagneticVariationFromRunway(unittest.TestCase):
+
+class TestMagneticVariationFromRunway(unittest.TestCase): 
     def test_can_operate(self):
         opts = MagneticVariationFromRunway.get_operational_combinations()
         self.assertEqual(opts,
-                    [('HDF Duration',
+                    [('Magnetic Variation',
                      'Heading During Takeoff',
                      'Heading During Landing',
                      'FDR Takeoff Runway',
@@ -5142,52 +5137,62 @@ class TestMagneticVariationFromRunway(unittest.TestCase):
                      )])
 
     def test_derive_both_runways(self):
-        toff_rwy = {'end': {'elevation': 10,
-                            'latitude': 52.7100630002283,
-                            'longitude': -8.907803520515461},
-                    'start': {'elevation': 43,
-                              'latitude': 52.69327604095164,
-                              'longitude': -8.943465355819775},
-                    'strip': {'id': 2014, 'length': 10495,
+        # Updates to the derived parameter. New data from 
+        # segment: d9785fefb912dc77b6e936a4c16de96e5fad868c8cc4cff4e568fb1cff8b87a5
+        toff_rwy = {'end': {'elevation': 76,
+                            'latitude': 28.45938337469715,
+                            'longitude': -13.863540217017873},
+                    'id': 9893,
+                    'identifier': '01',
+                    'magnetic_heading': 6.0,
+                    'start': {'elevation': 24,
+                              'latitude': 28.441860630699686,
+                              'longitude': -13.86412042467909},
+                    'strip': {'id': 4947, 'length': 11175,
                               'surface': 'ASP', 'width': 147}}
-        land_rwy = {'end': {'elevation': 374,
-                            'latitude': 49.024719,
-                            'longitude': 2.524892},
-                    'start': {'elevation': 377,
-                              'latitude': 49.026694,
-                              'longitude': 2.561689},
-                    'strip': {'id': 2322, 'length': 8858,
-                              'surface': 'ASP', 'width': 197}}
+        land_rwy = {'end': {'elevation': -12,
+                            'latitude': 52.32863339288183,
+                            'longitude': 4.70886201465568},
+                    'id': 8089,
+                    'identifier': '18R',
+                    'magnetic_heading': 183.0,
+                    'start': {'elevation': -13,
+                              'latitude': 52.36023790740991,
+                              'longitude': 4.7117260390982185},
+                    'strip': {'id': 4045, 'length': 12467,
+                              'surface': 'ASP', 'width': 183}}
+        mag_var = load(os.path.join(test_data_path, 'magnetic_variation_from_runway__mag_vari.nod'))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 14272),
-            KPV([KeyPointValue(index=62.143, value=58.014, name='Heading During Takeoff')]),
-            KPV([KeyPointValue(index=213.869, value=266.5128, name='Heading During Landing')]),
+            mag_var,
+            KPV([KeyPointValue(index=222.0546875, value=9.4921875, name='Heading During Takeoff')]),
+            KPV([KeyPointValue(index=3626.3046875, value=185.9765625, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
             A('FDR Landing Runway', land_rwy)
         )
         # 0 to takeoff index variation
-        self.assertAlmostEqual(mag_var_rwy.array[0], -5.87, places=2)
-        self.assertAlmostEqual(mag_var_rwy.array[62], -5.87, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[0], -7.83, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[222], -7.82, places=2)
         # landing index to end
-        self.assertAlmostEqual(mag_var_rwy.array[213], -1.18, places=2)
-        self.assertAlmostEqual(mag_var_rwy.array[-1], -1.18, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[3626], -2.81, places=2)
+        self.assertAlmostEqual(mag_var_rwy.array[-1], -2.79, places=2)
 
     def test_derive_only_takeoff_available(self):
         toff_rwy = {'end': {'elevation': 10,
-                            'latitude': 52.7100630002283,
-                            'longitude': -8.907803520515461},
-                    'start': {'elevation': 43,
-                              'latitude': 52.69327604095164,
-                              'longitude': -8.943465355819775},
-                    'strip': {'id': 2014, 'length': 10495,
+                                'latitude': 52.7100630002283,
+                                'longitude': -8.907803520515461},
+                        'start': {'elevation': 43,
+                                  'latitude': 52.69327604095164,
+                                  'longitude': -8.943465355819775},
+                        'strip': {'id': 2014, 'length': 10495,
                               'surface': 'ASP', 'width': 147}}
         land_rwy = {# MISSING VITAL LAT/LONG INFORMATION
                     'strip': {'id': 2322, 'length': 8858,
                               'surface': 'ASP', 'width': 197}}
+        mag_var = P('Magnetic Variation', np.ma.array([0.0]*14272))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 14272),
+            mag_var,
             KPV([KeyPointValue(index=62.143, value=58.014, name='Heading During Takeoff')]),
             KPV([KeyPointValue(index=213.869, value=266.5128, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
@@ -5217,9 +5222,10 @@ class TestMagneticVariationFromRunway(unittest.TestCase):
                               'latitude': 36.899355805,
                               'longitude': -94.0129958013},
                     'strip': {'id': 12132, 'length': 5000, 'surface': 'ASPH', 'width': 75}}
+        mag_var = P('Magnetic Variation', np.ma.array([0.0]*9336))
         mag_var_rwy = MagneticVariationFromRunway()
         mag_var_rwy.derive(
-            A('HDF Duration', 9336),
+            mag_var,
             KPV([KeyPointValue(index=148.9833984375, value=53.00950000000029, name='Heading During Takeoff')]),
             KPV([KeyPointValue(index=1580.7333984375, value=359.8320000000002, name='Heading During Landing')]),
             A('FDR Takeoff Runway', toff_rwy),
@@ -6086,14 +6092,11 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
         super(TestApproachRange, self).setUp()
 
     def test_can_operate(self):
-        operational_combinations = ApproachRange.get_operational_combinations(ac_type=aeroplane)
-        self.assertTrue(('Heading True Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading True' combination")
-        self.assertTrue(('Track True Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track True' combination")
-        self.assertTrue(('Track Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track' combination")
-        self.assertTrue(('Heading Continuous', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading' combination")
-
-        operational_combinations = ApproachRange.get_operational_combinations(ac_type=helicopter)
-        self.assertTrue(('Altitude AAL', 'Latitude Smoothed', 'Longitude Smoothed', 'Touchdown') in operational_combinations, msg="Missing 'helicopter' combination")
+        operational_combinations = ApproachRange.get_operational_combinations()
+        self.assertTrue(('Heading True', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading True' combination")
+        self.assertTrue(('Track True', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track True' combination")
+        self.assertTrue(('Track', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Track' combination")
+        self.assertTrue(('Heading', 'Airspeed True', 'Altitude AAL', 'Approach Information') in operational_combinations, msg="Missing 'Heading' combination")
 
     def test_range_basic(self):
         with hdf_file(self.test_file_path) as hdf:
@@ -6103,7 +6106,7 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
             glide = hdf['ILS Glideslope']
 
         ar = ApproachRange()
-        ar.derive(None, glide, None, None, None, hdg, tas, alt, self.approaches, None, None, None, aeroplane)
+        ar.derive(None, glide, None, None, None, hdg, tas, alt, self.approaches)
         result = ar.array
         chunks = np.ma.clump_unmasked(result)
         self.assertEqual(len(chunks),2)
@@ -6119,24 +6122,13 @@ class TestApproachRange(TemporaryFileTest, unittest.TestCase):
             gspd = hdf['Groundspeed']
 
         ar = ApproachRange()
-        ar.derive(gspd, glide, None, None, hdg, None, tas, alt, self.approaches, None, None, None, aeroplane)
+        ar.derive(gspd, glide, None, None, hdg, None, tas, alt, self.approaches)
         result = ar.array
         chunks = np.ma.clump_unmasked(result)
         self.assertEqual(len(chunks),2)
         self.assertEqual(chunks,[slice(3198, 3422, None),
                                  slice(12928, 13440, None)])
 
-    def test_helicopters(self):
-        d=1.0/60.0
-        lat = P('Latitude',  array=[0.0, d/2.0, d])
-        lon = P('Longitude', array=[0.0, 0.0, 0.0])
-        alt = P('Altitude AAL', array=[200, 100, 0.0])
-        tdn = KTI('Touchdown', items=[KeyTimeInstance(2, 'Touchdown'),])
-        ar = ApproachRange()
-        ar.derive(None, None, None, None, None, None, None, alt, None, lat, lon, tdn, helicopter)
-        result = ar.array
-        # Strictly, 1nm is 1852m, but this error arises from the haversine function.
-        self.assertEqual(int(result[0]), 1853)
 
 class TestZeroFuelWeight(unittest.TestCase, NodeTest):
 
@@ -7611,6 +7603,58 @@ class TestAirspeedMinusVrefFor3Sec(unittest.TestCase, NodeTest):
         ]
         self.airspeed = P(
             name='Airspeed Minus Vref',
+            array=np.ma.repeat((100, 110, 120, 100), (6, 7, 1, 6)),
+            frequency=2,
+        )
+
+    def test_derive_basic(self):
+        node = self.node_class()
+        node.get_derived([self.airspeed])
+        expected = np.ma.repeat((100, 110, 100), (6, 8, 6))
+        expected[-6:] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+    def test_derive_align(self):
+        self.airspeed.frequency = 1
+        node = self.node_class()
+        node.get_derived([self.airspeed])
+        expected = np.ma.array([100.0] * 11 + [105] + [110] * 16 + [100] * 12)
+        expected = np.ma.repeat((100, 105, 110, 100), (11, 1, 16, 12))
+        expected[-7:] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+
+########################################
+# Airspeed Minus VLS
+
+class TestAirspeedMinusVLS(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusVLS
+        self.operational_combinations = [
+            ('Airspeed', 'VLS', 'Approach And Landing'),
+        ]
+        self.airspeed = P('Airspeed', np.ma.repeat(102, 2000))
+        self.vls_record = P('VLS', np.ma.repeat((90, 120), 1000))
+        self.approaches = buildsection('Approach And Landing', 500, 999.5)
+
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(self.airspeed, self.vls_record, self.approaches)
+        expected = np.ma.repeat((0, 12, 0, 0), 500)
+        expected[expected == 0] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+
+class TestAirspeedMinusVLSFor3Sec(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusVLSFor3Sec
+        self.operational_combinations = [
+            ('Airspeed Minus VLS',),
+        ]
+        self.airspeed = P(
+            name='Airspeed Minus VLS',
             array=np.ma.repeat((100, 110, 120, 100), (6, 7, 1, 6)),
             frequency=2,
         )

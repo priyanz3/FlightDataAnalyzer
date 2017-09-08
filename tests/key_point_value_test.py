@@ -1,4 +1,5 @@
 
+import itertools
 import os
 import numpy as np
 import sys
@@ -580,6 +581,7 @@ from analysis_engine.key_point_values import (
     RateOfDescentBelow500FtMax,
     RateOfDescentBelow10000FtMax,
     RateOfDescentMax,
+    RateOfDescentAbove3000FtMax,
     RateOfDescentTopOfDescentTo10000FtMax,
     RateOfDescentAtHeightBeforeLevelFlight,
     VerticalSpeedAtAltitude,
@@ -6966,18 +6968,14 @@ class TestHeadingTrueDuringTakeoff(unittest.TestCase, NodeTest):
 class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
     def setUp(self):
         self.node_class = HeadingDuringLanding
-        self.can_operate_kwargs = {'ac_type':aeroplane}
-        self.operational_combinations = [
-            ('Touchdown', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Touchdown', 'Landing Roll', 'Aircraft Type', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Touchdown', 'Transition Flight To Hover', 'Landing Roll', 'Landing Turn Off Runway', 'Heading Continuous'),
-            ('Aircraft Type', 'Heading Continuous', 'Transition Flight To Hover', 'Touchdown', 'Landing Roll', 'Landing Turn Off Runway'),
-        ]
 
-    def test_can_operate__helicopter(self):
-        can_operate = self.node_class.can_operate
-        self.assertTrue(can_operate(('Heading Continuous', 'Transition Flight To Hover'), ac_type=helicopter))
-        self.assertFalse(can_operate(self.operational_combinations[0], ac_type=helicopter))
+    def test_can_operate(self):
+        combinations = self.node_class.get_operational_combinations()
+        expected_combinations = [
+            ('Heading Continuous', 'Landing Roll', 'Touchdown',
+             'Landing Turn Off Runway')
+        ]
+        self.assertEqual(combinations, expected_combinations)
 
     def test_derive_basic(self):
         head = P('Heading Continuous',np.ma.array([0,1,2,3,4,5,6,7,8,9,10,-1,-1,
@@ -6987,7 +6985,7 @@ class TestHeadingDuringLanding(unittest.TestCase, NodeTest):
         touchdowns = KTI(name='Touchdown', items=[KeyTimeInstance(index=5, name='Touchdown')])
         turn_offs = KTI(name='Landing Turn Off Runway', items=[KeyTimeInstance(index=14, name='Landing Turn Off Runway')])
         kpv = self.node_class()
-        kpv.derive(head, landing, touchdowns, turn_offs, aeroplane)
+        kpv.derive(head, landing, touchdowns, turn_offs)
         expected = [KeyPointValue(index=10, value=6.0,
                                   name='Heading During Landing')]
         self.assertEqual(kpv, expected)
@@ -7107,12 +7105,12 @@ class TestTrackVariation100To50Ft(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Track Continuous', 'Altitude AGL')])
+        self.assertEqual(opts, [('Track', 'Altitude AGL')])
 
     def test_derive(self):
         x = np.linspace(0, 10, 50)
         track = P(
-            name='Track Continuous',
+            name='Track',
             array=-x*np.sin(x),
         )
         array = np.ma.arange(0, 250, 10)
@@ -9332,17 +9330,32 @@ class TestEngGasTempAboveNormalMaxLimitDuringMaximumContinuousPowerDuration(unit
 # Engine N1
 
 
-class TestEngN1DuringTaxiMax(unittest.TestCase, CreateKPVFromSlicesTest):
+class TestEngN1DuringTaxiMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngN1DuringTaxiMax
-        self.operational_combinations = [('Eng (*) N1 Max', 'Taxiing')]
+        self.operational_combinations = [('Eng (*) N1 Max', 'Taxi Out', 'Taxi In', 'Taxiing')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
+        taxi = buildsections('Taxiing', (10, 130), (160, 200))
+        taxi_out = buildsections('Taxi Out', (10, 130))
+        taxi_in = buildsections('Taxi In', (160, 200))
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
+        node = EngN1DuringTaxiMax()
+        node.get_derived((eng_n1, taxi_out, taxi_in, taxi))
+        self.assertEqual(node[0].value, 55)
+        
+    def test_taxiOut_too_short(self):
+        taxi = buildsections('Taxiing', (10, 25), (160, 200))
+        taxi_out = buildsections('Taxi Out', (10, 25))
+        taxi_in = buildsections('Taxi In', (160, 200))
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
+        node = EngN1DuringTaxiMax()
+        node.get_derived((eng_n1, taxi_out, taxi_in, taxi))
+        self.assertEqual(node[0].value, 50)   
+        
+        
 class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
 
     def setUp(self):
@@ -9355,17 +9368,27 @@ class TestEngN1DuringTaxiInMax(unittest.TestCase, CreateKPVFromSlicesTest):
         self.assertTrue(False, msg='Test not implemented.')
 
 
-class TestEngN1DuringTaxiOutMax(unittest.TestCase, CreateKPVFromSlicesTest):
+class TestEngN1DuringTaxiOutMax(unittest.TestCase):
 
     def setUp(self):
         self.node_class = EngN1DuringTaxiOutMax
         self.operational_combinations = [('Eng (*) N1 Max', 'Taxi Out')]
         self.function = max_value
 
-    @unittest.skip('Test Not Implemented')
     def test_derive(self):
-        self.assertTrue(False, msg='Test not implemented.')
-
+        taxi = buildsection('Taxi Out', 10, 130)
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10))
+        node = EngN1DuringTaxiOutMax()
+        node.get_derived((eng_n1, taxi))
+        self.assertEqual(node[0].value, 55)
+    
+    def test_index_OOR(self):
+        taxi = buildsection('Taxiing', 10, 15)
+        taxi.pop() # pop the slice so that get_slices() returns empty array
+        eng_n1 = P('Eng (*) N1 Max', array=np.ma.array([80]*10 + [30]*99 + [55] + [98]*10 + [50]*80))
+        node = EngN1DuringTaxiOutMax()
+        node.get_derived((eng_n1, taxi))
+        self.assertEqual(node, [])    
 
 class TestEngN1DuringApproachMax(unittest.TestCase, CreateKPVFromSlicesTest):
 
@@ -14687,6 +14710,29 @@ class TestRateOfDescentTopOfDescentTo10000FtMax(unittest.TestCase):
         self.assertTrue(False, msg='Test Not Implemented')
 
 
+class TestRateOfDescentAbove3000FtMax(unittest.TestCase):
+
+    def test_can_operate(self):
+        opts = RateOfDescentAbove3000FtMax.get_operational_combinations()
+        self.assertEqual(opts, [('Vertical Speed', 'Altitude AAL For Flight Phases', 'Descent')])
+
+    def test_derive(self):
+        array = np.ma.concatenate((np.ma.arange(0, 3500, 350), [3500]*10))
+        array = np.ma.concatenate((array, array[::-1]))
+        alt = P('Altitude AAL For Flight Phases', array)
+        roc_array = np.ma.concatenate(([437, 625, 812, 1000, 1125, 625, 475, 500, 125, 375], [0]*10))
+        roc_array = np.ma.concatenate((1-roc_array, roc_array[::-1]))
+        vert_spd = P('Vertical Speed', -roc_array)
+        airs = buildsection('Descent', 30, 39)
+        node = RateOfDescentAbove3000FtMax()
+        node.derive(vert_spd, alt, airs)
+
+        expected = KPV('Rate Of Descent Above 3000 Ft Max', items=[
+            KeyPointValue(name='Rate Of Descent Above 3000 Ft Max', index=30, value=-375),
+        ])
+        self.assertEqual(node, expected)
+        
+    
 class TestRateOfDescentBelow10000FtMax(unittest.TestCase):
 
     def test_can_operate(self):
@@ -14980,7 +15026,7 @@ class TestRateOfDescent500To100FtMax(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Final Approach'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Descent'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AGL', 'Descent'), ac_type=helicopter))
 
     def test_derive(self):
         array = np.ma.concatenate((np.ma.arange(0, 50, 25), np.ma.arange(50, 500, 100), [550, 450, 540], [590]*5))
@@ -14988,7 +15034,7 @@ class TestRateOfDescent500To100FtMax(unittest.TestCase):
         alt = P('Altitude AGL', array, frequency=0.25)
         roc_array = np.ma.concatenate(([25]*2, [62, 81, 100, 100, 50, 47, 35, 10, 35, 12, 0, 0, 0]))
         roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
-        vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
+        vert_spd = P('Vertical Speed Inertial', roc_array, frequency=0.25)
         name = 'Descent'
         section = Section(name, slice(19, 27), 19, 27)
         descents = SectionNode(name, items=[section], frequency=0.25)
@@ -15012,7 +15058,7 @@ class TestRateOfDescent100To20FtMax(unittest.TestCase):
         self.assertFalse(self.node_class.can_operate([], ac_type=helicopter))
         self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Final Approach'), ac_type=aeroplane))
         self.assertFalse(self.node_class.can_operate(('Vertical Speed', 'Altitude AAL For Flight Phases', 'Final Approach'), ac_type=helicopter))
-        self.assertTrue(self.node_class.can_operate(('Vertical Speed', 'Altitude AGL', 'Descent'), ac_type=helicopter))
+        self.assertTrue(self.node_class.can_operate(('Vertical Speed Inertial', 'Altitude AGL', 'Descent'), ac_type=helicopter))
 
     def test_derive(self):
         array = np.ma.concatenate((np.ma.arange(0, 50, 5), np.ma.arange(50, 500, 100)))
@@ -15020,7 +15066,7 @@ class TestRateOfDescent100To20FtMax(unittest.TestCase):
         alt = P('Altitude AGL', array, frequency=0.25)
         roc_array = np.ma.concatenate(([25]*2, [62, 81, 100, 100, 50, 47, 35, 10, 35, 12, 0, 0, 0]))
         roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
-        vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
+        vert_spd = P('Vertical Speed Inertial', roc_array, frequency=0.25)
         name = 'Descent'
         section = Section(name, slice(19, 27), 19, 27)
         descents = SectionNode(name, items=[section], frequency=0.25)
@@ -15136,7 +15182,7 @@ class TestRateOfDescentBelow500FtMax(unittest.TestCase):
     def test_can_operate(self):
         self.assertEqual(self.node_class.get_operational_combinations(ac_type=aeroplane), [])
         opts = self.node_class.get_operational_combinations(ac_type=helicopter)
-        self.assertEqual(opts, [('Vertical Speed', 'Altitude AGL For Flight Phases', 'Descending')])
+        self.assertEqual(opts, [('Vertical Speed Inertial', 'Altitude AGL For Flight Phases', 'Descending')])
 
     def test_derive(self,):
         array = np.ma.concatenate((np.ma.arange(0, 2000, 100), np.ma.arange(5000, 10000, 1000)))
@@ -15144,7 +15190,7 @@ class TestRateOfDescentBelow500FtMax(unittest.TestCase):
         alt = P('Altitude AGL For Flight Phases', array, frequency=0.25)
         roc_array = np.ma.concatenate(([437, 625, 812, 1000, 1125, 625, 475, 500, 125, 375, 275], [250]*14))
         roc_array = np.ma.concatenate((roc_array, -roc_array[::-1]))
-        vert_spd = P('Vertical Speed', roc_array, frequency=0.25)
+        vert_spd = P('Vertical Speed Inertial', roc_array, frequency=0.25)
         name = 'Descending'
         section = Section(name, slice(25, 48), 25, 48)
         descent = SectionNode(name, items=[section], frequency=0.25)
@@ -19279,34 +19325,38 @@ class TestAileronPreflightCheck(unittest.TestCase):
 
     @patch('analysis_engine.key_point_values.at')
     def test_can_operate(self, at):
-        at.get_aileron_range.side_effect = [self.return_value, KeyError('No Aileron range for model')]
-        self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
-                         [('Aileron', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family')])
+        at.get_aileron_range.return_value = self.return_value
+        required_deps = ['First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family']
+        ops = self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family)
+        self.assertIn(tuple(['Aileron'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (L)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron (L)', 'Aileron (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Aileron', 'Aileron (L)', 'Aileron (R)'] + required_deps), ops)
+        at.get_aileron_range.side_effect = KeyError('No Aileron range for model')
         self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
                          [])
 
     @patch('analysis_engine.key_point_values.at')
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
-                       items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-
+                     items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
         accels = KTI('Takeoff Acceleration Start',
-                       items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
+                     items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
-        aileron = P(
-            name='Aileron',
-            array=x*np.sin(x)*3,
-        )
+        aileron = P(name='Aileron', array=x*np.sin(x)*3)
 
         # Assume that lookup tables are found correctly...
         at.get_aileron_range.return_value = self.return_value
 
-        node = self.node_class()
-        node.derive(aileron, firsts, accels, self.model, self.series, self.family)
-
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 318)
-        self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
+        for args in itertools.product(*[(None, aileron)] * 3):
+            if not any(args):
+                continue
+            node = self.node_class()
+            node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
+            self.assertEqual(len(node), 1)
+            self.assertEqual(node[0].index, 318)
+            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
 class TestElevatorPreflightCheck(unittest.TestCase):
@@ -19318,36 +19368,41 @@ class TestElevatorPreflightCheck(unittest.TestCase):
         self.family = A('Family', 'Family')
         self.return_value = (-17, 25)
 
+
     @patch('analysis_engine.key_point_values.at')
     def test_can_operate(self, at):
-        at.get_elevator_range.side_effect = [self.return_value, KeyError('No Elevator range for model')]
-        self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
-                         [('Elevator', 'First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family')])
+        at.get_aileron_range.return_value = self.return_value
+        required_deps = ['First Eng Start Before Liftoff', 'Takeoff Acceleration Start', 'Model', 'Series', 'Family']
+        ops = self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family)
+        self.assertIn(tuple(['Elevator'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (L)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator (L)', 'Elevator (R)'] + required_deps), ops)
+        self.assertIn(tuple(['Elevator', 'Elevator (L)', 'Elevator (R)'] + required_deps), ops)
+        at.get_elevator_range.side_effect = KeyError('No Elevator range for model')
         self.assertEqual(self.node_class.get_operational_combinations(model=self.model, series=self.series, family=self.family),
                          [])
 
     @patch('analysis_engine.key_point_values.at')
     def test_derive(self, at):
         firsts = KTI('First Eng Start Before Liftoff',
-                       items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
-
+                     items=[KeyTimeInstance(50, 'First Eng Start Before Liftoff')])
         accels = KTI('Takeoff Acceleration Start',
-                       items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
+                     items=[KeyTimeInstance(375, 'Takeoff Acceleration Start')])
         x = np.linspace(0, 10, 400)
-        elevator = P(
-            name='Elevator',
-            array=x*np.sin(x)*3,
-        )
+        elevator = P(name='Elevator', array=x*np.sin(x)*3)
 
         # Assume that lookup tables are found correctly...
         at.get_elevator_range.return_value = self.return_value
 
-        node = self.node_class()
-        node.derive(elevator, firsts, accels, self.model, self.series, self.family)
-
-        self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 318)
-        self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
+        for args in itertools.product(*[(None, elevator)] * 3):
+            if not any(args):
+                continue
+            node = self.node_class()
+            node.derive(*list(args) + [firsts, accels, self.model, self.series, self.family])
+            self.assertEqual(len(node), 1)
+            self.assertEqual(node[0].index, 318)
+            self.assertAlmostEqual(node[0].value, 90, delta=1) # 90% of total movement
 
 
 class TestRudderPreflightCheck(unittest.TestCase):

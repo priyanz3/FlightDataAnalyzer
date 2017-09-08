@@ -1442,27 +1442,15 @@ class GearDown(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        combine_gears = any_of(('Gear (L) Down', 'Gear (N) Down', 'Gear (R) Down', 'Gear (C) Down'), available)
         gear_lever = all_of(('Gear Down Selected', 'Gear Down In Transit'), available)
-        return 'Gear Position' in available or combine_gears or gear_lever
+        return 'Gear Position' in available or gear_lever
 
     def derive(self,
-               gl=M('Gear (L) Down'),
-               gn=M('Gear (N) Down'),
-               gr=M('Gear (R) Down'),
-               gc=M('Gear (C) Down'),
                gear_transit=M('Gear Down In Transit'),
                gear_sel=M('Gear Down Selected'),
                gear_pos=M('Gear Position')):
         # Join all available gear parameters and use whichever are available.
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'Down'),
-                (gn, 'Down'),
-                (gr, 'Down'),
-                (gc, 'Down'),
-            ).all(axis=0)
-        elif gear_sel and gear_transit:
+        if gear_sel and gear_transit:
             gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
             self.array = (gear_sel_array == 'Down') & ~(gear_transit.array == 'Extending')
         else:
@@ -1483,8 +1471,7 @@ class GearDownInTransit(MultistateDerivedParameterNode):
     def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
         # Can operate with a any combination of parameters available
         gear_transits = ('Gear (L) Down In Transit', 'Gear (N) Down In Transit', 'Gear (R) Down In Transit', 'Gear (C) Down In Transit')
-        gears_available = any_of(gear_transits, available) \
-            or all_of(('Gear Down', 'Gear Down Selected'), available) \
+        gears_available = all_of(('Gear Down', 'Gear Down Selected'), available) \
             or all_of(('Gear Up', 'Gear Down'), available) \
             or all_of(('Gear Down Selected', 'Gear In Transit'), available) \
             or all_of(('Gear Up', 'Gear In Transit'), available) \
@@ -1516,10 +1503,6 @@ class GearDownInTransit(MultistateDerivedParameterNode):
 
 
     def derive(self,
-               gear_L=M('Gear (L) Down In Transit'),
-               gear_N=M('Gear (N) Down In Transit'),
-               gear_R=M('Gear (R) Down In Transit'),
-               gear_C=M('Gear (C) Down In Transit'),
                gear_down=M('Gear Down'),
                gear_up=M('Gear Up'),
                gear_down_sel=M('Gear Down Selected'),
@@ -1529,10 +1512,6 @@ class GearDownInTransit(MultistateDerivedParameterNode):
                airborne=S('Airborne'),
                model=A('Model'), series=A('Series'), family=A('Family')):
 
-        combine_params = [(x, 'Extending') for x in (gear_L, gear_R, gear_N, gear_C) if x]
-        if len(combine_params):
-            self.array = vstack_params_where_state(*combine_params).any(axis=0)
-            return
 
         gear_sels = gear_ups = gear_downs = runs = []
         self.array = np_ma_zeros_like(first_valid_parameter(gear_down, gear_up, gear_down_sel, gear_position).array)
@@ -1625,9 +1604,7 @@ class GearUpInTransit(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available, model=A('Model'), series=A('Series'), family=A('Family')):
         # Can operate with a any combination of parameters available
-        gear_transits = ('Gear (L) Up In Transit', 'Gear (N) Up In Transit', 'Gear (R) Up In Transit', 'Gear (C) Up In Transit')
-        gears_available = any_of(gear_transits, available) \
-            or all_of(('Gear Up', 'Gear Up Selected'), available) \
+        gears_available = all_of(('Gear Up', 'Gear Up Selected'), available) \
             or all_of(('Gear Down', 'Gear Up'), available) \
             or all_of(('Gear Up Selected', 'Gear In Transit'), available) \
             or all_of(('Gear Up', 'Gear In Transit'), available) \
@@ -1655,10 +1632,6 @@ class GearUpInTransit(MultistateDerivedParameterNode):
             return False
 
     def derive(self,
-               gear_L=M('Gear (L) Up In Transit'),
-               gear_N=M('Gear (N) Up In Transit'),
-               gear_R=M('Gear (R) Up In Transit'),
-               gear_C=M('Gear (C) Up In Transit'),
                gear_down=M('Gear Down'),
                gear_up=M('Gear Up'),
                gear_up_sel=M('Gear Up Selected'),
@@ -1667,11 +1640,6 @@ class GearUpInTransit(MultistateDerivedParameterNode):
                gear_position=M('Gear Position'),
                fast=S('Fast'),
                model=A('Model'), series=A('Series'), family=A('Family')):
-
-        combine_params = [(x, 'Retracting') for x in (gear_L, gear_R, gear_N, gear_C) if x]
-        if len(combine_params):
-            self.array = vstack_params_where_state(*combine_params).any(axis=0)
-            return
 
         gear_sels = gear_ups = gear_downs = runs = []
         self.array = np_ma_zeros_like(first_valid_parameter(gear_down, gear_up, gear_up_sel, gear_position).array)
@@ -1770,27 +1738,15 @@ class GearUp(MultistateDerivedParameterNode):
     @classmethod
     def can_operate(cls, available):
         # Can operate with a any combination of parameters available
-        merge_gear_up = any_of(('Gear (L) Up', 'Gear (N) Up', 'Gear (R) Up', 'Gear (C) Up'), available)
         calc_gear_up = all_of(('Gear Up Selected', 'Gear Up In Transit'), available)
         gear_pos = 'Gear Position' in available
-        return merge_gear_up or calc_gear_up or gear_pos
+        return calc_gear_up or gear_pos
 
     def derive(self,
-               gl=M('Gear (L) Up'),
-               gn=M('Gear (N) Up'),
-               gr=M('Gear (R) Up'),
-               gc=M('Gear (C) Up'),
                gear_transit=M('Gear Up In Transit'),
                gear_sel=M('Gear Up Selected'),
                gear_pos=M('Gear Position')):
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'Up'),
-                (gn, 'Up'),
-                (gr, 'Up'),
-                (gc, 'Up'),
-            ).all(axis=0)
-        elif gear_sel and gear_transit:
+        if gear_sel and gear_transit:
             gear_sel_array = align(gear_sel, gear_transit) if gear_sel.hz != gear_transit.hz else gear_sel.array
             self.array = (gear_sel_array == 'Up') & ~(gear_transit.array == 'Retracting')
             _slices = runs_of_ones(self.array == 'Down')
@@ -1813,78 +1769,11 @@ class GearInTransit(MultistateDerivedParameterNode):
         1: 'In Transit',
     }
 
-    @classmethod
-    def can_operate(cls, available):
-        # Can operate with a any combination of parameters available
-        merge_transit = ('Gear (L) In Transit', 'Gear (N) In Transit', 'Gear (R) In Transit', 'Gear (C) In Transit')
-
-        return any_of(merge_transit, available) \
-               or all_of(('Gear Down In Transit', 'Gear Up In Transit'), available)
-
     def derive(self,
-               gl=M('Gear (L) In Transit'),
-               gn=M('Gear (N) In Transit'),
-               gr=M('Gear (R) In Transit'),
-               gc=M('Gear (C) In Transit'),
                gear_down_transit=M('Gear Down In Transit'),
                gear_up_transit=M('Gear Up In Transit')):
-
-        if gl or gn or gr or gc:
-            self.array = vstack_params_where_state(
-                (gl, 'In Transit'),
-                (gn, 'In Transit'),
-                (gr, 'In Transit'),
-                (gc, 'In Transit'),
-            ).any(axis=0)
-        else:
-            self.array = (gear_down_transit.array == 'Extending') | (gear_up_transit.array == 'Retracting')
-
-
-class GearPosition(MultistateDerivedParameterNode):
-
-    align = False
-    values_mapping = {
-        0: '-',
-        1: 'Up',
-        2: 'In Transit',
-        3: 'Down',
-    }
-
-    @classmethod
-    def can_operate(cls, available):
-        # Can operate with a any combination of parameters available
-        merge_position = any_of(('Gear (L) Position', 'Gear (N) Position', 'Gear (R) Position', 'Gear (C) Position'), available)
-        return merge_position
-
-    def derive(self,
-               gl=M('Gear (L) Position'),
-               gn=M('Gear (N) Position'),
-               gr=M('Gear (R) Position'),
-               gc=M('Gear (C) Position')):
-        up_state = vstack_params_where_state(
-            (gl, 'Up'),
-            (gn, 'Up'),
-            (gr, 'Up'),
-            (gc, 'Up'),
-        ).all(axis=0)
-        down_state = vstack_params_where_state(
-            (gl, 'Down'),
-            (gn, 'Down'),
-            (gr, 'Down'),
-            (gc, 'Down'),
-        ).all(axis=0)
-        transit_state = vstack_params_where_state(
-            (gl, 'In Transit'),
-            (gn, 'In Transit'),
-            (gr, 'In Transit'),
-            (gc, 'In Transit'),
-        ).any(axis=0)
-        param = first_valid_parameter(gl, gn, gr, gc)
-        self.array = np_ma_masked_zeros_like(param.array)
-        self.array[repair_mask(up_state, repair_duration=None)] = 'Up'
-        self.array[repair_mask(down_state, repair_duration=None)] = 'Down'
-        self.array[repair_mask(transit_state, repair_duration=None)] = 'In Transit'
-        self.array = nearest_neighbour_mask_repair(self.array)
+        self.array = (gear_down_transit.array == 'Extending') | \
+            (gear_up_transit.array == 'Retracting')
 
 
 class GearOnGround(MultistateDerivedParameterNode):
@@ -1898,24 +1787,12 @@ class GearOnGround(MultistateDerivedParameterNode):
     }
 
     @classmethod
-    def can_operate(cls, available, ac_type=A('Aircraft Type')):
-        gog_available = any_of(('Gear (L) On Ground', 'Gear (R) On Ground'), available)
-        if gog_available:
-            return True
-        elif ac_type == helicopter:
-            return all_of(('Vertical Speed', 'Eng (*) Torque Avg'), available)
-        else:
-            return False
+    def can_operate(cls, available):
+        return any_of(('Gear (L) On Ground', 'Gear (R) On Ground'), available)
 
     def derive(self,
                gl=M('Gear (L) On Ground'),
-               gr=M('Gear (R) On Ground'),
-               # derived for helicopter
-               vert_spd=P('Vertical Speed'),
-               torque=P('Eng (*) Torque Avg'),
-               ac_type=A('Aircraft Type'),
-               ac_series=A('Series'),
-               collective=P('Collective')):
+               gr=M('Gear (R) On Ground')):
 
         # Note that this is not needed on the following frames which record
         # this parameter directly: 737-4, 737-i
@@ -1941,96 +1818,22 @@ class GearOnGround(MultistateDerivedParameterNode):
             self.array = gear.array
             self.frequency = gear.frequency
             self.offset = gear.offset
-        elif ac_type == helicopter:
-            vert_spd_limit = 100.0
-            torque_limit = 30.0
-            if ac_series and ac_series.value == 'Columbia 234':
-                vert_spd_limit = 125.0
-                torque_limit = 22.0
-                collective_limit = 15.0
-                
-                vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
-                collective_array = align(collective, torque) if collective.hz != torque.hz else collective.array
-                
-                vert_spd_array = moving_average(vert_spd_array)
-                torque_array = moving_average(torque.array)                
-                collective_array = moving_average(collective_array)
-                
-                roo_vs_array = runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1)
-                roo_torque_array = runs_of_ones(torque_array < torque_limit, min_samples=1)
-                roo_collective_array = runs_of_ones(collective_array < collective_limit, min_samples=1)
-                
-                vs_and_torque = slices_and(roo_vs_array, roo_torque_array)
-                grounded = slices_and(vs_and_torque, roo_collective_array)
-                
-                array = np_ma_zeros_like(vert_spd_array)
-                for _slice in slices_remove_small_slices(grounded, count=2):
-                    array[_slice] = 1
-                array.mask = vert_spd_array.mask | torque_array.mask
-                array.mask = array.mask | collective_array.mask
-                self.array = nearest_neighbour_mask_repair(array)
-                self.frequency = torque.frequency
-                self.offset = torque.offset                
-                
-            else:
-                vert_spd_array = align(vert_spd, torque) if vert_spd.hz != torque.hz else vert_spd.array
-                # Introducted for S76 and Bell 212 which do not have Gear On Ground available
-                
-                vert_spd_array = moving_average(vert_spd_array)
-                torque_array = moving_average(torque.array)
-                
-                grounded = slices_and(runs_of_ones(abs(vert_spd_array) < vert_spd_limit, min_samples=1), 
-                                      runs_of_ones(torque_array < torque_limit, min_samples=1))
-                
-                array = np_ma_zeros_like(vert_spd_array)
-                for _slice in slices_remove_small_slices(grounded, count=2):
-                    array[_slice] = 1
-                array.mask = vert_spd_array.mask | torque_array.mask
-                self.array = nearest_neighbour_mask_repair(array)
-                self.frequency = torque.frequency
-                self.offset = torque.offset
-                
         else:
             # should not get here if can_operate is correct
             raise NotImplementedError()
 
 
 class GearDownSelected(MultistateDerivedParameterNode):
-    '''
-    Red warnings are included as the selection may first be indicated by one
-    of the red warning lights coming on, rather than the gear status
-    changing.
-
-    This is the basis for 'Gear Up Selected'.
-
-    TODO: Derive from "Gear Up" only if recorded.
-    '''
+    
+    
     align_frequency = 1
-
     values_mapping = {
         0: 'Up',
         1: 'Down',
     }
-
-    @classmethod
-    def can_operate(cls, available):
-        if 'Gear Down In Transit' in available:
-            return any_of(('Gear Down', 'Gear Position'), available)
-        else:
-            return 'Gear Up Selected' in available
-
-    def derive(self,
-               gear_down=M('Gear Down'),
-               gear_position=M('Gear Position'),
-               up_sel=M('Gear Up Selected'),
-               gear_down_transit=M('Gear Down In Transit')):
-
-        if gear_down and gear_down_transit:
-            self.array = (gear_down.array == 'Down') | (gear_down_transit.array == 'Extending')
-        elif gear_position and gear_down_transit:
-            self.array = (gear_position.array == 'Down') | (gear_down_transit.array == 'Extending')
-        else:
-            self.array = up_sel.array == 'Down'
+    
+    def derive(self, up_sel=M('Gear Up Selected')):
+        self.array = up_sel.array == 'Down'
 
 
 class GearUpSelected(MultistateDerivedParameterNode):
@@ -2040,7 +1843,6 @@ class GearUpSelected(MultistateDerivedParameterNode):
     Warnings.
     '''
     align_frequency = 1
-
     values_mapping = {
         0: 'Down',
         1: 'Up',
@@ -2048,23 +1850,21 @@ class GearUpSelected(MultistateDerivedParameterNode):
 
     @classmethod
     def can_operate(cls, available):
-        up_trans = ('Gear Up In Transit' in available) and any_of(('Gear Up', 'Gear Position'), available)
-        return up_trans or ('Gear Down Selected' in available)
+        return all_of(('Gear Up', 'Gear Up In Transit'), available) or \
+               all_of(('Gear Down', 'Gear Down In Transit'), available)
 
     def derive(self,
                gear_up=M('Gear Up'),
-               gear_position=M('Gear Position'),
-               down_sel=M('Gear Down Selected'),
-               gear_up_transit=M('Gear Up In Transit')):
+               gear_up_transit=M('Gear Up In Transit'),
+               gear_down=M('Gear Down'),
+               gear_down_transit=M('Gear Down In Transit')):
 
         if gear_up and gear_up_transit:
-            self.array = (gear_up.array == 'Up') | (gear_up_transit.array == 'Retracting')
-        elif gear_position and gear_up_transit:
-            self.array = (gear_position.array == 'Up') | (gear_up_transit.array == 'Retracting')
-        else:
-            self.array = down_sel.array == 'Up'
-        ## Invert the Gear Down Selected array
-        # self.array = 1 - gear_dn_sel.array.raw
+            self.array = (gear_up.array == 'Up') | \
+                (gear_up_transit.array == 'Retracting')
+        if gear_down and gear_down_transit:
+            self.array = 1 - ((gear_down.array == 'Down') | \
+                              (gear_down_transit.array == 'Extending'))
 
 
 class Gear_RedWarning(MultistateDerivedParameterNode):
@@ -2975,9 +2775,9 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             If there is no handle position recorded, the default 'Stowed'
             value is retained.
             '''
-            armed = np.ma.where((2.0 < handle.array) & (handle.array < 35.0),
+            armed = np.ma.where((2.0 < handle.array) & (handle.array < 15.0),
                                 'Armed/Cmd Dn', 'Stowed')
-            array = np.ma.where((handle.array >= 35.0) | (spdbrk.array > 1.0),
+            array = np.ma.where((handle.array >= 15.0) | (spdbrk.array > 1.0),
                                 'Deployed/Cmd Up', armed)
         elif spdbrk and not handle:
             # Speedbrake only
@@ -2985,9 +2785,9 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
                                 'Deployed/Cmd Up', 'Stowed')
         elif handle and not spdbrk:
             # Speedbrake Handle only
-            armed = np.ma.where((2.0 < handle.array) & (handle.array < 35.0),
+            armed = np.ma.where((2.0 < handle.array) & (handle.array < 15.0),
                                 'Armed/Cmd Dn', 'Stowed')
-            array = np.ma.where(handle.array >= 35.0,
+            array = np.ma.where(handle.array >= 15.0,
                                 'Deployed/Cmd Up', armed)
         else:
             raise ValueError("Can't work without either Speedbrake or Handle")

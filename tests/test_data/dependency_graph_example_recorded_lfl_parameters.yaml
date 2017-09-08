@@ -1,0 +1,490 @@
+[!!python/unicode '115 VAC Standby Bus', !!python/unicode '115 VAC Unavailable To
+    IGN (L) (1)', !!python/unicode '115 VAC Unavailable To IGN (L) (2)', !!python/unicode '115
+    VAC Unavailable To IGN (R) (1)', !!python/unicode '115 VAC Unavailable To IGN
+    (R) (2)', !!python/unicode '115 VAC XFR Bus', !!python/unicode '28 VDC Battery
+    Bus', !!python/unicode '28 VDC Battery Bus Hot', !!python/unicode '28 VDC Battery
+    Bus Switch Hot', !!python/unicode '28 VDC Bus (1)', !!python/unicode '28 VDC Bus
+    (2)', !!python/unicode '28 VDC Standby Bus', !!python/unicode 'ABS Roll Exceeded',
+  !!python/unicode 'AC Ident', !!python/unicode 'AC Type', !!python/unicode 'ACMS
+    Software Part Number Code', !!python/unicode 'AD-IR Fault', !!python/unicode 'ADC
+    Fault', !!python/unicode 'ADF (L) Selected (Capt)', !!python/unicode 'ADF (L)
+    Selected (FO)', !!python/unicode 'ADF (R) Selected (Capt)', !!python/unicode 'ADF
+    (R) Selected (FO)', !!python/unicode 'ADIRU (L) PT Input (1) Invalid', !!python/unicode 'ADIRU
+    (L) PT Input (2) Invalid', !!python/unicode 'ADIRU (R) PT Input (1) Invalid',
+  !!python/unicode 'ADIRU (R) PT Input (2) Invalid', !!python/unicode 'ADR Air-Ground
+    Logic Invalid', !!python/unicode 'ADR Fault', !!python/unicode 'ADR Ground Effect
+    Inoperative', !!python/unicode 'ADR Program Pin Invalid', !!python/unicode 'ADR
+    Selected', !!python/unicode 'AOA (L)', !!python/unicode 'AOA (R)', !!python/unicode 'AOA
+    Failure', !!python/unicode 'AOA Primary Heater', !!python/unicode 'AOA Signal
+    Failure', !!python/unicode 'AP (1) Engaged', !!python/unicode 'AP (2) Engaged',
+  !!python/unicode 'AP Trim Down', !!python/unicode 'AP Trim Up', !!python/unicode 'AP
+    Warning', !!python/unicode 'APU Available', !!python/unicode 'APU Bleed Air Switch',
+  !!python/unicode 'APU Bleed Valve Open', !!python/unicode 'APU Fault', !!python/unicode 'APU
+    Fire', !!python/unicode 'APU Fuel Flow', !!python/unicode 'APU Gas Temp', !!python/unicode 'APU
+    N1', !!python/unicode 'APU Oil Qty Low', !!python/unicode 'APU Oil Temp', !!python/unicode 'APU
+    On', !!python/unicode 'AT Armed', !!python/unicode 'AT Disconnected', !!python/unicode 'AT
+    Engaged', !!python/unicode 'AT FMC Speed', !!python/unicode 'AT Go Around', !!python/unicode 'AT
+    Limit', !!python/unicode 'AT MCP Speed', !!python/unicode 'AT Min Speed', !!python/unicode 'AT
+    Mode', !!python/unicode 'AT N1', !!python/unicode 'AT Retard', !!python/unicode 'AT
+    Speed Warning', !!python/unicode 'AT Warning', !!python/unicode 'Acceleration
+    Lateral', !!python/unicode 'Acceleration Limit Mode (1) Selected', !!python/unicode 'Acceleration
+    Limit Mode (2) Selected', !!python/unicode 'Acceleration Longitudinal', !!python/unicode 'Acceleration
+    Normal', !!python/unicode 'Aileron (L)', !!python/unicode 'Aileron (L) Actuator',
+  !!python/unicode 'Aileron (R)', !!python/unicode 'Aileron (R) Actuator', !!python/unicode 'Aileron
+    AP (1) Roll Command', !!python/unicode 'Aileron AP (2) Roll Command', !!python/unicode 'Aileron
+    Quadrant', !!python/unicode 'Airborne Vibration Monitoring System Fault', !!python/unicode 'Airports
+    Selected (Capt)', !!python/unicode 'Airports Selected (FO)', !!python/unicode 'Airspeed',
+  !!python/unicode 'Airspeed Max Allowable', !!python/unicode 'Airspeed Min For Flaps
+    Retracted', !!python/unicode 'Airspeed Selected', !!python/unicode 'Airspeed Selected
+    (FMC)', !!python/unicode 'Align Mode Enhanced Selected', !!python/unicode 'All
+    ADIRU (1) Invalid (1)', !!python/unicode 'All ADIRU (1) Invalid (2)', !!python/unicode 'All
+    ADIRU (2) Invalid (1)', !!python/unicode 'All ADIRU (2) Invalid (2)', !!python/unicode 'Alternator
+    (1) Fault', !!python/unicode 'Alternator (2) Fault', !!python/unicode 'Altitude
+    (FMC) Selected', !!python/unicode 'Altitude Acq', !!python/unicode 'Altitude Acquire',
+  !!python/unicode 'Altitude Alert', !!python/unicode 'Altitude Baro (1)', !!python/unicode 'Altitude
+    Baro (2)', !!python/unicode 'Altitude Baro (3)', !!python/unicode 'Altitude Baro
+    (4)', !!python/unicode 'Altitude Baro Invalid (1)', !!python/unicode 'Altitude
+    Baro Invalid (2)', !!python/unicode 'Altitude Baro No Data (1)', !!python/unicode 'Altitude
+    Baro No Data (2)', !!python/unicode 'Altitude Baro Signal Fail (3)', !!python/unicode 'Altitude
+    Hold', !!python/unicode 'Altitude Hold Push Button Light', !!python/unicode 'Altitude
+    Radio (A)', !!python/unicode 'Altitude Radio (B)', !!python/unicode 'Altitude
+    Radio (C)', !!python/unicode 'Altitude Radio Health', !!python/unicode 'Altitude
+    Reference Active', !!python/unicode 'Altitude STD', !!python/unicode 'Altitude
+    Selected', !!python/unicode 'Approach Mode Selected (Capt)', !!python/unicode 'Approach
+    Mode Selected (FO)', !!python/unicode 'Approach Push Button Light', !!python/unicode 'Asymmetry
+    Enabled', !!python/unicode 'Auto Speedbrake Extend', !!python/unicode 'Autobrake
+    Applied', !!python/unicode 'Autoslat (L) Command', !!python/unicode 'Autoslat
+    (L) Enabled', !!python/unicode 'Autoslat (L) Valid', !!python/unicode 'Autoslat
+    (R) Command', !!python/unicode 'Autoslat (R) Enabled', !!python/unicode 'Autoslat
+    (R) Valid', !!python/unicode 'Autoslat Command', !!python/unicode 'Brake (L) Inboard
+    Temp', !!python/unicode 'Brake (L) Outboard Temp', !!python/unicode 'Brake (L)
+    Press', !!python/unicode 'Brake (R) Inboard Temp', !!python/unicode 'Brake (R)
+    Outboard Temp', !!python/unicode 'Brake (R) Press', !!python/unicode 'Brake Main
+    Alternate Selected', !!python/unicode 'Brake Overheat Light', !!python/unicode 'CDS
+    Fault Message DEU (1)', !!python/unicode 'CDS Fault Message DEU (2)', !!python/unicode 'CDS
+    Maintenance Message DEU (1)', !!python/unicode 'CDS Maintenance Message DEU (2)',
+  !!python/unicode 'Cabin Altitude Warning', !!python/unicode 'Centre Unit Display
+    Driven (1)', !!python/unicode 'Centre Unit Display Driven (2)', !!python/unicode 'Centre
+    Unit Display Format', !!python/unicode 'Communications Select', !!python/unicode 'Control
+    Column (Capt)', !!python/unicode 'Control Column (FO)', !!python/unicode 'Control
+    Column Force', !!python/unicode 'Control Column Force (Foreign)', !!python/unicode 'Control
+    Column Force Raw', !!python/unicode 'Control Display Unit Format', !!python/unicode 'Control
+    Regulator (1)', !!python/unicode 'Control Regulator (2)', !!python/unicode 'Control
+    Unit Display Driven (1)', !!python/unicode 'Control Unit Display Driven (2)',
+  !!python/unicode 'Control Unit Display Format', !!python/unicode 'Control Wheel
+    (Capt)', !!python/unicode 'Control Wheel (FO)', !!python/unicode 'Control Wheel
+    Force', !!python/unicode 'Control Wheel Steering (A) Engaged', !!python/unicode 'Control
+    Wheel Steering (B) Engaged', !!python/unicode 'Control Wheel Steering Pitch Engaged',
+  !!python/unicode 'Control Wheel Steering Roll Engaged', !!python/unicode 'Control
+    Wheel Steering Warning', !!python/unicode 'Customer Unique Frame', !!python/unicode 'DAC
+    Fuel Mod Valve (1) Selected', !!python/unicode 'DAC Fuel Mod Valve (2) Selected',
+  !!python/unicode 'DAC Staging Mode (1)', !!python/unicode 'DAC Staging Mode (2)',
+  !!python/unicode 'DC Fail-On DC', !!python/unicode 'DEU Centre Display Format (Capt)',
+  !!python/unicode 'DEU Centre Display Format (FO)', !!python/unicode 'DEU Check List',
+  !!python/unicode 'DH Selected (Capt)', !!python/unicode 'DH Selected (FO)', !!python/unicode 'DME
+    (1)', !!python/unicode 'DME (1) Antenna Failure', !!python/unicode 'DME (1) Failure',
+  !!python/unicode 'DME (2)', !!python/unicode 'DME (2) Antenna Failure', !!python/unicode 'DME
+    (2) Failure', !!python/unicode 'DSM Inboard Engaged (Capt)', !!python/unicode 'DSM
+    Inboard Engaged (FO)', !!python/unicode 'DSM Inboard Multi Function Display (Capt)',
+  !!python/unicode 'DSM Inboard Multi Function Display (FO)', !!python/unicode 'DSM
+    Inboard Primary Flight Display (Capt)', !!python/unicode 'DSM Inboard Primary
+    Flight Display (FO)', !!python/unicode 'DSM Lower Engaged (Capt)', !!python/unicode 'DSM
+    Lower Engaged (FO)', !!python/unicode 'DSM Lower Navigation Display (Capt)', !!python/unicode 'DSM
+    Lower Navigation Display (FO)', !!python/unicode 'DSM Lower Normal (Capt)', !!python/unicode 'DSM
+    Lower Normal (FO)', !!python/unicode 'DSM Normal (Capt)', !!python/unicode 'DSM
+    Normal (FO)', !!python/unicode 'DSM Outboard Primary Flight Display (Capt)', !!python/unicode 'DSM
+    Outboard Primary Flight Display (FO)', !!python/unicode 'Day', !!python/unicode 'Deceleration
+    Limit Mode (1) Selected', !!python/unicode 'Deceleration Limit Mode (2) Selected',
+  !!python/unicode 'Destination', !!python/unicode 'Display Unit Format Cleared',
+  !!python/unicode 'Distance To Go', !!python/unicode 'Drift', !!python/unicode 'ECS
+    (1) Configuration Code', !!python/unicode 'ECS (2) Configuration Code', !!python/unicode 'ECS
+    Pack (1)', !!python/unicode 'ECS Pack (1) High Flow', !!python/unicode 'ECS Pack
+    (1) On', !!python/unicode 'ECS Pack (2)', !!python/unicode 'ECS Pack (2) High
+    Flow', !!python/unicode 'ECS Pack (2) On', !!python/unicode 'EFIS Display Data',
+  !!python/unicode 'ETA Hour', !!python/unicode 'ETA Minutes', !!python/unicode 'Elevator
+    (L)', !!python/unicode 'Elevator (L) Actuator', !!python/unicode 'Elevator (R)',
+  !!python/unicode 'Elevator (R) Actuator', !!python/unicode 'Elevator AP (1) Pitch
+    Command', !!python/unicode 'Elevator AP (2) Pitch Command', !!python/unicode 'Elevator
+    Quadrant', !!python/unicode 'Eng (1 ) EEC Soft Alternate Mode Selected', !!python/unicode 'Eng
+    (1) Airborne Vibration Monitoring', !!python/unicode 'Eng (1) Aircraft Type Code',
+  !!python/unicode 'Eng (1) Anti Ice', !!python/unicode 'Eng (1) Anti Ice Configuration
+    Code', !!python/unicode 'Eng (1) Approach Idle Selected', !!python/unicode 'Eng
+    (1) Auto Start Mode Selected', !!python/unicode 'Eng (1) BSV Demanded Closed',
+  !!python/unicode 'Eng (1) BSV Driver Relay Connected', !!python/unicode 'Eng (1)
+    Bleed', !!python/unicode 'Eng (1) Burner Staging Valve', !!python/unicode 'Eng
+    (1) Combustor Severity', !!python/unicode 'Eng (1) Cutoff', !!python/unicode 'Eng
+    (1) Dual Annular Combustor Selected', !!python/unicode 'Eng (1) EEC Channel Fault',
+  !!python/unicode 'Eng (1) EEC Channel In Control', !!python/unicode 'Eng (1) EEC
+    Cross Channel Fault', !!python/unicode 'Eng (1) EEC Hard Alternate Mode Selected',
+  !!python/unicode 'Eng (1) EEC On Ground Selected', !!python/unicode 'Eng (1) EEC
+    Temp Over Limit', !!python/unicode 'Eng (1) FMV Driver Relay Connected', !!python/unicode 'Eng
+    (1) Failure', !!python/unicode 'Eng (1) Fan Imbalance Angle', !!python/unicode 'Eng
+    (1) Fault Dispatch Level (A)', !!python/unicode 'Eng (1) Fault Dispatch Level
+    (B)', !!python/unicode 'Eng (1) Fault Dispatch Level (C)', !!python/unicode 'Eng
+    (1) Fault Dispatch Level (D)', !!python/unicode 'Eng (1) Fire', !!python/unicode 'Eng
+    (1) Flameout Protection', !!python/unicode 'Eng (1) Forward Thrust Limited By
+    Thrust Reverser', !!python/unicode 'Eng (1) Fuel Air Ratio Status', !!python/unicode 'Eng
+    (1) Fuel Filter Impending Bypass', !!python/unicode 'Eng (1) Fuel Flow', !!python/unicode 'Eng
+    (1) Fuel Metering Valve Selected', !!python/unicode 'Eng (1) Gas Temp', !!python/unicode 'Eng
+    (1) Gas Temp Amber', !!python/unicode 'Eng (1) Gas Temp Amber Limit', !!python/unicode 'Eng
+    (1) Gas Temp Redline Alert', !!python/unicode 'Eng (1) Gas Temp Redline Exceeded',
+  !!python/unicode 'Eng (1) Gas Temp Start Redline', !!python/unicode 'Eng (1) Gas
+    Temp Start Redline Exceeded', !!python/unicode 'Eng (1) Hot Start Detected', !!python/unicode 'Eng
+    (1) Hyd (A) Low Press', !!python/unicode 'Eng (1) Ignition Command On (1)', !!python/unicode 'Eng
+    (1) Ignition Command On (2)', !!python/unicode 'Eng (1) Light Off Ref Status',
+  !!python/unicode 'Eng (1) Low Press Turbine Imbalance Angle', !!python/unicode 'Eng
+    (1) Manual Start Mode', !!python/unicode 'Eng (1) Manual Start Mode Enhanced',
+  !!python/unicode 'Eng (1) Model', !!python/unicode 'Eng (1) N1', !!python/unicode 'Eng
+    (1) N1 Bug Drive', !!python/unicode 'Eng (1) N1 Command', !!python/unicode 'Eng
+    (1) N1 Limit', !!python/unicode 'Eng (1) N1 Max Climb Rating', !!python/unicode 'Eng
+    (1) N1 Max Takeoff Rating', !!python/unicode 'Eng (1) N1 Redline Alert', !!python/unicode 'Eng
+    (1) N1 Redline Exceeded', !!python/unicode 'Eng (1) N1 Reference Set', !!python/unicode 'Eng
+    (1) N1 Tachometer', !!python/unicode 'Eng (1) N1 Target', !!python/unicode 'Eng
+    (1) N1 Trim', !!python/unicode 'Eng (1) N2', !!python/unicode 'Eng (1) N2 Redline
+    Alert', !!python/unicode 'Eng (1) N2 Redline Exceeded', !!python/unicode 'Eng
+    (1) N2 Tachometer', !!python/unicode 'Eng (1) No Light Off', !!python/unicode 'Eng
+    (1) Oil Filter Impending Bypass', !!python/unicode 'Eng (1) Oil Press', !!python/unicode 'Eng
+    (1) Oil Press Amber Limit', !!python/unicode 'Eng (1) Oil Press Low', !!python/unicode 'Eng
+    (1) Oil Press Low Amber Warning', !!python/unicode 'Eng (1) Oil Press Low Caution',
+  !!python/unicode 'Eng (1) Oil Press Low Red Warning', !!python/unicode 'Eng (1)
+    Oil Press Redline', !!python/unicode 'Eng (1) Oil Press Redline Range', !!python/unicode 'Eng
+    (1) Oil Qty', !!python/unicode 'Eng (1) Oil Temp', !!python/unicode 'Eng (1) Oil
+    Temp Amber Limit', !!python/unicode 'Eng (1) Oil Temp Amber Limit Exceeded', !!python/unicode 'Eng
+    (1) Oil Temp Red', !!python/unicode 'Eng (1) Oil Temp Redline', !!python/unicode 'Eng
+    (1) Operating At Minimum Allowed Power', !!python/unicode 'Eng (1) P0 Sensor Selected',
+  !!python/unicode 'Eng (1) PS3 Selected', !!python/unicode 'Eng (1) PT Taxi Inhibit',
+  !!python/unicode 'Eng (1) PT2 Selected', !!python/unicode 'Eng (1) Panel Mode',
+  !!python/unicode 'Eng (1) Position Code', !!python/unicode 'Eng (1) Power Management
+    Control', !!python/unicode 'Eng (1) Rating', !!python/unicode 'Eng (1) Reverse
+    Thrust Limited By Thrust Reverser', !!python/unicode 'Eng (1) Reverser Fully Deployed',
+  !!python/unicode 'Eng (1) Reverser In Transit', !!python/unicode 'Eng (1) Rollback
+    Overtemperature Active', !!python/unicode 'Eng (1) Running Sim', !!python/unicode 'Eng
+    (1) Speed Regulator', !!python/unicode 'Eng (1) Starter Valve', !!python/unicode 'Eng
+    (1) T25 Sensor Selected', !!python/unicode 'Eng (1) T3 Sensor Selected', !!python/unicode 'Eng
+    (1) TAT Inhibit Flag', !!python/unicode 'Eng (1) Throttle Lever', !!python/unicode 'Eng
+    (1) Throttle Rate Command', !!python/unicode 'Eng (1) Throttle Torque', !!python/unicode 'Eng
+    (1) Thrust Reverser (L) Sleeve', !!python/unicode 'Eng (1) Thrust Reverser (R)
+    Sleeve', !!python/unicode 'Eng (1) Thrust Reverser Deployed', !!python/unicode 'Eng
+    (1) Thrust Reverser In Transit', !!python/unicode 'Eng (1) Thrust Reverser Interlocked',
+  !!python/unicode 'Eng (1) Thrust Servo Motor Tachometer', !!python/unicode 'Eng
+    (1) Vib N1 Fan', !!python/unicode 'Eng (1) Vib N1 Turbine', !!python/unicode 'Eng
+    (1) Vib N2 Compressor', !!python/unicode 'Eng (1) Vib N2 Turbine', !!python/unicode 'Eng
+    (2) Airborne Vibration Monitoring', !!python/unicode 'Eng (2) Aircraft Type Code',
+  !!python/unicode 'Eng (2) Anti Ice', !!python/unicode 'Eng (2) Anti Ice Configuration
+    Code', !!python/unicode 'Eng (2) Approach Idle Selected', !!python/unicode 'Eng
+    (2) Auto Start Mode Selected', !!python/unicode 'Eng (2) BSV Demanded Closed',
+  !!python/unicode 'Eng (2) BSV Driver Relay Connected', !!python/unicode 'Eng (2)
+    Bleed', !!python/unicode 'Eng (2) Burner Staging Valve', !!python/unicode 'Eng
+    (2) Combustor Severity', !!python/unicode 'Eng (2) Cutoff', !!python/unicode 'Eng
+    (2) Dual Annular Combustor Selected', !!python/unicode 'Eng (2) EEC Channel Fault',
+  !!python/unicode 'Eng (2) EEC Channel In Control', !!python/unicode 'Eng (2) EEC
+    Cross Channel Fault', !!python/unicode 'Eng (2) EEC Hard Alternate Mode Selected',
+  !!python/unicode 'Eng (2) EEC On Ground Selected', !!python/unicode 'Eng (2) EEC
+    Soft Alternate Mode Selected', !!python/unicode 'Eng (2) EEC Temp Over Limit',
+  !!python/unicode 'Eng (2) FMV Driver Relay Connected', !!python/unicode 'Eng (2)
+    Failure', !!python/unicode 'Eng (2) Fan Imbalance Angle', !!python/unicode 'Eng
+    (2) Fault Dispatch Level (A)', !!python/unicode 'Eng (2) Fault Dispatch Level
+    (B)', !!python/unicode 'Eng (2) Fault Dispatch Level (C)', !!python/unicode 'Eng
+    (2) Fault Dispatch Level (D)', !!python/unicode 'Eng (2) Fire', !!python/unicode 'Eng
+    (2) Flameout Protection', !!python/unicode 'Eng (2) Forward Thrust Limited By
+    Thrust Reverser', !!python/unicode 'Eng (2) Fuel Air Ratio Status', !!python/unicode 'Eng
+    (2) Fuel Filter Impending Bypass', !!python/unicode 'Eng (2) Fuel Flow', !!python/unicode 'Eng
+    (2) Fuel Metering Valve Selected', !!python/unicode 'Eng (2) Gas Temp', !!python/unicode 'Eng
+    (2) Gas Temp Amber', !!python/unicode 'Eng (2) Gas Temp Amber Limit', !!python/unicode 'Eng
+    (2) Gas Temp Redline Alert', !!python/unicode 'Eng (2) Gas Temp Redline Exceeded',
+  !!python/unicode 'Eng (2) Gas Temp Start Redline', !!python/unicode 'Eng (2) Gas
+    Temp Start Redline Exceeded', !!python/unicode 'Eng (2) Hot Start Detected', !!python/unicode 'Eng
+    (2) Hyd (B) Low Press', !!python/unicode 'Eng (2) Ignition Command On (1)', !!python/unicode 'Eng
+    (2) Ignition Command On (2)', !!python/unicode 'Eng (2) Light Off Ref Status',
+  !!python/unicode 'Eng (2) Low Press Turbine Imbalance Angle', !!python/unicode 'Eng
+    (2) Manual Start Mode', !!python/unicode 'Eng (2) Manual Start Mode Enhanced',
+  !!python/unicode 'Eng (2) Model', !!python/unicode 'Eng (2) N1', !!python/unicode 'Eng
+    (2) N1 Bug Drive', !!python/unicode 'Eng (2) N1 Command', !!python/unicode 'Eng
+    (2) N1 Max Climb Rating', !!python/unicode 'Eng (2) N1 Max Takeoff Rating', !!python/unicode 'Eng
+    (2) N1 Redline Alert', !!python/unicode 'Eng (2) N1 Redline Exceeded', !!python/unicode 'Eng
+    (2) N1 Reference Set', !!python/unicode 'Eng (2) N1 Tachometer', !!python/unicode 'Eng
+    (2) N1 Target', !!python/unicode 'Eng (2) N1 Trim', !!python/unicode 'Eng (2)
+    N2', !!python/unicode 'Eng (2) N2 Redline Alert', !!python/unicode 'Eng (2) N2
+    Redline Exceeded', !!python/unicode 'Eng (2) N2 Tachometer', !!python/unicode 'Eng
+    (2) No Light Off', !!python/unicode 'Eng (2) Oil Filter Impending Bypass', !!python/unicode 'Eng
+    (2) Oil Press', !!python/unicode 'Eng (2) Oil Press Amber Limit', !!python/unicode 'Eng
+    (2) Oil Press Low', !!python/unicode 'Eng (2) Oil Press Low Amber Warning', !!python/unicode 'Eng
+    (2) Oil Press Low Caution', !!python/unicode 'Eng (2) Oil Press Low Red Warning',
+  !!python/unicode 'Eng (2) Oil Press Redline', !!python/unicode 'Eng (2) Oil Press
+    Redline Range', !!python/unicode 'Eng (2) Oil Qty', !!python/unicode 'Eng (2)
+    Oil Temp', !!python/unicode 'Eng (2) Oil Temp Amber Limit', !!python/unicode 'Eng
+    (2) Oil Temp Amber Limit Exceeded', !!python/unicode 'Eng (2) Oil Temp Redline',
+  !!python/unicode 'Eng (2) Oil Temp Redline Exceeded', !!python/unicode 'Eng (2)
+    Operating At Minimum Allowed Power', !!python/unicode 'Eng (2) P0 Sensor Selected',
+  !!python/unicode 'Eng (2) PS3 Selected', !!python/unicode 'Eng (2) PT Taxi Inhibit',
+  !!python/unicode 'Eng (2) PT2 Selected', !!python/unicode 'Eng (2) Panel Mode',
+  !!python/unicode 'Eng (2) Position Code', !!python/unicode 'Eng (2) Power Management
+    Control', !!python/unicode 'Eng (2) Rating', !!python/unicode 'Eng (2) Reverse
+    Thrust Limited By Thrust Reverser', !!python/unicode 'Eng (2) Reverser Fully Deployed',
+  !!python/unicode 'Eng (2) Reverser In Transit', !!python/unicode 'Eng (2) Rollback
+    Overtemperature Active', !!python/unicode 'Eng (2) Running Sim', !!python/unicode 'Eng
+    (2) Speed Regulator', !!python/unicode 'Eng (2) Starter Valve', !!python/unicode 'Eng
+    (2) T25 Sensor Selected', !!python/unicode 'Eng (2) T3 Sensor Selected', !!python/unicode 'Eng
+    (2) TAT Inhibit Flag', !!python/unicode 'Eng (2) Throttle Lever', !!python/unicode 'Eng
+    (2) Throttle Rate Command', !!python/unicode 'Eng (2) Throttle Torque', !!python/unicode 'Eng
+    (2) Thrust Reverser (L) Sleeve', !!python/unicode 'Eng (2) Thrust Reverser (R)
+    Sleeve', !!python/unicode 'Eng (2) Thrust Reverser Deployed', !!python/unicode 'Eng
+    (2) Thrust Reverser In Transit', !!python/unicode 'Eng (2) Thrust Reverser Interlocked',
+  !!python/unicode 'Eng (2) Thrust Servo Motor Tachometer', !!python/unicode 'Eng
+    (2) Vib N1 Fan', !!python/unicode 'Eng (2) Vib N1 Turbine', !!python/unicode 'Eng
+    (2) Vib N2 Compressor', !!python/unicode 'Eng (2) Vib N2 Turbine', !!python/unicode 'Eng
+    Accelerometer Source CN1', !!python/unicode 'Eng Accelerometer Source CN2', !!python/unicode 'Eng
+    Accelerometer Source TN1', !!python/unicode 'Eng Accelerometer Source TN2', !!python/unicode 'Eng
+    Display Data', !!python/unicode 'Eng Fan Imbalance Accelerometer Source', !!python/unicode 'Eng
+    Fuel Filter Impending Bypass (1)', !!python/unicode 'Eng Fuel Filter Impending
+    Bypass (2)', !!python/unicode 'Eng Hot Start Detected (1)', !!python/unicode 'Eng
+    Hot Start Detected (2)', !!python/unicode 'Eng Low Press Turbine Compressor (1)
+    Driver Rly Connected', !!python/unicode 'Eng Low Press Turbine Compressor (2)
+    Driver Rly Connected', !!python/unicode 'Eng Low Press Turbine Imbalance Acceleration
+    Source', !!python/unicode 'Eng N1 Limit Mode', !!python/unicode 'Eng N1 Push Button
+    Light', !!python/unicode 'Eng N1 Set Selected', !!python/unicode 'Eng Out Engaged',
+  !!python/unicode 'Eng Secondary', !!python/unicode 'Event Marker', !!python/unicode 'Exc
+    Invalid (L)', !!python/unicode 'Exc Invalid (R)', !!python/unicode 'FC Min Operating
+    Speed', !!python/unicode 'FD Only', !!python/unicode 'FDEP Day', !!python/unicode 'FDEP
+    Depart', !!python/unicode 'FDEP Destination', !!python/unicode 'FDEP Flight Number',
+  !!python/unicode 'FDEP Leg Number', !!python/unicode 'FMC Data Source Selected',
+  !!python/unicode 'FMC Eng Out Engaged', !!python/unicode 'FMC Selected Navigation
+    Source', !!python/unicode 'FMC Selected Switch (Capt)', !!python/unicode 'FMC
+    Static Air Temperature', !!python/unicode 'FMC Valid', !!python/unicode 'FSEU
+    Fault', !!python/unicode 'FSEU Flap Gate Up', !!python/unicode 'Flap (L) Split
+    Needle', !!python/unicode 'Flap (R) Split Needle', !!python/unicode 'Flap Alternate
+    Armed', !!python/unicode 'Flap Angle (L)', !!python/unicode 'Flap Angle (R)',
+  !!python/unicode 'Flap Bypass Relay', !!python/unicode 'Flap Bypass Valve Position',
+  !!python/unicode 'Flap Extended', !!python/unicode 'Flap Leading Edge (1) Extended',
+  !!python/unicode 'Flap Leading Edge (1) In Transit', !!python/unicode 'Flap Leading
+    Edge (2) Extended', !!python/unicode 'Flap Leading Edge (2) In Transit', !!python/unicode 'Flap
+    Leading Edge (3) Extended', !!python/unicode 'Flap Leading Edge (3) In Transit',
+  !!python/unicode 'Flap Leading Edge (4) Extended', !!python/unicode 'Flap Leading
+    Edge (4) In Transit', !!python/unicode 'Flap Lever Angle', !!python/unicode 'Flap
+    Load Relief', !!python/unicode 'Flap Skew (1) Position', !!python/unicode 'Flap
+    Skew (1-8)', !!python/unicode 'Flap Skew (2) Position', !!python/unicode 'Flap
+    Skew (2-7)', !!python/unicode 'Flap Skew (3) Position', !!python/unicode 'Flap
+    Skew (3-6)', !!python/unicode 'Flap Skew (4) Position', !!python/unicode 'Flap
+    Skew (4-5)', !!python/unicode 'Flap Skew (5) Position', !!python/unicode 'Flap
+    Skew (6) Position', !!python/unicode 'Flap Skew (7) Position', !!python/unicode 'Flap
+    Skew (8) Position', !!python/unicode 'Flap Split Needle CW', !!python/unicode 'Flare
+    Armed', !!python/unicode 'Flare Engaged', !!python/unicode 'Fleet Ident', !!python/unicode 'Flight
+    Dir (A) Engaged', !!python/unicode 'Flight Dir (B) Engaged', !!python/unicode 'Flight
+    Number', !!python/unicode 'Flight Number Numeric', !!python/unicode 'Flight Path
+    Angle', !!python/unicode 'Flight Path Vector Selected (Capt)', !!python/unicode 'Flight
+    Path Vector Selected (FO)', !!python/unicode 'Frame Counter', !!python/unicode 'Fuel
+    Configuration Alert', !!python/unicode 'Fuel Qty (1) Imbalance Tank', !!python/unicode 'Fuel
+    Qty (2) Imbalance Tank', !!python/unicode 'Fuel Qty (Aux)', !!python/unicode 'Fuel
+    Qty (C)', !!python/unicode 'Fuel Qty (L)', !!python/unicode 'Fuel Qty (L) Low',
+  !!python/unicode 'Fuel Qty (R)', !!python/unicode 'Fuel Qty (R) Low', !!python/unicode 'GLS
+    Mode (Capt)', !!python/unicode 'GLS Mode (FO)', !!python/unicode 'GMT Hour', !!python/unicode 'GMT
+    Minute', !!python/unicode 'GNSS Output Correction', !!python/unicode 'GPS Selected',
+  !!python/unicode 'Gear (L) Down', !!python/unicode 'Gear (L) On Ground', !!python/unicode 'Gear
+    (L) Red Warning', !!python/unicode 'Gear (N) Down', !!python/unicode 'Gear (N)
+    On Ground', !!python/unicode 'Gear (N) Red Warning', !!python/unicode 'Gear (R)
+    Down', !!python/unicode 'Gear (R) On Ground', !!python/unicode 'Gear (R) Red Warning',
+  !!python/unicode 'Gear On Ground', !!python/unicode 'Gross Weight', !!python/unicode 'Ground
+    Spoiler Deployed', !!python/unicode 'Ground Station Data Selected (1)', !!python/unicode 'Ground
+    Station Data Selected (2)', !!python/unicode 'Groundspeed', !!python/unicode 'Groundspeed
+    (FMC)', !!python/unicode 'HUD Aiii Capability', !!python/unicode 'HUD Aiii Mode',
+  !!python/unicode 'HUD Airspeed Absolute Error', !!python/unicode 'HUD Airspeed Average
+    Error', !!python/unicode 'HUD Approach Warning', !!python/unicode 'HUD Clear Submode',
+  !!python/unicode 'HUD Combiner Position', !!python/unicode 'HUD Crosstrack Rate
+    Below 8 Ft Sec', !!python/unicode 'HUD Crosstrack Rate Below 9 Ft Sec', !!python/unicode 'HUD
+    Crosstrack Rate Latitude Below 0 Ft Sec', !!python/unicode 'HUD Crosstrack Rate
+    Latitude Over 0 Ft Sec', !!python/unicode 'HUD Flare Command Not Initiated', !!python/unicode 'HUD
+    Flight Path X Position', !!python/unicode 'HUD Flight Path Y Position', !!python/unicode 'HUD
+    Guidance Cue Flight Path Deviation', !!python/unicode 'HUD Guidance Cue X Position',
+  !!python/unicode 'HUD Guidance Cue Y Position', !!python/unicode 'HUD Hgs Bit Fault',
+  !!python/unicode 'HUD ILS Glideslope Deviation', !!python/unicode 'HUD ILS Localizer
+    Deviation', !!python/unicode 'HUD Instrument Meteorological Condition', !!python/unicode 'HUD
+    Low Visibility Takeoff', !!python/unicode 'HUD Primary Mode Active', !!python/unicode 'HUD
+    Touchdown', !!python/unicode 'HUD Vertical Deviation', !!python/unicode 'HUD Vertical
+    Speed Deviation', !!python/unicode 'HUD Vertical Speed Over 12Ft Sec', !!python/unicode 'HUD
+    Visual Meteorological Condition', !!python/unicode 'Heading', !!python/unicode 'Heading
+    Mag-True (Capt)', !!python/unicode 'Heading Selected', !!python/unicode 'Heading
+    Selected Engaged', !!python/unicode 'Heading Selected Push Button Light', !!python/unicode 'Heading
+    True Track', !!python/unicode 'Heading Up MAP Format (Capt)', !!python/unicode 'Heading
+    Up MAP Format (FO)', !!python/unicode 'Hectopascals Selected (Capt)', !!python/unicode 'Hectopascals
+    Selected (FO)', !!python/unicode 'High Speed Buffet Speed', !!python/unicode 'Hour',
+  !!python/unicode 'Hyd (A) Chip Detect Installed', !!python/unicode 'Hyd (A) Chip
+    Detected', !!python/unicode 'Hyd (A) Electrical', !!python/unicode 'Hyd (A) Oil
+    Press', !!python/unicode 'Hyd (A) Oil Qty', !!python/unicode 'Hyd (B) Chip Detected',
+  !!python/unicode 'Hyd (B) Electrical', !!python/unicode 'Hyd (B) Oil Press', !!python/unicode 'Hyd
+    (B) Oil Qty', !!python/unicode 'Hyd Standby Low Press', !!python/unicode 'Hyd
+    System (B) Chip Detect Installed', !!python/unicode 'IAN Final Approach Course',
+  !!python/unicode 'IAN Glidepath', !!python/unicode 'ILS (1) Failure', !!python/unicode 'ILS
+    (1) Frequency', !!python/unicode 'ILS (1) Glideslope', !!python/unicode 'ILS (1)
+    Glideslope Antenna Failure', !!python/unicode 'ILS (1) Glideslope Receiver Failure',
+  !!python/unicode 'ILS (1) Localizer', !!python/unicode 'ILS (1) Localizer Antenna
+    Failure', !!python/unicode 'ILS (1) Localizer Receiver Failure', !!python/unicode 'ILS
+    (1) Standby', !!python/unicode 'ILS (2) Failure', !!python/unicode 'ILS (2) Frequency',
+  !!python/unicode 'ILS (2) Glideslope', !!python/unicode 'ILS (2) Glideslope Antenna
+    Failure', !!python/unicode 'ILS (2) Glideslope Receiver Failure', !!python/unicode 'ILS
+    (2) Localizer', !!python/unicode 'ILS (2) Localizer Antenna Failure', !!python/unicode 'ILS
+    (2) Localizer Receiver Failure', !!python/unicode 'ILS (2) Standby', !!python/unicode 'ILS
+    (3) Glideslope', !!python/unicode 'ILS (3) Localizer', !!python/unicode 'ILS (4)
+    Glideslope', !!python/unicode 'ILS (4) Localizer', !!python/unicode 'ILS Deviation
+    Warning', !!python/unicode 'ILS Glideslope Armed', !!python/unicode 'ILS Glideslope
+    Deviation Warning', !!python/unicode 'ILS Glideslope Engaged', !!python/unicode 'ILS
+    Glideslope Test Tune Inhibit', !!python/unicode 'ILS Inner Marker', !!python/unicode 'ILS
+    Localizer Deviation Warning', !!python/unicode 'ILS Localizer Engaged', !!python/unicode 'ILS
+    Localizer Test Tune Inhibit', !!python/unicode 'ILS Middle Marker', !!python/unicode 'ILS
+    Mode (1)', !!python/unicode 'ILS Mode (2)', !!python/unicode 'ILS Outer Marker',
+  !!python/unicode 'ILS Selected', !!python/unicode 'ILS-GLS (1) Frequency', !!python/unicode 'ILS-GLS
+    (2) Frequency', !!python/unicode 'ILS-MLS-GLS (1) Mode Selected', !!python/unicode 'ILS-MLS-GLS
+    (2) Mode Selected', !!python/unicode 'ILS-VOR (1) Course Selected', !!python/unicode 'ILS-VOR
+    (2) Course Selected', !!python/unicode 'IRU Aircraft Ident Code Invalid', !!python/unicode 'IRU
+    Attitude Invalid', !!python/unicode 'IRU Attitude Rev Mode', !!python/unicode 'IRU
+    Auto Navigation Realign', !!python/unicode 'IRU DC Fail', !!python/unicode 'IRU
+    Excess Motion Error', !!python/unicode 'IRU Fault', !!python/unicode 'IRU Navigation
+    Align Fault', !!python/unicode 'IRU Navigation Align Not Ready', !!python/unicode 'IRU
+    Navigation Mode', !!python/unicode 'IRU No Initialization', !!python/unicode 'IRU
+    On DC', !!python/unicode 'IRU Selected Switch (Capt)', !!python/unicode 'IRU Set
+    Heading', !!python/unicode 'IRU To ADR Data Invalid', !!python/unicode 'IRU To
+    ADR No Data', !!python/unicode 'Isolation Valve Open', !!python/unicode 'Key HF
+    (1)', !!python/unicode 'Key HF (2)', !!python/unicode 'Key Satcom (1)', !!python/unicode 'Key
+    Satcom (2)', !!python/unicode 'Key VHF (1)', !!python/unicode 'Key VHF (2)', !!python/unicode 'Key
+    VHF (3)', !!python/unicode 'LIB Display Unit (1) Driven', !!python/unicode 'LIB
+    Display Unit Format', !!python/unicode 'LOB Display Unit Driven', !!python/unicode 'LOB
+    Display Unit Format', !!python/unicode 'LRRA (1) Antenna Receive', !!python/unicode 'LRRA
+    (1) Antenna Transmit', !!python/unicode 'LRRA (1) Failure', !!python/unicode 'LRRA
+    (2) Antenna Receive', !!python/unicode 'LRRA (2) Antenna Transmit', !!python/unicode 'LRRA
+    (2) Failure', !!python/unicode 'Land (3) Mode', !!python/unicode 'Landing Mode
+    Status Selected (L)', !!python/unicode 'Landing Mode Status Selected (R)', !!python/unicode 'Lateral
+    Navigation Push Button Light', !!python/unicode 'Latitude', !!python/unicode 'Latitude
+    Below 35 Ft', !!python/unicode 'Latitude Below 45 40 Ft', !!python/unicode 'Latitude
+    Over 35 Ft', !!python/unicode 'Leading Edge Cruise Deployed', !!python/unicode 'Leading
+    Edge Master Extended', !!python/unicode 'Leading Edge Master In Transit', !!python/unicode 'Leading
+    Edge Uncommanded Motion', !!python/unicode 'Leading Edge Uncommanded Motion Shutoff',
+  !!python/unicode 'Level Change Push Button Light', !!python/unicode 'Local Limited
+    Master (L)', !!python/unicode 'Local Limited Master (R)', !!python/unicode 'Longitude',
+  !!python/unicode 'Longitude Below 2250 Ft', !!python/unicode 'MAP Mode Selected
+    (1)', !!python/unicode 'MAP Mode Selected (2)', !!python/unicode 'MDA (Capt)',
+  !!python/unicode 'MDA (FO)', !!python/unicode 'MDA Selected (Capt)', !!python/unicode 'MDA
+    Selected (FO)', !!python/unicode 'MLS (1) Channel', !!python/unicode 'MLS (2)
+    Channel', !!python/unicode 'MLS (L) Mode', !!python/unicode 'MLS (R) Mode', !!python/unicode 'MLS
+    Antenna Source', !!python/unicode 'MLS Direct Antenna Selected Command Acknowledge',
+  !!python/unicode 'Mach', !!python/unicode 'Mach Calculated (1)', !!python/unicode 'Mach
+    Calculated (2)', !!python/unicode 'Mach Selected', !!python/unicode 'Mach Selected
+    (FMC)', !!python/unicode 'Mach Trim (1) Servo Brake Status', !!python/unicode 'Mach
+    Trim Command', !!python/unicode 'Mach Trim Command Feedback', !!python/unicode 'Mach
+    Trim In Command', !!python/unicode 'Mach-Airspeed Selected', !!python/unicode 'Mandatory
+    Software Part Number Code', !!python/unicode 'Manufacturer Code', !!python/unicode 'Master
+    Caution', !!python/unicode 'Master Light (A)', !!python/unicode 'Master Light
+    (B)', !!python/unicode 'Meters (1) Selected', !!python/unicode 'Meters (2) Selected',
+  !!python/unicode 'Min Operating Speed', !!python/unicode 'Minute', !!python/unicode 'Mode
+    Control Panel Speed (FCC)', !!python/unicode 'Month', !!python/unicode 'Motor
+    Pwr App From Asm (1)', !!python/unicode 'Motor Pwr App From Asm (2)', !!python/unicode 'NAV
+    Database Effectivity Day', !!python/unicode 'NAV Database Effectivity Month',
+  !!python/unicode 'NAV Database Effectivity Year', !!python/unicode 'NAV Mode Operational',
+  !!python/unicode 'NAV Performance Actual', !!python/unicode 'NAV Performance Required',
+  !!python/unicode 'On Ground Switch', !!python/unicode 'Origin', !!python/unicode 'Overspeed
+    Warning', !!python/unicode 'PFD Navigation Display Format (Capt)', !!python/unicode 'PFD
+    Navigation Display Format (FO)', !!python/unicode 'Pitch', !!python/unicode 'Pitch
+    Mode', !!python/unicode 'Pitot Air Data Modules Data Invalid', !!python/unicode 'Pitot
+    Air Data Modules No Data', !!python/unicode 'Pitot Heater (L)', !!python/unicode 'Pitot
+    Static Selected', !!python/unicode 'Plan Mode Selected (Capt)', !!python/unicode 'Plan
+    Mode Selected (FO)', !!python/unicode 'Position Data Selected (Capt)', !!python/unicode 'Position
+    Data Selected (FO)', !!python/unicode 'RX Label 206 Activity Invalid', !!python/unicode 'RX
+    Label 206 Parity Invalid', !!python/unicode 'RX Label 206 Sign Status Matrix Invalid',
+  !!python/unicode 'Range Selected (Capt)', !!python/unicode 'Range Selected (FO)',
+  !!python/unicode 'Rate Of Climb (Inertial)', !!python/unicode 'Reduced Thrust Takeoff',
+  !!python/unicode 'Rib Display Unit Driven', !!python/unicode 'Rib Display Unit Format',
+  !!python/unicode 'Rob Display Unit Driven', !!python/unicode 'Rob Display Unit Format',
+  !!python/unicode 'Roll', !!python/unicode 'Roll Mode', !!python/unicode 'Roll Trim
+    Command Wing (L) Down', !!python/unicode 'Roll Trim Command Wing (R) Down', !!python/unicode 'Rollout
+    Engaged', !!python/unicode 'Rollout Warning', !!python/unicode 'Route Data Selected
+    (Capt)', !!python/unicode 'Route Data Selected (FO)', !!python/unicode 'Rudder',
+  !!python/unicode 'Rudder Main', !!python/unicode 'Rudder Pedal', !!python/unicode 'Rudder
+    Pedal Force', !!python/unicode 'Rudder Pressure Limit', !!python/unicode 'Rudder
+    Servo Command Standby', !!python/unicode 'Rudder Standby', !!python/unicode 'Second',
+  !!python/unicode 'Single Channel Engaged', !!python/unicode 'Slat (1) Fully Extended',
+  !!python/unicode 'Slat (1) In Transit', !!python/unicode 'Slat (1) Part Extended',
+  !!python/unicode 'Slat (2) Fully Extended', !!python/unicode 'Slat (2) In Transit',
+  !!python/unicode 'Slat (2) Part Extended', !!python/unicode 'Slat (3) Fully Extended',
+  !!python/unicode 'Slat (3) In Transit', !!python/unicode 'Slat (3) Part Extended',
+  !!python/unicode 'Slat (4) Fully Extended', !!python/unicode 'Slat (4) In Transit',
+  !!python/unicode 'Slat (4) Part Extended', !!python/unicode 'Slat (5) Fully Extended',
+  !!python/unicode 'Slat (5) In Transit', !!python/unicode 'Slat (5) Part Extended',
+  !!python/unicode 'Slat (6) Fully Extended', !!python/unicode 'Slat (6) In Transit',
+  !!python/unicode 'Slat (6) Part Extended', !!python/unicode 'Slat (7) Fully Extended',
+  !!python/unicode 'Slat (7) In Transit', !!python/unicode 'Slat (7) Part Extended',
+  !!python/unicode 'Slat (8) Fully Extended', !!python/unicode 'Slat (8) In Transit',
+  !!python/unicode 'Slat (8) Part Extended', !!python/unicode 'Smoke Cargo Aft Warning',
+  !!python/unicode 'Smoke Cargo Forward Warning', !!python/unicode 'Smoke Cargo Main
+    Warning', !!python/unicode 'Smoke Lavatory Warning', !!python/unicode 'Solenoid
+    Engage', !!python/unicode 'Special Pulse Identification', !!python/unicode 'Speed
+    Push Button Light', !!python/unicode 'Speedbrake Armed', !!python/unicode 'Speedbrake
+    Do Not Arm', !!python/unicode 'Speedbrake Handle', !!python/unicode 'Spoiler (L)
+    (3)', !!python/unicode 'Spoiler (L) (4)', !!python/unicode 'Spoiler (R) (3)',
+  !!python/unicode 'Spoiler (R) (4)', !!python/unicode 'Stabilizer', !!python/unicode 'Stabilizer
+    Manual Trim Down', !!python/unicode 'Stabilizer Manual Trim Up', !!python/unicode 'Stall
+    Mode Status (1)', !!python/unicode 'Stall Mode Status (2)', !!python/unicode 'Static
+    Air Data Module Data Invalid', !!python/unicode 'Static Air Data Modules No Data',
+  !!python/unicode 'Static Heater (R)', !!python/unicode 'Stick Shaker (L)', !!python/unicode 'Stick
+    Shaker (R)', !!python/unicode 'Stick Shaker Speed', !!python/unicode 'Subframe
+    Offset In Data', !!python/unicode 'Superframe Counter', !!python/unicode 'Superframe
+    Cycle Count', !!python/unicode 'System Push Button Selected', !!python/unicode 'TAT',
+  !!python/unicode 'TAT (1) Selected', !!python/unicode 'TAT (2) Selected', !!python/unicode 'TAT
+    Heater', !!python/unicode 'TAT Probe Failure', !!python/unicode 'TAWS Alert Recorded',
+  !!python/unicode 'TAWS Bit 23', !!python/unicode 'TAWS Caution', !!python/unicode 'TAWS
+    Caution Terrain', !!python/unicode 'TAWS Display Selected (Capt)', !!python/unicode 'TAWS
+    Display Selected (FO)', !!python/unicode 'TAWS Dont Sink', !!python/unicode 'TAWS
+    Failure', !!python/unicode 'TAWS General', !!python/unicode 'TAWS Glideslope',
+  !!python/unicode 'TAWS Glideslope Cancel', !!python/unicode 'TAWS Inoperative',
+  !!python/unicode 'TAWS Minimums', !!python/unicode 'TAWS Obstacle Caution', !!python/unicode 'TAWS
+    Obstacle Warning', !!python/unicode 'TAWS Predictive Windshear', !!python/unicode 'TAWS
+    Pull Up', !!python/unicode 'TAWS Sink Rate', !!python/unicode 'TAWS Terrain',
+  !!python/unicode 'TAWS Terrain Ahead', !!python/unicode 'TAWS Terrain Ahead Pull
+    Up', !!python/unicode 'TAWS Terrain Awareness Inoperative', !!python/unicode 'TAWS
+    Terrain Awareness Not Available', !!python/unicode 'TAWS Terrain Caution', !!python/unicode 'TAWS
+    Terrain Display Selected (Capt)', !!python/unicode 'TAWS Terrain Display Selected
+    (FO)', !!python/unicode 'TAWS Terrain Override', !!python/unicode 'TAWS Terrain
+    Pull Up', !!python/unicode 'TAWS Terrain Warning', !!python/unicode 'TAWS Too
+    Low Flap', !!python/unicode 'TAWS Too Low Gear', !!python/unicode 'TAWS Too Low
+    Terrain', !!python/unicode 'TAWS V1 Callout Enabled (Capt)', !!python/unicode 'TAWS
+    V1 Callout Enabled (FO)', !!python/unicode 'TAWS Warning', !!python/unicode 'TAWS
+    Windshear', !!python/unicode 'TAWS Windshear Caution', !!python/unicode 'TAWS
+    Windshear Inoperative', !!python/unicode 'TAWS Windshear Warning', !!python/unicode 'TBC-DMV
+    Driver Relay Connected', !!python/unicode 'TBV-DMV Driver Relay Connected', !!python/unicode 'TCAS
+    Advisory Rate To Maintain', !!python/unicode 'TCAS Altitude', !!python/unicode 'TCAS
+    Altitude Rate Advisory', !!python/unicode 'TCAS Altitude Reporting', !!python/unicode 'TCAS
+    Altitude Selected', !!python/unicode 'TCAS Combined Control', !!python/unicode 'TCAS
+    Combined Control B', !!python/unicode 'TCAS Computer Unit', !!python/unicode 'TCAS
+    Down Advisory', !!python/unicode 'TCAS Failure', !!python/unicode 'TCAS Reply
+    Information', !!python/unicode 'TCAS Sensitivity Level', !!python/unicode 'TCAS
+    Sensitivity Level Standby', !!python/unicode 'TCAS Special Position Identification',
+  !!python/unicode 'TCAS Up Advisory', !!python/unicode 'TCAS Vertical Control', !!python/unicode 'TFC
+    Selected (Capt)', !!python/unicode 'TFC Selected (FO)', !!python/unicode 'Takeoff
+    And Go Around', !!python/unicode 'Takeoff And Go Around Switch', !!python/unicode 'Test
+    Display (1) Command', !!python/unicode 'Test Display (2) Command', !!python/unicode 'Tuning
+    Input Bus Activity', !!python/unicode 'V1', !!python/unicode 'V2', !!python/unicode 'VBV
+    (1) Driver Relay Connected', !!python/unicode 'VBV (2) Driver Relay Connected',
+  !!python/unicode 'VMO-MMO Alternate (1)', !!python/unicode 'VMO-MMO Alternate (2)',
+  !!python/unicode 'VMO-MMO Alternate (3)', !!python/unicode 'VMO-MMO Alternate (4)',
+  !!python/unicode 'VNAV Path', !!python/unicode 'VNAV Push Button Light', !!python/unicode 'VNAV
+    Speed', !!python/unicode 'VOR (1) Failure', !!python/unicode 'VOR (1) Frequency',
+  !!python/unicode 'VOR (1) Input Data', !!python/unicode 'VOR (1) MB Failure', !!python/unicode 'VOR
+    (1) Selected (Capt)', !!python/unicode 'VOR (1) Selected (FO)', !!python/unicode 'VOR
+    (2) Failure', !!python/unicode 'VOR (2) Frequency', !!python/unicode 'VOR (2)
+    Input Data', !!python/unicode 'VOR (2) MB Failure', !!python/unicode 'VOR (2)
+    Selected (Capt)', !!python/unicode 'VOR (2) Selected (FO)', !!python/unicode 'VOR
+    Mode Selected (Capt)', !!python/unicode 'VOR Mode Selected (FO)', !!python/unicode 'VORLOC
+    Armed', !!python/unicode 'VORLOC Engaged', !!python/unicode 'VORLOC Push Button
+    Light', !!python/unicode 'VR', !!python/unicode 'VSV Driver Relay Connected (1)',
+  !!python/unicode 'VSV Driver Relay Connected (2)', !!python/unicode 'Variable Bleed
+    Valve (1)', !!python/unicode 'Variable Bleed Valve (2)', !!python/unicode 'Variable
+    Stator Vane (1)', !!python/unicode 'Variable Stator Vane (2)', !!python/unicode 'Vertical
+    Speed (FMC) Selected', !!python/unicode 'Vertical Speed Armed', !!python/unicode 'Vertical
+    Speed Engaged', !!python/unicode 'Vertical Speed Push Button Light', !!python/unicode 'Vertical
+    Speed Selected', !!python/unicode 'Vref', !!python/unicode 'Vref Selected', !!python/unicode 'WPT
+    Distance To Go', !!python/unicode 'WPT Selected (Capt)', !!python/unicode 'WPT
+    Selected (FO)', !!python/unicode 'WXR Selected (Capt)', !!python/unicode 'WXR
+    Selected (FO)', !!python/unicode 'Wheel Well Fire', !!python/unicode 'Wind Direction',
+  !!python/unicode 'Wind Speed', !!python/unicode 'Wing (L) Anti Ice Configuration
+    Code', !!python/unicode 'Wing (R) Anti Ice Configuration Code', !!python/unicode 'Wing
+    Anti Ice', !!python/unicode 'Yaw Damper Engaged', !!python/unicode 'Yaw Damper
+    Engaged (Standby)', !!python/unicode 'Yaw Trim (L) Command', !!python/unicode 'Yaw
+    Trim (R) Command', !!python/unicode 'Year', !!python/unicode 'inHg Selected (Capt)',
+  !!python/unicode 'inHg Selected (FO)']

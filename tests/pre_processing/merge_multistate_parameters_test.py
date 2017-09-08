@@ -11,6 +11,7 @@ from analysis_engine.pre_processing.merge_multistate_parameters import (
     GearInTransit,
     GearUp,
     GearUpInTransit,
+    GearPosition,
 )
 
 
@@ -52,7 +53,8 @@ class TestGearInTransit(unittest.TestCase):
             0: '-',
             1: 'In Transit',
         }
-        self.expected = M('Gear In Transition', array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
+        self.expected = M('Gear In Transition',
+                          array=np.ma.array([0]*5 + [1]*10 + [0]*30 + [1]*10 + [0]*5),
                           values_mapping=self.values_mapping)
 
     def test_can_operate(self):
@@ -61,10 +63,13 @@ class TestGearInTransit(unittest.TestCase):
 
     def test_derive(self):
         # combine individal (L/R/C/N) params
-        left = M('Gear (L) In Transit', array=np.ma.array([0]*6 + [1]*9 + [0]*30 + [1]*9 + [0]*6),
+        left = M('Gear (L) In Transit',
+                 array=np.ma.array([0]*6 + [1]*9 + [0]*30 + [1]*9 + [0]*6),
                  values_mapping=self.values_mapping)
-        right = M('Gear (R) In Transit', array=np.ma.array([0]*5 + [1]*9 + [0]*32 + [1]*9 + [0]*5),
+        right = M('Gear (R) In Transit',
+                  array=np.ma.array([0]*5 + [1]*9 + [0]*32 + [1]*9 + [0]*5),
                   values_mapping=self.values_mapping)
+
         node = self.node_class()
         node.derive(left, None, right, None)
 
@@ -166,6 +171,32 @@ class TestGearUpInTransit(unittest.TestCase):
                   values_mapping=self.values_mapping)
         node = self.node_class()
         node.derive(left, None, right, None)
+
+        np.testing.assert_array_equal(node.array, self.expected.array)
+        self.assertEqual(node.values_mapping, self.values_mapping)
+
+
+class TestGearPosition(unittest.TestCase):
+
+    def setUp(self):
+        self.node_class = GearPosition
+
+        self.values_mapping = {
+            0: '-',
+            1: 'Up',
+            2: 'In Transit',
+            3: 'Down',
+        }
+        self.expected = M('Gear Position', array=np.ma.array([3]*5 + [2]*10 + [1]*30 + [2]*10 + [3]*5),
+                          values_mapping=self.values_mapping)
+
+    def test_derive__gear_position(self):
+        gl = M('Gear (L) Position', array=np.ma.array([3]*5 + [2]*10 + [1]*30 + [2]*10 + [3]*5),
+                      values_mapping=self.values_mapping)
+        gr = M('Gear (R) Position', array=np.ma.array([3]*6 + [2]*9 + [1]*30 + [2]*9 + [3]*6),
+                      values_mapping=self.values_mapping)
+        node = self.node_class()
+        node.derive(gl, None, gr, None)
 
         np.testing.assert_array_equal(node.array, self.expected.array)
         self.assertEqual(node.values_mapping, self.values_mapping)
