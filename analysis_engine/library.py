@@ -2550,20 +2550,29 @@ def runway_touchdown(runway):
     :type aiming_point: dict, with keys 'latitude' and 'longitude' both units = degrees
     '''
     length = runway_length(runway)
-    if length < 800:
-        tdn_dist = 165
-    elif length < 1200:
-        tdn_dist = 265
-    elif length < 2400:
-        tdn_dist = 322.5
-    elif length > 2400:
-        tdn_dist = 422.5
+    if length:
+        if length < 800:
+            tdn_dist = 165
+        elif length < 1200:
+            tdn_dist = 265
+        elif length < 2400:
+            tdn_dist = 322.5
+        elif length > 2400:
+            tdn_dist = 422.5
+        
+        r = tdn_dist / length
+        
+        lat = (1.0-r) * runway['start']['latitude'] + r * runway['end']['latitude']
+        lon = (1.0-r) * runway['start']['longitude'] + r * runway['end']['longitude']
+        return tdn_dist, {'latitude':lat, 'longitude':lon}
     
-    r = tdn_dist / length
-    
-    lat = (1.0-r) * runway['start']['latitude'] + r * runway['end']['latitude']
-    lon = (1.0-r) * runway['start']['longitude'] + r * runway['end']['longitude']
-    return tdn_dist, {'latitude':lat, 'longitude':lon}
+    else:
+        # Helipads
+        if runway: 
+            locn = runway['start'] 
+        else: 
+            locn = None
+        return 0.0, locn
     
 
 def runway_heading(runway):
