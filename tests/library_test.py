@@ -5403,6 +5403,26 @@ class TestRunwaySnapDict(unittest.TestCase):
         self.assertEqual(coords, {'latitude': 70, 'longitude': 80})
 
 
+class TestRunwayTouchdown(unittest.TestCase):
+    def test_runway_touchdown_quite_short(self):
+        # Based on Stellar Air Park in Phoenix - the touchdown markings look strangely deep, and are
+        # more like 350m down the runway. Still, the end locations are fine.
+        runway = {'start': {'latitude':  33.29360, 'longitude': -111.915817},
+                  'end': {'latitude':  33.303773, 'longitude': -111.915792}}
+        tdn_dist, coords = runway_touchdown(runway)
+        self.assertEqual(tdn_dist, 265)
+        self.assertAlmostEqual(coords['latitude'], 33.295982, places=4)
+        self.assertAlmostEqual(coords['longitude'], -111.915803, places=4)
+        
+    def test_runway_touchdown_zero(self):
+        # Helipads have zero length, for example Battersea  :o)
+        runway = {'start': {'latitude': 51.469955, 'longitude': -0.179543},
+                      'end': {'latitude': 51.469955, 'longitude': -0.179543}}
+        tdn_dist, coords = runway_touchdown(runway)
+        self.assertEqual(tdn_dist, 0)
+        self.assertAlmostEqual(coords['latitude'], 51.469955)
+        self.assertAlmostEqual(coords['longitude'], -0.179543, places=4)        
+
 """
 class TestSectionContainsKti(unittest.TestCase):
     def test_valid(self):
