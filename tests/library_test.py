@@ -6149,6 +6149,36 @@ class TestSlicesOverlap(unittest.TestCase):
         # step negative
         self.assertRaises(ValueError, slices_overlap, first, slice(1,2,-1))
 
+class TestSlicesOverlapMerge(unittest.TestCase):
+    
+    def test_slices_overlap_merge_basic(self):
+        first = [slice(10,20)]
+        second = [slice(15,25)]
+        self.assertEqual(slices_overlap_merge(first, second),
+                         [slice(10, 25)])
+    
+    def test_slices_overlap_merge_no_overlap(self):
+        first = [slice(10,20)]
+        second = [slice(25,35)]
+        self.assertEqual(slices_overlap_merge(first, second),
+                         [slice(10, 20)])
+    
+    def test_slices_overlap_merge_no_first(self):
+        first = []
+        second = [slice(25,35)]
+        self.assertEqual(slices_overlap_merge(first, second), [])
+
+    def test_slices_overlap_merge_no_second(self):
+        first = [slice(10,20)]
+        second = []
+        self.assertEqual(slices_overlap_merge(first, second),
+                         [slice(10, 20)])
+        
+    def test_slices_everlap_extend(self):
+        first = [slice(10,20)]
+        second = [slice(25,35)]
+        self.assertEqual(slices_overlap_merge(first, second, extend_stop=2),
+                             [slice(10, 22)])
 
 class TestSlicesOverlay(unittest.TestCase):
     def test_slices_and(self):

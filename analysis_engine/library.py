@@ -3641,6 +3641,39 @@ def slices_overlap(first_slice, second_slice):
     return ((second_slice.stop is None) or ((first_slice.start or 0) < second_slice.stop)) and \
            ((first_slice.stop is None) or ((second_slice.start or 0) < first_slice.stop))
 
+
+def slices_overlap_merge(first_list, second_list, extend_stop=0):
+    '''
+    Where slices from the second list overlap the first, the first slice is
+    extended to the limit of the second list slice.
+    If there is no overlap, the first slice is returned unchanged.
+
+    :param first_list: First list of slices
+    :type first_list: List of slices
+    :param second_list: Second list of slices
+    :type second_list: List of slices
+    :param extend_stop: Increment at stop end of the resulting slices_above
+    :type extend_stop: Integer
+    '''
+    result_list = []
+
+    for first_slice in first_list:
+        overlap = False
+        for second_slice in second_list:
+            if slices_overlap(first_slice, second_slice):
+                overlap = True
+                result_list.append(slice(min(first_slice.start, second_slice.start),
+                                         max(first_slice.stop, second_slice.stop) + extend_stop))
+                break
+        if not overlap:
+            if extend_stop:
+                result_list.append(slice(first_slice.start, first_slice.stop + extend_stop))
+            else:
+                result_list.append(first_slice)
+
+    return result_list
+
+    
 def slices_and(first_list, second_list):
     '''
     This is a simple AND function to allow two slice lists to be merged. This
