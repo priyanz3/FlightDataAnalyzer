@@ -9605,12 +9605,12 @@ class EngN1DuringTaxiMax(KeyPointValueNode):
         false event triggers in case of immediate takeoff
         '''
         
-        if len(taxi_out.get_slices()) > 0:
+        if (len(taxi_out.get_slices()) > 0) and taxi_out[0].slice.stop - (20 * taxi_out.hz) - taxi_out[0].slice.start > 0:
             #check if taxi out is longer than 20 seconds
-            if taxi_out[0].slice.stop - (20 * taxi_out.hz) - taxi_out[0].slice.start > 0:
-                taxi_slices = [slice(taxi_out[0].slice.start, taxi_out[0].slice.stop - 
+            taxi_slices = [slice(taxi_out[0].slice.start, taxi_out[0].slice.stop - 
                                      (20 * taxi_out.hz))] + taxi_in.get_slices()
-                self.create_kpv_from_slices(eng_n1_max.array, taxi_slices, max_value)
+            self.create_kpv_from_slices(eng_n1_max.array, taxi_slices, max_value)
+            
         elif len(taxiing.get_slices()) > 0:
             self.create_kpv_from_slices(eng_n1_max.array, taxiing, max_value)
 
