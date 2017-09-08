@@ -5317,7 +5317,8 @@ def overflow_correction(param, fast=None, max_val=8191):
         abs_jump = np.ma.abs(jump)
         jump_sign = -jump / abs_jump
         steps = np.ma.where(abs_jump > delta, max_val * jump_sign, 0)
-
+        for jump_idx in np.ma.where(steps)[0]:
+            old_mask[sl.start + jump_idx - 2: sl.start + jump_idx + 2] = False 
         correction = np.ma.cumsum(steps)
 
         array[sl] += correction
