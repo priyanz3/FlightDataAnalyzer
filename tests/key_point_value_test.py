@@ -4760,15 +4760,38 @@ class TestAirspeedWithSpeedbrakeDeployedMax(unittest.TestCase, NodeTest):
             name='Airspeed',
             array=np.ma.arange(10),
         )
+        spoiler_values_mapping = {0: '0', 6: '6'}
         spoiler = M(
             name='Speedbrake',
-            array=np.ma.array([0, 0, 0, 0, 5, 5, 0, 0, 5, 0]),
+            array=np.ma.array([0, 0, 0, 0, 6, 6, 0, 0, 6, 0]),
+            values_mapping=spoiler_values_mapping
         )
+    
         node = self.node_class()
         node.derive(air_spd, spoiler)
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 9)
-        self.assertEqual(node[0].value, 9.0)
+        self.assertEqual(node[0].index, 8)
+        self.assertEqual(node[0].value, 8.0)
+        self.assertEqual(node[0].name, 'Airspeed With Speedbrake Deployed Max')
+
+
+    def test_derive_below_threshold(self):
+        air_spd = P(
+            name='Airspeed',
+            array=np.ma.arange(10),
+        )
+        spoiler_values_mapping = {0: '0', 4:'4', 6: '6'}
+        spoiler = M(
+            name='Speedbrake',
+            array=np.ma.array([0, 0, 0, 0, 6, 6, 0, 0, 4, 0]),
+            values_mapping=spoiler_values_mapping
+        )
+    
+        node = self.node_class()
+        node.derive(air_spd, spoiler)
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 5)
+        self.assertEqual(node[0].value, 5.0)
         self.assertEqual(node[0].name, 'Airspeed With Speedbrake Deployed Max')
 
 

@@ -3537,9 +3537,9 @@ class AirspeedWithSpeedbrakeDeployedMax(KeyPointValueNode):
                air_spd=P('Airspeed'),
                spdbrk=P('Speedbrake')):
 
-        spdbrk.array[spdbrk.array > SPOILER_DEPLOYED] = np.ma.masked
+        spdbrk.array[spdbrk.array.data < SPOILER_DEPLOYED] = np.ma.masked
         spoiler_deployeds = np.ma.clump_unmasked(spdbrk.array)
-        self.create_kpvs_within_slices(
+        self.create_kpv_from_slices(
             air_spd.array, spoiler_deployeds, max_value)
 
 
