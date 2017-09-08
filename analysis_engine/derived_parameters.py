@@ -8507,7 +8507,64 @@ class AirspeedMinusVappFor3Sec(DerivedParameterNode):
 
         self.array = second_window(speed.array, self.frequency, 3)
 
+########################################
+# Airspeed Minus VLS
 
+
+class AirspeedMinusVLS(DerivedParameterNode):
+    '''
+    Airspeed relative to VLS.
+    '''
+
+    units = ut.KT
+
+    @classmethod
+    def can_operate(cls, available):
+
+        return all_of((
+            'Airspeed',
+            'Approach And Landing',
+            'VLS'
+        ), available)
+
+    def derive(self,
+               airspeed=P('Airspeed'),
+               vls_recorded=P('VLS'),
+               #vls_lookup=P('VLS Lookup'), - TODO
+               approaches=S('Approach And Landing')):
+
+        # Prepare a zeroed, masked array based on the airspeed:
+        self.array = np_ma_masked_zeros_like(airspeed.array)
+
+        # Determine the sections of flight where data must be valid:
+        phases = [approach.slice for approach in approaches]
+
+        # Using first_valid_parameter so that once lookup tables are introduced we'll just add it here
+        vls = first_valid_parameter(vls_recorded, phases=phases) 
+
+        if vls is None:
+            return
+
+        for phase in phases:
+            self.array[phase] = airspeed.array[phase] - vls.array[phase]
+
+
+class AirspeedMinusVLSFor3Sec(DerivedParameterNode):
+    '''
+    Airspeed relative to VLS over a 3 second window.
+
+    See the derived parameter 'Airspeed Minus VLS' for further details.
+    '''
+
+    align_frequency = 2
+    align_offset = 0
+    units = ut.KT
+
+    def derive(self, speed=P('Airspeed Minus VLS')):
+
+        self.array = second_window(speed.array, self.frequency, 3)
+        
+        
 ########################################
 # Airspeed Minus Minimum Airspeed
 

@@ -82,6 +82,8 @@ from analysis_engine.derived_parameters import (
     AirspeedMinusVappFor3Sec,
     AirspeedMinusVref,
     AirspeedMinusVrefFor3Sec,
+    AirspeedMinusVLS,
+    AirspeedMinusVLSFor3Sec,
     AirspeedRelative,
     AirspeedRelativeFor3Sec,
     AirspeedSelected,
@@ -7601,6 +7603,58 @@ class TestAirspeedMinusVrefFor3Sec(unittest.TestCase, NodeTest):
         ]
         self.airspeed = P(
             name='Airspeed Minus Vref',
+            array=np.ma.repeat((100, 110, 120, 100), (6, 7, 1, 6)),
+            frequency=2,
+        )
+
+    def test_derive_basic(self):
+        node = self.node_class()
+        node.get_derived([self.airspeed])
+        expected = np.ma.repeat((100, 110, 100), (6, 8, 6))
+        expected[-6:] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+    def test_derive_align(self):
+        self.airspeed.frequency = 1
+        node = self.node_class()
+        node.get_derived([self.airspeed])
+        expected = np.ma.array([100.0] * 11 + [105] + [110] * 16 + [100] * 12)
+        expected = np.ma.repeat((100, 105, 110, 100), (11, 1, 16, 12))
+        expected[-7:] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+
+########################################
+# Airspeed Minus VLS
+
+class TestAirspeedMinusVLS(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusVLS
+        self.operational_combinations = [
+            ('Airspeed', 'VLS', 'Approach And Landing'),
+        ]
+        self.airspeed = P('Airspeed', np.ma.repeat(102, 2000))
+        self.vls_record = P('VLS', np.ma.repeat((90, 120), 1000))
+        self.approaches = buildsection('Approach And Landing', 500, 999.5)
+
+    def test_derive(self):
+        node = self.node_class()
+        node.derive(self.airspeed, self.vls_record, self.approaches)
+        expected = np.ma.repeat((0, 12, 0, 0), 500)
+        expected[expected == 0] = np.ma.masked
+        ma_test.assert_masked_array_equal(node.array, expected)
+
+
+class TestAirspeedMinusVLSFor3Sec(unittest.TestCase, NodeTest):
+
+    def setUp(self):
+        self.node_class = AirspeedMinusVLSFor3Sec
+        self.operational_combinations = [
+            ('Airspeed Minus VLS',),
+        ]
+        self.airspeed = P(
+            name='Airspeed Minus VLS',
             array=np.ma.repeat((100, 110, 120, 100), (6, 7, 1, 6)),
             frequency=2,
         )
