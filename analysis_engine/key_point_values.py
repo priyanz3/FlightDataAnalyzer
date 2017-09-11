@@ -17736,7 +17736,7 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
         touchdowns = defaultdict(lambda: [None] * 3)
         for idx, kpv in enumerate((gw_kpv, acc_norm_kpv, rod_kpv)):
             for item in kpv:
-                touchdowns[int(item.index / 10)][idx] = item
+                touchdowns[round(item.index / 10)][idx] = item
 
         for gw, acc_norm, rod in six.itervalues(touchdowns):
             hi_g = acc_norm and acc_norm.value and acc_norm.value > acc_norm_limit
