@@ -16093,41 +16093,41 @@ class AirspeedIncreaseAlertDuration(KeyPointValueNode):
                                airborne)
 
 
-##class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
-    ##'''
-    ##Duration in which the Airspeed is below Minimum Airspeed in clean
-    ##configuration. 
+class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
+    '''
+    Duration in which the Airspeed is below Minimum Airspeed in clean
+    configuration. 
     
-    ##If no Minimum Airspeed parameter, KPV will use the Flap and 
-    ##Flap Manoeuvre Speed
-    ##'''
-    ##units = ut.SECOND
+    If no Minimum Airspeed parameter, KPV will use the Flap and 
+    Flap Manoeuvre Speed
+    '''
+    units = ut.SECOND
 
-    ##@classmethod
-    ##def can_operate(cls, available):
-        ##core = all_of(['Airspeed', 'Airborne', 'Flap'], available)
-        ##min_spd = any_of(['Minimum Airspeed', 'Flap Manoeuvre Speed'],
-                         ##available)
-        ##return core and min_spd
+    @classmethod
+    def can_operate(cls, available):
+        core = all_of(['Airspeed', 'Airborne', 'Flap'], available)
+        min_spd = any_of(['Minimum Airspeed', 'Flap Manoeuvre Speed'],
+                         available)
+        return core and min_spd
 
-    ##def derive(self,
-               ##air_spd=P('Airspeed'),
-               ##min_spd=P('Minimum Airspeed'),
-               ##flap = M('Flap'),
-               ##f_m_spd = P('Flap Manoeuvre Speed'),
-               ##airborne = S('Airborne')):
-        ##mspd = min_spd or f_m_spd
-        ##if mspd.name == 'Minimum Airspeed':
-            ##spd_slices = runs_of_ones((air_spd.array - mspd.array) < 0)
-        ##else:
-            ### Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
-            ### raw data
-            ##spd_slices = runs_of_ones((air_spd.array - mspd.array.data) < 0)
-        ##slices = slices_and(
-            ##clump_multistate(flap.array, '0', airborne.get_slices()),
-            ##spd_slices
-        ##)
-        ##self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
+    def derive(self,
+               air_spd=P('Airspeed'),
+               min_spd=P('Minimum Airspeed'),
+               flap = M('Flap'),
+               f_m_spd = P('Flap Manoeuvre Speed'),
+               airborne = S('Airborne')):
+        mspd = min_spd or f_m_spd
+        if mspd.name == 'Minimum Airspeed':
+            spd_slices = runs_of_ones((air_spd.array - mspd.array) < 0)
+        else:
+            # Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
+            # raw data
+            spd_slices = runs_of_ones((air_spd.array - mspd.array.data) < 0)
+        slices = slices_and(
+            clump_multistate(flap.array, '0', airborne.get_slices()),
+            spd_slices
+        )
+        self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
 
 
 ##############################################################################
@@ -17736,7 +17736,7 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
         touchdowns = defaultdict(lambda: [None] * 3)
         for idx, kpv in enumerate((gw_kpv, acc_norm_kpv, rod_kpv)):
             for item in kpv:
-                touchdowns[int(item.index / 10)][idx] = item
+                touchdowns[round(item.index / 10)][idx] = item
 
         for gw, acc_norm, rod in six.itervalues(touchdowns):
             hi_g = acc_norm and acc_norm.value and acc_norm.value > acc_norm_limit
