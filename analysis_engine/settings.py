@@ -166,11 +166,9 @@ AIRBORNE_THRESHOLD_TIME = 60  # secs
 
 # An airspeed or rotor speed below which you just can't possibly be flying.
 AIRSPEED_THRESHOLD = 80  # kts
-ROTORSPEED_THRESHOLD = 90 # %
 
 # The minimum sensible duration for being declaring a START_AND_STOP
 AIRSPEED_THRESHOLD_TIME = 3 * 60  # secs
-ROTORSPEED_THRESHOLD_TIME = 1 * 60  # secs
 
 # Min number of samples to use when creating hash of airspeed
 # 64 samples is enough to exceed arinc and short enough to not affect flights
