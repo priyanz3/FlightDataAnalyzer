@@ -505,7 +505,7 @@ LANDING_HEIGHT = 20.0
 LANDING_TRACEBACK_PERIOD = 30.0 # sec
 
 # The minimum sensible rotor speed to become airborne. Used for flight splitting (nb: rotor speed can fall below this level in flight).
-ROTORSPEED_THRESHOLD = 90  # % Nr
+ROTORSPEED_THRESHOLD = 50  # % Nr
 
 # The minimum sensible duration for being declaring a START_AND_STOP
 ROTORSPEED_THRESHOLD_TIME = 3 * 60  # secs
