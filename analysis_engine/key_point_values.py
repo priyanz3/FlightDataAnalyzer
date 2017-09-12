@@ -2902,6 +2902,188 @@ class AirspeedRelativeFor3Sec20FtToTouchdownMin(KeyPointValueNode):
 
 
 ########################################
+# Airspeed Minus VLS
+
+class AirspeedMinusVLSAtTouchdown(KeyPointValueNode):
+    '''
+    Airspeed minus VLS at touchdown.
+    '''
+
+    name = 'Airspeed Minus VLS At Touchdown'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS'),
+               touchdowns=KTI('Touchdown')):
+
+        self.create_kpvs_at_ktis(spd_rel.array, touchdowns)
+
+
+class AirspeedMinusVLS1000To500FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed minus VLS between 1000ft and 500ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS 1000 To 500 Ft Max'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            alt_aal.slices_from_to(1000, 500),
+            max_value,
+        )
+
+
+class AirspeedMinusVLS1000To500FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed minus VLS between 1000ft and 500ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS 1000 To 500 Ft Min'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            alt_aal.slices_from_to(1000, 500),
+            min_value,
+        )
+
+
+class AirspeedMinusVLS500To20FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed minus VLS between 500ft and 20ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS 500 To 20 Ft Max'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            alt_aal.slices_from_to(500, 20),
+            max_value,
+        )
+
+
+class AirspeedMinusVLS500To20FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed minus VLS between 500ft and 20ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS 500 To 20 Ft Min'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS'),
+               alt_aal=P('Altitude AAL For Flight Phases')):
+
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            alt_aal.slices_from_to(500, 20),
+            min_value,
+        )
+
+
+class AirspeedMinusVLSFor3Sec1000To500FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed minus VLS for 3 seconds between 1000ft and 500ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS For 3 Sec 1000 To 500 Ft Max'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(1000, 500), 3, self.frequency,
+                        hdf_duration),
+            max_value,
+        )
+
+
+class AirspeedMinusVLSFor3Sec1000To500FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed minus VLS for 3 seconds between 1000ft and 500ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS For 3 Sec 1000 To 500 Ft Min'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(1000, 500), 3, self.frequency,
+                        hdf_duration),
+            min_value,
+        )
+
+
+class AirspeedMinusVLSFor3Sec500To20FtMax(KeyPointValueNode):
+    '''
+    Maximum airspeed minus VLS for 3 seconds between 500ft and 20ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS For 3 Sec 500 To 20 Ft Max'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(500, 20), 3, self.frequency,
+                        hdf_duration),
+            max_value,
+        )
+
+
+class AirspeedMinusVLSFor3Sec500To20FtMin(KeyPointValueNode):
+    '''
+    Minimum airspeed minus VLS for 3 seconds between 500ft and 20ft AAL.
+    '''
+
+    name = 'Airspeed Minus VLS For 3 Sec 500 To 20 Ft Min'
+    units = ut.KT
+
+    def derive(self,
+               spd_rel=P('Airspeed Minus VLS For 3 Sec'),
+               alt_aal=P('Altitude AAL For Flight Phases'),
+               duration=A('HDF Duration')):
+
+        hdf_duration = duration.value * self.frequency if duration else None
+        self.create_kpvs_within_slices(
+            spd_rel.array,
+            trim_slices(alt_aal.slices_from_to(500, 20), 3, self.frequency,
+                        hdf_duration),
+            min_value,
+        )
+
+
+########################################
 # Airspeed: Flap
 
 
