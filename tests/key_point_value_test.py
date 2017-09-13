@@ -502,7 +502,7 @@ from analysis_engine.key_point_values import (
     CruiseSpeedLowDuration,
     DegradedPerformanceCautionDuration,
     AirspeedIncreaseAlertDuration,
-    AirspeedBelowMinimumAirspeedDuration,
+    AirspeedBelowMinimumAirspeedMin,
     PackValvesOpenAtLiftoff,
     PercentApproachStable,
     Pitch100To20FtMax,
