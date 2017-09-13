@@ -102,6 +102,7 @@ from analysis_engine.library import (ambiguous_runway,
                                      slices_overlap,
                                      slices_or,
                                      slices_and,
+                                     slices_overlap_merge,
                                      slices_remove_overlaps,
                                      slices_remove_small_slices,
                                      slices_remove_small_gaps,
@@ -11473,6 +11474,63 @@ class EngRunningDuration(KeyPointValueNode):
             self.create_kpvs_from_slice_durations(slices, self.frequency,
                                                   mark='start', engnum=engnum)
 
+
+class EngStartTimeMax(KeyPointValueNode):
+    '''
+    This computes the longest engine cranking time.
+    '''
+
+    units = ut.SECOND
+
+    @classmethod
+    # This KPV is intended for use on the Embraer Phenom, 
+    # but may be extended to other types at a later date.
+    
+    def can_operate(cls, available, ac_type=A('Aircraft Type'),
+                    family=A('Family')):
+        is_phenom = ac_type == aeroplane and family and family.value == 'Phenom 300'
+        return is_phenom and all_deps(cls, available)
+    
+    def derive(self, eng1_n2=P('Eng (1) N2'), eng2_n2=P('Eng (2) N2'),
+               station=S('Stationary'), taxi_out=S('Taxi Out')):
+
+        def start_time(array, hz):
+            # Start counting from the first non-zero value
+            # (the N2 recording is a solid zero before start)
+            non_zeros = np.nonzero(array)[0]
+            if len(non_zeros):
+                begin = non_zeros[0]
+                # Then find when the differential first drops below zero
+                startup_count = index_at_value(np.ediff1d(array[begin:]), 0.0)
+                # Check it's sensible
+                if begin > 0 and array[begin + startup_count] > 50.0:
+                    return begin, startup_count * hz
+                else:
+                    return None, None
+            else:
+                return None, None
+
+        hz = eng1_n2.frequency
+        startups = slices_overlap_merge(taxi_out.get_slices(), station.get_slices())
+        
+        for startup in startups:
+
+            eng_1_index, eng_1_time = start_time(eng1_n2.array[startup], hz)
+            eng_2_index, eng_2_time = start_time(eng2_n2.array[startup], hz)
+            '''
+            print (eng_1_index, eng_1_time)
+            print (eng_2_index, eng_2_time )
+            import matplotlib.pyplot as plt
+            plt.plot(eng1_n2.array[startup])
+            plt.plot(eng2_n2.array[startup])
+            plt.show()
+            '''
+            if eng_1_time > eng_2_time:
+                self.create_kpv(eng_1_index + startup.start, eng_1_time)
+            elif eng_2_time:
+                self.create_kpv(eng_2_index + startup.start, eng_2_time)
+    
+    
 ##############################################################################
 
 

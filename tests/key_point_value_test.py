@@ -348,6 +348,7 @@ from analysis_engine.key_point_values import (
     EngOilTempMax,
     EngRunningDuration,
     EngShutdownDuringFlightDuration,
+    EngStartTimeMax,
     EngTPRAtTOGADuringTakeoffMin,
     EngTPRDuringGoAround5MinRatingMax,
     EngTPRDuringMaximumContinuousPowerMax,
@@ -17265,6 +17266,65 @@ class TestEngRunningDuration(unittest.TestCase):
         self.assertEqual(running[2].name, 'Eng (3) Running Duration')
         self.assertEqual(running[2].index, 11)
         self.assertEqual(running[2].value, 6)
+
+
+class TestEngStartTimeMax(unittest.TestCase):
+        
+    def test_can_operate(self):
+        ac_type=A('Aircraft Type', value='565')
+        ac_family=A('Family', value='565')
+        opts = EngStartTimeMax.get_operational_combinations()
+        self.assertEqual(opts,  [('Aircraft Type', 'Family',
+                                          'Eng (1) N2', 'Eng (2) N2',
+                                          'Stationary', 'Taxi Out')])
+        
+    def test_1_start(self):
+        eng_1_start = P('Eng (1) N2', np.ma.array([0]*4+range(55)+[54]*4))
+        eng_2_start = P('Eng (2) N2', np.ma.array([0]*50))
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_1_start, eng_2_start, stat, t_out)
+        self.assertEqual(len(estm), 1)
+        self.assertEqual(estm[0].value, 53.0)
+        self.assertEqual(estm[0].index, 5.0)
+
+    def test_no_start(self):
+        eng_start = P('Eng (1) N2', np.ma.array([0]*50))
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_start, eng_start, stat, t_out)
+        self.assertEqual(len(estm), 0)
+
+    def test_unclear_start(self):
+        eng_start = P('Eng (1) N2', np.ma.array([0]*5+range(45)+[45]*5))
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_start, eng_start, stat, t_out)
+        self.assertEqual(len(estm), 0)
+
+    def test_2_start(self):
+        eng_1_start = P('Eng (1) N2', np.ma.array([60.0]*50))
+        eng_2_start = P('Eng (2) N2', np.ma.array([0]*3+range(0, 55, 2)+[54]*4))
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_1_start, eng_2_start, stat, t_out)
+        self.assertEqual(len(estm), 1)
+        self.assertEqual(estm[0].value, 26.0)
+        self.assertEqual(estm[0].index, 4.0)
+
+    def test_both_start(self):
+        eng_1_start = P('Eng (1) N2', np.ma.array([0]*4+range(55)+[54]*4))
+        eng_2_start = P('Eng (2) N2', np.ma.array([0]*6+range(55)+[54]*2))
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_1_start, eng_2_start, stat, t_out)
+        self.assertEqual(len(estm), 1)
+        self.assertEqual(estm[0].value, 53.0)
 
 
 class TestMasterWarningDuringTakeoffDuration(unittest.TestCase, NodeTest):
