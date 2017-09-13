@@ -16815,9 +16815,9 @@ class TestAirspeedIncreaseAlertDuration(unittest.TestCase,
         self.basic_setup()
 
 
-class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
+class TestAirspeedBelowMinimumAirspeedMin(unittest.TestCase):
     def setUp(self):
-        self.node_class = AirspeedBelowMinimumAirspeedDuration
+        self.node_class = AirspeedBelowMinimumAirspeedMin
         self.air_spd = P('Airspeed',
                          np.ma.array([
                              170, 170, 171, 172, 172, 172, 174, 174, 175, 176,
@@ -16865,7 +16865,7 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
     def test_attributes(self):
         node = self.node_class()
         self.assertEqual(node.units, 's')
-        self.assertEqual(node.name, 'Airspeed Below Minimum Airspeed Duration')
+        self.assertEqual(node.name, 'Airspeed Below Minimum Airspeed Min')
 
     def test_can_operate(self):
         opts = self.node_class.get_operational_combinations()
@@ -16890,8 +16890,8 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
                     airborne=self.airborne)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 28)
-        self.assertEqual(node[0].value, 19)
+        self.assertEqual(node[0].index, 34)
+        self.assertEqual(node[0].value, -31)
 
     def test_derive_minimum_airspeed(self):
         '''
@@ -16907,8 +16907,8 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
                     airborne=self.airborne)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 28)
-        self.assertEqual(node[0].value, 17)
+        self.assertEqual(node[0].index, 34)
+        self.assertEqual(node[0].value, -25)
 
     def test_derive_both_speed_param(self):
         '''
@@ -16925,8 +16925,8 @@ class TestAirspeedBelowMinimumAirspeedDuration(unittest.TestCase):
                     airborne=self.airborne)
 
         self.assertEqual(len(node), 1)
-        self.assertEqual(node[0].index, 28)
-        self.assertEqual(node[0].value, 17)
+        self.assertEqual(node[0].index, 34)
+        self.assertEqual(node[0].value, -25)
 
 
 ##############################################################################

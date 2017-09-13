@@ -16093,7 +16093,7 @@ class AirspeedIncreaseAlertDuration(KeyPointValueNode):
                                airborne)
 
 
-class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
+class AirspeedBelowMinimumAirspeedMin(KeyPointValueNode):
     '''
     Duration in which the Airspeed is below Minimum Airspeed in clean
     configuration. 
@@ -16118,16 +16118,19 @@ class AirspeedBelowMinimumAirspeedDuration(KeyPointValueNode):
                airborne = S('Airborne')):
         mspd = min_spd or f_m_spd
         if mspd.name == 'Minimum Airspeed':
-            spd_slices = runs_of_ones((air_spd.array - mspd.array) < 0)
+            to_test = air_spd.array - mspd.array
+            spd_slices = runs_of_ones(to_test < 0)
         else:
             # Flap Manoeuvre Speed masks data above 20,000 ft STD, need to use
             # raw data
-            spd_slices = runs_of_ones((air_spd.array - mspd.array.data) < 0)
+            to_test = air_spd.array - mspd.array.data
+            spd_slices = runs_of_ones(to_test < 0)
         slices = slices_and(
             clump_multistate(flap.array, '0', airborne.get_slices()),
             spd_slices
         )
-        self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
+        # self.create_kpvs_from_slice_durations(slices, air_spd.frequency)
+        self.create_kpv_from_slices(to_test, slices, min_value)
 
 
 ##############################################################################
