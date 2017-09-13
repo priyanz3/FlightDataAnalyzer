@@ -11695,24 +11695,25 @@ class EngStartTimeMax(KeyPointValueNode):
                 return None, None
 
         hz = eng1_n2.frequency
-        startups = slices_overlap_merge(taxi_out.get_slices(), station.get_slices())
-        
-        for startup in startups:
+       
+        for taxi in taxi_out.get_slices():
 
-            eng_1_index, eng_1_time = start_time(eng1_n2.array[startup], hz)
-            eng_2_index, eng_2_time = start_time(eng2_n2.array[startup], hz)
+            eng_1_index, eng_1_time = start_time(eng1_n2.array[:taxi.stop], hz)
+            eng_2_index, eng_2_time = start_time(eng2_n2.array[:taxi.stop], hz)
+
             '''
             print (eng_1_index, eng_1_time)
             print (eng_2_index, eng_2_time )
             import matplotlib.pyplot as plt
-            plt.plot(eng1_n2.array[startup])
-            plt.plot(eng2_n2.array[startup])
+            plt.plot(eng1_n2.array[:taxi.stop])
+            plt.plot(eng2_n2.array[:taxi.stop])
             plt.show()
             '''
+
             if eng_1_time > eng_2_time:
-                self.create_kpv(eng_1_index + startup.start, eng_1_time)
+                self.create_kpv(eng_1_index, eng_1_time)
             elif eng_2_time:
-                self.create_kpv(eng_2_index + startup.start, eng_2_time)
+                self.create_kpv(eng_2_index, eng_2_time)
     
     
 ##############################################################################
