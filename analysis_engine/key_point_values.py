@@ -11677,19 +11677,21 @@ class EngStartTimeMax(KeyPointValueNode):
                station=S('Stationary'), taxi_out=S('Taxi Out')):
 
         def start_time(array, hz):
-            # Start counting from the first non-zero value
-            # (the N2 recording is a solid zero before start)
-            non_zeros = np.nonzero(array)[0]
-            if len(non_zeros):
-                begin = non_zeros[0]
+            try:
+                # Skip past any trailing non-zeros resulting from flight splitting.
+                first_non_zero = np.where(array==0)[0][0]
+                # Start counting from the first non-zero value
+                # (the N2 recording is a solid zero before start)
+                non_zeros = np.nonzero(array[first_non_zero:])[0]
+                begin = non_zeros[0] + first_non_zero
                 # Then find when the differential first drops below zero
                 startup_count = index_at_value(np.ediff1d(array[begin:]), 0.0)
                 # Check it's sensible
                 if begin > 0 and array[begin + startup_count] > 50.0:
-                    return begin, startup_count * hz
+                    return begin, startup_count / hz
                 else:
                     return None, None
-            else:
+            except:
                 return None, None
 
         hz = eng1_n2.frequency

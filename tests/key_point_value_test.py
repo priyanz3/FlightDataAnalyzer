@@ -17405,12 +17405,12 @@ class TestEngRunningDuration(unittest.TestCase):
 class TestEngStartTimeMax(unittest.TestCase):
         
     def test_can_operate(self):
-        ac_type=A('Aircraft Type', value='565')
-        ac_family=A('Family', value='565')
-        opts = EngStartTimeMax.get_operational_combinations()
-        self.assertEqual(opts,  [('Aircraft Type', 'Family',
-                                          'Eng (1) N2', 'Eng (2) N2',
-                                          'Stationary', 'Taxi Out')])
+        ac_type=A('Aircraft Type', value='aeroplane')
+        ac_family=A('Family', value='Phenom 300')
+        opts = EngStartTimeMax.get_operational_combinations(ac_type=ac_type,
+                                                            family=ac_family)
+        self.assertEqual(opts,  [('Eng (1) N2', 'Eng (2) N2',
+                                  'Stationary', 'Taxi Out')])
         
     def test_1_start(self):
         eng_1_start = P('Eng (1) N2', np.ma.array([0]*4+range(55)+[54]*4))
@@ -17430,6 +17430,18 @@ class TestEngStartTimeMax(unittest.TestCase):
         estm = EngStartTimeMax()
         estm.derive(eng_start, eng_start, stat, t_out)
         self.assertEqual(len(estm), 0)
+
+    def test_early_cut(self):
+        eng_start = P('Eng (1) N2', 
+                      np.ma.array([60, 30]+[0]*5+range(0, 60, 5)+[60]*3),
+                      frequency=0.5)
+        stat=buildsection('Stationary', 0, 25)
+        t_out=buildsection('Taxi Out', 20, 70)
+        estm = EngStartTimeMax()
+        estm.derive(eng_start, eng_start, stat, t_out)
+        self.assertEqual(len(estm), 1)
+        self.assertEqual(estm[0].value, 22.0)
+        self.assertEqual(estm[0].index, 8.0)
 
     def test_unclear_start(self):
         eng_start = P('Eng (1) N2', np.ma.array([0]*5+range(45)+[45]*5))
