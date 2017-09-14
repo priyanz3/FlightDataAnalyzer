@@ -5007,11 +5007,10 @@ class CoordinatesSmoothed(object):
                     
                     if approach.type == 'GO_AROUND':
                         '''
-                        A go-around with no ILS and imprecise positioning, our best option is just
-                        to leave the track alone.
+                        A go-around with no or an offset ILS and imprecise positioning, 
+                        our best option is just to leave the track alone.
                         '''
-                        lat_err = 0.0
-                        lon_err = 0.0
+                        continue
 
                     else:
                         '''
