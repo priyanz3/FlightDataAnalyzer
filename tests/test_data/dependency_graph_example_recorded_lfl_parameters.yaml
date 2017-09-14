@@ -151,16 +151,16 @@
     (1) Oil Qty', !!python/unicode 'Eng (1) Oil Temp', !!python/unicode 'Eng (1) Oil
     Temp Amber Limit', !!python/unicode 'Eng (1) Oil Temp Amber Limit Exceeded', !!python/unicode 'Eng
     (1) Oil Temp Red', !!python/unicode 'Eng (1) Oil Temp Redline', !!python/unicode 'Eng
-    (1) Operating At Minimum Allowed Power', !!python/unicode 'Eng (1) P0 Sensor Selected',
-  !!python/unicode 'Eng (1) PS3 Selected', !!python/unicode 'Eng (1) PT Taxi Inhibit',
-  !!python/unicode 'Eng (1) PT2 Selected', !!python/unicode 'Eng (1) Panel Mode',
+    (1) Operating At Minimum Allowed Power', !!python/unicode 'Eng (1) P0 Selected',
+  !!python/unicode 'Eng (1) P30 Selected', !!python/unicode 'Eng (1) PT Taxi Inhibit',
+  !!python/unicode 'Eng (1) P20 Selected', !!python/unicode 'Eng (1) Panel Mode',
   !!python/unicode 'Eng (1) Position Code', !!python/unicode 'Eng (1) Power Management
     Control', !!python/unicode 'Eng (1) Rating', !!python/unicode 'Eng (1) Reverse
     Thrust Limited By Thrust Reverser', !!python/unicode 'Eng (1) Reverser Fully Deployed',
   !!python/unicode 'Eng (1) Reverser In Transit', !!python/unicode 'Eng (1) Rollback
     Overtemperature Active', !!python/unicode 'Eng (1) Running Sim', !!python/unicode 'Eng
     (1) Speed Regulator', !!python/unicode 'Eng (1) Starter Valve', !!python/unicode 'Eng
-    (1) T25 Sensor Selected', !!python/unicode 'Eng (1) T3 Sensor Selected', !!python/unicode 'Eng
+    (1) T25 Sensor Selected', !!python/unicode 'Eng (1) T30 Selected', !!python/unicode 'Eng
     (1) TAT Inhibit Flag', !!python/unicode 'Eng (1) Throttle Lever', !!python/unicode 'Eng
     (1) Throttle Rate Command', !!python/unicode 'Eng (1) Throttle Torque', !!python/unicode 'Eng
     (1) Thrust Reverser (L) Sleeve', !!python/unicode 'Eng (1) Thrust Reverser (R)
@@ -215,16 +215,16 @@
     Oil Temp', !!python/unicode 'Eng (2) Oil Temp Amber Limit', !!python/unicode 'Eng
     (2) Oil Temp Amber Limit Exceeded', !!python/unicode 'Eng (2) Oil Temp Redline',
   !!python/unicode 'Eng (2) Oil Temp Redline Exceeded', !!python/unicode 'Eng (2)
-    Operating At Minimum Allowed Power', !!python/unicode 'Eng (2) P0 Sensor Selected',
-  !!python/unicode 'Eng (2) PS3 Selected', !!python/unicode 'Eng (2) PT Taxi Inhibit',
-  !!python/unicode 'Eng (2) PT2 Selected', !!python/unicode 'Eng (2) Panel Mode',
+    Operating At Minimum Allowed Power', !!python/unicode 'Eng (2) P0 Selected',
+  !!python/unicode 'Eng (2) P30 Selected', !!python/unicode 'Eng (2) PT Taxi Inhibit',
+  !!python/unicode 'Eng (2) P20 Selected', !!python/unicode 'Eng (2) Panel Mode',
   !!python/unicode 'Eng (2) Position Code', !!python/unicode 'Eng (2) Power Management
     Control', !!python/unicode 'Eng (2) Rating', !!python/unicode 'Eng (2) Reverse
     Thrust Limited By Thrust Reverser', !!python/unicode 'Eng (2) Reverser Fully Deployed',
   !!python/unicode 'Eng (2) Reverser In Transit', !!python/unicode 'Eng (2) Rollback
     Overtemperature Active', !!python/unicode 'Eng (2) Running Sim', !!python/unicode 'Eng
     (2) Speed Regulator', !!python/unicode 'Eng (2) Starter Valve', !!python/unicode 'Eng
-    (2) T25 Sensor Selected', !!python/unicode 'Eng (2) T3 Sensor Selected', !!python/unicode 'Eng
+    (2) T25 Sensor Selected', !!python/unicode 'Eng (2) T30 Selected', !!python/unicode 'Eng
     (2) TAT Inhibit Flag', !!python/unicode 'Eng (2) Throttle Lever', !!python/unicode 'Eng
     (2) Throttle Rate Command', !!python/unicode 'Eng (2) Throttle Torque', !!python/unicode 'Eng
     (2) Thrust Reverser (L) Sleeve', !!python/unicode 'Eng (2) Thrust Reverser (R)
