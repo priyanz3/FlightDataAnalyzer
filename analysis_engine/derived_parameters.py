@@ -4918,7 +4918,9 @@ class CoordinatesSmoothed(object):
         if not approaches:
             return lat_adj, lon_adj
 
-        for approach in approaches:
+        # Work through the approaches in reverse order, so any 
+        # go-around can copy the landing positional corrections.
+        for approach in approaches[::-1]:
 
             this_app_slice = approach.slice
             
@@ -5008,9 +5010,11 @@ class CoordinatesSmoothed(object):
                     if approach.type == 'GO_AROUND':
                         '''
                         A go-around with no or an offset ILS and imprecise positioning, 
-                        our best option is just to leave the track alone.
+                        our best option is to use the same correction as for the landing.
                         '''
-                        continue
+                        # TODO: Add a check that this go-around is at the same airfield.
+                        lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
+                        lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
 
                     else:
                         '''
