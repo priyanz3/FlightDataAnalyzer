@@ -479,7 +479,7 @@ class ApproachInformation(ApproachNode):
                 appr_ils_freq = None
             else:
                 if appr_ils_freq and loc_slice:
-                    if appr_ils_freq != ut.convert(approach_runway['localizer']['frequency'], ut.KHZ, ut.MHZ):
+                    if appr_ils_freq != round(ut.convert(approach_runway['localizer']['frequency'], ut.KHZ, ut.MHZ), 2):
                         loc_slice = None
 
             #######################################################################
