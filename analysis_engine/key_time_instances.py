@@ -1270,7 +1270,7 @@ class Liftoff(KeyTimeInstanceNode):
                         index_acc = idx + back_6
 
             if alt_rad:
-                index_rad = index_at_value(alt_rad.array, 0.0, to_scan)
+                index_rad = index_at_value(alt_rad.array, 0.0, slice(on_6, back_6,-1))
 
             if gog:
                 # Try using Gear On Ground switch
