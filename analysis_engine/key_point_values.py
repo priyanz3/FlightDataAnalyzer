@@ -24,6 +24,7 @@ from analysis_engine.settings import (ACCEL_LAT_OFFSET_LIMIT,
                                       CONTROL_FORCE_THRESHOLD,
                                       GRAVITY_IMPERIAL,
                                       GRAVITY_METRIC,
+                                      GROUNDSPEED_FOR_MOBILE,
                                       HOVER_MIN_DURATION,
                                       HYSTERESIS_FPALT,
                                       MIN_HEADING_CHANGE,
@@ -12370,6 +12371,32 @@ class HeightMinsToTouchdown(KeyPointValueNode):
 
 ##############################################################################
 # Flap
+
+
+class FlapAtFirstMovementAfterEngineStart(KeyPointValueNode):
+    '''
+    Records the flap setting at the point that the aircraft starts moving.
+    '''
+    units = ut.DEGREE
+
+    def derive(self, flap=P('Flap'), gnd_spd=P('Groundspeed Signed'),
+               eng_start=KTI('First Eng Start Before Liftoff'),
+               liftoff=KTI('Liftoff')):
+        gndspd = mask_outside_slices(gnd_spd.array,
+                                     [slice(eng_start.get_first().index,
+                                            liftoff.get_first().index), ])
+        # Slice any of forward movement above GROUNDSPEED_FOR_MOBILE.
+        # This will filter out pushback and tows. It may not filtered all tows.
+        movement = runs_of_ones(gndspd > GROUNDSPEED_FOR_MOBILE)
+        # If there is more than one slice, this may indicate a period in which
+        # the aircraft has stopped, possibly because of a tow or taxi.
+        #
+        # Attempt to detect tows (from example flight, speed does not go 
+        # beyond 4 kt). Filter out any slices where the groundspeed
+        # does not go above 4 kt and take the first slice. This will be slice
+        # where the aircraft is moving under its own power.
+        moving = [s for s in movement if (max_value(gndspd, s)).value > 4.0][0]
+        self.create_kpv(moving.start, flap.array[moving.start])
 
 
 class FlapAtLiftoff(KeyPointValueNode):

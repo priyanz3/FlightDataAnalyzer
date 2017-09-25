@@ -391,6 +391,7 @@ from analysis_engine.key_point_values import (
     FlapAt500Ft,
     FlapAtGearDownSelection,
     FlapAtGearUpSelectionDuringGoAround,
+    FlapAtFirstMovementAfterEngineStart,
     FlapAtLiftoff,
     FlapAtTouchdown,
     FlapOrConfigurationMaxOrMin,
@@ -12071,6 +12072,77 @@ class TestHeightMinsToTouchdown(unittest.TestCase, NodeTest):
 
 ##############################################################################
 # Flap
+
+
+class TestFlapAtFirstMovementAfterEngineStart(unittest.TestCase):
+    def setUp(self):
+        self.node_class = FlapAtFirstMovementAfterEngineStart
+
+    def test_attributes(self):
+        node = self.node_class()
+        self.assertEqual(node.name, 'Flap At First Movement After Engine Start')
+        self.assertEqual(node.units, 'deg')
+
+    def test_can_operate(self):
+        opts = self.node_class.get_operational_combinations()
+        self.assertEqual(len(opts), 1)
+        self.assertIn('Flap', opts[0])
+        self.assertIn('Groundspeed Signed', opts[0])
+        self.assertIn('First Eng Start Before Liftoff', opts[0])
+        self.assertIn('Liftoff', opts[0])
+
+    def test_derive(self):
+        
+        flap = P('Flap', np.ma.array([
+            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,
+            1, 15, 15, 15, 15,
+            15, 15, 15, 15, 0
+        ]))
+        gnd_spd = P('Groundspeed Signed', np.ma.array([
+            0., 5., 0., 0., 0.,
+            0., 0., -1., -3., 0.,
+            0., 0., 1., 2., 5.,
+            10., 15., 20., 25., 30.
+        ]))
+        eng_start = KTI('First Eng Start Before Liftoff', items=[
+            KeyTimeInstance(3,'First Eng Start Before Liftoff'),
+        ])
+        liftoff = KTI('Liftoff', items=[KeyTimeInstance(19, 'Liftoff')])
+
+        node = self.node_class()
+        node.derive(flap=flap, gnd_spd=gnd_spd, eng_start=eng_start,
+                    liftoff=liftoff)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 14)
+        self.assertEqual(node[0].value, 15)
+
+    def test_derive_tow(self):
+        flap = P('Flap', np.ma.array([
+            0, 0, 0, 0, 0, # before eng start
+            0, 0, 0, 0, 0,
+            1, 15, 15, 15, 15,
+            15, 15, 15, 15, 0
+        ]))
+        gnd_spd = P('Groundspeed Signed', np.ma.array([
+            0., 5., 0., 0., 0., # before eng start
+            0., 3., 4., 0., 0., # towed 
+            0., 0., 1., 2., 5.,
+            10., 15., 20., 25., 30.
+        ]))
+        eng_start = KTI('First Eng Start Before Liftoff', items=[
+            KeyTimeInstance(3,'First Eng Start Before Liftoff'),
+        ])
+        liftoff = KTI('Liftoff', items=[KeyTimeInstance(19, 'Liftoff')])
+
+        node = self.node_class()
+        node.derive(flap=flap, gnd_spd=gnd_spd, eng_start=eng_start,
+                    liftoff=liftoff)
+
+        self.assertEqual(len(node), 1)
+        self.assertEqual(node[0].index, 14)
+        self.assertEqual(node[0].value, 15)
 
 
 class TestFlapAtLiftoff(unittest.TestCase, NodeTest):
