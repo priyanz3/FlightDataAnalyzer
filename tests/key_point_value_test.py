@@ -2621,6 +2621,58 @@ class TestAirspeedAt200FtDuringOnshoreApproach(unittest.TestCase, NodeTest):
         self.assertAlmostEqual(node[1].index, 63, places=0)
         self.assertAlmostEqual(node[1].value, 48.6, places=1)
 
+    def test_not_offshore(self):
+        x = np.linspace(3, 141, 17).tolist() + [140] + \
+            np.linspace(140, 2, 17).tolist() + \
+            np.linspace(5, 139, 17).tolist() + [138] + \
+            np.linspace(138, 0, 17).tolist()
+        air_spd = P('Airspeed', x)
+        approaches = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(25, 30)),
+                          ApproachItem('LANDING', slice(60, 65))])
+        y = np.linspace(190, 403, 17).tolist() + \
+            np.linspace(415, 20, 18).tolist() + \
+            np.linspace(230, 534, 17).tolist() + \
+            np.linspace(503, 50, 18).tolist()
+        alt_agl = P('Altitude AGL For Flight Phases', y)
+
+        offshore = M(name='Offshore', array=np.ma.array([1]*70, dtype=int),
+                 values_mapping={0: 'Onshore', 1: 'Offshore'})
+
+        node = self.node_class()
+        node.derive(air_spd, alt_agl, approaches, offshore)
+
+        self.assertEqual(len(node), 0)
+
+    def test_short_hop(self):
+        x = np.linspace(3, 141, 17).tolist() + [140] + \
+            np.linspace(140, 2, 17).tolist() + \
+            np.linspace(5, 139, 17).tolist() + [138] + \
+            np.linspace(138, 0, 17).tolist()
+        air_spd = P('Airspeed', x)
+        approaches = App('Approach Information',
+                   items=[ApproachItem('LANDING', slice(25, 30)),
+                          ApproachItem('LANDING', slice(34, 65))])
+        y = np.linspace(190, 403, 17).tolist() + \
+            np.linspace(415, 20, 18).tolist() + \
+            np.linspace(230, 534, 17).tolist() + \
+            np.linspace(503, 50, 18).tolist()
+        alt_agl = P('Altitude AGL For Flight Phases', y)
+
+        offshore = M(name='Offshore', array=np.ma.array([0]*70, dtype=int),
+                 values_mapping={0: 'Onshore', 1: 'Offshore'})
+
+        node = self.node_class()
+        node.derive(air_spd, alt_agl, approaches, offshore)
+
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].index, 26, places=0)
+        self.assertAlmostEqual(node[0].value, 68.8, places=1)
+    
+        self.assertAlmostEqual(node[1].index, 63, places=0)
+        self.assertAlmostEqual(node[1].value, 48.6, places=1)
+
+
 
 class TestAirspeedAtAPGoAroundEngaged(unittest.TestCase):
     '''

@@ -1805,7 +1805,8 @@ class AirspeedAt200FtDuringOnshoreApproach(KeyPointValueNode):
             if value_at_index(offshore.array, approach.slice.stop, interpolate=False) == 'Offshore':
                 continue
 
-            index = index_at_value(alt_agl.array, 200, approach.slice)
+            index = index_at_value(alt_agl.array, 200, 
+                                   _slice=slice(approach.slice.stop, approach.slice.start, -1))
             if not index:
                 continue
             value = value_at_index(air_spd.array, index)
