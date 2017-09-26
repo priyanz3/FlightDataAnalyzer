@@ -5048,8 +5048,8 @@ class CoordinatesSmoothed(object):
                         lat_err = value_at_index(lat.array, tdwn_index) - lat_tdwn
                         lon_err = value_at_index(lon.array, tdwn_index) - lon_tdwn
                         
-                    lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
-                    lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
+                        lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
+                        lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
