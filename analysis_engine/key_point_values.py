@@ -18003,20 +18003,16 @@ class GrossWeightConditionalAtTouchdown(KeyPointValueNode):
         if not gw_kpv:
             self.warning('No Gross Weight At Touchdown KPVs')
             return
+        
+        for gw in gw_kpv:
+            acc = [k for k in acc_norm_kpv if abs(int(gw.index) - int(k.index)) <= 1 ]
+            hi_g = acc and acc[0].value and acc[0].value > acc_norm_limit
 
-        # group kpvs by touchdown index, using tens as depending on alignment
-        # indexes may not match exactly
-        touchdowns = defaultdict(lambda: [None] * 3)
-        for idx, kpv in enumerate((gw_kpv, acc_norm_kpv, rod_kpv)):
-            for item in kpv:
-                touchdowns[round(item.index / 10)][idx] = item
-
-        for gw, acc_norm, rod in six.itervalues(touchdowns):
-            hi_g = acc_norm and acc_norm.value and acc_norm.value > acc_norm_limit
-            hi_rod = rod and rod.value and rod.value < vrt_spd_limit # less than as descending
+            rod = [k for k in rod_kpv if abs(int(gw.index) - int(k.index)) <= 1 ]
+            hi_rod = rod and rod[0].value and rod[0].value < vrt_spd_limit # less than as descending
 
             if hi_g or hi_rod: # if either condition matched create KPV.
-                self.create_kpv(gw.index, gw.value)
+                self.create_kpv(gw.index, gw.value)            
 
 
 class GrossWeightDelta60SecondsInFlightMax(KeyPointValueNode):
