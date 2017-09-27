@@ -4912,26 +4912,25 @@ class CoordinatesSmoothed(object):
                 print('Cannot smooth taxi out')
 
         #-----------------------------------------------------------------------
-        # Use ILS track for approach and landings in all localizer approches
+        # Use ILS track for approach and landings in all localizer approaches
         #-----------------------------------------------------------------------
 
         if not approaches:
             return lat_adj, lon_adj
 
-        # Work through the approaches in reverse order, so any 
-        # go-around can copy the landing positional corrections.
-        for approach in approaches[::-1]:
+        # Work through the approaches in sequence.
+        for approach in approaches:
 
             this_app_slice = approach.slice
             
-            # Set a default reference point to be used for Go-Arounds
-            tdwn_index = this_app_slice.stop - 2
+            # Set a default reference point that can be be used for Go-Arounds
+            low_point = this_app_slice.stop - 2
             # If we really did touchdown, that is the better point to use.
             for tdwn in tdwns:
                 if not is_index_within_slice(tdwn.index, this_app_slice):
                     continue
                 else:
-                    tdwn_index = tdwn.index
+                    low_point = tdwn.index
 
             if approach.type == 'LANDING':
                 runway = approach.landing_runway
@@ -4945,7 +4944,7 @@ class CoordinatesSmoothed(object):
 
             # We only refine the approach track if the aircraft lands off the localizer based approach
             # and the localizer is on the runway centreline.
-            if approach.loc_est and is_index_within_slice(tdwn_index, approach.loc_est) and not approach.offset_ils:
+            if approach.loc_est and is_index_within_slice(low_point, approach.loc_est) and not approach.offset_ils:
                 this_loc_slice = approach.loc_est
 
                 # Adjust the ils data to be degrees from the reference point.
@@ -5001,55 +5000,29 @@ class CoordinatesSmoothed(object):
                     lat_adj[this_app_slice] = lat.array[this_app_slice]
                     lon_adj[this_app_slice] = lon.array[this_app_slice]
                 else:
+                    '''
+                    We need to fix the bottom end of the descent without an
+                    ILS to fix. The best we can do is put the touchdown point
+                    in the right place. (An earlier version put the track
+                    onto the runway centreline which looked convincing, but
+                    went disasterously wrong for curving visual approaches
+                    into airfields like Nice).
+                    '''
+                    # Adjust distance units
+                    distance = np.ma.array([value_at_index(app_range.array, low_point)])
+                    bearing = np.ma.array([(runway_heading(runway)+180)%360.0])
 
-                    landing_runway = approach.landing_runway
-                    # The reference point is the ILS Localizer antenna, 
-                    # or the end of the runway where no ILS is available.
-                    ref_point = landing_runway['end']
+                    # Work out the touchdown or lowest point of go-around.
+                    # The reference point is the end of the runway where no ILS is available.
+                    ref_point = runway['end']
+                    lat_tdwn, lon_tdwn = latitudes_and_longitudes \
+                        (bearing, distance, ref_point)
+
+                    lat_err = value_at_index(lat.array, low_point) - lat_tdwn
+                    lon_err = value_at_index(lon.array, low_point) - lon_tdwn
                     
-                    if approach.type == 'GO_AROUND':
-                        '''
-                        A go-around with no or an offset ILS and imprecise positioning, 
-                        our best option is to use the same correction as for the landing.
-                        '''
-                        # TODO: Add a check that this go-around is at the same airfield.
-                        lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
-                        lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
-
-                    else:
-                        '''
-                        We need to fix the bottom end of the descent without an
-                        ILS to fix. The best we can do is put the touchdown point
-                        in the right place. (An earlier version put the track
-                        onto the runway centreline which looked convincing, but
-                        went disasterously wrong for curving visual approaches
-                        into airfields like Nice).
-                        '''
-                        # Q: Currently we rely on a Touchdown KTI existing to smooth
-                        #    a track without the ILS Localiser being established or
-                        #    precise positioning. This is to ensure that the
-                        #    aircraft is on the runway and therefore we can use
-                        #    database coordinates for the runway to smooth the
-                        #    track. This does not provide a solution for aircraft
-                        #    which do not momentarily land on the runway. Could we
-                        #    assume that the aircraft will match the runway
-                        #    coordinates if it drops below a certain altitude as
-                        #    this will be more accurate than low precision
-                        #    positioning equipment.
-    
-                        # Adjust distance units
-                        distance = np.ma.array([value_at_index(app_range.array, tdwn_index)])
-                        bearing = np.ma.array([(runway_heading(landing_runway)+180)%360.0])
-
-                        # Work out the touchdown point
-                        lat_tdwn, lon_tdwn = latitudes_and_longitudes \
-                            (bearing, distance, ref_point)
-    
-                        lat_err = value_at_index(lat.array, tdwn_index) - lat_tdwn
-                        lon_err = value_at_index(lon.array, tdwn_index) - lon_tdwn
-                        
-                        lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
-                        lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
+                    lat_adj[this_app_slice] = lat.array[this_app_slice] - lat_err
+                    lon_adj[this_app_slice] = lon.array[this_app_slice] - lon_err
 
             # The computation of a ground track is not ILS dependent and does
             # not depend upon knowing the runway details.
