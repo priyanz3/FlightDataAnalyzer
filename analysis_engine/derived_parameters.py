@@ -3921,8 +3921,15 @@ class GrossWeightSmoothed(DerivedParameterNode):
         gw_masked = gw.array.copy()
 
         if ff and airs:
-            gw_masked = mask_inside_slices(gw_masked, climbs.get_slices())
+            
+            # From the entire flight, we remove the periods we are not interested in...
+            
+            # We are not interested in matching the data to taxi periods
             gw_masked = mask_outside_slices(gw_masked, airs.get_slices())
+            # You can get really silly numbers on some aircraft in the climb
+            gw_masked = mask_inside_slices(gw_masked, climbs.get_slices())
+            # And we really don't believe that the weight can increase
+            gw_masked = np.ma.masked_where(np.ma.ediff1d(gw_masked, to_end=0.0) > 0.0, gw_masked)
 
             flow = repair_mask(ff.array)
             fuel_to_burn = np.ma.array(integrate(flow / 3600.0, ff.frequency,
