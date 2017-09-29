@@ -3036,6 +3036,20 @@ class TestGrossWeightSmoothed(unittest.TestCase):
         self.assertEqual(result.array[0], 484.0)
         self.assertEqual(result.array[-1], 37.0)
 
+    def test_gw_formula_with_rising_endpoint(self):
+        weight = P('Gross Weight', np.ma.array(data=[484, 420, 356, 292, 228, 164, 500],
+                                               mask=[1, 0, 0, 0, 0, 0, 0], dtype=float),
+                   offset=0.0, frequency=1 / 64.0)
+        fuel_flow = P('Eng (*) Fuel Flow', np.ma.array([3600] * 64 * 7, dtype=float),
+                      offset=0.0, frequency=1.0)
+        climb = buildsection('Climbing', 10, 20)
+        descend = buildsection('Descending', 60, 70)
+        airs = buildsection('Airborne', 10, 350)
+        gws = GrossWeightSmoothed()
+        result = gws.get_derived([fuel_flow, weight, climb, descend, airs])
+        self.assertEqual(result.array[0], 484.0)
+        self.assertEqual(result.array[-1], 37.0)
+
     def test_gw_formula_climbing(self):
         weight = P('Gross Weight',np.ma.array(data=[484,420,356,292,228,164,100],
                                               mask=[1,0,0,0,0,1,0],dtype=float),
