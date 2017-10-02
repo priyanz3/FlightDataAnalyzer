@@ -6341,6 +6341,12 @@ class TestSlicesRemoveSmallSlices(unittest.TestCase):
         expected = [slice(1, 13)]
         self.assertEqual(expected, newlist)
 
+    def test_slice_removal_none_cases(self):
+        slicelist = [slice(1, 13), slice(None, 27), slice(10, None)]
+        newlist = slices_remove_small_slices(slicelist, time_limit=5)
+        expected = [slice(1, 13)]
+        self.assertEqual(expected, newlist)
+
     def test_slice_removal_time_set_different_freq(self):
         slicelist = [slice(1, 13), slice(25, 27), slice(30, 33)]
         newlist = slices_remove_small_slices(slicelist, time_limit=10, hz=0.5)
