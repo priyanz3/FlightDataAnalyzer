@@ -7399,8 +7399,8 @@ class ILSGlideslope10SecBeforeCapture(KeyPointValueNode):
                ils_glideslope=P('ILS Glideslope'),
                ils_established=S('ILS Glideslope Established')):
 
-        for slice in ils_established.get_slices():
-            index = slice.start - 10*ils_glideslope.hz 
+        for established_slice in ils_established.get_slices():
+            index = established_slice.start - 10*ils_glideslope.hz 
             value = value_at_index(ils_glideslope.array, index)
             self.create_kpv(index, value)
 
