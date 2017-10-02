@@ -3893,7 +3893,7 @@ def slices_remove_small_slices(slices, time_limit=10, hz=1, count=None):
     if slices is None or slices == []:
         return slices
     sample_limit = count if count is not None else time_limit * hz
-    return [s for s in slices if s.stop - s.start > sample_limit]
+    return [s for s in slices if s.start and s.stop and (s.stop - s.start) > sample_limit]
 
 
 def trim_slices(slices, seconds, frequency, hdf_duration):
