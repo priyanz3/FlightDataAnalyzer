@@ -10740,6 +10740,7 @@ class TestEngTorqueDuringGoAround5MinRatingMax(unittest.TestCase, CreateKPVsWith
 
 class TestEngTorqueExceeding100(unittest.TestCase):
     
+    
     def setUp(self):
         self.node_class = EngTorqueExceeding100
         
@@ -10784,8 +10785,6 @@ class TestEngTorqueExceeding100(unittest.TestCase):
         self.assertEqual(len(kpv), 2)
         self.assertEqual(kpv[0].value, 9)
         self.assertEqual(kpv[0].index, 5)
-        
-        self.assertEqual(len(kpv), 2)
         self.assertEqual(kpv[1].value, 11)
         self.assertEqual(kpv[1].index, 17)        
         
@@ -10804,11 +10803,9 @@ class TestEngTorqueExceeding100(unittest.TestCase):
     def test_derive_exceeding_masked_data(self):
         
         eng_avg_torque = P(name='Eng (*) Avg Torque', 
-                           array=np.ma.array([95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 
-                                              103, 104, 105, 104, 103, 102, 101, 100, 99, 98]))
+                               array=np.ma.masked_greater_equal([95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 
+                                                  103, 104, 105, 104, 103, 102, 101, 100, 99, 98], 100))
         
-        eng_avg_torque.array[4::] = np.ma.masked
-
         kpv = EngTorqueExceeding100()
         kpv.derive(eng_avg_torque)
 
