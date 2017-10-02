@@ -1173,7 +1173,8 @@ class TakeoffStart(KeyTimeInstanceNode):
     def derive(self,
                acc_start=KTI('Takeoff Acceleration Start'),
                throttle=P('Throttle Levers')):
-        self.create_kti(acc_start.get_first().index)
+        if acc_start:
+            self.create_kti(acc_start.get_first().index)
 
 
 class TakeoffPeakAcceleration(KeyTimeInstanceNode):
