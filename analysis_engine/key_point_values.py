@@ -12396,8 +12396,9 @@ class FlapAtFirstMovementAfterEngineStart(KeyPointValueNode):
         # beyond 4 kt). Filter out any slices where the groundspeed
         # does not go above 4 kt and take the first slice. This will be slice
         # where the aircraft is moving under its own power.
-        moving = [s for s in movement if (max_value(gndspd, s)).value > 4.0][0]
-        self.create_kpv(moving.start, flap.array[moving.start])
+        moving = [s for s in movement if (max_value(gndspd, s)).value > 4.0]
+        if moving:
+            self.create_kpv(moving[0].start, flap.array[moving[0].start])
 
 
 class FlapAtLiftoff(KeyPointValueNode):
