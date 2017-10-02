@@ -2026,6 +2026,14 @@ class IANGlidepathEstablishedEnd(KeyTimeInstanceNode):
             self.create_kti(ils.slice.stop)
 
 #################################################################
+# Rejected Takeoff Start Markers (primarily for development)
+
+class RejectedTakeoffStart(KeyTimeInstanceNode):
+    def derive(self, rejs=S('Rejected Takeoff')):
+        for rej in rejs:
+            self.create_kti(rej.slice.start)
+
+#################################################################
 
 
 class MovementStart(KeyTimeInstanceNode):
