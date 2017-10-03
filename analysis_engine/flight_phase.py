@@ -1592,48 +1592,40 @@ class RejectedTakeoff(FlightPhaseNode):
     '''
     Rejected Takeoff based on Acceleration Longitudinal Offset Removed exceeding
     the TAKEOFF_ACCELERATION_THRESHOLD and not being followed by a liftoff.
+    
+    Note: We cannot use Liftoff, Taxi Out or Airborne in this computation in case
+    the rejected takeoff was followed by a taxi back to stand.
     '''
 
     def derive(self, accel_lon=P('Acceleration Longitudinal Offset Removed'),
+               eng_running=M('Eng (*) All Running'),
                groundeds=S('Grounded')):
-        accel_lon_masked = moving_average(accel_lon.array)
-        accel_lon_masked.mask |= \
-            accel_lon_masked <= TAKEOFF_ACCELERATION_THRESHOLD
-
-        accel_lon_slices = np.ma.clump_unmasked(accel_lon_masked)
-
-        potential_rtos = []
-        for grounded in groundeds:
-            for accel_lon_slice in accel_lon_slices:
-                is_in = (
-                    is_index_within_slice(
-                        accel_lon_slice.start, grounded.slice)
-                    and is_index_within_slice(
-                        accel_lon_slice.stop, grounded.slice)
-                )
-                if is_in:
-                    potential_rtos.append(accel_lon_slice)
-
-        for next_index, potential_rto in enumerate(potential_rtos, start=1):
-            # we get the min of the potential rto stop and the end of the
-            # data for cases where the potential rto is detected close to the
-            # end of the data
-            check_grounded_idx = min(
-                potential_rto.stop + (60 * self.frequency),
-                len(accel_lon.array) - 1
-            )
-            if is_index_within_slices(check_grounded_idx,
-                                      groundeds.get_slices()):
-                # if soon after potential rto and still grounded we have a
-                # rto, otherwise we continue to takeoff
-                duration = (potential_rto.stop - potential_rto.start) / self.hz
-                # Note: A duration of 2 seconds was detecting enthusiastic
-                # taxiing as RTO's and a duration of 5 seconds missed a genuine RTO
-                if duration >= 3.5:
-                    start = max(potential_rto.start - (10 * self.hz), 0)
-                    stop = min(potential_rto.stop + (30 * self.hz),
-                               len(accel_lon.array))
-                    self.create_phase(slice(start, stop))
+        
+        # We need all engines running to be a realistic attempt to get airborne
+        runnings = runs_of_ones(eng_running.array=='Running')
+        running_on_grounds = slices_and(runnings, groundeds.get_slices())
+        if len(running_on_grounds) > 1:
+            # The final slice will be the landing and taxi in, so we can skip this
+            to_test = running_on_grounds[:-1]
+        else:
+            # We always check a single period as this is a classic rejection candidate.
+            to_test = running_on_grounds
+        
+        for running_on_ground in to_test:
+            to_scan = accel_lon.array[running_on_ground]
+            peaks = np.ma.clump_unmasked(np.ma.masked_less(to_scan, TAKEOFF_ACCELERATION_THRESHOLD))
+            trough_index = 0
+            for peak in peaks:
+                if peak.start < trough_index:
+                    continue
+                # Look for the deceleration characteristic of a rejected takeoff.
+                trough_index = index_at_value(to_scan, -TAKEOFF_ACCELERATION_THRESHOLD/2.0, _slice=slice(peak.stop, None))
+                # trough_index will be None for every takeoff. Then, if it looks like a rejection, 
+                # we check the two accelerations happened fairly close together.
+                if trough_index and \
+                   (trough_index - peak.start)/accel_lon.hz < 60.0:
+                    self.create_phase(slice(peak.start + running_on_ground.start,
+                                            trough_index + running_on_ground.start))
 
 
 class RotorsTurning(FlightPhaseNode):
