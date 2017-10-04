@@ -12431,10 +12431,9 @@ class FlapAtTouchdown(KeyPointValueNode):
 
 
 import flightdataaircrafttables as at1
-        
 class FlapLeverSyntheticAtTouchdown(KeyPointValueNode):
     '''
-    Flap Lever (Synthetic) at Touchdown
+    Flap Lever (Synthetic) at Touchdown (including Touch And Go touchdowns)
             
     As for some aircrafts the Flap Lever (Synthetic) represents a 
     configuration, this KPV measures the actual flap angle
@@ -12442,6 +12441,9 @@ class FlapLeverSyntheticAtTouchdown(KeyPointValueNode):
     For example for 787:
     Flap 20 (configuration) is Flap 20 + Slat 50 so we need to return 20
     Flap 25 (configuration) is Flap 20 + Slat 100 so we need to return 20
+    
+    If there is no configuration this just creates the KPV using the value 
+    of Flap Lever (Synthetic)
     '''
             
     units = ut.DEGREE
@@ -12452,7 +12454,12 @@ class FlapLeverSyntheticAtTouchdown(KeyPointValueNode):
             
                
     def derive(self, model=A('Model'), series=A('Series'), family=A('Family'),
-               flap=M('Flap Lever (Synthetic)'), touchdowns=KTI('Touchdown')):
+               flap=M('Flap Lever (Synthetic)'), touchdowns=KTI('Touchdown'),
+               touch_and_goes=KTI('Touch And Go')):
+        
+        all_touchdowns = []
+        all_touchdowns.extend(touchdowns)
+        all_touchdowns.extend(touch_and_goes)
                 
         if model.value in at1.model_information.LEVER_MODEL_MAP:
             lever_map = at1.model_information.LEVER_MODEL_MAP[model.value]
@@ -12461,16 +12468,17 @@ class FlapLeverSyntheticAtTouchdown(KeyPointValueNode):
         elif family.value in at1.model_information.LEVER_FAMILY_MAP:
             lever_map = at1.model_information.LEVER_FAMILY_MAP[family.value]
         else:
-            return
-                
-        for touchdown in touchdowns:
-                                
-            flap_at_touchdown = flap.array[touchdown.index]
-                
-            for key, value in lever_map.iteritems():
-                if key[0] == int(flap_at_touchdown):
-                    self.create_kpv(touchdown.index, value[1])
-                    break
+            lever_map = None
+        
+        for touchdown in all_touchdowns:
+            if lever_map is not None:
+                for key, value in lever_map.iteritems():
+                    if key[0] == int(flap.array[touchdown.index]):
+                        self.create_kpv(touchdown.index, value[1])
+                        break
+            else:
+                self.create_kpv(touchdown.index, flap.array[touchdown.index])
+
 
 class FlapAtGearDownSelection(KeyPointValueNode):
     '''

@@ -1408,11 +1408,14 @@ class TouchAndGo(KeyTimeInstanceNode):
     """
     In POLARIS we define a Touch and Go as a Go-Around that contacted the ground.
     """
-    def derive(self, alt_aal=P('Altitude AAL'), go_arounds=KTI('Go Around')):
-        for ga in go_arounds:
-            if alt_aal.array[ga.index] == 0.0:
-                # wheels on ground
-                self.create_kti(ga.index)
+    def derive(self, alt_aal=P('Altitude AAL'), go_around_and_climbouts=S('Go Around And Climbout')):
+        for ga in go_around_and_climbouts:
+            ga_index = ga.start_edge
+            while ga_index < ga.stop_edge:
+                if alt_aal.array[ga_index] == 0.0:
+                    self.create_kti(ga_index)
+                    break
+                ga_index += 1
 
 
 class Touchdown(KeyTimeInstanceNode):
