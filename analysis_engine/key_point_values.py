@@ -12428,6 +12428,48 @@ class FlapAtTouchdown(KeyPointValueNode):
         self.create_kpvs_at_ktis(flap.array, touchdowns, interpolate=False)
 
 
+import flightdataaircrafttables as at1
+        
+class FlapLeverSyntheticAtTouchdown(KeyPointValueNode):
+    '''
+    Flap Lever (Synthetic) at Touchdown
+            
+    As for some aircrafts the Flap Lever (Synthetic) represents a 
+    configuration, this KPV measures the actual flap angle
+            
+    For example for 787:
+    Flap 20 (configuration) is Flap 20 + Slat 50 so we need to return 20
+    Flap 25 (configuration) is Flap 20 + Slat 100 so we need to return 20
+    '''
+            
+    units = ut.DEGREE
+            
+    @classmethod
+    def can_operate(cls, available):
+        return all_of(('Model', 'Series', 'Family', 'Flap Lever (Synthetic)'), available)
+            
+               
+    def derive(self, model=A('Model'), series=A('Series'), family=A('Family'),
+               flap=M('Flap Lever (Synthetic)'), touchdowns=KTI('Touchdown')):
+                
+        if model.value in at1.model_information.LEVER_MODEL_MAP:
+            lever_map = at1.model_information.LEVER_MODEL_MAP[model.value]
+        elif series.value in at1.model_information.LEVER_SERIES_MAP:
+            lever_map = at1.model_information.LEVER_SERIES_MAP[series.value]
+        elif family.value in at1.model_information.LEVER_FAMILY_MAP:
+            lever_map = at1.model_information.LEVER_FAMILY_MAP[family.value]
+        else:
+            return
+                
+        for touchdown in touchdowns:
+                                
+            flap_at_touchdown = flap.array[touchdown.index]
+                
+            for key, value in lever_map.iteritems():
+                if key[0] == int(flap_at_touchdown):
+                    self.create_kpv(touchdown.index, value[1])
+                    break
+
 class FlapAtGearDownSelection(KeyPointValueNode):
     '''
     Flap angle at gear down selection.
