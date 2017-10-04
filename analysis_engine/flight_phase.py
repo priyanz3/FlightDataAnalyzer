@@ -1518,14 +1518,14 @@ class Landing(FlightPhaseNode):
             to_scan = tdn - alt_agl.frequency*LANDING_TRACEBACK_PERIOD
             landing_begin = index_at_value(alt_agl.array, LANDING_HEIGHT,
                                            _slice=slice(tdn, to_scan , -1),
-                                           endpoint='closing')
+                                           endpoint='exact')
 
             # Scan forwards to find lowest collective shortly after touchdown.
             to_scan = tdn + coll.frequency*LANDING_COLLECTIVE_PERIOD
             landing_end = tdn  + np.ma.argmin(coll.array[tdn:to_scan])
-
-            new_phase = [slice(landing_begin, landing_end)]
-            phases = slices_or(phases, new_phase)
+            if landing_begin and landing_end:
+                new_phase = [slice(landing_begin, landing_end)]
+                phases = slices_or(phases, new_phase)
         self.create_phases(phases)
 
     def derive(self,

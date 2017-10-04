@@ -8,6 +8,55 @@ You can view the differences in tagged versions as follows:
 
   git log --pretty=format:"%Cblue%h %Cgreen%cn %Cred(%cr) %Creset%s %n%b %N" --graph "v0.3.2..v0.4.1"
 
+v0.36.1
+-------
+
+  Resolved Tickets:
+  - AE-215:  Airspeed relative to VLS events
+  - AE-1260: Problem - Airspeed low 200 ft
+  - AE-1267: SRR new event speed below minimum clean speed. https://polaris.flightdataservices.com/support/ticket/14425/
+             Polaris Ticket 14425
+  - AE-1445: Helicopter Flight Splitting
+             Duplicate tickets AE-1312
+  - AE-1446: Helicopter Rates Of Descent
+  - AE-1475: Engine and Ground Spoiler parameter renaming
+  - AE-1476: Ticket #15373: Missing flight data
+             Polaris Ticket 15373
+  - AE-1483: New Event INT029 Time to Engine Start
+  - AE-1484: Undefined Errors #15418
+             Polaris Ticket 15418
+  - AE-1492: Visual displacement (from support ticket 15319)
+             Polaris Ticket 15319
+  - AE-1500: Make GFF000 event available to everyone
+  - 15530: Boeing failed files 
+
+  Fixes:
+  - Liftoff computation now scans radio altimeter signal backwards to ensure noise during takeoff run is not misinterpreted.
+  - Track computation corrected to apply correction to each landing and go-around segment separately.
+  - ILS Frequency Checking - arithmetic errors when converting from kHz to MHz could cause this test to fail. 2 decimal places allows for nnn.n5 MHz spacing.
+  - 3c2dfac SlopeToLanding: ignore masked altitude during approach
+  - Fix for N1 During Taxi Out
+  - N1 Hi Taxi - added condition to check if taxi_out.get_slices() array isn't empty
+  - Avoid failing if whole array is masked
+  - Runway touchdown algorithm improvements to cater for helipads
+  - changed all limits from 35 to 15 for 737. Waiting for confirmation
+  - Existing KPV Airspeed With Speedbrake Deployed Max corrected and test improved.
+  - Stationary phase now removes nuisance sections below 5 seconds, and test added.
+  - splitter: fix fallback if date and time parameters constant.
+  - Fix: alt_agl needs to pass through LANDING_HEIGHT to count as a landing
+  - FlapAtFirstMovementAfterEngineStart: Fix: indexing an emtpy list
+  - GearUpInTransit: Fix: don't create slice if the start list is empty
+  - TakeoffStart: fix: trying to index an empty list acc_start
+
+  New KPV:
+  - Airspeed Below Minimum Airspeed Duration
+  - RoD Above 3000 Ft Max
+  - Tail Clearance During Go Around Min
+
+  other:
+  - New function slices_overlap_merge created in preparation for improvements in ARINC NCD detection.
+
+
 v0.35.1
 -------
 
