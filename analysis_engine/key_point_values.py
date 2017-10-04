@@ -463,9 +463,10 @@ class AccelerationLateralOffset(KeyPointValueNode):
                 total_sum += np.sum(unmasked_data)
         if total_count > 20:
             delta = total_sum / float(total_count)
-            if abs(delta) < ACCEL_LAT_OFFSET_LIMIT:
-                self.create_kpv(0, delta)
-
+            self.create_kpv(0, delta)
+            if abs(delta) > ACCEL_LAT_OFFSET_LIMIT:
+                self.warning("Acceleration Lateral offset '%s' greater than limit '%s'",
+                             delta, ACCEL_LAT_OFFSET_LIMIT)
 
 class AccelerationLateralFor5SecMax(KeyPointValueNode):
     '''
@@ -527,9 +528,8 @@ class AccelerationLongitudinalOffset(KeyPointValueNode):
                 total_sum += np.sum(unmasked_data)
         if total_count > 20:
             delta = total_sum / float(total_count)
-            if abs(delta) < ACCEL_LON_OFFSET_LIMIT:
-                self.create_kpv(0, delta)
-            else:
+            self.create_kpv(0, delta)
+            if abs(delta) > ACCEL_LON_OFFSET_LIMIT:
                 self.warning("Acceleration Longitudinal offset '%s' greater than limit '%s'",
                              delta, ACCEL_LON_OFFSET_LIMIT)
 
@@ -956,9 +956,10 @@ class AccelerationNormalOffset(KeyPointValueNode):
                 total_sum += np.sum(unmasked_data)
         if total_count > 20:
             delta = total_sum / float(total_count) - 1.0
-            if abs(delta) < ACCEL_NORM_OFFSET_LIMIT:
-                self.create_kpv(0, delta + 1.0)
-
+            self.create_kpv(0, delta + 1.0)
+            if abs(delta) > ACCEL_NORM_OFFSET_LIMIT:
+                self.warning("Acceleration Normal offset '%s' greater than limit '%s'",
+                             delta, ACCEL_NORM_OFFSET_LIMIT)                
 
 class AccelerationNormalWhileAirborneMax(KeyPointValueNode):
     '''
