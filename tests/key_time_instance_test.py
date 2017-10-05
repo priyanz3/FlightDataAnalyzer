@@ -2265,20 +2265,46 @@ class TestAutoland(unittest.TestCase):
 
 
 class TestTouchAndGo(unittest.TestCase):
+    
+    def setUp(self):
+        self.node_class = TouchAndGo
+    
     def test_can_operate(self):
-        expected = [('Altitude AAL', 'Go Around')]
+        expected = [('Altitude AAL', 'Go Around And Climbout')]
         self.assertEqual(expected, TouchAndGo.get_operational_combinations())
 
-    def test_derive(self):
+    def test_derive_one_go_around_and_climbout(self):
         alt_aal = P(name='Altitude AAL', array=np.ma.array([
             5, 5, 4, 4, 3, 3, 2, 2, 1, 1,
             0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
         ]))
-        go_around = [KeyTimeInstance(index=10, name='Go Around')]
-        t_a_g = TouchAndGo()
-        t_a_g.derive(alt_aal, go_around)
+       
+        go_around_and_climbout = S('Go Around And Climbout')
+        go_around_and_climbout.create_section(slice(7, 13))        
+        
+        touch_and_go = TouchAndGo()
+        touch_and_go.derive(alt_aal, go_around_and_climbout)
+        
         expected = [KeyTimeInstance(index=10, name='Touch And Go')]
-        self.assertEqual(t_a_g, expected)
+        self.assertEqual(len(expected), 1)
+        self.assertEqual(touch_and_go, expected)
+        
+    def test_derive_multiple_go_around_and_climbout(self):
+        alt_aal = P(name='Altitude AAL', array=np.ma.array([
+            5, 5, 4, 4, 3, 3, 2, 2, 1, 1,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+            8, 7, 6, 5, 4, 3, 2, 1, 0, 1, 
+            2, 3, 4, 5, 6]))
+       
+        go_around_and_climbout = S('Go Around And Climbout')
+        go_around_and_climbout.create_sections([slice(7, 13), slice(25, 30)]) 
+        
+        touch_and_go = TouchAndGo()
+        touch_and_go.derive(alt_aal, go_around_and_climbout)
+        
+        expected = [KeyTimeInstance(index=10, name='Touch And Go'), KeyTimeInstance(index=28, name='Touch And Go')]
+        self.assertEqual(len(expected), 2)
+        self.assertEqual(touch_and_go, expected)
 
 
 class TestTransmit(unittest.TestCase):
