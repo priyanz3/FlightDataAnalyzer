@@ -7386,6 +7386,27 @@ class ILSLocalizerDeviation1500To1000FtMax(KeyPointValueNode):
                 max_abs_value)
 
 
+class ILSGlideslope10SecBeforeCapture(KeyPointValueNode):
+    '''
+    Glideslope dot value 10 seconds from glideslope capture.  
+    '''
+
+    name = 'ILS Glideslope 10 Sec Before Capture'
+    units = ut.DOTS
+    
+    can_operate = aeroplane_only
+    
+    def derive(self,
+               ils_glideslope=P('ILS Glideslope'),
+               ils_established=S('ILS Glideslope Established')):
+
+        for established_slice in ils_established.get_slices():
+            index = established_slice.start - 10*ils_glideslope.hz 
+            value = value_at_index(ils_glideslope.array, index)
+            self.create_kpv(index, value)
+
+
+
 class ILSLocalizerDeviation1000To500FtMax(KeyPointValueNode):
     '''
     Determine maximum deviation from the localizer between 1000 and 

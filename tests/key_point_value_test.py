@@ -465,6 +465,7 @@ from analysis_engine.key_point_values import (
     IANFinalApproachCourseDeviationMax,
     IANGlidepathDeviationMax,
     ILSFrequencyDuringApproach,
+    ILSGlideslope10SecBeforeCapture,
     ILSGlideslopeDeviation1000To500FtMax,
     ILSGlideslopeDeviation1500To1000FtMax,
     ILSGlideslopeDeviation500To200FtMax,
@@ -7366,6 +7367,83 @@ class TestILSGlideslopeDeviation1500To1000FtMax(unittest.TestCase, ILSTest):
         self.assertEqual(len(kpv), 1)
         self.assertEqual(kpv[0].index, 16)
         self.assertAlmostEqual(kpv[0].value, -1.1995736)
+
+
+class TestILSGlideslope10SecBeforeCapture(unittest.TestCase):
+        
+    def setUp(self):
+        self.node_class = ILSGlideslope10SecBeforeCapture
+
+
+    def test_derive_positive_dot(self):
+        
+        ils_glideslope = P(
+            name='ILS Glideslope', 
+            array=np.ma.array(1.0 - np.cos(np.arange(0, 6.3, 0.1))),
+        )
+
+        ils_established = buildsection('ILS Glideslope Established', 30, 60)
+
+        kpv = ILSGlideslope10SecBeforeCapture()
+        kpv.derive(ils_glideslope, ils_established)
+
+        self.assertEqual(len(kpv),1)
+        self.assertGreater(kpv[0].value, 0)
+        self.assertEqual(kpv[0].index, 20)
+
+
+    def test_derive_multiple_approaches(self):
+        
+        ils_glideslope = P(
+            name='ILS Glideslope', 
+            array=np.ma.array(1.0 - np.cos(np.arange(0, 6.3, 0.1))),
+        )        
+        
+        ils_glideslope.array[20] = -ils_glideslope.array[20]
+        ils_established = buildsections('ILS Glideslope Established', [30,50], [40, 60])
+
+        kpv = ILSGlideslope10SecBeforeCapture()
+        kpv.derive(ils_glideslope, ils_established)
+
+        self.assertEqual(len(kpv),2)
+        self.assertLess(kpv[0].value, 0)
+        self.assertGreater(kpv[1].value, 0)
+        self.assertEqual(kpv[0].index, 20)
+        self.assertEqual(kpv[1].index, 30)
+
+
+    def test_derive_negative_dot(self):
+        
+        ils_glideslope = P(
+            name='ILS Glideslope', 
+            array=np.ma.array(1.0 - np.cos(np.arange(0, 6.3, 0.1))),
+        )         
+
+        ils_glideslope.array = -ils_glideslope.array
+        ils_established = buildsection('ILS Glideslope Established', 30, 60)
+
+        kpv = ILSGlideslope10SecBeforeCapture()
+        kpv.derive(ils_glideslope, ils_established)
+
+        self.assertEqual(len(kpv),1)
+        self.assertLess(kpv[0].value, 0)
+        self.assertEqual(kpv[0].index, 20)
+
+
+    def test_derive_masked_value(self):
+        
+        ils_glideslope = P(
+            name='ILS Glideslope', 
+            array=np.ma.array(1.0 - np.cos(np.arange(0, 6.3, 0.1))),
+        )         
+
+        ils_glideslope.array[40] = np.ma.masked
+        ils_established = buildsection('ILS Glideslope Established', 50, 60)
+
+        kpv = ILSGlideslope10SecBeforeCapture()
+        kpv.derive(ils_glideslope, ils_established)
+
+        self.assertEqual(len(kpv),0)
 
 
 class TestILSGlideslopeDeviation1000To500FtMax(unittest.TestCase, ILSTest):
