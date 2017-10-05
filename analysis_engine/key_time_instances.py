@@ -1404,7 +1404,6 @@ class LandingStart(KeyTimeInstanceNode):
 
 
 class TouchAndGo(KeyTimeInstanceNode):
-    # TODO: TESTS
     """
     In POLARIS we define a Touch and Go as a Go-Around that contacted the ground.
     """
