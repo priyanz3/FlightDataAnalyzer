@@ -62,7 +62,7 @@ from analysis_engine.flight_phase import (
     TwoDegPitchTo35Ft,
 )
 from analysis_engine.key_time_instances import BottomOfDescent, TopOfClimb, TopOfDescent
-from analysis_engine.library import integrate, np_ma_zeros_like
+from analysis_engine.library import integrate, np_ma_zeros_like, np_ma_ones_like
 from analysis_engine.node import (A, App, ApproachItem, KTI,
                                   KeyTimeInstance, KPV, KeyPointValue, M,
                                   Parameter, P, S, Section, SectionNode, load,
@@ -1943,28 +1943,68 @@ class TestRejectedTakeoff(unittest.TestCase):
     '''
     @unittest.skip('Being fixed')
     def test_can_operate(self):
-        expected = [('Acceleration Longitudinal Offset Removed', 'Grounded')]
+        expected = [('Acceleration Longitudinal Offset Removed', 
+                     'Eng (*) All Running', 'Grounded')]
         self.assertEqual(
             expected,
-            RejectedTakeoff.get_operational_combinations())
+            RejectedTakeoff.get_operational_combinations())       
+        
+    def test_derive_one_rejected_takeoff(self):
+        accel_lon = P('Acceleration Longitudinal Offset Removed',
+                      np.ma.array([0] * 3 + [0.02, 0.05, 0.02, 0, -0.17,] + [0] * 7 +
+                                  [0.2, 0.4, 0.1] + [0.11] * 4 + [0] * 6 + [-2] +
+                                  [0] * 5 + [0.02, 0.08, 0.08, 0.08, 0.08] + [0] * 20)*1.5)
+        grounded = buildsection('Grounded', 0, len(accel_lon.array))
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                        values_mapping={0: 'Not Running', 1: 'Running'})
+        
+        node = RejectedTakeoff()
+        # Set a low frequency to pass slice duration checks.
+        node.frequency = 1/64.0
+        node.derive(accel_lon, eng_running, grounded)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].slice.start, 15, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 27, 0)        
+        
+    def test_derive_two_rejected_takeoffs(self):
 
-    @unittest.skip('Being fixed')
-    def test_derive_basic(self):
         accel_lon = P('Acceleration Longitudinal Offset Removed',
                       np.ma.array([0] * 3 + [0.02, 0.05, 0.11, 0, -0.17,] + [0] * 7 +
                                   [0.2, 0.4, 0.1] + [0.11] * 4 + [0] * 6 + [-2] +
                                   [0] * 5 + [0.02, 0.08, 0.08, 0.08, 0.08] + [0] * 20)*1.5)
         grounded = buildsection('Grounded', 0, len(accel_lon.array))
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})
 
         node = RejectedTakeoff()
         # Set a low frequency to pass slice duration checks.
         node.frequency = 1/64.0
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
+        self.assertEqual(len(node), 2)
+        self.assertAlmostEqual(node[0].slice.start, 5, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 6, 0)        
+        self.assertAlmostEqual(node[1].slice.start, 15, 0)
+        self.assertAlmostEqual(node[1].slice.stop, 27, 0)
+        
+        
+    def test_derive_one_rejected_takeoff_with_two_acceleration_spikes(self):
+        accel_lon = P('Acceleration Longitudinal Offset Removed',
+                          np.ma.array([0] * 3 + [0.02, 0.05, 0.02, 0, -0.17,] + [0] * 7 + 
+                                      [0.2, 0.4, 0.1] + [0.11] * 4 + [0] * 6 + [0.2, 0.4, 0.1] + 
+                                      [0.11] * 4 + [0] * 6  + [-0.2] + [0] * 5 + 
+                                      [0.02, 0.08, 0.08, 0.08, 0.08] + [0] * 20)*1.5)
+        grounded = buildsection('Grounded', 0, len(accel_lon.array))
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})
+    
+        node = RejectedTakeoff()
+        # Set a low frequency to pass slice duration checks.
+        node.frequency = 1/64.0
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 1)
         self.assertAlmostEqual(node[0].slice.start, 15, 0)
-        self.assertAlmostEqual(node[0].slice.stop, 21, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 40, 0)                
 
-    @unittest.skip('Being fixed')
     def test_derive_flight_with_rejected_takeoff_1(self):
         accel_lon = load(os.path.join(
             test_data_path,
@@ -1972,13 +2012,15 @@ class TestRejectedTakeoff(unittest.TestCase):
         accel_lon.array *= 1.5
         grounded = load(os.path.join(test_data_path,
                                      'RejectedTakeoff_Grounded_2.nod'))
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                        values_mapping={0: 'Not Running', 1: 'Running'})
+        
         node = RejectedTakeoff()
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 1)
-        self.assertAlmostEqual(node[0].slice.start, 3612, 0)
-        self.assertAlmostEqual(node[0].slice.stop, 3682, 0)
+        self.assertAlmostEqual(node[0].slice.start, 3622, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 3663, 0)
 
-    @unittest.skip('Being fixed')
     def test_derive_flight_with_rejected_takeoff_2(self):
         accel_lon = load(os.path.join(
             test_data_path,
@@ -1986,13 +2028,15 @@ class TestRejectedTakeoff(unittest.TestCase):
         accel_lon.array *= 1.5
         grounded = load(os.path.join(test_data_path,
                                      'RejectedTakeoff_Grounded_5.nod'))
-        node = RejectedTakeoff()
-        node.derive(accel_lon, grounded)
-        self.assertEqual(len(node), 1)
-        self.assertAlmostEqual(node[0].slice.start, 2373, 0)
-        self.assertAlmostEqual(node[0].slice.stop, 2435, 0)
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})
     
-    @unittest.skip('Being fixed')
+        node = RejectedTakeoff()
+        node.derive(accel_lon, eng_running, grounded)
+        self.assertEqual(len(node), 1)
+        self.assertAlmostEqual(node[0].slice.start, 2383, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 2413, 0)
+
     def test_derive_flight_with_rejected_takeoff_short(self):
         '''
         test derived from genuine low speed rejected takeoff FDS hash 452728ea2768
@@ -2001,13 +2045,14 @@ class TestRejectedTakeoff(unittest.TestCase):
             test_data_path,
             'RejectedTakeoff_AccelerationLongitudinalOffsetRemoved_Short.nod'))
         grounded = buildsections('Grounded', [0, 3796], [23516, 24576])
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})        
         node = RejectedTakeoff(frequency=4)
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 1)
-        self.assertAlmostEqual(node[0].slice.start, 1878, 0)
-        self.assertAlmostEqual(node[0].slice.stop, 2056, 0)
+        self.assertAlmostEqual(node[0].slice.start, 1917, 0)
+        self.assertAlmostEqual(node[0].slice.stop, 1969, 0)
 
-    @unittest.skip('Being fixed')
     def test_derive_flight_without_rejected_takeoff_3(self):
         accel_lon = load(os.path.join(
             test_data_path,
@@ -2015,11 +2060,12 @@ class TestRejectedTakeoff(unittest.TestCase):
         grounded = load(os.path.join(test_data_path,
                                      'RejectedTakeoff_Grounded_4.nod'))
         accel_lon.array *= 1.5
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})        
         node = RejectedTakeoff()
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 0)
 
-    @unittest.skip('Being fixed')
     def test_derive_flight_without_rejected_takeoff_1(self):
         accel_lon = load(os.path.join(
             test_data_path,
@@ -2027,8 +2073,10 @@ class TestRejectedTakeoff(unittest.TestCase):
         grounded = load(os.path.join(test_data_path,
                                      'RejectedTakeoff_Grounded_1.nod'))
         accel_lon.array *= 1.5
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})        
         node = RejectedTakeoff()
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 0)
 
     @unittest.skip('Being fixed')
@@ -2036,11 +2084,13 @@ class TestRejectedTakeoff(unittest.TestCase):
         accel_lon = load(os.path.join(
             test_data_path,
             'RejectedTakeoff_AccelerationLongitudinalOffsetRemoved_3.nod'))
-        accel_lon.array *= 1.5
+        accel_lon.array *= 1.5     
         grounded = load(os.path.join(test_data_path,
                                      'RejectedTakeoff_Grounded_3.nod'))
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel_lon.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})           
         node = RejectedTakeoff()
-        node.derive(accel_lon, grounded)
+        node.derive(accel_lon, eng_running, grounded)
         self.assertEqual(len(node), 0)
 
 

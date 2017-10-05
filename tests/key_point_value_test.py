@@ -19,7 +19,7 @@ from flightdatautilities.geometry import midpoint
 
 from hdfaccess.parameter import MappedArray
 
-from analysis_engine.library import align, median_value, any_of
+from analysis_engine.library import align, median_value, any_of, np_ma_ones_like
 from analysis_engine.node import (
     A, App, ApproachItem, KPV, KTI, load, M, P, KeyPointValue,
     MultistateDerivedParameterNode,
@@ -12968,16 +12968,17 @@ class TestGroundspeedDuringRejectedTakeoffMax(unittest.TestCase):
         self.assertEqual(gspd_rto[0].index, 40)
         self.assertEqual(gspd_rto[0].value, 20)
 
-    @unittest.skip('Being fixed')
     def test_no_gspd(self):
         sinewave = np.ma.sin(np.arange(0, 3.14*2, 0.04))*0.4
         testwave = [0]*150+sinewave.tolist()+[0]*193 # To match array sizes
         accel = P('Acceleration Longitudinal Offset Removed',
                   testwave, frequency=4.0, offset=0.2)
         gnds = buildsection('Grounded', 0, 125)
+        eng_running = M('Eng (*) All Running', np_ma_ones_like(accel.array), 
+                            values_mapping={0: 'Not Running', 1: 'Running'})        
         # Create RTO here to ensure it operates as expected
         rto = RejectedTakeoff()
-        rto.get_derived((accel, gnds))
+        rto.get_derived((accel, eng_running, gnds))
         # The data passes 0.1g on the 6th and 72nd samples of the sine wave.
         # With the 24 sample offset and 4Hz sample rate this gives an RTO
         # section thus:
@@ -12987,7 +12988,7 @@ class TestGroundspeedDuringRejectedTakeoffMax(unittest.TestCase):
         # The groundspeed should match the integration. Done crudely here for plotting when developing the routine.
         #expected = np.cumsum(testwave)*32.2*0.592/4
 
-        self.assertAlmostEqual(gspd_rto[0].value, 95.4, 1)
+        self.assertAlmostEqual(gspd_rto[0].value, 91.6, 1)
         self.assertEqual(gspd_rto[0].index, 229)
 
 
