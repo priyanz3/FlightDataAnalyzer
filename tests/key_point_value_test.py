@@ -10745,7 +10745,7 @@ class TestEngTorqueExceeding100(unittest.TestCase):
         self.node_class = EngTorqueExceeding100
         
         
-    def test_derive_exceeding_one_short_period(self):
+    def test_derive_exceeding_one_second_period(self):
         
         eng_avg_torque = P(name='Eng (*) Avg Torque', 
                            array=np.ma.array([95, 96, 97, 98, 99, 100, 99, 98]))
@@ -10753,12 +10753,19 @@ class TestEngTorqueExceeding100(unittest.TestCase):
         kpv = EngTorqueExceeding100()
         kpv.derive(eng_avg_torque)
         
-        self.assertEqual(len(kpv), 1)
-        self.assertEqual(kpv[0].value, 1)
-        self.assertEqual(kpv[0].index, 5)
-    
-    
-    def test_derive_exceeding_one_long_period(self):
+        self.assertEqual(len(kpv), 0)
+        
+    def test_derive_exceeding_two_seconds_period(self):
+        
+        eng_avg_torque = P(name='Eng (*) Avg Torque', 
+                           array=np.ma.array([95, 96, 97, 98, 99, 100, 101, 99, 98]))
+        
+        kpv = EngTorqueExceeding100()
+        kpv.derive(eng_avg_torque)
+        
+        self.assertEqual(len(kpv), 0)
+           
+    def test_derive_exceeding_one_longer_than_two_seconds_period(self):
         
         eng_avg_torque = P(name='Eng (*) Avg Torque', 
                            array=np.ma.array([95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 104,
