@@ -8819,6 +8819,22 @@ class EngTorqueLimitExceedanceWithOneEngineInoperativeDuration(KeyPointValueNode
                 self.create_kpvs_from_slice_durations(phase_slices, self.frequency)
 
 
+class EngTorqueExceeding100(KeyPointValueNode):
+    '''
+    Measures the duration of Eng (*) Torque Avg exceeding 100. 
+    '''
+    
+    units = ut.SECOND    
+    can_operate = helicopter_only
+
+    
+    def derive(self, avg_torque = P('Eng (*) Torque Avg')):
+        
+        threshold_slices = slices_above(avg_torque.array, 100)[1]
+        threshold_slices = slices_remove_small_slices(threshold_slices, 2, avg_torque.hz)
+        self.create_kpvs_from_slice_durations(threshold_slices, self.frequency)
+
+
 ##############################################################################
 # Engine Bleed
 
