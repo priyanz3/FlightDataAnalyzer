@@ -564,9 +564,23 @@ class DualInput(MultistateDerivedParameterNode):
         array[pilot.array == 'First Officer'] = stick_capt.array[pilot.array == 'First Officer']
         array = np.ma.array(array > 2.0, mask=array.mask, dtype=int)
 
+        '''
+        Here we're removing small slices first and then removing gaps, not
+        the other way around as it would cause multiple short sidestick dual input
+        'nudges' to be interpreted as continuous dual input, which is incorrect, as
+        Airbus AFPS specifies that in order for the warning to come on dual input
+        has to be >0.5deg (we're using 2.0deg, see class docstring for details) for 
+        at least 3 seconds.
+        
+        Also using 2.9s to remove small slices instead of 3.0s as using 3.0s causes
+        valid dual input events that are exactly 3 seconds (i.e 12 samples where angle
+        is over 2 degrees at 4Hz) to be missed. Can't be 2.75 as in case the parameter
+        is recorded at 8Hz it would have to be at least 2.8, this threshold makes
+        it to be 'safe' for up to 10Hz.
+        '''
         slices = runs_of_ones(array)
+        slices = slices_remove_small_slices(slices, 2.9, self.hz)
         slices = slices_remove_small_gaps(slices, 15, self.hz)
-        slices = slices_remove_small_slices(slices, 3, self.hz)
 
         dual = np_ma_zeros_like(array, dtype=np.short)
         for sl in slices:

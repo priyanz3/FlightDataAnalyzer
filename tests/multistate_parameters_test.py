@@ -929,7 +929,7 @@ class TestDualInput(unittest.TestCase, NodeTest):
         expected_array = MappedArray(
             np.ma.zeros(pilot.array.size),
             values_mapping=self.node_class.values_mapping)
-        expected_array[178:215] = 'Dual'
+        expected_array[178:188] = 'Dual'
         expected_array[421:464] = 'Dual'
         expected_array[487:506] = 'Dual'
         np.testing.assert_array_equal(node.array, expected_array)
