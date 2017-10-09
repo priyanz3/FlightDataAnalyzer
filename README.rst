@@ -1,5 +1,3 @@
-[![Build Status](http://jenkins.flightdataservices.com/buildStatus/icon?job=FlightDataAnalyser)](http://jenkins.flightdataservices.com/job/FlightDataAnalyser)
-
 Introduction
 ============
 
