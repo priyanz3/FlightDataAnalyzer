@@ -5914,6 +5914,34 @@ class AltitudeLastUnstableDuringLastApproach(KeyPointValueNode):
             self.create_kpv(index, value_at_index(alt.array, index))
 
 
+class AltitudeLastUnstableDuringLastApproachExcludingEngTrust(KeyPointValueNode):
+    '''
+    Establish last Unstable altitude AAL during the last approach i.e. a full 
+    stop landing.
+    
+    Unlike 'Altitude Last Unstable During Last Approach', this uses the 
+    multistae parameter 'Stable Approach Excluding Eng Trust' which
+    excludes the Engine Trust (N1/EPR) stability stage.
+
+    Should the approach have not become stable, the altitude will read 0 ft,
+    indicating that it was unstable all the way to touchdown.
+    '''
+
+    units = ut.FT
+
+    def derive(self, stable=M('Stable Approach Excluding Eng Trust'),
+               alt=P('Altitude AAL')):
+
+        apps = np.ma.clump_unmasked(stable.array)
+        if apps:
+            # we're only interested in the last approach - we assume that
+            # this was the one which came to a full stop
+            app = apps[-1]
+            index = index_of_last_stop(stable.array != 'Stable', app, min_dur=2)
+            # Note: Assumed will never have an approach which is 100% Stable
+            self.create_kpv(index, value_at_index(alt.array, index))
+
+
 class AltitudeLastUnstableDuringApproachBeforeGoAround(KeyPointValueNode):
     '''
     Establish last Unstable altitude (AAL) during all but the last approach. 
