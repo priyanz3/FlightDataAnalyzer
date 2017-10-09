@@ -214,7 +214,7 @@ from analysis_engine.key_point_values import (
     AltitudeFirstStableDuringLastApproach,
     AltitudeLastUnstableDuringApproachBeforeGoAround,
     AltitudeLastUnstableDuringLastApproach,
-    AltitudeLastUnstableDuringLastApproachExcludingEngTrust,
+    AltitudeLastUnstableDuringLastApproachExcludingEngThrust,
     AltitudeMax,
     AltitudeOvershootAtSuspectedLevelBust,
     AltitudeRadioDuringAutorotationMin,
@@ -7976,15 +7976,15 @@ class TestAltitudeLastUnstableDuringLastApproach(unittest.TestCase):
         self.assertEqual(lastunstable[0].value, 0)
 
 
-class TestAltitudeLastUnstableDuringLastApproachExcludingEngTrust(unittest.TestCase):
+class TestAltitudeLastUnstableDuringLastApproachExcludingEngThrust(unittest.TestCase):
     def test_can_operate(self):
-        ops = AltitudeLastUnstableDuringLastApproachExcludingEngTrust.get_operational_combinations()
+        ops = AltitudeLastUnstableDuringLastApproachExcludingEngThrust.get_operational_combinations()
         self.assertEqual(ops, [('Stable Approach Excluding Eng Trust',
                                 'Altitude AAL')])
 
     def test_derive_two_approaches_uses_last_one(self):
         # two approaches
-        lastunstable = AltitudeLastUnstableDuringLastApproachExcludingEngTrust()
+        lastunstable = AltitudeLastUnstableDuringLastApproachExcludingEngThrust()
         #                                                 stable tooshort stable
         stable = StableApproach(array=np.ma.array([1,4,9,9,  3,2,9,   2,9,9,1,1],
                                              mask=[0,0,0,0,  1,0,0,   0,0,0,0,0]))
@@ -7997,7 +7997,7 @@ class TestAltitudeLastUnstableDuringLastApproachExcludingEngTrust(unittest.TestC
 
     def test_never_stable_stores_a_value(self):
         # if we were never stable, ensure we record a value at landing (0 feet)
-        lastunstable = AltitudeLastUnstableDuringLastApproachExcludingEngTrust()
+        lastunstable = AltitudeLastUnstableDuringLastApproachExcludingEngThrust()
         # not stable for either approach
         stable = StableApproach(array=np.ma.array([1,4,4,4,  3,2,2,2,2,2,1,1],
                                              mask=[0,0,0,0,  1,0,0,0,0,0,0,0]))

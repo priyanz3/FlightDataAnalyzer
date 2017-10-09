@@ -96,7 +96,7 @@ from analysis_engine.multistate_parameters import (
     SpeedbrakeDeployed,
     SpeedbrakeSelected,
     StableApproach,
-    StableApproachExcludingEngTrust,
+    StableApproachExcludingEngThrust,
     StallWarning,
     StickPusher,
     StickShaker,
@@ -3181,9 +3181,9 @@ class TestStableApproach(unittest.TestCase):
         self.assertTrue(np.all(sect[127:] == ['Stable']))
 
 
-class TestStableApproachExcludingEngTrust(unittest.TestCase):
+class TestStableApproachExcludingEngThrust(unittest.TestCase):
     def test_can_operate(self):
-        opts = StableApproachExcludingEngTrust.get_operational_combinations()
+        opts = StableApproachExcludingEngThrust.get_operational_combinations()
         combinations = [
             # all
             ('Approach Information', 'Descent', 'Gear Down', 'Flap', 'Track Deviation From Runway', 'Airspeed Relative For 3 Sec', 'Vertical Speed', 'ILS Glideslope', 'ILS Localizer', 'Altitude AAL', 'Vapp'),
@@ -3204,7 +3204,7 @@ class TestStableApproachExcludingEngTrust(unittest.TestCase):
             self.assertIn(combo, opts)
 
     def test_stable_approach(self):
-        stable = StableApproachExcludingEngTrust()
+        stable = StableApproachExcludingEngThrust()
         apps = App()
         apps.create_approach('LANDING', slice(15, 20),
                              gs_est=True, loc_est=True,
@@ -3304,7 +3304,7 @@ class TestStableApproachExcludingEngTrust(unittest.TestCase):
 
         def test_node(name):
             return load(os.path.join(test_data_path, 'Stable Approach - '+name+'.nod'))
-        stable = StableApproachExcludingEngTrust()
+        stable = StableApproachExcludingEngThrust()
 
         gear = test_node('Gear Down')
         flap = test_node('Flap')

@@ -5914,7 +5914,7 @@ class AltitudeLastUnstableDuringLastApproach(KeyPointValueNode):
             self.create_kpv(index, value_at_index(alt.array, index))
 
 
-class AltitudeLastUnstableDuringLastApproachExcludingEngTrust(KeyPointValueNode):
+class AltitudeLastUnstableDuringLastApproachExcludingEngThrust(KeyPointValueNode):
     '''
     Establish last Unstable altitude AAL during the last approach i.e. a full 
     stop landing.

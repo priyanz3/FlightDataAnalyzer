@@ -3304,8 +3304,8 @@ class StableApproach(MultistateDerivedParameterNode,
                                     eng_epr, alt, vapp, family)
 
 
-class StableApproachExcludingEngTrust(MultistateDerivedParameterNode,
-                                      StableApproachStages):
+class StableApproachExcludingEngThrust(MultistateDerivedParameterNode,
+                                       StableApproachStages):
 
     @classmethod
     def can_operate(cls, available):
