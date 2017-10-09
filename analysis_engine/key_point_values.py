@@ -18728,3 +18728,63 @@ class DriftAtTouchdown(KeyPointValueNode):
 
 
        
+
+class EngThrustTakeoffDerate(KeyPointValueNode):
+    '''
+    Specific to CFM56-5B engines
+    '''
+
+    units = ut.LBF
+
+    def derive(self, mach=P('Mach'),
+               n1_derates=KPV('Eng N1 Takeoff Derate')):
+        
+        for n1 in n1_derates:
+            index = n1.index
+            corr_n1 = 100.0 - n1.value
+            mach_toff = mach.array[index]
+            fnk = -34422.1945 \
+                - 3.591798057 * mach_toff \
+                - 221.3236997 * mach_toff * corr_n1 \
+                + 663.3754542 * corr_n1
+            derate = 100.0 * (1.0 - fnk / 27000.0)
+            self.create_kpv(index, derate)
+
+    
+class EngN1TakeoffDerate(KeyPointValueNode):
+    '''
+    Specific to CFM56-5B engines
+    '''
+    units = ut.PERCENT
+    
+    name = 'Eng N1 Takeoff Derate'
+
+    def derive(self, eng_n1=P('Eng (*) N1 Avg'),
+               tat=P('TAT'), 
+               sage_toffs=KTI('SAGE Takeoff'),
+               engine_series=A('Engine Series'), engine_type=A('Engine Type')):
+
+        for toff in sage_toffs:
+            index = toff.index
+            n1 = eng_n1.array[index]
+            if n1 < 85 or n1 > 100:
+                # Should raise a warning here as it's 
+                # outside the scope of the fitted surface
+                continue
+            theta = (tat.array[index] + 273.15) / 288.15
+            corr_n1 = n1 / np.sqrt(theta)
+            derate = 100.0 - corr_n1
+            self.create_kpv(index, derate)
+    
+    
+class EngTakeoffFlexTemp(KeyPointValueNode):
+    '''
+    Specific to CFM56-5B engines
+    '''
+
+    units = ut.CELSIUS
+    
+    def derive(self, flex=P('Flex Temp'),
+               sage_toffs=KTI('SAGE Takeoff')):
+        
+        self.create_kpvs_at_ktis(flex.array, sage_toffs)
