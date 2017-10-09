@@ -5487,6 +5487,7 @@ def rate_of_change_array(to_diff, hz, width=None, method='two_points'):
         width = 2 / hz
 
     hw = int(width * hz / 2.0)
+    hw2 = hw * 2
 
     if hw < 1:
         raise ValueError('Rate of change called with inadequate width.')
@@ -5500,7 +5501,7 @@ def rate_of_change_array(to_diff, hz, width=None, method='two_points'):
         input_mask = np.ma.getmaskarray(to_diff)
         # Set up an array of masked zeros for extending arrays.
         slope = np.ma.copy(to_diff)
-        slope[hw:-hw] = (to_diff[2*hw:] - to_diff[:-2*hw])/width
+        slope[hw:-hw] = (to_diff[2*hw:] - to_diff[:-2*hw]) / hw2 * hz
         slope[:hw] = (to_diff[1:hw+1] - to_diff[0:hw]) * hz
         slope[-hw:] = (to_diff[-hw:] - to_diff[-hw-1:-1])* hz
         slope.mask = np.logical_or(input_mask, np.ma.getmaskarray(slope))

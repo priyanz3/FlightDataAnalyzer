@@ -4931,10 +4931,27 @@ class TestRateOfChangeArray(unittest.TestCase):
     # Also, handling short arrays added.
     def test_case_basic(self):
         test_array = np.ma.array([0,1,2,3,4], dtype=float)
-        sloped = rate_of_change_array(test_array, 2.0, 1.0)
+        sloped = rate_of_change_array(test_array, 2.0, width=1.0)
         answer = np.ma.array([2,2,2,2,2])
         assert_array_almost_equal(sloped, answer)
 
+    def test_case_changing_widths(self):
+        test_array = np.ma.array(range(20), dtype=float)
+        answer = np.ones_like(test_array)
+        sloped = rate_of_change_array(test_array, 1.0, width=2)
+        assert_array_almost_equal(sloped.data, answer)
+        sloped = rate_of_change_array(test_array, 1.0, width=3)
+        assert_array_almost_equal(sloped.data, answer)
+        sloped = rate_of_change_array(test_array, 1.0, width=4)
+        assert_array_almost_equal(sloped.data, answer)
+        sloped = rate_of_change_array(test_array, 1.0, width=5)
+        assert_array_almost_equal(sloped.data, answer)
+        sloped = rate_of_change_array(test_array, 1.0, width=6)
+        assert_array_almost_equal(sloped.data, answer)
+        sloped = rate_of_change_array(test_array, 1.0, width=7)
+        assert_array_almost_equal(sloped.data, answer)
+        
+        
     def test_case_short_data(self):
         test_array = np.ma.array([0,1,2,3,4], dtype=float)
         sloped = rate_of_change_array(test_array, 2.0, 10.0)
@@ -4983,6 +5000,12 @@ class TestRateOfChange(unittest.TestCase):
                                               dtype=float), 0.5), 4)
         answer = np.ma.array(data=[-0.5,-0.5,0.5,0.5,0.25,0.75,0.75,0.25,0.25,1.0],
                              mask=False)
+        ma_test.assert_mask_equivalent(sloped, answer)
+
+    def test_rate_of_change_reduced_frequency_extended(self):
+        sloped = rate_of_change(P('Test',
+                                  np.ma.array(range(20), dtype=float), 0.5), 4)
+        answer = np.ma.array(data=[0.5]*20, mask=False)
         ma_test.assert_mask_equivalent(sloped, answer)
 
     def test_rate_of_change_transfer_mask(self):
