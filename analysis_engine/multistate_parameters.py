@@ -2979,7 +2979,361 @@ class SpeedbrakeSelected(MultistateDerivedParameterNode):
             raise NotImplementedError("No Speedbrake mapping for '%s'" % family_name)
 
 
-class StableApproach(MultistateDerivedParameterNode):
+class StableApproachStages(object):
+    '''
+    During the Descent and Approach, the following steps are assessed in turn
+    to determine the aircraft stability:
+
+    1. Gear is down
+    2. Landing Flap is set
+    3. Track is aligned to Runway (within 12 degrees or 30 if offset approach)
+    4. Airspeed:
+        - airspeed minus selected approach speed within -5 to +15 knots (for 3 secs)
+        - or Vapp within -5 to +10 knots (for 3 secs)
+        - or Vref within -5 to +35 knots (for 3 secs)
+    5. Glideslope deviation within 1 dot
+    6. Localizer deviation within 1 dot
+    7. Vertical speed between -1100 and -200 fpm
+    8. Engine Thrust greater than 40% N1 or 35% (A319/B787) or 1.09 EPR 
+       (for 10 secs) or 1.02 (A319, A320, A321)
+
+    if all the above steps are met, the result is the declaration of:
+    9. "Stable"
+
+    Notes:
+
+    Airspeed is relative to "Airspeed Selected" where available as this will
+    account for the reference speed and any compensation for the wind speed.
+
+    If Vapp is recorded, a more constraint airspeed threshold is applied.
+
+    Where parameters are not monitored below a certain threshold (e.g. ILS
+    below 200ft) the stability criteria just before 200ft is reached is
+    continued through to landing. So if one was unstable due to ILS
+    Glideslope down to 200ft, that stability is assumed to continue through
+    to landing.
+
+    TODO/REVIEW:
+    ============
+    * Check for 300ft limit if turning onto runway late and ignore stability
+      criteria before this? Alternatively only assess criteria when heading is
+      within 50.
+    * Add hysteresis (3 second gliding windows for GS / LOC etc.)
+    * Engine cycling check
+    * Use Engine TPR for B787 instead of EPR if available.
+    '''
+
+    values_mapping = {
+        0: '-',  # All values should be masked anyway, this helps align values
+        1: 'Gear Not Down',
+        2: 'Not Landing Flap',
+        3: 'Track Not Aligned',
+        4: 'Aspd Not Stable',  # Q: Split into two Airspeed High/Low?
+        5: 'GS Not Stable',
+        6: 'Loc Not Stable',
+        7: 'IVV Not Stable',
+        8: 'Eng Thrust Not Stable',
+        9: 'Stable',
+    }
+
+    align_frequency = 1 
+
+    def derive_stable_approach(self, apps, phases, gear, flap, tdev, aspd_rel,
+                               aspd_minus_sel, vspd, gdev, ldev, eng_n1,
+                               eng_epr, alt, vapp, family):
+
+        # create an empty fully masked array
+        self.array = np.ma.zeros(len(alt.array), dtype=np.short)
+        self.array.mask = True
+
+        self.repair = lambda ar, ap, method='interpolate': repair_mask(
+            ar[ap], raise_entirely_masked=False, method=method)
+        for approach in apps:
+            # lookup descent from approach, dont zip as not guanenteed to have the same
+            # number of descents and approaches
+            phase = phases.get_last(within_slice=approach.slice, within_use='any')
+            # use Combined descent phase slice as it contains the data from
+            # top of descent to touchdown (approach starts and finishes later)
+            approach.slice = phase.slice
+
+            # FIXME: approaches shorter than 10 samples will not work due to
+            # the use of moving_average with a width of 10 samples.
+            if approach.slice.stop - approach.slice.start < 10:
+                continue
+            # Restrict slice to 10 seconds after landing if we hit the ground
+            gnd = index_at_value(alt.array, 0, approach.slice)
+            if gnd and gnd + 10 < approach.slice.stop:
+                stop = gnd + 10
+            else:
+                stop = approach.slice.stop
+            _slice = slice(approach.slice.start, stop)
+
+            altitude = self.repair(alt.array, _slice)
+            index_at_50 = index_closest_value(altitude, 50)
+            index_at_200 = index_closest_value(altitude, 200)
+
+            if gear:
+                #== 1. Gear Down ==
+                stable = self._stable_1_gear_down(_slice, gear)
+            if flap:
+                #== 2. Landing Flap ==
+                stable = self._stable_2_landing_flap(_slice, stable, altitude, flap)
+            if tdev:
+                #== 3. Track Deviation ==
+                stable = self._stable_3_track_deviation(_slice, stable, approach, tdev)
+            if aspd_rel or aspd_minus_sel:
+                #== 4. Airspeed Relative ==
+                stable = self._stable_4_airspeed_relative(_slice, stable, aspd_minus_sel, aspd_rel, vapp, index_at_50, altitude)
+            if gdev:
+                #== 5. Glideslope Deviation ==
+                stable = self._stable_5_glideslope_deviation(_slice, stable, approach, gdev, index_at_200, altitude)
+            if ldev:
+                #== 6. Localizer Deviation ==
+                stable = self._stable_6_localizer_deviation(_slice, stable, approach, ldev, index_at_200, altitude)
+            if vspd:
+                #== 7. Vertical Speed ==
+                stable = self._stable_7_vertical_speed(_slice, stable, approach, vspd, index_at_50, altitude)
+            if eng_epr or eng_n1:
+                #== 8. Engine Thrust (N1/EPR) ==
+                stable = self._stable_8_engine_thrust(_slice, stable, eng_epr, eng_n1, family, index_at_50, altitude)
+            #== 9. Stable ==
+            # Congratulations; whatever remains in this approach is stable!
+            self.array[_slice][stable] = 9
+
+        #endfor
+        return
+
+    def _stable_1_gear_down(self, _slice, gear):
+        #== 1. Gear Down ==
+        # prepare data for this appproach:
+        gear_down = self.repair(gear.array, _slice, method='fill_start')        
+        # Assume unstable due to Gear Down at first
+        self.array[_slice] = 1
+        landing_gear_set = (gear_down == 'Down')
+        stable = landing_gear_set.filled(True)  # assume stable (gear down)
+        return stable
+
+    def _stable_2_landing_flap(self, _slice, stable, altitude, flap):
+        #== 2. Landing Flap ==
+        # prepare data for this appproach:
+        flap_lever = self.repair(flap.array, _slice, method='fill_start')
+        # not due to landing gear so try to prove it wasn't due to Landing Flap
+        self.array[_slice][stable] = 2
+        # look for maximum flap used in approach below 1,000ft, otherwise
+        # go-arounds can detect the start of flap retracting as the
+        # landing flap.
+        landing_flap = np.ma.where(altitude < 1000, flap_lever, np.ma.masked).max()
+        if landing_flap is np.ma.masked:
+            # try looking above 1000ft
+            landing_flap = np.ma.where(altitude > 1000, flap_lever, np.ma.masked).max()
+
+        if landing_flap is not np.ma.masked:
+            landing_flap_set = (flap_lever == landing_flap)
+            # assume stable (flap set)
+            stable &= landing_flap_set.filled(True)
+        else:
+            # All landing flap is masked, assume stable
+            logger.warning(
+                'StableApproach: the landing flap is all masked in '
+                'the approach.')
+            stable &= True
+        return stable
+
+    def _stable_3_track_deviation(self, _slice, stable, approach, tdev):
+        #== 3. Track Deviation ==
+        # prepare data for this appproach:
+        track_dev = self.repair(tdev.array, _slice)
+        
+        self.array[_slice][stable] = 3
+        runway = approach.approach_runway
+        if runway and runway.get('localizer', {}).get('is_offset'):
+            # offset ILS Localizer or offset approach without ILS (IAN approach)
+            STABLE_TRACK = 30  # degrees
+        else:
+            # use 12 to allow rolling a little over the 10 degrees when
+            # aligning to runway.
+            STABLE_TRACK = 12  # degrees
+        stable_track_dev = abs(track_dev) <= STABLE_TRACK
+        stable &= stable_track_dev.filled(True)  # assume stable (on track)
+        return stable
+
+    def _stable_4_airspeed_relative(self, _slice, stable, aspd_minus_sel, aspd_rel, vapp, index_at_50, altitude):
+        #== 4. Airspeed Relative ==
+        # prepare data for this appproach:
+        if aspd_minus_sel:
+            airspeed = self.repair(aspd_minus_sel.array, _slice)
+        elif aspd_rel:
+            airspeed = self.repair(aspd_rel.array, _slice)
+        else:
+            airspeed = None
+
+        if airspeed is not None:
+            self.array[_slice][stable] = 4
+            if aspd_minus_sel:
+                # Airspeed relative to selected speed
+                if aspd_rel:
+                    low_limit_airspeed = self.repair(aspd_rel.array, _slice)
+                else:
+                    low_limit_airspeed = airspeed
+                STABLE_AIRSPEED_BELOW_REF = -5
+                STABLE_AIRSPEED_ABOVE_REF = 15
+            elif vapp:
+                # Those aircraft which record a variable Vapp shall have more constraint thresholds
+                low_limit_airspeed = airspeed
+                STABLE_AIRSPEED_BELOW_REF = -5
+                STABLE_AIRSPEED_ABOVE_REF = 10
+            else:
+                # Most aircraft record only Vref - as we don't know the wind correction be more lenient
+                low_limit_airspeed = airspeed
+                STABLE_AIRSPEED_BELOW_REF = -5
+                STABLE_AIRSPEED_ABOVE_REF = 35
+
+            stable_airspeed = (low_limit_airspeed >= STABLE_AIRSPEED_BELOW_REF) & (airspeed <= STABLE_AIRSPEED_ABOVE_REF)
+            # extend the stability at the end of the altitude threshold through to landing
+            stable_airspeed[altitude < 50] = stable_airspeed[index_at_50]
+            stable &= stable_airspeed.filled(True)  # if no V Ref speed, values are masked so consider stable as one is not flying to the vref speed??
+        return stable
+
+    def _stable_5_glideslope_deviation(self, _slice, stable, approach, gdev, index_at_200, altitude):
+        #== 5. Glideslope Deviation ==
+        # prepare data for this appproach:
+        glideslope = self.repair(gdev.array, _slice) if gdev else None  # optional        
+        if approach.gs_est:
+            self.array[_slice][stable] = 5
+            STABLE_GLIDESLOPE = 1.0  # dots
+            stable_gs = (abs(glideslope) <= STABLE_GLIDESLOPE)
+            # extend the stability at the end of the altitude threshold through to landing
+            stable_gs[altitude < 200] = stable_gs[index_at_200]
+            stable &= stable_gs.filled(False)  # masked values are usually because they are way outside of range and short spikes will have been repaired
+        return stable
+
+    def _stable_6_localizer_deviation(self, _slice, stable, approach, ldev, index_at_200, altitude):
+        #== 6. Localizer Deviation ==
+        # prepare data for this appproach:
+        localizer = self.repair(ldev.array, _slice) if ldev else None  # optional
+
+        if approach.gs_est and approach.loc_est:
+            self.array[_slice][stable] = 6
+            STABLE_LOCALIZER = 1.0  # dots
+            stable_loc = (abs(localizer) <= STABLE_LOCALIZER)
+            # extend the stability at the end of the altitude threshold through to landing
+            stable_loc[altitude < 200] = stable_loc[index_at_200]
+            stable &= stable_loc.filled(False)  # masked values are usually because they are way outside of range and short spikes will have been repaired
+        return stable
+
+    def _stable_7_vertical_speed(self, _slice, stable, approach, vspd, index_at_50, altitude, ):
+        #== 7. Vertical Speed ==
+        # prepare data for this appproach:
+        # apply quite a large moving average to smooth over peaks and troughs
+        vertical_speed = moving_average(self.repair(vspd.array, _slice), 11)
+        runway = approach.approach_runway
+        
+        self.array[_slice][stable] = 7
+        STABLE_VERTICAL_SPEED_MAX = -200
+        STABLE_VERTICAL_SPEED_MIN = -1100
+        if runway:
+            gs_angle = runway.get('glideslope', {}).get('angle')
+            # offset ILS Localizer or offset approach without ILS (IAN approach)
+            if gs_angle is not None and gs_angle > 3:
+                STABLE_VERTICAL_SPEED_MIN = -1500
+        stable_vert = (vertical_speed >= STABLE_VERTICAL_SPEED_MIN) & (vertical_speed <= STABLE_VERTICAL_SPEED_MAX)
+        # extend the stability at the end of the altitude threshold through to landing
+        stable_vert[altitude < 50] = stable_vert[index_at_50]
+        stable &= stable_vert.filled(True)
+        return stable
+
+    def _stable_8_engine_thrust(self, _slice, stable, eng_epr, eng_n1, family, index_at_50, altitude):
+        #== 8. Engine Thrust (N1/EPR) ==
+        if eng_epr:
+            # use EPR if available
+            engine = self.repair(eng_epr.array, _slice)
+        else:
+            engine = self.repair(eng_n1.array, _slice)
+
+        self.array[_slice][stable] = 8
+        # Patch this value depending upon aircraft type
+        if eng_epr:
+            if family and family.value in ('A319', 'A320', 'A321'):
+                STABLE_EPR_MIN = 1.02  # Ratio
+            else:
+                STABLE_EPR_MIN = 1.09  # Ratio
+            stable_engine = (engine >= STABLE_EPR_MIN)
+        else:
+            if family and family.value in ('B787', 'A319'):
+                STABLE_N1_MIN = 35  # %
+            else:
+                STABLE_N1_MIN = 40  # %
+            stable_engine = (engine >= STABLE_N1_MIN)
+        # extend the stability at the end of the altitude threshold through to landing
+        stable_engine[altitude < 50] = stable_engine[index_at_50]
+        stable &= stable_engine.filled(True)
+        return stable
+        
+    
+class StableApproach(MultistateDerivedParameterNode,
+                     StableApproachStages):
+
+    @classmethod
+    def can_operate(cls, available):
+        # Many parameters are optional dependencies
+        deps = ['Approach Information', 'Descent', 'Gear Down', 'Flap',
+                'Track Deviation From Runway', 'Vertical Speed',
+                'Altitude AAL',]
+        return all_of(deps, available) and (
+            'Eng (*) N1 Avg For 10 Sec' in available or
+            'Eng (*) EPR Avg For 10 Sec' in available)
+
+    def derive(self,
+               apps=A('Approach Information'),
+               phases=S('Descent'),
+               gear=M('Gear Down'),
+               flap=M('Flap'),
+               tdev=P('Track Deviation From Runway'),
+               aspd_rel=P('Airspeed Relative For 3 Sec'),
+               aspd_minus_sel=P('Airspeed Minus Airspeed Selected For 3 Sec'),
+               vspd=P('Vertical Speed'),
+               gdev=P('ILS Glideslope'),
+               ldev=P('ILS Localizer'),
+               eng_n1=P('Eng (*) N1 Avg For 10 Sec'),
+               eng_epr=P('Eng (*) EPR Avg For 10 Sec'),
+               alt=P('Altitude AAL'),
+               vapp=P('Vapp'),
+               family=A('Family')):
+        self.derive_stable_approach(apps, phases, gear, flap, tdev, aspd_rel,
+                                    aspd_minus_sel, vspd, gdev, ldev, eng_n1,
+                                    eng_epr, alt, vapp, family)
+
+
+class StableApproachExcludingEngTrust(MultistateDerivedParameterNode,
+                                      StableApproachStages):
+
+    @classmethod
+    def can_operate(cls, available):
+        # Many parameters are optional dependencies
+        deps = ['Approach Information', 'Descent', 'Gear Down', 'Flap',
+                'Track Deviation From Runway', 'Vertical Speed',
+                'Altitude AAL',]
+        return all_of(deps, available)
+
+    def derive(self,
+               apps=A('Approach Information'),
+               phases=S('Descent'),
+               gear=M('Gear Down'),
+               flap=M('Flap'),
+               tdev=P('Track Deviation From Runway'),
+               aspd_rel=P('Airspeed Relative For 3 Sec'),
+               aspd_minus_sel=P('Airspeed Minus Airspeed Selected For 3 Sec'),
+               vspd=P('Vertical Speed'),
+               gdev=P('ILS Glideslope'),
+               ldev=P('ILS Localizer'),
+               alt=P('Altitude AAL'),
+               vapp=P('Vapp')):
+        self.derive_stable_approach(apps, phases, gear, flap, tdev, aspd_rel,
+                                    aspd_minus_sel, vspd, gdev, ldev, None,
+                                    None, alt, vapp, None)
+
+
+class StableApproachOld(MultistateDerivedParameterNode):
     '''
     During the Descent and Approach, the following steps are assessed in turn
     to determine the aircraft stability:
