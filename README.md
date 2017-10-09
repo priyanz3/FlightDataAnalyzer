@@ -1,6 +1,6 @@
 Build Status
 ============
-<a href='http://jenkins.flightdataservices.com/job/FlightDataAnalyser'><img src='http://jenkins.flightdataservices.com/buildStatus/icon?job=FlightDataAnalyser'></a>
+[![Build Status](http://jenkins.flightdataservices.com/buildStatus/icon?job=FlightDataAnalyser)](http://jenkins.flightdataservices.com/job/FlightDataAnalyser)
 
 Introduction
 ============
