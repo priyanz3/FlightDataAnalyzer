@@ -5920,8 +5920,8 @@ class AltitudeLastUnstableDuringLastApproachExcludingEngThrust(KeyPointValueNode
     stop landing.
     
     Unlike 'Altitude Last Unstable During Last Approach', this uses the 
-    multistae parameter 'Stable Approach Excluding Eng Trust' which
-    excludes the Engine Trust (N1/EPR) stability stage.
+    multistae parameter 'Stable Approach Excluding Eng Thrust' which
+    excludes the Engine Thrust (N1/EPR) stability stage.
 
     Should the approach have not become stable, the altitude will read 0 ft,
     indicating that it was unstable all the way to touchdown.
@@ -5929,7 +5929,7 @@ class AltitudeLastUnstableDuringLastApproachExcludingEngThrust(KeyPointValueNode
 
     units = ut.FT
 
-    def derive(self, stable=M('Stable Approach Excluding Eng Trust'),
+    def derive(self, stable=M('Stable Approach Excluding Eng Thrust'),
                alt=P('Altitude AAL')):
 
         apps = np.ma.clump_unmasked(stable.array)

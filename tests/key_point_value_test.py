@@ -7979,7 +7979,7 @@ class TestAltitudeLastUnstableDuringLastApproach(unittest.TestCase):
 class TestAltitudeLastUnstableDuringLastApproachExcludingEngThrust(unittest.TestCase):
     def test_can_operate(self):
         ops = AltitudeLastUnstableDuringLastApproachExcludingEngThrust.get_operational_combinations()
-        self.assertEqual(ops, [('Stable Approach Excluding Eng Trust',
+        self.assertEqual(ops, [('Stable Approach Excluding Eng Thrust',
                                 'Altitude AAL')])
 
     def test_derive_two_approaches_uses_last_one(self):
